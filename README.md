@@ -1,6 +1,6 @@
 # Angeborserstellung-App für das Handwerk
-Die ******-App ermöglicht eine schnelle und einfache Angebotserstellung im Handwerk. 
-Nutzer (Handwerksunternehmen) erfassen dafür Leistungen, Materialien und Aufwände, während das System im Hintergrund automatisch ein professionelles Angebot generiert.
+Die CraftVoice-App ermöglicht eine schnelle und einfache Angebotserstellung im Handwerk. 
+Nutzer erfassen dafür Leistungen, Materialien und Aufwände, während das System im Hintergrund automatisch ein professionelles Angebot generiert.
 
 # Setup
 ### Software
