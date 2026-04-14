@@ -1,4 +1,4 @@
-# 📱 Frontend Architektur Leitfaden
+# 📱 Architektur Leitfaden
 Dieses Dokument dient als verbindliche Orientierung für die Entwicklung unserer React-Anwendung. Ziel ist eine klare, skalierbare und wartbare Struktur, die von allen Teammitgliedern einheitlich genutzt wird.
 ---
 
