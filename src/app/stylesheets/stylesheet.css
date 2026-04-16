@@ -1,0 +1,180 @@
+﻿/* =========================
+   🎨 Design Tokens
+   ========================= */
+:root {
+  /* Background */
+  --color-bg: #0F0F10;
+  --color-surface: rgba(26, 26, 28, 0.8);
+  /* Text */
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #A1A1AA;
+  /* UI */
+  --color-divider: #2A2E44;
+  /* Accent*/
+  --color-accent: #FF6A00;
+  --color-accent-gradient: linear-gradient(135deg, #FF7A18, #FF4D00);
+  /* Effects */
+  --blur: 22px;
+  --radius: 26px;
+  --shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
+}
+
+/* =========================
+   ☀️ Light Mode
+   ========================= */
+[data-theme="light"] {
+  --color-bg: #F4F4F5;
+  --color-surface: rgba(255, 255, 255, 0.95);
+
+  --color-text-primary: #111111;
+  --color-text-secondary: #6B7280;
+
+  --color-divider: #E5E7EB;
+
+  --shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+}
+
+/* =========================
+   Base Layout
+   ========================= */
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+}
+
+/* =========================
+   App Container
+   ========================= */
+.app {
+  max-width: 420px;
+  margin: 40px auto;
+  padding: 20px;
+  border-radius: 32px;
+
+  background: var(--color-surface);
+  backdrop-filter: blur(var(--blur));
+
+  box-shadow: var(--shadow);
+  border: 1px solid var(--color-divider);
+}
+
+/* =========================
+   Cards (Aufträge)
+   ========================= */
+.card {
+  background: var(--color-surface);
+  backdrop-filter: blur(var(--blur));
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+
+  border: 1px solid var(--color-divider);
+  box-shadow: var(--shadow);
+}
+
+/* =========================
+   Primary Button
+   ========================= */
+.button-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  padding: 16px;
+  border-radius: 16px;
+  border: none;
+
+  background: var(--color-accent-gradient);
+  color: white;
+  font-weight: 600;
+  font-size: 16px;
+
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(255, 106, 0, 0.4);
+
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.button-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 25px rgba(255, 106, 0, 0.5);
+}
+
+/* =========================
+   Status Tags
+   ========================= */
+.tag {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.tag-notes {
+  background: rgba(255, 200, 0, 0.15);
+  color: #FFC800;
+}
+
+.tag-planned {
+  background: rgba(100, 200, 120, 0.15);
+  color: #64C878;
+}
+
+/* =========================
+   Text Styles
+   ========================= */
+.text-secondary {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+h1 {
+  font-size: 22px;
+  margin: 0 0 6px 0;
+}
+
+h2 {
+  font-size: 18px;
+  margin-bottom: 12px;
+}
+
+/* =========================
+    Divider
+   ========================= */
+.divider {
+  height: 1px;
+  background: var(--color-divider);
+  margin: 12px 0;
+  border: none;
+}
+
+/* =========================
+   Navigationsleiste
+   ========================= */
+.navbar {
+  position: sticky;
+  bottom: 0;
+
+  display: flex;
+  justify-content: space-around;
+  padding: 12px;
+
+  background: var(--color-surface);
+  backdrop-filter: blur(var(--blur));
+
+  border-top: 1px solid var(--color-divider);
+  border-radius: 20px 20px 0 0;
+}
+
+.nav-item {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  text-align: center;
+}
+
+.nav-item.active {
+  color: var(--color-accent);
+}
