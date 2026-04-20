@@ -31,7 +31,6 @@ Trennung von:
 ```
 /src
   /app
-    /stylesheets
     /views
   /features
   /domain
@@ -50,7 +49,6 @@ Zentrale Steuerung der Anwendung
 * `App.tsx` → Einstiegspunkt
 * `routes.tsx` → Navigation
 * `providers.tsx` → Globale Zustände (Auth, Theme, etc.)
-* `stylesheets/` → App-Styles und globale CSS-Dateien
 * `views/` → HTML-Seiten und statische App-Views
 
 ## Regeln
@@ -79,6 +77,7 @@ featureName/
 ---
 ## 📂 components
 UI-Komponenten (React Components)
+* `stylesheets/` → App-Styles und globale CSS-Dateien
 
 ### Regeln
 * Keine Business-Logik
