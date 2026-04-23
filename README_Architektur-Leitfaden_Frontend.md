@@ -1,4 +1,4 @@
-# 📱 Architektur Leitfaden
+# 📱 Architektur Leitfaden - Frontend
 Dieses Dokument dient als verbindliche Orientierung für die Entwicklung unserer React-Anwendung. Ziel ist eine klare, skalierbare und wartbare Struktur, die von allen Teammitgliedern einheitlich genutzt wird.
 ---
 
@@ -112,7 +112,7 @@ Feature-spezifische Datentypen
 ## 📄 index.ts
 Exportiert die öffentliche API des Features
 ---
-# 📁 /domain -> Schnittstelle mit Backend
+# 📁 /domain
 ## Zweck
 Zentrale Business-Logik der Anwendung
 ## Struktur
