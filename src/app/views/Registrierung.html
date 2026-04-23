@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="de" data-theme="light">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Registrierung</title>
+  <link rel="stylesheet" href="/src/features/formBuilder/components/stylesheets/stylesheet.css" />
+</head>
+
+<body>
+<div class="app">
+  <div class="card register-card">
+
+    <h1>Registrieren</h1>
+    <p class="text-secondary">Erstelle deinen Account</p>
+
+    <div class="divider"></div>
+
+    <!-- Rolle -->
+    <select class="input-field select-field">
+      <option value="">Ich bin...</option>
+      <option value="kunde">Kunde</option>
+      <option value="unternehmer">Unternehmer</option>
+    </select>
+
+    <input class="input-field" type="text" placeholder="Benutzername" />
+    <input class="input-field" type="email" placeholder="E-Mail-Adresse" />
+    <input class="input-field" type="password" placeholder="Passwort" />
+
+    <button class="button-primary register-btn">
+      Registrieren
+    </button>
+
+    <div class="register-footer">
+      <a href="#" class="text-secondary">Bereits ein Konto? Einloggen</a>
+    </div>
+
+  </div>
+</div>
+</body>
+
+</html>

@@ -178,3 +178,97 @@ h2 {
 .nav-item.active {
   color: var(--color-accent);
 }
+
+
+/* Inputs */
+.input-field {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 12px;
+
+  border-radius: 14px;
+  border: 1px solid var(--color-divider);
+
+  background: transparent;
+  color: var(--color-text-primary);
+
+  outline: none;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input-field:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px rgba(255, 106, 0, 0.2);
+}
+
+/* Login Button spacing */
+.login-btn {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+/* Secondary Button */
+.button-secondary {
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 14px;
+
+  border-radius: 14px;
+  border: 1px solid var(--color-divider);
+
+  background: transparent;
+  color: var(--color-text-primary);
+
+  font-weight: 500;
+  cursor: pointer;
+
+  transition: background 0.2s ease;
+}
+
+.button-secondary:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Footer */
+.login-footer {
+  text-align: center;
+  font-size: 13px;
+}
+/* Reset Card */
+.reset-card {
+  padding: 20px;
+}
+
+/* Button spacing */
+.reset-btn {
+  width: 100%;
+  margin-bottom: 14px;
+}
+
+/* Footer */
+.reset-footer {
+  text-align: center;
+  font-size: 13px;
+}
+.register-card {
+  padding: 20px;
+}
+
+/* Select Styling */
+.select-field {
+  appearance: none;
+  cursor: pointer;
+}
+
+/* Button spacing */
+.register-btn {
+  width: 100%;
+  margin-bottom: 14px;
+}
+
+/* Footer */
+.register-footer {
+  text-align: center;
+  font-size: 13px;
+}
