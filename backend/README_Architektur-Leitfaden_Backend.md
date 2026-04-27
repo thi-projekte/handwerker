@@ -1,20 +1,26 @@
-# 🖥️ Backend Architektur Leitfaden
+# 🖥️ Backend Architektur Leitfaden (Erweitert mit KI & Process Engine)
 
-Dieses Dokument definiert die Struktur und Regeln für das Backend unserer Anwendung. Ziel ist eine klare Trennung von Verantwortlichkeiten, eine wartbare Codebasis und eine saubere Zusammenarbeit mit dem Frontend-Team.
+Dieses Dokument definiert die Struktur und Regeln für das Backend unserer Anwendung.
+Die Architektur wurde erweitert, um den Einsatz von **Künstlicher Intelligenz (KI)** und einer **Process Engine (Workflow-System)** sauber zu integrieren.
+
+Ziel ist eine klare Trennung von Verantwortlichkeiten, eine wartbare Codebasis und eine skalierbare Systemarchitektur.
+
+Architekturstil: Erweiterte Schichtenarchitektur mit AI- und Workflow-Orchestrierung
 
 ---
 
 # 🧠 Grundprinzipien
 
-Das Backend folgt einer strukturierten Schichtenarchitektur.
+Das Backend folgt einer strukturierten Schichtenarchitektur mit klarer Verantwortungstrennung.
 
-Ziele:
+## Ziele
 
 * klare Verantwortlichkeiten
 * einfache Wartbarkeit
 * saubere API-Struktur
 * gute Skalierbarkeit
 * einfache Erweiterbarkeit
+* saubere Integration von KI und Workflows
 
 ---
 
@@ -29,6 +35,10 @@ Ziele:
     /routes
     /middlewares
     /config
+
+    /ai            ← KI-Logik (NEU)
+    /workflows     ← Process Engine / Abläufe (NEU)
+    /integrations  ← externe APIs (NEU)
 ```
 
 ---
@@ -52,16 +62,6 @@ Sie bilden die Schnittstelle zwischen Frontend und Backend.
 
 ---
 
-## Beispiele
-
-```
-/controllers
-  authController.ts
-  offerController.ts
-```
-
----
-
 ## Regeln
 
 ### ✅ Erlaubt
@@ -74,8 +74,9 @@ Sie bilden die Schnittstelle zwischen Frontend und Backend.
 ### ❌ Verboten
 
 * Business-Logik
-* Datenbankzugriffe direkt im Controller
-* komplexe Berechnungen
+* KI-Aufrufe
+* Workflow-Logik
+* Datenbankzugriffe
 
 ---
 
@@ -84,7 +85,6 @@ Sie bilden die Schnittstelle zwischen Frontend und Backend.
 ```ts
 export const login = async (req, res) => {
   const result = await authService.login(req.body);
-
   res.status(200).json(result);
 };
 ```
@@ -95,28 +95,22 @@ export const login = async (req, res) => {
 
 ## Zweck
 
-Enthält die Business-Logik des Backends.
+Services enthalten die Business-Logik und fungieren als **Orchestrator**.
 
-Hier passiert die eigentliche Verarbeitung der Daten.
+Sie koordinieren:
+
+* Datenbank
+* KI
+* Workflows
 
 ---
 
 ## Aufgaben
 
 * Geschäftslogik
+* Koordination von Modulen
 * Validierungen
 * Datenverarbeitung
-* Koordination zwischen Datenbank und API
-
----
-
-## Beispiele
-
-```
-/services
-  authService.ts
-  offerService.ts
-```
 
 ---
 
@@ -124,9 +118,9 @@ Hier passiert die eigentliche Verarbeitung der Daten.
 
 ### ✅ Erlaubt
 
-* Geschäftsregeln
-* Datenverarbeitung
 * Aufruf von Models
+* Aufruf von AI-Modulen
+* Starten von Workflows
 
 ### ❌ Verboten
 
@@ -139,12 +133,13 @@ Hier passiert die eigentliche Verarbeitung der Daten.
 
 ```ts
 export const createOffer = async (data) => {
-  const totalPrice = calculatePrice(data);
+  const offer = await OfferModel.create(data);
 
-  return await OfferModel.create({
-    ...data,
-    totalPrice,
-  });
+  const aiText = await ai.generateOfferText(data);
+
+  await workflow.startOfferProcess(offer.id);
+
+  return { ...offer, aiText };
 };
 ```
 
@@ -154,26 +149,14 @@ export const createOffer = async (data) => {
 
 ## Zweck
 
-Definiert Datenstrukturen und Datenbankmodelle.
-
-Dieser Ordner repräsentiert die Datenbankebene.
+Definiert Datenstrukturen und kapselt Datenbankzugriffe.
 
 ---
 
 ## Aufgaben
 
 * Datenbankmodelle definieren
-* Datenbankzugriffe kapseln
-
----
-
-## Beispiele
-
-```
-/models
-  UserModel.ts
-  OfferModel.ts
-```
+* CRUD-Operationen
 
 ---
 
@@ -187,7 +170,8 @@ Dieser Ordner repräsentiert die Datenbankebene.
 ### ❌ Verboten
 
 * Business-Logik
-* HTTP-Logik
+* KI-Logik
+* Workflow-Logik
 
 ---
 
@@ -195,19 +179,21 @@ Dieser Ordner repräsentiert die Datenbankebene.
 
 ## Zweck
 
-Definiert alle API-Endpunkte.
-
-Routes verbinden HTTP-Endpunkte mit den passenden Controllern.
+Definiert API-Endpunkte und verbindet sie mit Controllern.
 
 ---
 
-## Beispiele
+## Regeln
 
-```
-/routes
-  authRoutes.ts
-  offerRoutes.ts
-```
+### ✅ Erlaubt
+
+* Routing
+* Middleware einbinden
+
+### ❌ Verboten
+
+* Business-Logik
+* Datenbankzugriffe
 
 ---
 
@@ -219,25 +205,11 @@ router.post('/login', authController.login);
 
 ---
 
-## Regeln
-
-### ✅ Erlaubt
-
-* Routing definieren
-* Middleware registrieren
-
-### ❌ Verboten
-
-* Business-Logik
-* Datenbankzugriffe
-
----
-
 # 📁 /middlewares
 
 ## Zweck
 
-Middlewares verarbeiten Requests bevor sie den Controller erreichen.
+Verarbeiten Requests vor dem Controller.
 
 ---
 
@@ -251,30 +223,6 @@ Middlewares verarbeiten Requests bevor sie den Controller erreichen.
 
 ---
 
-## Beispiele
-
-```
-/middlewares
-  authMiddleware.ts
-  errorMiddleware.ts
-```
-
----
-
-## Beispiel
-
-```ts
-export const authMiddleware = (req, res, next) => {
-  if (!req.headers.authorization) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
-
-  next();
-};
-```
-
----
-
 # 📁 /config
 
 ## Zweck
@@ -283,27 +231,125 @@ Zentrale Konfiguration der Anwendung.
 
 ---
 
-## Beispiele
-
-```
-/config
-  database.ts
-  env.ts
-```
-
----
-
 ## Inhalte
 
 * Datenbankverbindung
 * Environment Variablen
-* globale Backend-Konfiguration
+* globale Einstellungen
+
+---
+
+# 🤖 /ai (KI-Schicht)
+
+## Zweck
+
+Kapselt alle KI-bezogenen Funktionen.
+
+---
+
+## Aufgaben
+
+* Prompt-Erstellung
+* Kommunikation mit KI APIs
+* Response-Verarbeitung
+* optionale Embeddings
+
+---
+
+## Regeln
+
+### ✅ Erlaubt
+
+* KI-Aufrufe
+* Datenverarbeitung für KI
+
+### ❌ Verboten
+
+* direkte DB-Zugriffe
+* HTTP-Logik
+
+---
+
+## Beispiel
+
+```ts
+export const generateOfferText = async (data) => {
+  const prompt = buildPrompt(data);
+  const response = await aiClient.call(prompt);
+  return parseResponse(response);
+};
+```
+
+---
+
+# ⚙️ /workflows (Process Engine)
+
+## Zweck
+
+Steuert komplexe Geschäftsprozesse und Abläufe.
+
+---
+
+## Beispiele
+
+* Bestellprozesse
+* Genehmigungsflows
+* Statusmaschinen
+* Event-basierte Abläufe
+
+---
+
+## Regeln
+
+### ✅ Erlaubt
+
+* Starten und Steuern von Prozessen
+* Interaktion mit Workflow-Engine
+
+### ❌ Verboten
+
+* direkte HTTP-Logik
+* komplexe Business-Logik außerhalb von Prozessen
+
+---
+
+## Beispiel
+
+```ts
+export const startOfferProcess = async (offerId) => {
+  return workflowEngine.start('offer-process', {
+    offerId,
+  });
+};
+```
+
+---
+
+# 🔌 /integrations
+
+## Zweck
+
+Kapselt externe Systeme und APIs.
+
+---
+
+## Beispiele
+
+* KI-Anbieter
+* Payment Provider
+* E-Mail-Dienste
+* Third-Party APIs
+
+---
+
+## Vorteil
+
+* externe Abhängigkeiten sind isoliert
+* einfacher Austausch möglich
 
 ---
 
 # 🔄 Typischer Request Flow
-
-Ein Request durchläuft mehrere Schichten:
 
 ```text
 Frontend Request
@@ -311,18 +357,10 @@ Frontend Request
 → Middleware
 → Controller
 → Service
-→ Model
-→ Datenbank
-```
-
-Antwort zurück:
-
-```text
-Datenbank
-→ Model
-→ Service
-→ Controller
-→ Frontend Response
+    → Model (DB)
+    → AI Modul
+    → Workflow Engine
+→ Response
 ```
 
 ---
@@ -340,15 +378,17 @@ POST /login
 
 ---
 
-# 📌 Beispiel: Angebot erstellen
+# 📌 Beispiel: Angebot mit KI + Workflow
 
 ```text
 POST /offers
 → offerRoutes.ts
 → offerController.ts
 → offerService.ts
-→ OfferModel.ts
-→ Datenbank
+    → OfferModel.ts
+    → ai/offerGenerator.ts
+    → workflows/offerWorkflow.ts
+→ Datenbank + Prozesse
 ```
 
 ---
@@ -359,6 +399,8 @@ POST /offers
 
 * Datenbankzugriffe im Controller
 * Business-Logik in Routes
+* KI-Logik im Controller
+* Workflow-Logik im Model
 * direkte Responses aus Services
 * Vermischung von Verantwortlichkeiten
 
@@ -367,8 +409,10 @@ POST /offers
 ## ✅ Pflicht
 
 * klare Trennung der Schichten
-* Services für Business-Logik nutzen
-* Controller möglichst klein halten
+* Services als Orchestrator nutzen
+* KI sauber kapseln
+* Workflows getrennt halten
+* kleine, fokussierte Module
 
 ---
 
@@ -377,16 +421,13 @@ POST /offers
 * Jede API-Änderung dokumentieren
 * Einheitliche Namenskonventionen nutzen
 * Keine Breaking Changes ohne Abstimmung
+* KI- und Workflow-Änderungen besonders abstimmen
 
 ---
 
 # 🔗 Zusammenarbeit mit Frontend
 
 Frontend kommuniziert ausschließlich über APIs.
-
-Das Frontend darf niemals direkt auf Datenbanklogik zugreifen.
-
-Kommunikation erfolgt über:
 
 ```text
 Frontend
@@ -395,16 +436,35 @@ Frontend
 → Response
 ```
 
+❗ Das Frontend hat **keinen direkten Zugriff** auf:
+
+* Datenbank
+* KI-Logik
+* Workflows
+
 ---
 
 # 🎯 Ziel
 
-Diese Struktur stellt sicher, dass:
+Diese Architektur stellt sicher, dass:
 
 * das Backend wartbar bleibt
-* neue Features sauber integriert werden können
-* die Zusammenarbeit im Team effizient bleibt
-* Frontend und Backend sauber getrennt bleiben
+* KI sauber integriert ist
+* Prozesse klar steuerbar sind
+* neue Features problemlos ergänzt werden können
+* das Team effizient zusammenarbeitet
+
+---
+
+# 🧩 Fazit
+
+Die Architektur basiert auf einer klassischen Schichtenstruktur, wurde jedoch gezielt erweitert:
+
+* KI ist ausgelagert (`/ai`)
+* Prozesse sind entkoppelt (`/workflows`)
+* externe Systeme sind isoliert (`/integrations`)
+
+➡️ Dadurch bleibt das System sauber, flexibel und skalierbar.
 
 ---
 
