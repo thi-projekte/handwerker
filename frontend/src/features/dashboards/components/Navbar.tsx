@@ -1,9 +1,49 @@
+import { NavLink } from "react-router-dom";
+
+const navItems = [
+  {
+    to: "/",
+    label: "Dashboard",
+    icon: "1",
+  },
+  {
+    to: "/angebote",
+    label: "Angebote",
+    icon: "2",
+  },
+  {
+    to: "/aufnahme",
+    label: "Aufnahme",
+    icon: "3",
+  },
+  {
+    to: "/unternehmen",
+    label: "Unternehmen",
+    icon: "4",
+  },
+  {
+    to: "/profil",
+    label: "Profil",
+    icon: "5",
+  },
+];
+
 export const Navbar = () => {
   return (
     <nav className="navbar">
-      <div className="nav-item active">Home</div>
-      <div className="nav-item">Aufträge</div>
-      <div className="nav-item">Profil</div>
+      {navItems.map((item) => (
+        <NavLink
+          key={item.to}
+          to={item.to}
+          end={item.to === "/"}
+          className={({ isActive }) =>
+            isActive ? "nav-item active" : "nav-item"
+          }
+        >
+          <span className="nav-icon">{item.icon}</span>
+          <span className="nav-label">{item.label}</span>
+        </NavLink>
+      ))}
     </nav>
   );
 };
