@@ -36,9 +36,9 @@ Das Backend folgt einer strukturierten Schichtenarchitektur mit klarer Verantwor
     /middlewares
     /config
 
-    /ai            ← KI-Logik (NEU)
-    /workflows     ← Process Engine / Abläufe (NEU)
-    /integrations  ← externe APIs (NEU)
+    /ai            ← KI-Logik
+    /workflows     ← Process Engine / Abläufe
+    /integrations  ← externe APIs
 ```
 
 ---
