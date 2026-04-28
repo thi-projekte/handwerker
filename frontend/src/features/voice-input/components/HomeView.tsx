@@ -10,25 +10,18 @@ export const HomeView = () => {
 
   return (
     <div className="app voice-app">
-      <Navbar />
-
       <div className="voice-container">
         <h1>Angebot erstellen</h1>
 
-        <p className="text-secondary">
-          Sprich dein Angebot einfach ein.
-        </p>
+        <p className="text-secondary">Sprich dein Angebot einfach ein.</p>
 
-        <MicButton
-          isRecording={isRecording}
-          volume={volume}
-          onClick={toggle}
-        />
+        <MicButton isRecording={isRecording} volume={volume} onClick={toggle} />
 
         <p className="voice-hint">
           Tippe auf das Mikrofon, um die Aufnahme zu starten
         </p>
       </div>
+      <Navbar />
     </div>
   );
 };
