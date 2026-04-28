@@ -1,7 +1,7 @@
 /* =========================
    Navigationsleiste
    ========================= */
-.navbar {
+/*.navbar {
   position: sticky;
   bottom: 0;
 
@@ -18,7 +18,7 @@
   border-radius: 20px 20px 0 0;
 
   /* Kein gap nötig – justify-content: space-around verteilt gleichmäßig */
-}
+/*}
 
 .nav-item {
   display: flex;
@@ -74,3 +74,4 @@
   letter-spacing: 0.2px;
   line-height: 1;
 }
+*/
