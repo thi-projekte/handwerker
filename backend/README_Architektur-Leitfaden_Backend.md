@@ -28,7 +28,7 @@ Das Backend folgt einer strukturierten Schichtenarchitektur mit klarer Verantwor
 
 ```
 /backend
-  /src
+  /src ggggggggggggggggggggggggggggggggggggggggg
     /controllers
     /services
     /models
