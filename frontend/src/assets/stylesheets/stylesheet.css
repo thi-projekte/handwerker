@@ -272,3 +272,96 @@ h2 {
   text-align: center;
   font-size: 13px;
 }
+
+
+.profile-page {
+  text-align: center;
+}
+
+.profile-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.profile-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--color-accent-gradient);
+  color: white;
+  font-weight: 800;
+  box-shadow: 0 10px 25px rgba(255, 106, 0, 0.35);
+}
+
+.profile-tab-card {
+  display: flex;
+  gap: 10px;
+}
+
+.profile-tab {
+  flex: 1;
+  padding: 14px 10px;
+  border-radius: 16px;
+  border: 1px solid var(--color-divider);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.profile-tab.active {
+  background: var(--color-accent-gradient);
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 8px 20px rgba(255, 106, 0, 0.3);
+}
+
+.profile-content-card {
+  text-align: left;
+}
+
+.profile-content-card h2 {
+  text-align: center;
+}
+
+.profile-save-button {
+  margin: 0 auto;
+  min-width: 160px;
+}
+
+.settings-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--color-divider);
+  border-radius: 18px;
+}
+
+.theme-switch {
+  width: 62px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid var(--color-divider);
+  background: var(--color-bg);
+  padding: 4px;
+  cursor: pointer;
+}
+
+.switch-dot {
+  display: block;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  transition: transform 0.2s ease;
+}
+
+.switch-dot.light {
+  transform: translateX(26px);
+}
