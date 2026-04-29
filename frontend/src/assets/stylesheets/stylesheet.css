@@ -365,3 +365,29 @@ h2 {
 .switch-dot.light {
   transform: translateX(26px);
 }
+
+
+.profile-header {
+  align-items: stretch;
+  text-align: left;
+}
+
+.profile-header-top {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.profile-title-area {
+  flex: 1;
+}
+
+.profile-eyebrow {
+  display: inline-block;
+  margin-bottom: 6px;
+  color: var(--color-accent);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}

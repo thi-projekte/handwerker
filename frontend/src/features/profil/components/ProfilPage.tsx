@@ -19,13 +19,19 @@ useEffect(() => {
 
   return (
     <div className="app profile-page">
-      <header className="card profile-header">
-        <div className="profile-avatar">CH</div>
-        <h1>Profil & Einstellungen</h1>
-        <p className="text-secondary">
-          Verwalte dein Profil und passe CraftVoice an deinen Arbeitsalltag an.
-        </p>
-      </header>
+    <header className="card profile-header">
+  <div className="profile-header-top">
+    <div className="profile-avatar">CH</div>
+
+    <div className="profile-title-area">
+      <span className="profile-eyebrow">CraftVoice Konto</span>
+      <h1>Profil & Einstellungen</h1>
+      <p className="text-secondary">
+        Passe Nutzerprofil, Darstellung und Benachrichtigungen zentral an.
+      </p>
+    </div>
+  </div>
+</header>
 
       <section className="card profile-tab-card">
         <button
