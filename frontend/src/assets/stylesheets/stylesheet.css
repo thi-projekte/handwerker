@@ -1,0 +1,365 @@
+﻿/* =========================
+   🎨 Design Tokens
+   ========================= */
+:root {
+  /* Background */
+  --color-bg: #0f0f10;
+  --color-surface: rgba(26, 26, 28, 0.8);
+  /* Text */
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #a1a1aa;
+  /* UI */
+  --color-divider: #2a2e44;
+  /* Accent*/
+  --color-accent: #ff6a00;
+  --color-accent-gradient: linear-gradient(135deg, #ff7a18, #ff4d00);
+  /* Effects */
+  --blur: 22px;
+  --radius: 26px;
+  /* --shadow: 0 20px 45px rgba(0, 0, 0, 0.35); */
+}
+
+/* =========================
+   ☀️ Light Mode
+   ========================= */
+[data-theme="light"] {
+  --color-bg: #f4f4f5;
+  --color-surface: rgba(255, 255, 255, 0.95);
+
+  --color-text-primary: #111111;
+  --color-text-secondary: #6b7280;
+
+  --color-divider: #e5e7eb;
+
+  --shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+}
+
+/* =========================
+   Base Layout
+   ========================= */
+body {
+  margin: 0;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+}
+
+/* =========================
+   App Container
+   ========================= */
+.app {
+  max-width: 420px;
+  margin: 40px auto;
+  padding: 20px;
+  border-radius: 32px;
+
+  background: var(--color-surface);
+  backdrop-filter: blur(var(--blur));
+
+  box-shadow: var(--shadow);
+  border: 1px solid var(--color-divider);
+}
+
+/* =========================
+   Cards (Aufträge)
+   ========================= */
+.card {
+  background: var(--color-surface);
+  backdrop-filter: blur(var(--blur));
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+
+  border: 1px solid var(--color-divider);
+  box-shadow: var(--shadow);
+}
+
+/* =========================
+   Primary Button
+   ========================= */
+.button-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  padding: 16px;
+  border-radius: 16px;
+  border: none;
+
+  background: var(--color-accent-gradient);
+  color: white;
+  font-weight: 600;
+  font-size: 16px;
+
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(255, 106, 0, 0.4);
+
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.button-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 25px rgba(255, 106, 0, 0.5);
+}
+
+/* =========================
+   Status Tags
+   ========================= */
+.tag {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.tag-notes {
+  background: rgba(255, 200, 0, 0.15);
+  color: #ffc800;
+}
+
+.tag-planned {
+  background: rgba(100, 200, 120, 0.15);
+  color: #64c878;
+}
+
+/* =========================
+   Text Styles
+   ========================= */
+.text-secondary {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+h1 {
+  font-size: 22px;
+  margin: 0 0 6px 0;
+}
+
+h2 {
+  font-size: 18px;
+  margin-bottom: 12px;
+}
+
+/* =========================
+    Divider
+   ========================= */
+.divider {
+  height: 1px;
+  background: var(--color-divider);
+  margin: 12px 0;
+  border: none;
+}
+
+/* =========================
+   Navigationsleiste
+   ========================= */
+
+.navbar {
+  position: sticky;
+  bottom: 0;
+
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+
+  padding: 10px 0 0px;
+
+  background: var(--color-surface);
+  /*backdrop-filter: blur(var(--blur));*/
+
+  border-top: 2px solid var(--color-divider);
+
+  /* Kein gap nötig – justify-content: space-around verteilt gleichmäßig */
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+
+  flex: 1;
+
+  color: var(--color-text-secondary);
+  text-decoration: none;
+
+  transition:
+    color 0.2s ease,
+    transform 0.15s ease;
+}
+
+.nav-item:hover {
+  color: var(--color-text-primary);
+}
+
+.nav-item.active {
+  color: var(--color-accent);
+}
+
+.nav-item.active .nav-icon {
+  background: rgba(255, 106, 0, 0.12);
+  border-radius: 12px;
+  transform: translateY(-2px);
+}
+
+.nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 44px;
+  height: 32px;
+
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 12px;
+
+  transition:
+    background 0.2s ease,
+    transform 0.15s ease;
+}
+
+/* Inputs */
+.input-field {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 12px;
+
+  border-radius: 14px;
+  border: 1px solid var(--color-divider);
+
+  background: transparent;
+  color: var(--color-text-primary);
+
+  outline: none;
+  transition:
+    border 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.input-field:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px rgba(255, 106, 0, 0.2);
+}
+
+/* Login Button spacing */
+.login-btn {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+/* Secondary Button */
+.button-secondary {
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 14px;
+
+  border-radius: 14px;
+  border: 1px solid var(--color-divider);
+
+  background: transparent;
+  color: var(--color-text-primary);
+
+  font-weight: 500;
+  cursor: pointer;
+
+  transition: background 0.2s ease;
+}
+
+.button-secondary:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Footer */
+.login-footer {
+  text-align: center;
+  font-size: 13px;
+}
+/* Reset Card */
+.reset-card {
+  padding: 20px;
+}
+
+/* Button spacing */
+.reset-btn {
+  width: 100%;
+  margin-bottom: 14px;
+}
+
+/* Footer */
+.reset-footer {
+  text-align: center;
+  font-size: 13px;
+}
+.register-card {
+  padding: 20px;
+}
+
+/* Select Styling */
+.select-field {
+  appearance: none;
+  cursor: pointer;
+}
+
+/* Button spacing */
+.register-btn {
+  width: 100%;
+  margin-bottom: 14px;
+}
+
+
+.register-footer {
+  text-align: center;
+  font-size: 13px;
+}
+
+
+.company-logo {
+  width: 100%;
+  max-height: 200px;
+  object-fit: cover;
+
+  border-radius: 14px;
+  margin-bottom: 12px;
+
+  border: 1px solid var(--color-divider);
+}
+
+
+.employee-card {
+  padding: 14px;
+}
+
+
+.empty-state {
+  text-align: center;
+  padding: 10px 0;
+}
+
+
+.hint-text {
+  font-size: 13px;
+  margin-top: 6px;
+}
+
+
+.card h2 {
+  margin-top: 0;
+}
+
+.logout-card {
+  text-align: center;
+}
+
+.logout-card .button-primary {
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+}
