@@ -1,0 +1,179 @@
+/* =========================
+   Dashboard Layout
+   ========================= */
+
+.dashboard-page {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 80vh;
+}
+
+.dashboard-content {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+}
+
+.dashboard-content h1 {
+    font-size: 30px;
+    font-weight: 800;
+    margin: 0;
+    letter-spacing: -0.03em;
+}
+
+/* =========================
+   Stats Grid
+   ========================= */
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+}
+
+.dashboard-card {
+    padding: 18px;
+    border-radius: 24px;
+
+    background: var(--color-surface);
+    backdrop-filter: blur(var(--blur));
+
+    border: 1px solid var(--color-divider);
+    box-shadow: var(--shadow);
+
+    transition:
+        transform 0.18s ease,
+        border 0.18s ease;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(255, 106, 0, 0.3);
+}
+
+.card-title {
+    margin: 0 0 10px;
+
+    font-size: 13px;
+    color: var(--color-text-secondary);
+
+    font-weight: 500;
+}
+
+.dashboard-card h2 {
+    margin: 0;
+
+    font-size: 24px;
+    font-weight: 800;
+
+    line-height: 1.1;
+}
+
+/* =========================
+   Quick Actions
+   ========================= */
+
+.quick-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.quick-actions button {
+    width: 100%;
+    padding: 18px;
+
+    border: none;
+    border-radius: 20px;
+
+    background: var(--color-accent-gradient);
+    color: white;
+
+    font-size: 15px;
+    font-weight: 700;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+
+    cursor: pointer;
+
+    box-shadow: 0 10px 24px rgba(255, 106, 0, 0.28);
+
+    transition:
+        transform 0.15s ease,
+        opacity 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+.quick-actions button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 28px rgba(255, 106, 0, 0.38);
+}
+
+.quick-actions button:active {
+    transform: scale(0.98);
+}
+
+/* =========================
+   Recent Offers
+   ========================= */
+
+.recent-offers {
+    padding: 20px;
+    border-radius: 28px;
+
+    background: var(--color-surface);
+    backdrop-filter: blur(var(--blur));
+
+    border: 1px solid var(--color-divider);
+    box-shadow: var(--shadow);
+}
+
+.recent-offers h2 {
+    margin-top: 0;
+    margin-bottom: 18px;
+
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.offer-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    gap: 14px;
+
+    padding: 16px 0;
+
+    border-bottom: 1px solid var(--color-divider);
+}
+
+.offer-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.offer-row strong {
+    display: block;
+    margin-bottom: 4px;
+
+    font-size: 15px;
+}
+
+.offer-row p {
+    margin: 0;
+
+    font-size: 13px;
+    color: var(--color-text-secondary);
+}
+
+.offer-row span {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--color-accent);
+    white-space: nowrap;
+}
