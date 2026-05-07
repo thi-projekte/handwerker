@@ -156,75 +156,6 @@ h2 {
   border: none;
 }
 
-/* =========================
-   Navigationsleiste
-   ========================= */
-
-.navbar {
-  position: sticky;
-  bottom: 0;
-
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-
-  padding: 10px 0 0px;
-
-  background: var(--color-surface);
-  /*backdrop-filter: blur(var(--blur));*/
-
-  border-top: 2px solid var(--color-divider);
-
-  /* Kein gap nötig – justify-content: space-around verteilt gleichmäßig */
-}
-
-.nav-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-
-  flex: 1;
-
-  color: var(--color-text-secondary);
-  text-decoration: none;
-
-  transition:
-    color 0.2s ease,
-    transform 0.15s ease;
-}
-
-.nav-item:hover {
-  color: var(--color-text-primary);
-}
-
-.nav-item.active {
-  color: var(--color-accent);
-}
-
-.nav-item.active .nav-icon {
-  background: rgba(255, 106, 0, 0.12);
-  border-radius: 12px;
-  transform: translateY(-2px);
-}
-
-.nav-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  width: 44px;
-  height: 32px;
-
-  font-size: 16px;
-  font-weight: 600;
-  border-radius: 12px;
-
-  transition:
-    background 0.2s ease,
-    transform 0.15s ease;
-}
-
 /* Inputs */
 .input-field {
   box-sizing: border-box;
@@ -320,7 +251,6 @@ h2 {
   font-size: 13px;
 }
 
-
 .profile-page {
   text-align: center;
 }
@@ -412,7 +342,6 @@ h2 {
 .switch-dot.light {
   transform: translateX(26px);
 }
-
 
 .profile-header {
   align-items: stretch;
