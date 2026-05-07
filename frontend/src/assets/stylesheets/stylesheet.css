@@ -3,16 +3,16 @@
    ========================= */
 :root {
   /* Background */
-  --color-bg: #0F0F10;
+  --color-bg: #0f0f10;
   --color-surface: rgba(26, 26, 28, 0.8);
   /* Text */
-  --color-text-primary: #FFFFFF;
-  --color-text-secondary: #A1A1AA;
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #a1a1aa;
   /* UI */
-  --color-divider: #2A2E44;
+  --color-divider: #2a2e44;
   /* Accent*/
-  --color-accent: #FF6A00;
-  --color-accent-gradient: linear-gradient(135deg, #FF7A18, #FF4D00);
+  --color-accent: #ff6a00;
+  --color-accent-gradient: linear-gradient(135deg, #ff7a18, #ff4d00);
   /* Effects */
   --blur: 22px;
   --radius: 26px;
@@ -23,13 +23,13 @@
    ☀️ Light Mode
    ========================= */
 [data-theme="light"] {
-  --color-bg: #F4F4F5;
+  --color-bg: #f4f4f5;
   --color-surface: rgba(255, 255, 255, 0.95);
 
   --color-text-primary: #111111;
-  --color-text-secondary: #6B7280;
+  --color-text-secondary: #6b7280;
 
-  --color-divider: #E5E7EB;
+  --color-divider: #e5e7eb;
 
   --shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
 }
@@ -39,7 +39,10 @@
    ========================= */
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   background: var(--color-bg);
   color: var(--color-text-primary);
 }
@@ -95,7 +98,9 @@ body {
   cursor: pointer;
   box-shadow: 0 8px 20px rgba(255, 106, 0, 0.4);
 
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .button-primary:hover {
@@ -115,12 +120,12 @@ body {
 
 .tag-notes {
   background: rgba(255, 200, 0, 0.15);
-  color: #FFC800;
+  color: #ffc800;
 }
 
 .tag-planned {
   background: rgba(100, 200, 120, 0.15);
-  color: #64C878;
+  color: #64c878;
 }
 
 /* =========================
@@ -151,35 +156,6 @@ h2 {
   border: none;
 }
 
-/* =========================
-   Navigationsleiste
-   ========================= */
-.navbar {
-  position: sticky;
-  bottom: 0;
-
-  display: flex;
-  justify-content: space-around;
-  padding: 12px;
-
-  background: var(--color-surface);
-  backdrop-filter: blur(var(--blur));
-
-  border-top: 1px solid var(--color-divider);
-  border-radius: 20px 20px 0 0;
-}
-
-.nav-item {
-  color: var(--color-text-secondary);
-  font-size: 12px;
-  text-align: center;
-}
-
-.nav-item.active {
-  color: var(--color-accent);
-}
-
-
 /* Inputs */
 .input-field {
   box-sizing: border-box;
@@ -194,7 +170,9 @@ h2 {
   color: var(--color-text-primary);
 
   outline: none;
-  transition: border 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .input-field:focus {
@@ -272,7 +250,6 @@ h2 {
   text-align: center;
   font-size: 13px;
 }
-
 
 .profile-page {
   text-align: center;
@@ -365,7 +342,6 @@ h2 {
 .switch-dot.light {
   transform: translateX(26px);
 }
-
 
 .profile-header {
   align-items: stretch;
