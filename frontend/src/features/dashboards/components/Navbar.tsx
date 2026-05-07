@@ -9,7 +9,7 @@ const navItems = [
   },
   {
     to: "/angebote",
-    label: "Angebote",
+    label: "Documents",
     icon: "2",
   },
   {
