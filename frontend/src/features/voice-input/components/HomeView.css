@@ -16,6 +16,7 @@
   justify-content: center;
   text-align: center;
   flex: 1;
+  gap: 12px;
 }
 
 /* Mikrofon Button */
@@ -47,8 +48,193 @@
   transform: scale(1.05);
 }
 
+.mic-button.active {
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 106, 0, 0.5);
+  }
+
+  70% {
+    box-shadow: 0 0 0 25px rgba(255, 106, 0, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 106, 0, 0);
+  }
+}
+
 /* Kleiner Hinweistext */
 .voice-hint {
   font-size: 13px;
   color: var(--color-text-secondary);
+}
+
+/* =========================
+   Mode Switch (Voice / Text)
+   ========================= */
+
+.mode-switch {
+  display: flex;
+  gap: 10px;
+  margin: 20px 0;
+  padding: 6px;
+
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 999px;
+}
+
+.mode-switch button {
+  flex: 1;
+  padding: 10px 14px;
+
+  border: none;
+  border-radius: 999px;
+
+  background: transparent;
+  color: var(--color-text-secondary);
+
+  font-size: 14px;
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+}
+
+.mode-switch button.active {
+  background: var(--color-accent-gradient);
+  color: white;
+
+  box-shadow: 0 8px 20px rgba(255, 106, 0, 0.25);
+}
+
+/* =========================
+   Transcript Box (Voice Mode)
+   ========================= */
+
+.transcript-box {
+  width: 200px;
+  max-width: 300px;
+  margin-top: 20px;
+  padding: 15px;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  font-size: 14px;
+  line-height: 1.4;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+}
+
+.review-text {
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* =========================
+   Text Mode Input
+   ========================= */
+
+.text-input {
+  width: 90%;
+  max-width: 500px;
+
+  min-height: 160px;
+
+  margin-top: 20px;
+  padding: 15px;
+
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+
+  background: white;
+
+  font-size: 14px;
+  line-height: 1.4;
+
+  resize: none;
+
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+
+  outline: none;
+}
+
+/* =========================
+   Audio Preview
+   ========================= */
+
+.audio-preview {
+  margin-top: 10px;
+
+  width: 90%;
+  max-width: 520px;
+
+  padding: 14px;
+
+  border-radius: 16px;
+
+  background: rgba(0, 0, 0, 0.03);
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  align-items: center;
+}
+
+.audio-preview audio {
+  width: 100%;
+}
+
+/* Download Link */
+.audio-actions {
+  display: flex;
+  gap: 12px;
+
+  width: 90%;
+  max-width: 520px;
+
+  margin-top: 10px;
+}
+
+.audio-actions button {
+  flex: 1;
+
+  padding: 12px 14px;
+
+  border-radius: 12px;
+
+  border: none;
+  cursor: pointer;
+
+  font-weight: 500;
+  color: white;
+}
+
+/* Primary Button (Weiter) */
+.audio-actions button:last-child {
+  background: var(--color-accent-gradient);
+}
+
+/* Secondary Button (Neu aufnehmen) */
+.audio-actions button:first-child {
+  background: var(--color-text-secondary)
+}
+
+/* =========================
+   Voice Section Layout Fix
+   ========================= */
+
+.voice-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  margin-top: 10px;
+}
+
+/* Titel im Review */
+.voice-section h2 {
+  font-size: 20px;
+  font-weight: 600;
+  margin-top: 10px;
 }
