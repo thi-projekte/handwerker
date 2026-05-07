@@ -16,7 +16,7 @@
   /* Effects */
   --blur: 22px;
   --radius: 26px;
-  --shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
+  /* --shadow: 0 20px 45px rgba(0, 0, 0, 0.35); */
 }
 
 /* =========================
@@ -245,7 +245,7 @@ h2 {
   margin-bottom: 14px;
 }
 
-/* Footer */
+
 .register-footer {
   text-align: center;
   font-size: 13px;
@@ -366,4 +366,48 @@ h2 {
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+
+.company-logo {
+  width: 100%;
+  max-height: 200px;
+  object-fit: cover;
+
+  border-radius: 14px;
+  margin-bottom: 12px;
+
+  border: 1px solid var(--color-divider);
+}
+
+
+.employee-card {
+  padding: 14px;
+}
+
+
+.empty-state {
+  text-align: center;
+  padding: 10px 0;
+}
+
+
+.hint-text {
+  font-size: 13px;
+  margin-top: 6px;
+}
+
+
+.card h2 {
+  margin-top: 0;
+}
+
+.logout-card {
+  text-align: center;
+}
+
+.logout-card .button-primary {
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
 }

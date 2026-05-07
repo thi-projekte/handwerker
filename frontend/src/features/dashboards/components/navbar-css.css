@@ -1,7 +1,6 @@
 /* =========================
    Navigationsleiste
    ========================= */
-
 .navbar {
   position: sticky;
   bottom: -20px;
