@@ -3,6 +3,8 @@ import { Navbar } from "@/features/dashboards/components/Navbar";
 import "@/assets/stylesheets/stylesheet.css";
 import "./HomeView.css";
 
+import { AppHeader } from "@/shared/components/AppHeader";
+
 import { useVoiceInput } from "@/features/voice-input/hooks/useVoiceInput";
 import { MicButton } from "@/features/voice-input/components/MicButton";
 
@@ -20,10 +22,11 @@ export const HomeView = () => {
     reset
   } = useVoiceInput();
 
-  return (
-    <div className="app voice-app">
+ return (
+  <div className="app voice-app">
+    <AppHeader />
 
-      <div className="voice-container">
+    <div className="voice-container">
 
         {/* HEADER (immer sichtbar) */}
         <h1>Angebot erstellen</h1>
