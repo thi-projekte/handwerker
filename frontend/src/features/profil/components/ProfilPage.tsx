@@ -27,7 +27,7 @@ useEffect(() => {
       <span className="profile-eyebrow">CraftVoice Konto</span>
       <h1>Profil & Einstellungen</h1>
       <p className="text-secondary">
-        Passe Nutzerprofil, Darstellung und Benachrichtigungen zentral an.
+        Passe Nutzerprofil, Darstellung und Benachrichtigungen zentral an.dfsjdflkjs
       </p>
     </div>
   </div>
