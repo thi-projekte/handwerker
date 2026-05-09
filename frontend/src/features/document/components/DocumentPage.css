@@ -253,5 +253,42 @@
 }
 
 .doc-page {
-  padding-bottom: 0;
+  /* Feste Höhe damit der Container nicht mit dem Inhalt wächst */
+  height: calc(100svh - 80px);
+  max-height: 860px;
+
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Sticky Header bleibt oben */
+.doc-page .doc-sticky-header {
+  flex-shrink: 0;
+  border-radius: 32px 32px 0 0;
+  margin: 0;
+  padding: 16px 20px 10px;
+}
+
+/* Scrollbarer Bereich zwischen Header und Navbar */
+.doc-page .doc-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px 8px;
+
+  /* Scrollbar verstecken aber scrollbar lassen */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.doc-page .doc-list::-webkit-scrollbar {
+  display: none;
+}
+
+/* Navbar bleibt am unteren Rand des Containers */
+.doc-page .navbar {
+  flex-shrink: 0;
+  position: static;
+  border-radius: 0 0 32px 32px;
 }
