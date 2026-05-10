@@ -39,6 +39,7 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           cache: maven
+          cache-dependency-path: backend/services/${{ matrix.service }}/pom.xml
 
       # Maven-Build ausführen
       - name: Build with Maven
