@@ -1,0 +1,231 @@
+/* =========================
+   ReviewPage
+   ========================= */
+
+/* Header */
+.review-header {
+  margin-bottom: 0;
+}
+
+.review-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.review-header-top h1 {
+  margin: 0;
+}
+
+.review-eyebrow {
+  display: inline-block;
+  margin-bottom: 4px;
+  color: var(--color-accent);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.review-badge {
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--color-divider);
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  margin-top: 4px;
+}
+
+/* Abschnitt */
+.review-section {
+  margin-top: 12px;
+}
+
+.review-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.review-section-header h2 {
+  margin: 0;
+}
+
+.review-count {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(255, 106, 0, 0.12);
+  color: var(--color-accent);
+  font-size: 12px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+}
+
+/* Liste */
+.review-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Einzelner Stichpunkt */
+.review-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--color-divider);
+  background: transparent;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+  cursor: grab;
+}
+
+.review-item:hover {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 106, 0, 0.2);
+}
+
+.review-item.dragging {
+  opacity: 0.4;
+  border-color: var(--color-accent);
+}
+
+/* Drag Handle */
+.review-drag-handle {
+  color: var(--color-text-secondary);
+  font-size: 16px;
+  line-height: 1.4;
+  cursor: grab;
+  user-select: none;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* Text */
+.review-text {
+  flex: 1;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-text-primary);
+  cursor: text;
+  word-break: break-word;
+}
+
+.review-placeholder {
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+/* Textarea beim Editieren */
+.review-textarea {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--color-text-primary);
+  font-size: 14px;
+  line-height: 1.5;
+  font-family: inherit;
+  resize: none;
+  padding: 0;
+  width: 100%;
+}
+
+/* Löschen-Button */
+.review-delete-btn {
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  line-height: 1;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease;
+  margin-top: 2px;
+}
+
+.review-delete-btn:hover {
+  color: #ff5050;
+  background: rgba(255, 80, 80, 0.1);
+}
+
+/* Hinzufügen-Button */
+.review-add-btn {
+  width: 100%;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px dashed var(--color-divider);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease,
+    background 0.15s ease;
+}
+
+.review-add-btn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  background: rgba(255, 106, 0, 0.05);
+}
+
+/* Bestätigen */
+.review-confirm-card {
+  margin-top: 12px;
+  text-align: center;
+}
+
+.review-confirm-hint {
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+
+.review-confirm-btn {
+  width: 100%;
+}
+
+/* Erfolg-Animation */
+.review-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+}
+
+.review-success-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--color-accent-gradient);
+  color: white;
+  font-size: 20px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 8px 20px rgba(255, 106, 0, 0.4);
+}
+
+.review-success p {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
