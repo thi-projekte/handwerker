@@ -79,7 +79,8 @@
 .mode-switch {
   display: flex;
   gap: 10px;
-  margin: 20px 0;
+  margin-top: 20px;
+  margin-bottom: 0px;
   padding: 6px;
 
   background: rgba(0, 0, 0, 0.05);
