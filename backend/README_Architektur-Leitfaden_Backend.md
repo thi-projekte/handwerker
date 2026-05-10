@@ -525,4 +525,3 @@ mvn spring-boot:run    # Service starten → http://localhost:8080
 
 Die Secrets `CIBSEVEN_USERNAME` und `CIBSEVEN_PASSWORD` sind im Repository
 unter Settings → Secrets and variables → Actions hinterlegt.
-Die CI-Konfiguration liegt unter `.github/maven-settings.xml`.
