@@ -16,3 +16,33 @@ Tbd
 
 # Projektstruktur
 Tbd
+
+
+## CIB seven lokal starten
+
+Für die lokale Entwicklung läuft CIB seven als Docker-Container.
+
+**Voraussetzung:** Docker Desktop ist installiert und gestartet.
+
+### Container starten
+
+```bash
+docker run -d --name cibseven -p 8080:8080 cibseven/cibseven:latest
+```
+
+### Weboberflächen
+
+Nach dem Start erreichbar unter http://localhost:8080/webapp/
+
+| Oberfläche | URL |
+|---|---|
+| Landing Page | http://localhost:8080/webapp/ |
+
+Standardzugangsdaten: `demo` / `demo`
+
+### Container stoppen und entfernen
+
+```bash
+docker stop cibseven
+docker rm cibseven
+```
