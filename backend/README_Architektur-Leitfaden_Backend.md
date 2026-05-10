@@ -469,3 +469,60 @@ Die Architektur basiert auf einer klassischen Schichtenstruktur, wurde jedoch ge
 ---
 
 Bei Unsicherheiten oder Architekturfragen bitte frühzeitig im Team abstimmen.
+
+
+## CIB seven Enterprise Repository einrichten
+
+Das CIB seven Enterprise Repository ist nicht öffentlich zugänglich.
+Die folgende Konfiguration ist notwendig damit der Maven-Build lokal funktioniert.
+
+### Lokale Einrichtung
+
+Datei `~/.m2/settings.xml` anlegen falls noch nicht vorhanden
+
+**Windows:** `C:\Users\DEINNAME\.m2\settings.xml`  
+**Mac/Linux:** `/Users/DEINNAME/.m2/settings.xml`
+
+Folgenden Inhalt einfügen und Platzhalter ersetzen:
+
+```xml
+<settings>
+  <servers>
+    <server>
+      <id>mvn-cibseven-enterprise</id>
+      <username>KUNDENNUMMER</username>
+      <password>PASSWORT</password>
+    </server>
+  </servers>
+  <profiles>
+    <profile>
+      <id>cibseven-ee</id>
+      <repositories>
+        <repository>
+          <id>mvn-cibseven-enterprise</id>
+          <name>CIB seven Enterprise repository</name>
+          <url>https://artifacts.cibseven.org/repository/enterprise-group/</url>
+        </repository>
+      </repositories>
+    </profile>
+  </profiles>
+  <activeProfiles>
+    <activeProfile>cibseven-ee</activeProfile>
+  </activeProfiles>
+</settings>
+```
+
+> ⚠️ Diese Datei niemals ins Repository committen — sie enthält Zugangsdaten.
+
+### Build testen
+
+```bash
+docker compose up -d   # Keycloak starten
+mvn spring-boot:run    # Service starten → http://localhost:8080
+```
+
+### CI/CD (GitHub Actions)
+
+Die Secrets `CIBSEVEN_USERNAME` und `CIBSEVEN_PASSWORD` sind im Repository
+unter Settings → Secrets and variables → Actions hinterlegt.
+Die CI-Konfiguration liegt unter `.github/maven-settings.xml`.
