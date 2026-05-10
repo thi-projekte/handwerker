@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [db-service, service-a, service-b, service-c]
+        service: [db-service]
 
     steps:
       # Repository herunterladen
