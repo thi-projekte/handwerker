@@ -9,7 +9,7 @@ import { RegistrierungPage } from "@/features/Login/components/RegistrierungPage
 import { PasswortVergessenPage } from "@/features/Login/components/PasswortVergessenPage";
 import { LoginPage } from "@/features/Login/components/LoginPage";
 import { LogoutPage } from "@/features/Logout/components/LogoutPage";
-
+import { ReviewPage } from "@/features/review/components/ReviewPage";
 
 export function AppRoutes() {
   return (
@@ -24,6 +24,7 @@ export function AppRoutes() {
       <Route path="/registrierung" element={<RegistrierungPage />} />
       <Route path="/unternehmen" element={<UnternehmenPage />} />
       <Route path="/logout" element={<LogoutPage />} />
+      <Route path="/review" element={<ReviewPage />} />
     </Routes>
   );
 }

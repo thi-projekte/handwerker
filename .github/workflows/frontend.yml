@@ -1,0 +1,50 @@
+name: Frontend CI
+
+on:
+  push:
+    branches:
+      - main
+      - 'sprint*'
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+      - 'sprint*'
+
+jobs:
+  frontend-ci:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      # Repository herunterladen
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Node.js installieren
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      # Dependencies installieren
+      - name: Install dependencies
+        run: npm ci
+
+      # Linting prüfen
+      - name: Run ESLint
+        run: npm run lint
+
+      # TypeScript-Typen prüfen
+      - name: Run typecheck
+        run: npm run typecheck
+
+      # Produktionsbuild testen
+      - name: Build frontend
+        run: npm run build

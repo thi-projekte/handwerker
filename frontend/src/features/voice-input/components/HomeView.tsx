@@ -30,9 +30,6 @@ export const HomeView = () => {
 
         {/* HEADER (immer sichtbar) */}
         <h1>Angebot erstellen</h1>
-        <p className="text-secondary">
-          Wähle Sprache oder Text
-        </p>
 
         {/* MODE SWITCH */}
         {state === "idle" && (
@@ -60,20 +57,21 @@ export const HomeView = () => {
           <>
             {state === "idle" && (
               <div className="voice-section review">
-                <p className="text-secondary">
-                  Tippe auf das Mikrofon um zu starten
-                </p>
 
                 <MicButton
                   isRecording={false}
                   volume={0}
                   onClick={toggle}
                 />
+                <p className="text-secondary">
+                  Tippe auf das Mikrofon um zu starten
+                </p>
               </div>
             )}
 
             {state === "recording" && (
-              <div className="voice-section review">
+              <div className="voice-section review recording">
+
                 <h2>Ich höre zu...</h2>
 
                 <MicButton
@@ -81,7 +79,6 @@ export const HomeView = () => {
                   volume={volume}
                   onClick={toggle}
                 />
-
                 <p className="voice-hint">
                   Sprich jetzt dein Angebot
                 </p>
