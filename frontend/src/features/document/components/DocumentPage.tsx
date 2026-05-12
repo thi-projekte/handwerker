@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { Navbar } from "@/features/dashboards/components/Navbar";
+import { AppHeader } from "@/shared/components/AppHeader";
 import "@/assets/stylesheets/stylesheet.css";
 import "@/features/document/components/DocumentPage.css";
 
@@ -147,6 +148,8 @@ export const DocumentPage = () => {
 
   return (
     <div className="app doc-page">
+      <AppHeader />
+
       {/* ── Sticky Header ── */}
       <div className="doc-sticky-header">
         <div className="doc-tabs">
