@@ -1,0 +1,601 @@
+﻿diff --git a/backend/README_Architektur-Leitfaden_Backend.md b/backend/README_Architektur-Leitfaden_Backend.md
+index 01e76c6..3555cba 100644
+--- a/backend/README_Architektur-Leitfaden_Backend.md
++++ b/backend/README_Architektur-Leitfaden_Backend.md
+@@ -1,4 +1,4 @@
+-# ­ƒûÑ´©Å Backend Architektur Leitfaden (Erweitert mit KI & Process Engine)
++# ´©Å Backend Architektur Leitfaden (Erweitert mit KI & Process Engine)
+ 
+ Dieses Dokument definiert die Struktur und Regeln f├╝r das Backend unserer Anwendung.
+ Die Architektur wurde erweitert, um den Einsatz von **K├╝nstlicher Intelligenz (KI)** und einer **Process Engine (Workflow-System)** sauber zu integrieren.
+@@ -9,7 +9,7 @@ Architekturstil: Erweiterte Schichtenarchitektur mit AI- und Workflow-Orchestrie
+ 
+ ---
+ 
+-# ­ƒºá Grundprinzipien
++#  Grundprinzipien
+ 
+ Das Backend folgt einer strukturierten Schichtenarchitektur mit klarer Verantwortungstrennung.
+ 
+@@ -24,7 +24,7 @@ Das Backend folgt einer strukturierten Schichtenarchitektur mit klarer Verantwor
+ 
+ ---
+ 
+-# ­ƒôé Projektstruktur
++#  Projektstruktur
+ 
+ ```
+ /backend
+@@ -43,7 +43,7 @@ Das Backend folgt einer strukturierten Schichtenarchitektur mit klarer Verantwor
+ 
+ ---
+ 
+-# ­ƒôü /controllers
++#  /controllers
+ 
+ ## Zweck
+ 
+@@ -91,7 +91,7 @@ export const login = async (req, res) => {
+ 
+ ---
+ 
+-# ­ƒôü /services
++#  /services
+ 
+ ## Zweck
+ 
+@@ -145,7 +145,7 @@ export const createOffer = async (data) => {
+ 
+ ---
+ 
+-# ­ƒôü /models
++#  /models
+ 
+ ## Zweck
+ 
+@@ -175,7 +175,7 @@ Definiert Datenstrukturen und kapselt Datenbankzugriffe.
+ 
+ ---
+ 
+-# ­ƒôü /routes
++#  /routes
+ 
+ ## Zweck
+ 
+@@ -205,7 +205,7 @@ router.post('/login', authController.login);
+ 
+ ---
+ 
+-# ­ƒôü /middlewares
++#  /middlewares
+ 
+ ## Zweck
+ 
+@@ -223,7 +223,7 @@ Verarbeiten Requests vor dem Controller.
+ 
+ ---
+ 
+-# ­ƒôü /config
++#  /config
+ 
+ ## Zweck
+ 
+@@ -239,7 +239,7 @@ Zentrale Konfiguration der Anwendung.
+ 
+ ---
+ 
+-# ­ƒñû /ai (KI-Schicht)
++#  /ai (KI-Schicht)
+ 
+ ## Zweck
+ 
+@@ -325,7 +325,7 @@ export const startOfferProcess = async (offerId) => {
+ 
+ ---
+ 
+-# ­ƒöî /integrations
++#  /integrations
+ 
+ ## Zweck
+ 
+@@ -349,7 +349,7 @@ Kapselt externe Systeme und APIs.
+ 
+ ---
+ 
+-# ­ƒöä Typischer Request Flow
++#  Typischer Request Flow
+ 
+ ```text
+ Frontend Request
+@@ -365,7 +365,7 @@ Frontend Request
+ 
+ ---
+ 
+-# ­ƒôî Beispiel: Login Flow
++#  Beispiel: Login Flow
+ 
+ ```text
+ POST /login
+@@ -378,7 +378,7 @@ POST /login
+ 
+ ---
+ 
+-# ­ƒôî Beispiel: Angebot mit KI + Workflow
++#  Beispiel: Angebot mit KI + Workflow
+ 
+ ```text
+ POST /offers
+@@ -393,7 +393,7 @@ POST /offers
+ 
+ ---
+ 
+-# ­ƒÜ¿ Wichtige Regeln
++#  Wichtige Regeln
+ 
+ ## ÔØî Verboten
+ 
+@@ -416,7 +416,7 @@ POST /offers
+ 
+ ---
+ 
+-# ­ƒæÑ Teamregeln
++#  Teamregeln
+ 
+ * Jede API-├änderung dokumentieren
+ * Einheitliche Namenskonventionen nutzen
+@@ -425,7 +425,7 @@ POST /offers
+ 
+ ---
+ 
+-# ­ƒöù Zusammenarbeit mit Frontend
++#  Zusammenarbeit mit Frontend
+ 
+ Frontend kommuniziert ausschlie├ƒlich ├╝ber APIs.
+ 
+@@ -444,7 +444,7 @@ Frontend
+ 
+ ---
+ 
+-# ­ƒÄ» Ziel
++#  Ziel
+ 
+ Diese Architektur stellt sicher, dass:
+ 
+@@ -456,7 +456,7 @@ Diese Architektur stellt sicher, dass:
+ 
+ ---
+ 
+-# ­ƒº® Fazit
++#  Fazit
+ 
+ Die Architektur basiert auf einer klassischen Schichtenstruktur, wurde jedoch gezielt erweitert:
+ 
+@@ -469,3 +469,11 @@ Die Architektur basiert auf einer klassischen Schichtenstruktur, wurde jedoch ge
+ ---
+ 
+ Bei Unsicherheiten oder Architekturfragen bitte fr├╝hzeitig im Team abstimmen.
++
++---
++
++## Weiterf├╝hrende Dokumentation
++
++F├╝r das konkrete Setup von Datenbank und Services siehe
++[README_Services_Datenbank.md](./README_Services_Datenbank.md)
++
+diff --git a/backend/README_Services_Datenbank.md b/backend/README_Services_Datenbank.md
+new file mode 100644
+index 0000000..1996888
+--- /dev/null
++++ b/backend/README_Services_Datenbank.md
+@@ -0,0 +1,299 @@
++# Services & Datenbank ÔÇô ├£bersicht
++
++## ­ƒÅù´©Å Architektur
++
++Alle Microservices im CraftVoice-Projekt teilen sich **eine zentrale PostgreSQL-Instanz** in Docker. Jeder Service hat dabei seine eigene dedizierte Datenbank:
++
++```
++PostgreSQL-Container (postgres:15-alpine)
++Ôöé
++Ôö£ÔöÇÔöÇ offers-db          ÔåÉ offer-service
++Ôö£ÔöÇÔöÇ craftsman-db       ÔåÉ craftsman-service (kommt sp├ñter)
++Ôö£ÔöÇÔöÇ customer-db        ÔåÉ customer-service (kommt sp├ñter)
++ÔööÔöÇÔöÇ weitere-db         ÔåÉ weitere Services (kommen sp├ñter)
++```
++
++**Wichtig:** Jeder Service hat sein eigenes Datenbank-Schema und kann nur auf seine Datenbank zugreifen. Das garantiert Isolation und verhindert versehentliche Abh├ñngigkeiten zwischen Services.
++
++---
++
++## ­ƒÉ│ Docker Setup
++
++### Normale Umgebung starten
++Startet PostgreSQL im Docker-Netzwerk, Services k├Ânnen verbunden (z.B. von Kubernetes aus):
++
++```bash
++cd backend
++docker compose up -d
++```
++
++### Entwicklungsumgebung starten
++Startet PostgreSQL mit lokalem Port-Mapping. So kannst du von deinem Host-Computer ├╝ber `localhost:5432` direkt auf die Datenbank zugreifen z.B. mit pgAdmin oder dbasync:
++
++```bash
++cd backend
++docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
++```
++
++### Container stoppen
++```bash
++docker compose down
++```
++
++### Container neu starten (z.B. nach Konfigurations├ñnderungen)
++```bash
++docker compose down && docker compose up -d
++```
++
++### Logs anschauen
++```bash
++docker compose logs -f postgres
++```
++
++---
++
++## ­ƒÜÇ Neuen Service hinzuf├╝gen
++
++### Schritt 1: Service-Verzeichnis erstellen
++
++```bash
++cd backend/services
++# Mit Quarkus CLI oder code.quarkus.io:
++quarkus create app de.craftvoice:new-service-service
++```
++
++Oder manuell ein neues Quarkus-Projekt mit diesen **Extensions** initialisieren:
++- Hibernate ORM with Panache
++- REST Jackson
++- SmallRye Health
++- JDBC Driver - PostgreSQL
++- OpenID Connect
++
++### Schritt 2: pom.xml anpassen
++
++```xml
++<groupId>de.craftvoice</groupId>
++<artifactId>new-service-service</artifactId>
++<version>1.0.0</version>
++<name>new-service-service</name>
++```
++
++### Schritt 3: application.properties konfigurieren
++
++```properties
++# Datenbankverbindung
++quarkus.datasource.db-kind=postgresql
++quarkus.datasource.username=${DB_USER:postgres}
++quarkus.datasource.password=${DB_PASSWORD:postgres}
++quarkus.datasource.jdbc.url=jdbc:postgresql://${DB_HOST:postgres}:5432/${DB_NAME:new-service-db}
++
++# Schema automatisch aktualisieren (nur Entwicklung)
++# ÔÜá´©Å NICHT f├╝r Produktivsysteme geeignet
++quarkus.hibernate-orm.database.generation=update
++
++# Keycloak (wird sp├ñter aktiviert nach Setup-Abschluss)
++quarkus.oidc.tenant-enabled=false
++# quarkus.oidc.auth-server-url=${KEYCLOAK_URL}/realms/${KEYCLOAK_REALM}
++# quarkus.oidc.client-id=${KEYCLOAK_CLIENT_ID}
++# quarkus.oidc.application-type=service
++```
++
++**Wichtig:** Der `DB_NAME` muss eindeutig sein und wird als New-Service-Identifikator genutzt.
++
++### Schritt 4: PostgreSQL Datenbank erstellen
++
++Bearbeite `backend/docker-compose.yml` und erstelle einen neuen Service f├╝r die neue Datenbank, falls erforderlich ÔÇô oder nutze folgende Alternative:
++
++**Option A (einfach):** Verbinde dich mit existierender PostgreSQL und erstelle die DB:
++
++```bash
++# Dev-Umgebung starten (mit lokalem DB-Zugriff)
++docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
++
++# Mit psql verbinden
++psql -h localhost -U postgres -d postgres
++
++# In psql:
++CREATE DATABASE "new-service-db";
++```
++
++**Option B (automatisiert):** Nutze ein init-Script in `docker-compose.yml` (siehe Sektion "Datenbank-Initialisierung").
++
++### Schritt 5: Docker neu starten und testen
++
++```bash
++docker compose down
++docker compose up -d
++
++# Service-Logs kontrollieren
++docker compose logs -f new-service
++```
++
++Falls der Service sich nicht mit PostgreSQL verbinden kann ÔåÆ siehe **Troubleshooting** unten.
++
++---
++
++## ­ƒôª Java Package-Konvention
++
++Alle Java-Klassen folgen dieser Struktur f├╝r Klarheit und Wartbarkeit:
++
++```
++de.craftvoice.<servicename>.<domain>.<classname>
++```
++
++### Beispiele
++
++**offer-service:**
++```
++de.craftvoice.offerservice.offer.Offer                    (Entity)
++de.craftvoice.offerservice.offer.OfferRepository          (Data Access)
++de.craftvoice.offerservice.offer.OfferResource            (REST Endpoint)
++de.craftvoice.offerservice.common.BaseEntity              (Shared)
++```
++
++**craftsman-service (zuk├╝nftig):**
++```
++de.craftvoice.craftsmanservice.craftsman.Craftsman
++de.craftvoice.craftsmanservice.craftsman.CraftsmanRepository
++de.craftvoice.craftsmanservice.craftsman.CraftsmanResource
++```
++
++**Regeln:**
++- `<servicename>` ist der Verzeichnisname (z.B. `offerservice`, `craftsmanservice`)
++- `<domain>` entspricht dem Business-Bereich (z.B. `offer`, `craftsman`, `payment`)
++- Plurale werden NICHT verwendet
++- Alle Package-Namen sind lowercase
++
++---
++
++## ÔÜá´©Å Wichtiger Hinweis zu Entit├ñten
++
++### BPMN-Team-Abstimmung erforderlich
++Bevor du Entit├ñten, Repositories oder REST-Ressourcen erstellst, **musst du mit dem BPMN-Team abstimmen**. Das Datenmodell muss mit dem Prozessmodell konsistent sein.
++
++### JSON-String-Konvention
++Alle Properties in Entit├ñten m├╝ssen **immer vorhanden sein**, auch wenn sie leer sind:
++
++```java
++@Entity
++public class Offer {
++    @Id
++    public Long id;
++    
++    public String title;           // Ô£à Immer ein Wert (auch "" oder null)
++    public String description;     // Ô£à Immer ein Wert
++    public BigDecimal price;       // Ô£à Immer ein Wert
++    public String status;          // Ô£à Immer ein Wert
++}
++```
++
++**Warum?** Die JSON-Serialisierung muss f├╝r die Kompatibilit├ñt mit dem Prozessmodell garantieren, dass alle Felder im Output vorhanden sind:
++
++```json
++{
++  "id": 123,
++  "title": "Dachdeckung",
++  "description": "Neue Eindeckung mit Dachziegeln",
++  "price": 2500.00,
++  "status": "PENDING"
++}
++```
++
++Nie:
++```json
++{
++  "id": 123,
++  "title": "Dachdeckung"
++  // ÔØî Fehlende Properties
++}
++```
++
++---
++
++## ­ƒöì Debugging & Troubleshooting
++
++### Problem: Service kann sich nicht zur Datenbank verbinden
++
++**Pr├╝fungen:**
++
++1. **L├ñuft PostgreSQL?**
++   ```bash
++   docker compose ps
++   ```
++   Container `postgres` sollte mit Status `Up` angezeigt werden.
++
++2. **Zeigt der Service Fehler?**
++   ```bash
++   docker compose logs postgres
++   docker compose logs <service-name>
++   ```
++
++3. **Ist der Host-Name korrekt?**
++   - In `application.properties`: `${DB_HOST:postgres}`
++   - Der Container hei├ƒt: `postgres` Ô£à
++   - Services im Docker-Netzwerk k├Ânnen sich ├╝ber diesen Namen erreichen
++
++4. **Ist die Datenbank erstellt?**
++   ```bash
++   psql -h localhost -U postgres -d postgres
++   \l  # Listet alle Datenbanken
++   ```
++
++### Problem: Port 5432 ist bereits belegt
++
++```bash
++# Pr├╝fe welcher Prozess Port 5432 nutzt
++lsof -i :5432  # macOS/Linux
++netstat -ano | findstr :5432  # Windows
++
++# ├änderung in docker-compose.dev.yml:
++services:
++  postgres:
++    ports:
++      - "5433:5432"  # Host-Port 5433, Container-Port 5432
++```
++
++Dann beim Verbinden `localhost:5433` nutzen.
++
++### Problem: Hibernate erstellt Tabellen nicht automatisch
++
++**Checklist:**
++
++1. Ist `quarkus.hibernate-orm.database.generation=update` in `application.properties` gesetzt?
++2. Sind Entit├ñten korrekt annotiert mit `@Entity` und `@Table`?
++3. Wurden Entit├ñten in `resources/application.properties` registriert?
++   ```properties
++   quarkus.hibernate-orm.packages=de.craftvoice.offerservice
++   ```
++
++---
++
++## ­ƒôÜ Weiterf├╝hrende Resources
++
++- **[Quarkus Datenbank-Guide](https://quarkus.io/guides/datasource)**
++- **[Hibernate ORM with Panache](https://quarkus.io/guides/hibernate-orm-panache)**
++- **[Docker Compose Referenz](https://docs.docker.com/compose/)**
++- **[PostgreSQL Dokumentation](https://www.postgresql.org/docs/)**
++
++---
++
++## ­ƒÆí Best Practices
++
++Ô£à **DO:**
++- Ein Service = eine Datenbank
++- Package-Namen konsistent halten
++- Immer mit dem BPMN-Team abstimmen vor Entit├ñts-Erstellung
++- Environment-Variablen nutzen (DB_HOST, DB_USER, DB_PASSWORD, DB_NAME)
++- Dev- und Prod-Setup trennen (docker-compose.yml + docker-compose.dev.yml)
++
++ÔØî **DON'T:**
++- Direkter Datenbankzugriff zwischen Services (nur ├╝ber REST-APIs)
++- Tabellen in fremden Service-Datenbanken erstellen
++- Fest codierte Verbindungsdaten (immer Umgebungsvariablen nutzen)
++- Properties auslassen im Entity-Output (BPMN-Richtlinie)
++- `quarkus.hibernate-orm.database.generation=create` in Produktion (Datenverlust!)
++
++---
++
++**Zuletzt aktualisiert:** 2026-05-11  
++**G├╝ltig f├╝r CraftVoice v1.0+**
+diff --git a/backend/services/db-service/docker-compose.yml b/backend/docker-compose.yml
+similarity index 91%
+rename from backend/services/db-service/docker-compose.yml
+rename to backend/docker-compose.yml
+index e291b2a..f754948 100644
+--- a/backend/services/db-service/docker-compose.yml
++++ b/backend/docker-compose.yml
+@@ -3,7 +3,7 @@ version: '3.8'
+ services:
+   postgres:
+     image: postgres:15-alpine
+-    container_name: db-service-db
++    container_name: postgres
+     restart: unless-stopped
+     environment:
+       POSTGRES_USER: postgres
+@@ -21,3 +21,6 @@ networks:
+   internal:
+     driver: bridge
+ 
++
++
++
+diff --git a/backend/services/db-service/.mvn/wrapper/maven-wrapper.properties b/backend/services/db-service/.mvn/wrapper/maven-wrapper.properties
+deleted file mode 100644
+index ce33c1c..0000000
+--- a/backend/services/db-service/.mvn/wrapper/maven-wrapper.properties
++++ /dev/null
+@@ -1,4 +0,0 @@
+-wrapperVersion=3.3.4
+-distributionType=only-script
+-distributionUrl=https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.15/apache-maven-3.9.15-bin.zip
+-distributionSha256Sum=b0d9292f06c5faded31ddcb6cb69099f316d6fea40a7778624b259bad9fed18a
+diff --git a/backend/services/db-service/src/main/resources/application.properties b/backend/services/db-service/src/main/resources/application.properties
+deleted file mode 100644
+index 79d2174..0000000
+--- a/backend/services/db-service/src/main/resources/application.properties
++++ /dev/null
+@@ -1,15 +0,0 @@
+-# Datenbankverbindung
+-quarkus.datasource.db-kind=postgresql
+-quarkus.datasource.username=${DB_USER:postgres}
+-quarkus.datasource.password=${DB_PASSWORD:postgres}
+-quarkus.datasource.jdbc.url=jdbc:postgresql://${DB_HOST:postgres}:5432/${DB_NAME:craftvoice-db}
+-
+-# Schema automatisch aktualisieren (nur Entwicklung)
+-quarkus.hibernate-orm.database.generation=update
+-
+-# Keycloak (Platzhalter, damit OIDC nicht sofort beim Start crasht, falls wir es noch nicht haben)
+-quarkus.oidc.tenant-enabled=false
+-# Sobald Keycloak da ist:
+-# quarkus.oidc.auth-server-url=${KEYCLOAK_URL}/realms/${KEYCLOAK_REALM}
+-# quarkus.oidc.client-id=${KEYCLOAK_CLIENT_ID}
+-# quarkus.oidc.application-type=service
+diff --git a/backend/services/db-service/.dockerignore b/backend/services/offer-service/.dockerignore
+similarity index 100%
+rename from backend/services/db-service/.dockerignore
+rename to backend/services/offer-service/.dockerignore
+diff --git a/backend/services/db-service/.gitignore b/backend/services/offer-service/.gitignore
+similarity index 100%
+rename from backend/services/db-service/.gitignore
+rename to backend/services/offer-service/.gitignore
+diff --git a/backend/services/db-service/README.md b/backend/services/offer-service/README.md
+similarity index 100%
+rename from backend/services/db-service/README.md
+rename to backend/services/offer-service/README.md
+diff --git a/backend/services/db-service/mvnw b/backend/services/offer-service/mvnw
+similarity index 100%
+rename from backend/services/db-service/mvnw
+rename to backend/services/offer-service/mvnw
+diff --git a/backend/services/db-service/mvnw.cmd b/backend/services/offer-service/mvnw.cmd
+similarity index 100%
+rename from backend/services/db-service/mvnw.cmd
+rename to backend/services/offer-service/mvnw.cmd
+diff --git a/backend/services/db-service/pom.xml b/backend/services/offer-service/pom.xml
+similarity index 98%
+rename from backend/services/db-service/pom.xml
+rename to backend/services/offer-service/pom.xml
+index 47396cd..58af8a0 100644
+--- a/backend/services/db-service/pom.xml
++++ b/backend/services/offer-service/pom.xml
+@@ -1,8 +1,8 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+     <modelVersion>4.0.0</modelVersion>
+-    <groupId>de.winfprojekt</groupId>
+-    <artifactId>db-service</artifactId>
++    <groupId>de.craftvoice</groupId>
++    <artifactId>offer-service</artifactId>
+     <version>1.0.0-SNAPSHOT</version>
+     <packaging>quarkus</packaging>
+ 
+diff --git a/backend/services/db-service/src/main/docker/Dockerfile.jvm b/backend/services/offer-service/src/main/docker/Dockerfile.jvm
+similarity index 100%
+rename from backend/services/db-service/src/main/docker/Dockerfile.jvm
+rename to backend/services/offer-service/src/main/docker/Dockerfile.jvm
+diff --git a/backend/services/db-service/src/main/docker/Dockerfile.legacy-jar b/backend/services/offer-service/src/main/docker/Dockerfile.legacy-jar
+similarity index 100%
+rename from backend/services/db-service/src/main/docker/Dockerfile.legacy-jar
+rename to backend/services/offer-service/src/main/docker/Dockerfile.legacy-jar
+diff --git a/backend/services/db-service/src/main/docker/Dockerfile.native b/backend/services/offer-service/src/main/docker/Dockerfile.native
+similarity index 100%
+rename from backend/services/db-service/src/main/docker/Dockerfile.native
+rename to backend/services/offer-service/src/main/docker/Dockerfile.native
+diff --git a/backend/services/db-service/src/main/docker/Dockerfile.native-micro b/backend/services/offer-service/src/main/docker/Dockerfile.native-micro
+similarity index 100%
+rename from backend/services/db-service/src/main/docker/Dockerfile.native-micro
+rename to backend/services/offer-service/src/main/docker/Dockerfile.native-micro
+diff --git a/backend/services/db-service/src/main/resources/import.sql b/backend/services/offer-service/src/main/resources/import.sql
+similarity index 100%
+rename from backend/services/db-service/src/main/resources/import.sql
+rename to backend/services/offer-service/src/main/resources/import.sql
