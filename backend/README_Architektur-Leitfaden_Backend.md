@@ -1,4 +1,4 @@
-# 🖥️ Backend Architektur Leitfaden (Erweitert mit KI & Process Engine)
+# ️ Backend Architektur Leitfaden (Erweitert mit KI & Process Engine)
 
 Dieses Dokument definiert die Struktur und Regeln für das Backend unserer Anwendung.
 Die Architektur wurde erweitert, um den Einsatz von **Künstlicher Intelligenz (KI)** und einer **Process Engine (Workflow-System)** sauber zu integrieren.
@@ -9,7 +9,7 @@ Architekturstil: Erweiterte Schichtenarchitektur mit AI- und Workflow-Orchestrie
 
 ---
 
-# 🧠 Grundprinzipien
+#  Grundprinzipien
 
 Das Backend folgt einer strukturierten Schichtenarchitektur mit klarer Verantwortungstrennung.
 
@@ -24,7 +24,7 @@ Das Backend folgt einer strukturierten Schichtenarchitektur mit klarer Verantwor
 
 ---
 
-# 📂 Projektstruktur
+#  Projektstruktur
 
 ```
 /backend
@@ -43,7 +43,7 @@ Das Backend folgt einer strukturierten Schichtenarchitektur mit klarer Verantwor
 
 ---
 
-# 📁 /controllers
+#  /controllers
 
 ## Zweck
 
@@ -91,7 +91,7 @@ export const login = async (req, res) => {
 
 ---
 
-# 📁 /services
+#  /services
 
 ## Zweck
 
@@ -145,7 +145,7 @@ export const createOffer = async (data) => {
 
 ---
 
-# 📁 /models
+#  /models
 
 ## Zweck
 
@@ -175,7 +175,7 @@ Definiert Datenstrukturen und kapselt Datenbankzugriffe.
 
 ---
 
-# 📁 /routes
+#  /routes
 
 ## Zweck
 
@@ -205,7 +205,7 @@ router.post('/login', authController.login);
 
 ---
 
-# 📁 /middlewares
+#  /middlewares
 
 ## Zweck
 
@@ -223,7 +223,7 @@ Verarbeiten Requests vor dem Controller.
 
 ---
 
-# 📁 /config
+#  /config
 
 ## Zweck
 
@@ -239,7 +239,7 @@ Zentrale Konfiguration der Anwendung.
 
 ---
 
-# 🤖 /ai (KI-Schicht)
+#  /ai (KI-Schicht)
 
 ## Zweck
 
@@ -325,7 +325,7 @@ export const startOfferProcess = async (offerId) => {
 
 ---
 
-# 🔌 /integrations
+#  /integrations
 
 ## Zweck
 
@@ -349,7 +349,7 @@ Kapselt externe Systeme und APIs.
 
 ---
 
-# 🔄 Typischer Request Flow
+#  Typischer Request Flow
 
 ```text
 Frontend Request
@@ -365,7 +365,7 @@ Frontend Request
 
 ---
 
-# 📌 Beispiel: Login Flow
+#  Beispiel: Login Flow
 
 ```text
 POST /login
@@ -378,7 +378,7 @@ POST /login
 
 ---
 
-# 📌 Beispiel: Angebot mit KI + Workflow
+#  Beispiel: Angebot mit KI + Workflow
 
 ```text
 POST /offers
@@ -393,7 +393,7 @@ POST /offers
 
 ---
 
-# 🚨 Wichtige Regeln
+#  Wichtige Regeln
 
 ## ❌ Verboten
 
@@ -416,7 +416,7 @@ POST /offers
 
 ---
 
-# 👥 Teamregeln
+#  Teamregeln
 
 * Jede API-Änderung dokumentieren
 * Einheitliche Namenskonventionen nutzen
@@ -425,7 +425,7 @@ POST /offers
 
 ---
 
-# 🔗 Zusammenarbeit mit Frontend
+#  Zusammenarbeit mit Frontend
 
 Frontend kommuniziert ausschließlich über APIs.
 
@@ -444,7 +444,7 @@ Frontend
 
 ---
 
-# 🎯 Ziel
+#  Ziel
 
 Diese Architektur stellt sicher, dass:
 
@@ -456,7 +456,7 @@ Diese Architektur stellt sicher, dass:
 
 ---
 
-# 🧩 Fazit
+#  Fazit
 
 Die Architektur basiert auf einer klassischen Schichtenstruktur, wurde jedoch gezielt erweitert:
 
@@ -470,58 +470,10 @@ Die Architektur basiert auf einer klassischen Schichtenstruktur, wurde jedoch ge
 
 Bei Unsicherheiten oder Architekturfragen bitte frühzeitig im Team abstimmen.
 
+---
 
-## CIB seven Enterprise Repository einrichten
+## Weiterführende Dokumentation
 
-Das CIB seven Enterprise Repository ist nicht öffentlich zugänglich.
-Die folgende Konfiguration ist notwendig damit der Maven-Build lokal funktioniert.
+Für das konkrete Setup von Datenbank und Services siehe
+[README_Services_Datenbank.md](./README_Services_Datenbank.md)
 
-### Lokale Einrichtung
-
-Datei `~/.m2/settings.xml` anlegen falls noch nicht vorhanden
-
-**Windows:** `C:\Users\DEINNAME\.m2\settings.xml`  
-**Mac/Linux:** `/Users/DEINNAME/.m2/settings.xml`
-
-Folgenden Inhalt einfügen und Platzhalter ersetzen:
-
-```xml
-<settings>
-  <servers>
-    <server>
-      <id>mvn-cibseven-enterprise</id>
-      <username>KUNDENNUMMER</username>
-      <password>PASSWORT</password>
-    </server>
-  </servers>
-  <profiles>
-    <profile>
-      <id>cibseven-ee</id>
-      <repositories>
-        <repository>
-          <id>mvn-cibseven-enterprise</id>
-          <name>CIB seven Enterprise repository</name>
-          <url>https://artifacts.cibseven.org/repository/enterprise-group/</url>
-        </repository>
-      </repositories>
-    </profile>
-  </profiles>
-  <activeProfiles>
-    <activeProfile>cibseven-ee</activeProfile>
-  </activeProfiles>
-</settings>
-```
-
-> ⚠️ Diese Datei niemals ins Repository committen — sie enthält Zugangsdaten.
-
-### Build testen
-
-```bash
-docker compose up -d   # Keycloak starten
-mvn spring-boot:run    # Service starten → http://localhost:8080
-```
-
-### CI/CD (GitHub Actions)
-
-Die Secrets `CIBSEVEN_USERNAME` und `CIBSEVEN_PASSWORD` sind im Repository
-unter Settings → Secrets and variables → Actions hinterlegt.
