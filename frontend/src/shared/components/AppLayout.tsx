@@ -18,8 +18,10 @@ export const AppLayout = ({
 }: AppLayoutProps) => {
   return (
     <div className="shell">
-      {!hideHeader && <AppHeader />}
-      <main className="shell-content">{children}</main>
+      <main className="shell-content">
+        {!hideHeader && <AppHeader />}
+        {children}
+      </main>
       {!hideNav && <Navbar />}
     </div>
   );

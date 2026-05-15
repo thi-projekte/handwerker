@@ -8,15 +8,11 @@
   align-items: center;
   justify-content: flex-start;
 
-  padding: 14px 20px 12px;
-
-  border-bottom: 1px solid var(--color-divider);
-  background: var(--color-surface);
-  backdrop-filter: blur(var(--blur));
+  margin-bottom: 7px;
 }
 
 .app-header-logo {
-  height: 28px;
+  height: 35px;
   width: auto;
   display: block;
   object-fit: contain;
