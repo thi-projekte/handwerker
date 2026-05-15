@@ -1,0 +1,6 @@
+.idea/vcs.xml
+backend/docker-compose.dev.yml
+
+.idea/
+
+*.patch
