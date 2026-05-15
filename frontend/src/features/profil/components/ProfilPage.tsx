@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Navbar } from "@/features/dashboards/components/Navbar";
 import "@/assets/stylesheets/stylesheet.css";
 import "../ProfilePage.css";
 
@@ -29,11 +28,9 @@ type ProfileFormData = {
 
 export const ProfilPage = () => {
   const [activeTab, setActiveTab] = useState<Tab>("profil");
-
-  const [isLightMode, setIsLightMode] = useState(() => {
-    return localStorage.getItem("theme") === "light";
-  });
-
+  const [isLightMode, setIsLightMode] = useState(
+    () => localStorage.getItem("theme") === "light",
+  );
   const [formData, setFormData] = useState<ProfileFormData>({
     vorname: "Christian",
     nachname: "Huber",
@@ -63,28 +60,23 @@ export const ProfilPage = () => {
   }, [isLightMode]);
 
   const handleInputChange = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = event.target;
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   return (
-    <div className="app profile-page">
+    <div className="profile-page">
       <header className="card profile-header">
         <div className="profile-header-top">
           <div className="profile-avatar">CH</div>
-
           <div className="profile-title-area">
             <span className="profile-eyebrow">CraftVoice Konto</span>
             <h1>Profil & Einstellungen</h1>
             <p className="text-secondary">
               Verwalte persönliche Daten, Unternehmensinformationen und
-              Einstellungen zentral an einem Ort.
+              Einstellungen.
             </p>
           </div>
         </div>
@@ -97,20 +89,14 @@ export const ProfilPage = () => {
         >
           Profil
         </button>
-
         <button
-          className={`profile-tab ${
-            activeTab === "darstellung" ? "active" : ""
-          }`}
+          className={`profile-tab ${activeTab === "darstellung" ? "active" : ""}`}
           onClick={() => setActiveTab("darstellung")}
         >
           Darstellung
         </button>
-
         <button
-          className={`profile-tab ${
-            activeTab === "benachrichtigungen" ? "active" : ""
-          }`}
+          className={`profile-tab ${activeTab === "benachrichtigungen" ? "active" : ""}`}
           onClick={() => setActiveTab("benachrichtigungen")}
         >
           Benachrichtigungen
@@ -119,38 +105,8 @@ export const ProfilPage = () => {
 
       {activeTab === "profil" && (
         <>
-          <section className="card profile-overview-card">
-            <div className="profile-overview-header">
-              <div className="profile-avatar small">CH</div>
-              <div>
-                <h2>{formData.vorname} {formData.nachname}</h2>
-                <p className="text-secondary">{formData.rolle}</p>
-              </div>
-            </div>
-
-            <div className="profile-summary-grid">
-              <div className="summary-item">
-                <span className="summary-label">Unternehmen</span>
-                <strong>{formData.firmenname}</strong>
-              </div>
-              <div className="summary-item">
-                <span className="summary-label">Branche</span>
-                <strong>{formData.branche}</strong>
-              </div>
-              <div className="summary-item">
-                <span className="summary-label">E-Mail</span>
-                <strong>{formData.email}</strong>
-              </div>
-              <div className="summary-item">
-                <span className="summary-label">Telefon</span>
-                <strong>{formData.telefon}</strong>
-              </div>
-            </div>
-          </section>
-
           <section className="card profile-content-card">
             <h2>Persönliche Daten</h2>
-
             <div className="profile-form-grid">
               <input
                 className="input-field"
@@ -183,7 +139,7 @@ export const ProfilPage = () => {
               <input
                 className="input-field profile-full-width"
                 name="rolle"
-                placeholder="Rolle im Unternehmen"
+                placeholder="Rolle"
                 value={formData.rolle}
                 onChange={handleInputChange}
               />
@@ -192,7 +148,6 @@ export const ProfilPage = () => {
 
           <section className="card profile-content-card">
             <h2>Unternehmensdaten</h2>
-
             <div className="profile-form-grid">
               <input
                 className="input-field"
@@ -227,7 +182,6 @@ export const ProfilPage = () => {
 
           <section className="card profile-content-card">
             <h2>Adresse</h2>
-
             <div className="profile-form-grid">
               <input
                 className="input-field"
@@ -239,7 +193,7 @@ export const ProfilPage = () => {
               <input
                 className="input-field"
                 name="hausnummer"
-                placeholder="Hausnummer"
+                placeholder="Nr."
                 value={formData.hausnummer}
                 onChange={handleInputChange}
               />
@@ -269,7 +223,6 @@ export const ProfilPage = () => {
 
           <section className="card profile-content-card">
             <h2>Rechnungs- & Geschäftsdaten</h2>
-
             <div className="profile-form-grid">
               <input
                 className="input-field"
@@ -310,7 +263,6 @@ export const ProfilPage = () => {
                 <option value="30 Tage">30 Tage</option>
               </select>
             </div>
-
             <button className="button-primary profile-save-button">
               Änderungen speichern
             </button>
@@ -321,7 +273,6 @@ export const ProfilPage = () => {
       {activeTab === "darstellung" && (
         <section className="card profile-content-card">
           <h2>Darstellung</h2>
-
           <div className="settings-row">
             <div>
               <strong>
@@ -331,7 +282,6 @@ export const ProfilPage = () => {
                 Wechsle zwischen heller und dunkler Darstellung.
               </p>
             </div>
-
             <button
               className="theme-switch"
               onClick={() => setIsLightMode(!isLightMode)}
@@ -348,18 +298,15 @@ export const ProfilPage = () => {
       {activeTab === "benachrichtigungen" && (
         <section className="card profile-content-card">
           <h2>Benachrichtigungen</h2>
-
           <div className="notification-list">
             <label className="notification-item">
               <input type="checkbox" defaultChecked />
               <span>E-Mail bei neuem Angebot</span>
             </label>
-
             <label className="notification-item">
               <input type="checkbox" defaultChecked />
               <span>E-Mail bei fehlenden Pflichtdaten</span>
             </label>
-
             <label className="notification-item">
               <input type="checkbox" />
               <span>Wöchentliche Zusammenfassung</span>
@@ -367,8 +314,6 @@ export const ProfilPage = () => {
           </div>
         </section>
       )}
-
-      <Navbar />
     </div>
   );
 };
