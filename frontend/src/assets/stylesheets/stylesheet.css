@@ -2,21 +2,15 @@
    🎨 Design Tokens
    ========================= */
 :root {
-  /* Background */
   --color-bg: #0f0f10;
   --color-surface: rgba(26, 26, 28, 0.8);
-  /* Text */
   --color-text-primary: #ffffff;
   --color-text-secondary: #a1a1aa;
-  /* UI */
   --color-divider: #2a2e44;
-  /* Accent*/
   --color-accent: #ff6a00;
   --color-accent-gradient: linear-gradient(135deg, #ff7a18, #ff4d00);
-  /* Effects */
   --blur: 22px;
   --radius: 26px;
-  /* --shadow: 0 20px 45px rgba(0, 0, 0, 0.35); */
 }
 
 /* =========================
@@ -25,18 +19,21 @@
 [data-theme="light"] {
   --color-bg: #f4f4f5;
   --color-surface: rgba(255, 255, 255, 0.95);
-
   --color-text-primary: #111111;
   --color-text-secondary: #6b7280;
-
   --color-divider: #e5e7eb;
-
   --shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
 }
 
 /* =========================
-   Base Layout
+   Base
    ========================= */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   font-family:
@@ -45,26 +42,35 @@ body {
     sans-serif;
   background: var(--color-bg);
   color: var(--color-text-primary);
+  /* Verhindert horizontales Scrollen auf Mobilgeräten */
+  overflow-x: hidden;
+}
+
+h1 {
+  font-size: 22px;
+  margin: 0 0 6px 0;
+}
+
+h2 {
+  font-size: 18px;
+  margin-bottom: 12px;
+}
+
+p {
+  margin: 0;
 }
 
 /* =========================
-   App Container
+   .app — nur noch Content-Wrapper
+   (kein eigener Container mehr, Shell übernimmt das)
    ========================= */
 .app {
-  max-width: 420px;
-  margin: 40px auto;
-  padding: 20px;
-  border-radius: 32px;
-
-  background: var(--color-surface);
-  backdrop-filter: blur(var(--blur));
-
-  box-shadow: var(--shadow);
-  border: 1px solid var(--color-divider);
+  /* Kein max-width, kein border-radius, kein Padding mehr hier —
+     das macht jetzt AppLayout / .shell */
 }
 
 /* =========================
-   Cards (Aufträge)
+   Cards
    ========================= */
 .card {
   background: var(--color-surface);
@@ -72,32 +78,27 @@ body {
   border-radius: var(--radius);
   padding: 16px;
   margin-bottom: 12px;
-
   border: 1px solid var(--color-divider);
   box-shadow: var(--shadow);
 }
 
 /* =========================
-   Primary Button
+   Buttons
    ========================= */
 .button-primary {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
-
   padding: 16px;
   border-radius: 16px;
   border: none;
-
   background: var(--color-accent-gradient);
   color: white;
   font-weight: 600;
   font-size: 16px;
-
   cursor: pointer;
   box-shadow: 0 8px 20px rgba(255, 106, 0, 0.4);
-
   transition:
     transform 0.15s ease,
     box-shadow 0.15s ease;
@@ -106,6 +107,23 @@ body {
 .button-primary:hover {
   transform: translateY(-2px);
   box-shadow: 0 12px 25px rgba(255, 106, 0, 0.5);
+}
+
+.button-secondary {
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 14px;
+  border-radius: 14px;
+  border: 1px solid var(--color-divider);
+  background: transparent;
+  color: var(--color-text-primary);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.button-secondary:hover {
+  background: rgba(255, 255, 255, 0.05);
 }
 
 /* =========================
@@ -129,25 +147,15 @@ body {
 }
 
 /* =========================
-   Text Styles
+   Text
    ========================= */
 .text-secondary {
   color: var(--color-text-secondary);
   font-size: 14px;
 }
 
-h1 {
-  font-size: 22px;
-  margin: 0 0 6px 0;
-}
-
-h2 {
-  font-size: 18px;
-  margin-bottom: 12px;
-}
-
 /* =========================
-    Divider
+   Divider
    ========================= */
 .divider {
   height: 1px;
@@ -156,20 +164,21 @@ h2 {
   border: none;
 }
 
-/* Inputs */
+/* =========================
+   Inputs
+   ========================= */
 .input-field {
   box-sizing: border-box;
   width: 100%;
   padding: 14px;
   margin-bottom: 12px;
-
   border-radius: 14px;
   border: 1px solid var(--color-divider);
-
   background: transparent;
   color: var(--color-text-primary);
-
   outline: none;
+  font-size: 15px;
+  font-family: inherit;
   transition:
     border 0.2s ease,
     box-shadow 0.2s ease;
@@ -180,72 +189,43 @@ h2 {
   box-shadow: 0 0 0 2px rgba(255, 106, 0, 0.2);
 }
 
-/* Login Button spacing */
-.login-btn {
-  width: 100%;
-  margin-bottom: 10px;
-}
-
-/* Secondary Button */
-.button-secondary {
-  width: 100%;
-  padding: 14px;
-  margin-bottom: 14px;
-
-  border-radius: 14px;
-  border: 1px solid var(--color-divider);
-
-  background: transparent;
-  color: var(--color-text-primary);
-
-  font-weight: 500;
-  cursor: pointer;
-
-  transition: background 0.2s ease;
-}
-
-.button-secondary:hover {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-/* Footer */
-.login-footer {
-  text-align: center;
-  font-size: 13px;
-}
-/* Reset Card */
-.reset-card {
-  padding: 20px;
-}
-
-/* Button spacing */
-.reset-btn {
-  width: 100%;
-  margin-bottom: 14px;
-}
-
-/* Footer */
-.reset-footer {
-  text-align: center;
-  font-size: 13px;
-}
-.register-card {
-  padding: 20px;
-}
-
-/* Select Styling */
 .select-field {
   appearance: none;
   cursor: pointer;
 }
 
-/* Button spacing */
+/* =========================
+   Login / Auth
+   ========================= */
+.login-btn {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.login-footer {
+  text-align: center;
+  font-size: 13px;
+}
+
+.reset-card {
+  padding: 20px;
+}
+.reset-btn {
+  width: 100%;
+  margin-bottom: 14px;
+}
+.reset-footer {
+  text-align: center;
+  font-size: 13px;
+}
+
+.register-card {
+  padding: 20px;
+}
 .register-btn {
   width: 100%;
   margin-bottom: 14px;
 }
-
-
 .register-footer {
   text-align: center;
   font-size: 13px;
