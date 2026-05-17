@@ -3,7 +3,7 @@ version: '3.8'
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: db-service-db
+    container_name: postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
@@ -20,4 +20,7 @@ volumes:
 networks:
   internal:
     driver: bridge
+
+
+
 

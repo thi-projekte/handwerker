@@ -10,20 +10,6 @@ type ProfileFormData = {
   email: string;
   telefon: string;
   rolle: string;
-  firmenname: string;
-  branche: string;
-  ustId: string;
-  website: string;
-  strasse: string;
-  hausnummer: string;
-  plz: string;
-  ort: string;
-  land: string;
-  iban: string;
-  bic: string;
-  steuernummer: string;
-  angebotPrefix: string;
-  standardZahlungsziel: string;
 };
 
 export const ProfilPage = () => {
@@ -37,24 +23,11 @@ export const ProfilPage = () => {
     email: "christian.huber@craftvoice.de",
     telefon: "+49 841 123456",
     rolle: "Inhaber",
-    firmenname: "Huber Handwerk GmbH",
-    branche: "Maler & Innenausbau",
-    ustId: "DE123456789",
-    website: "www.huber-handwerk.de",
-    strasse: "Musterstraße",
-    hausnummer: "12",
-    plz: "85049",
-    ort: "Ingolstadt",
-    land: "Deutschland",
-    iban: "DE12 3456 7890 1234 5678 90",
-    bic: "GENODEF1ING",
-    steuernummer: "123/456/78901",
-    angebotPrefix: "ANG",
-    standardZahlungsziel: "14 Tage",
   });
 
   useEffect(() => {
     const theme = isLightMode ? "light" : "dark";
+
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("theme", theme);
   }, [isLightMode]);
@@ -67,19 +40,10 @@ export const ProfilPage = () => {
   };
 
   return (
-    <div className="profile-page">
-      <header className="card profile-header">
-        <div className="profile-header-top">
-          <div className="profile-avatar">CH</div>
-          <div className="profile-title-area">
-            <span className="profile-eyebrow">CraftVoice Konto</span>
-            <h1>Profil & Einstellungen</h1>
-            <p className="text-secondary">
-              Verwalte persönliche Daten, Unternehmensinformationen und
-              Einstellungen.
-            </p>
-          </div>
-        </div>
+    <div className="app profile-page">
+      <header className="card profile-header compact">
+        <span className="profile-eyebrow">CraftVoice Konto</span>
+        <h1>Profil & Einstellungen</h1>
       </header>
 
       <section className="card profile-tab-card">
@@ -105,167 +69,94 @@ export const ProfilPage = () => {
 
       {activeTab === "profil" && (
         <>
+          <section className="card profile-overview-card">
+            <div className="profile-overview-header">
+              <div className="profile-image-wrapper">
+                <div className="profile-avatar large">CH</div>
+                <button className="profile-image-button" type="button">
+                  Bild ändern
+                </button>
+              </div>
+
+              <div className="profile-main-info">
+                <h2>
+                  {formData.vorname} {formData.nachname}
+                </h2>
+                <p className="text-secondary">{formData.rolle}</p>
+              </div>
+            </div>
+          </section>
+
           <section className="card profile-content-card">
             <h2>Persönliche Daten</h2>
-            <div className="profile-form-grid">
-              <input
-                className="input-field"
-                name="vorname"
-                placeholder="Vorname"
-                value={formData.vorname}
-                onChange={handleInputChange}
-              />
-              <input
-                className="input-field"
-                name="nachname"
-                placeholder="Nachname"
-                value={formData.nachname}
-                onChange={handleInputChange}
-              />
-              <input
-                className="input-field"
-                name="email"
-                placeholder="E-Mail"
-                value={formData.email}
-                onChange={handleInputChange}
-              />
-              <input
-                className="input-field"
-                name="telefon"
-                placeholder="Telefon"
-                value={formData.telefon}
-                onChange={handleInputChange}
-              />
-              <input
-                className="input-field profile-full-width"
-                name="rolle"
-                placeholder="Rolle"
-                value={formData.rolle}
-                onChange={handleInputChange}
-              />
-            </div>
-          </section>
 
-          <section className="card profile-content-card">
-            <h2>Unternehmensdaten</h2>
-            <div className="profile-form-grid">
-              <input
-                className="input-field"
-                name="firmenname"
-                placeholder="Firmenname"
-                value={formData.firmenname}
-                onChange={handleInputChange}
-              />
-              <input
-                className="input-field"
-                name="branche"
-                placeholder="Branche"
-                value={formData.branche}
-                onChange={handleInputChange}
-              />
-              <input
-                className="input-field"
-                name="ustId"
-                placeholder="USt-IdNr."
-                value={formData.ustId}
-                onChange={handleInputChange}
-              />
-              <input
-                className="input-field"
-                name="website"
-                placeholder="Website"
-                value={formData.website}
-                onChange={handleInputChange}
-              />
-            </div>
-          </section>
+            <div className="profile-form-list">
+              <label className="profile-field">
+                <span>Vorname</span>
+                <input
+                  className="input-field"
+                  name="vorname"
+                  value={formData.vorname}
+                  onChange={handleInputChange}
+                />
+              </label>
 
-          <section className="card profile-content-card">
-            <h2>Adresse</h2>
-            <div className="profile-form-grid">
-              <input
-                className="input-field"
-                name="strasse"
-                placeholder="Straße"
-                value={formData.strasse}
-                onChange={handleInputChange}
-              />
-              <input
-                className="input-field"
-                name="hausnummer"
-                placeholder="Nr."
-                value={formData.hausnummer}
-                onChange={handleInputChange}
-              />
-              <input
-                className="input-field"
-                name="plz"
-                placeholder="PLZ"
-                value={formData.plz}
-                onChange={handleInputChange}
-              />
-              <input
-                className="input-field"
-                name="ort"
-                placeholder="Ort"
-                value={formData.ort}
-                onChange={handleInputChange}
-              />
-              <input
-                className="input-field profile-full-width"
-                name="land"
-                placeholder="Land"
-                value={formData.land}
-                onChange={handleInputChange}
-              />
-            </div>
-          </section>
+              <label className="profile-field">
+                <span>Nachname</span>
+                <input
+                  className="input-field"
+                  name="nachname"
+                  value={formData.nachname}
+                  onChange={handleInputChange}
+                />
+              </label>
 
-          <section className="card profile-content-card">
-            <h2>Rechnungs- & Geschäftsdaten</h2>
-            <div className="profile-form-grid">
-              <input
-                className="input-field"
-                name="steuernummer"
-                placeholder="Steuernummer"
-                value={formData.steuernummer}
-                onChange={handleInputChange}
-              />
-              <input
-                className="input-field"
-                name="angebotPrefix"
-                placeholder="Angebots-Präfix"
-                value={formData.angebotPrefix}
-                onChange={handleInputChange}
-              />
-              <input
-                className="input-field"
-                name="iban"
-                placeholder="IBAN"
-                value={formData.iban}
-                onChange={handleInputChange}
-              />
-              <input
-                className="input-field"
-                name="bic"
-                placeholder="BIC"
-                value={formData.bic}
-                onChange={handleInputChange}
-              />
-              <select
-                className="input-field profile-full-width"
-                name="standardZahlungsziel"
-                value={formData.standardZahlungsziel}
-                onChange={handleInputChange}
-              >
-                <option value="7 Tage">7 Tage</option>
-                <option value="14 Tage">14 Tage</option>
-                <option value="30 Tage">30 Tage</option>
-              </select>
+              <label className="profile-field">
+                <span>E-Mail</span>
+                <input
+                  className="input-field"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                />
+              </label>
+
+              <label className="profile-field">
+                <span>Telefonnummer</span>
+                <input
+                  className="input-field no-wrap-input"
+                  name="telefon"
+                  type="tel"
+                  value={formData.telefon}
+                  onChange={handleInputChange}
+                />
+              </label>
+
+              <label className="profile-field">
+                <span>Rolle</span>
+                <select
+                  className="input-field profile-select"
+                  name="rolle"
+                  value={formData.rolle}
+                  onChange={handleInputChange}
+                >
+                  <option value="Inhaber">Inhaber</option>
+                  <option value="Mitarbeiter">Mitarbeiter</option>
+                  <option value="Büro / Verwaltung">Büro / Verwaltung</option>
+                </select>
+              </label>
             </div>
-            <button className="button-primary profile-save-button">
-              Änderungen speichern
-            </button>
+
+            <div className="profile-actions">
+              <button className="button-primary profile-save-button">
+                Änderungen speichern
+              </button>
+
+              <button className="profile-password-button" type="button">
+                Passwort ändern
+              </button>
+            </div>
           </section>
         </>
       )}
