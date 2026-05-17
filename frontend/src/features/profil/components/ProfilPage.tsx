@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Navbar } from "@/features/dashboards/components/Navbar";
 import "@/assets/stylesheets/stylesheet.css";
 import "../ProfilePage.css";
 
@@ -15,11 +14,9 @@ type ProfileFormData = {
 
 export const ProfilPage = () => {
   const [activeTab, setActiveTab] = useState<Tab>("profil");
-
-  const [isLightMode, setIsLightMode] = useState(() => {
-    return localStorage.getItem("theme") === "light";
-  });
-
+  const [isLightMode, setIsLightMode] = useState(
+    () => localStorage.getItem("theme") === "light",
+  );
   const [formData, setFormData] = useState<ProfileFormData>({
     vorname: "Christian",
     nachname: "Huber",
@@ -36,14 +33,10 @@ export const ProfilPage = () => {
   }, [isLightMode]);
 
   const handleInputChange = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = event.target;
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   return (
@@ -60,20 +53,14 @@ export const ProfilPage = () => {
         >
           Profil
         </button>
-
         <button
-          className={`profile-tab ${
-            activeTab === "darstellung" ? "active" : ""
-          }`}
+          className={`profile-tab ${activeTab === "darstellung" ? "active" : ""}`}
           onClick={() => setActiveTab("darstellung")}
         >
           Darstellung
         </button>
-
         <button
-          className={`profile-tab ${
-            activeTab === "benachrichtigungen" ? "active" : ""
-          }`}
+          className={`profile-tab ${activeTab === "benachrichtigungen" ? "active" : ""}`}
           onClick={() => setActiveTab("benachrichtigungen")}
         >
           Benachrichtigungen
@@ -177,7 +164,6 @@ export const ProfilPage = () => {
       {activeTab === "darstellung" && (
         <section className="card profile-content-card">
           <h2>Darstellung</h2>
-
           <div className="settings-row">
             <div>
               <strong>
@@ -187,7 +173,6 @@ export const ProfilPage = () => {
                 Wechsle zwischen heller und dunkler Darstellung.
               </p>
             </div>
-
             <button
               className="theme-switch"
               onClick={() => setIsLightMode(!isLightMode)}
@@ -204,18 +189,15 @@ export const ProfilPage = () => {
       {activeTab === "benachrichtigungen" && (
         <section className="card profile-content-card">
           <h2>Benachrichtigungen</h2>
-
           <div className="notification-list">
             <label className="notification-item">
               <input type="checkbox" defaultChecked />
               <span>E-Mail bei neuem Angebot</span>
             </label>
-
             <label className="notification-item">
               <input type="checkbox" defaultChecked />
               <span>E-Mail bei fehlenden Pflichtdaten</span>
             </label>
-
             <label className="notification-item">
               <input type="checkbox" />
               <span>Wöchentliche Zusammenfassung</span>
@@ -223,8 +205,6 @@ export const ProfilPage = () => {
           </div>
         </section>
       )}
-
-      <Navbar />
     </div>
   );
 };

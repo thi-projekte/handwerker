@@ -1,10 +1,6 @@
 import { useState, useMemo } from "react";
-import { Navbar } from "@/features/dashboards/components/Navbar";
-import { AppHeader } from "@/shared/components/AppHeader";
 import "@/assets/stylesheets/stylesheet.css";
 import "@/features/document/components/DocumentPage.css";
-
-// ─── Typen ───────────────────────────────────────────────────────────────────
 
 type Status = "Erstellt" | "Versendet" | "Angenommen" | "Abgelehnt";
 
@@ -17,8 +13,6 @@ interface Angebot {
   status: Status;
   betrag: number;
 }
-
-// ─── Beispieldaten (werden später durch echte DB-Daten ersetzt) ───────────────
 
 const MOCK_ANGEBOTE: Angebot[] = [
   {
@@ -68,8 +62,6 @@ const MOCK_ANGEBOTE: Angebot[] = [
   },
 ];
 
-// ─── Hilfsfunktionen ──────────────────────────────────────────────────────────
-
 const STATUS_STYLES: Record<Status, string> = {
   Erstellt: "status-erstellt",
   Versendet: "status-versendet",
@@ -85,8 +77,6 @@ function formatDatum(iso: string) {
 function formatBetrag(n: number) {
   return n.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
 }
-
-// ─── Komponente ───────────────────────────────────────────────────────────────
 
 type Tab = "angebote" | "rechnungen";
 type SortKey = "datum" | "status" | "name";
@@ -106,11 +96,9 @@ export const DocumentPage = () => {
 
   const handleSortKey = (key: SortKey) => {
     if (key === sortKey) {
-      // Gleicher Key → Richtung umkehren
       setSortDir((d) => (d === "desc" ? "asc" : "desc"));
     } else {
       setSortKey(key);
-      // Datum: neueste zuerst; Name & Status: A→Z
       setSortDir(key === "datum" ? "desc" : "asc");
     }
   };
@@ -136,7 +124,6 @@ export const DocumentPage = () => {
     });
   }, [filtered, sortKey, sortDir]);
 
-  // Label für den Richtungs-Toggle
   const dirLabel =
     sortKey === "datum"
       ? sortDir === "desc"
@@ -147,10 +134,8 @@ export const DocumentPage = () => {
         : "↓ Z–A";
 
   return (
-    <div className="app doc-page">
-      <AppHeader />
-
-      {/* ── Sticky Header ── */}
+    <div className="doc-page">
+      {/* Sticky Tabs + Suche + Sortierung */}
       <div className="doc-sticky-header">
         <div className="doc-tabs">
           <button
@@ -176,10 +161,8 @@ export const DocumentPage = () => {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-
             <div className="doc-sort-row">
               <span className="text-secondary doc-sort-label">Sortieren:</span>
-
               {(["datum", "name", "status"] as SortKey[]).map((key) => (
                 <button
                   key={key}
@@ -194,8 +177,6 @@ export const DocumentPage = () => {
                   )}
                 </button>
               ))}
-
-              {/* Richtungs-Toggle */}
               <button
                 className="doc-dir-btn"
                 onClick={() =>
@@ -209,15 +190,14 @@ export const DocumentPage = () => {
         )}
       </div>
 
-      {/* ── Inhalt ── */}
+      {/* Liste */}
       <div className="doc-list">
         {activeTab === "rechnungen" ? (
           <div className="card doc-wip">
             <span className="doc-wip-icon">🔧</span>
             <h2>Im Aufbau</h2>
             <p className="text-secondary">
-              Die Rechnungsübersicht ist aktuell noch in Entwicklung. Sie wird
-              sich ähnlich wie die Angebotsübersicht verhalten.
+              Die Rechnungsübersicht ist aktuell noch in Entwicklung.
             </p>
           </div>
         ) : sorted.length === 0 ? (
@@ -233,9 +213,7 @@ export const DocumentPage = () => {
                   {angebot.status}
                 </span>
               </div>
-
               <div className="doc-card-name">{angebot.kundenname}</div>
-
               <div className="doc-card-meta">
                 <span className="text-secondary doc-meta-item">
                   📍 {angebot.adresse}
@@ -244,9 +222,7 @@ export const DocumentPage = () => {
                   📅 {formatDatum(angebot.datum)}
                 </span>
               </div>
-
               <hr className="divider" />
-
               <div className="doc-card-footer">
                 <span className="doc-betrag">
                   {formatBetrag(angebot.betrag)}
@@ -257,8 +233,6 @@ export const DocumentPage = () => {
           ))
         )}
       </div>
-
-      <Navbar />
     </div>
   );
 };

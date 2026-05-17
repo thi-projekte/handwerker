@@ -1,23 +1,17 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Navbar } from "@/features/dashboards/components/Navbar";
 import "@/assets/stylesheets/stylesheet.css";
 import "@/features/review/components/ReviewPage.css";
-
-// ─── Typen ───────────────────────────────────────────────────────────────────
 
 interface Stichpunkt {
   id: string;
   text: string;
 }
-
 interface Abschnitt {
   id: string;
   titel: string;
   stichpunkte: Stichpunkt[];
 }
-
-// ─── Mock-Daten (werden später durch echtes KI-Ergebnis ersetzt) ──────────────
 
 const MOCK_ERGEBNIS: Abschnitt[] = [
   {
@@ -63,12 +57,8 @@ const MOCK_ERGEBNIS: Abschnitt[] = [
   },
 ];
 
-// ─── Hilfsfunktion: eindeutige ID ────────────────────────────────────────────
-
 let _idCounter = 1000;
 const newId = () => `neu-${++_idCounter}`;
-
-// ─── Komponente ───────────────────────────────────────────────────────────────
 
 export const ReviewPage = () => {
   const navigate = useNavigate();
@@ -80,7 +70,6 @@ export const ReviewPage = () => {
   } | null>(null);
   const [bestaetigt, setBestaetigt] = useState(false);
 
-  // ── Stichpunkt Text ändern ──
   const updateText = (abschnittId: string, spId: string, text: string) => {
     setAbschnitte((prev) =>
       prev.map((a) =>
@@ -96,7 +85,6 @@ export const ReviewPage = () => {
     );
   };
 
-  // ── Stichpunkt löschen ──
   const deleteStichpunkt = (abschnittId: string, spId: string) => {
     setAbschnitte((prev) =>
       prev.map((a) =>
@@ -107,7 +95,6 @@ export const ReviewPage = () => {
     );
   };
 
-  // ── Stichpunkt hinzufügen ──
   const addStichpunkt = (abschnittId: string) => {
     const id = newId();
     setAbschnitte((prev) =>
@@ -120,10 +107,8 @@ export const ReviewPage = () => {
     setTimeout(() => setEditingId(id), 50);
   };
 
-  // ── Drag & Drop Reihenfolge ──
-  const onDragStart = (abschnittId: string, fromIndex: number) => {
+  const onDragStart = (abschnittId: string, fromIndex: number) =>
     setDragInfo({ abschnittId, fromIndex });
-  };
 
   const onDragOver = (
     e: React.DragEvent,
@@ -131,9 +116,12 @@ export const ReviewPage = () => {
     toIndex: number,
   ) => {
     e.preventDefault();
-    if (!dragInfo || dragInfo.abschnittId !== abschnittId) return;
-    if (dragInfo.fromIndex === toIndex) return;
-
+    if (
+      !dragInfo ||
+      dragInfo.abschnittId !== abschnittId ||
+      dragInfo.fromIndex === toIndex
+    )
+      return;
     setAbschnitte((prev) =>
       prev.map((a) => {
         if (a.id !== abschnittId) return a;
@@ -146,19 +134,13 @@ export const ReviewPage = () => {
     setDragInfo({ abschnittId, fromIndex: toIndex });
   };
 
-  const onDragEnd = () => setDragInfo(null);
-
-  // ── Bestätigen ──
   const handleBestaetigen = () => {
     setBestaetigt(true);
-    setTimeout(() => {
-      navigate("/angebot-vorschau");
-    }, 1200);
+    setTimeout(() => navigate("/angebot-vorschau"), 1200);
   };
 
   return (
-    <div className="app review-page">
-      {/* ── Header ── */}
+    <>
       <div className="card review-header">
         <div className="review-header-top">
           <div>
@@ -168,19 +150,16 @@ export const ReviewPage = () => {
           <span className="review-badge">Entwurf</span>
         </div>
         <p className="text-secondary">
-          Überprüfe und bearbeite die aufbereiteten Stichpunkte. Danach
-          bestätigst du das Ergebnis.
+          Überprüfe und bearbeite die aufbereiteten Stichpunkte.
         </p>
       </div>
 
-      {/* ── Abschnitte ── */}
       {abschnitte.map((abschnitt) => (
         <div key={abschnitt.id} className="card review-section">
           <div className="review-section-header">
             <h2>{abschnitt.titel}</h2>
             <span className="review-count">{abschnitt.stichpunkte.length}</span>
           </div>
-
           <ul className="review-list">
             {abschnitt.stichpunkte.map((sp, index) => (
               <li
@@ -189,14 +168,11 @@ export const ReviewPage = () => {
                 draggable
                 onDragStart={() => onDragStart(abschnitt.id, index)}
                 onDragOver={(e) => onDragOver(e, abschnitt.id, index)}
-                onDragEnd={onDragEnd}
+                onDragEnd={() => setDragInfo(null)}
               >
-                {/* Drag Handle */}
                 <span className="review-drag-handle" title="Verschieben">
                   ⠿
                 </span>
-
-                {/* Text – editierbar beim Tippen */}
                 {editingId === sp.id ? (
                   <textarea
                     className="review-textarea"
@@ -220,8 +196,6 @@ export const ReviewPage = () => {
                     )}
                   </span>
                 )}
-
-                {/* Löschen */}
                 <button
                   className="review-delete-btn"
                   onClick={() => deleteStichpunkt(abschnitt.id, sp.id)}
@@ -232,8 +206,6 @@ export const ReviewPage = () => {
               </li>
             ))}
           </ul>
-
-          {/* Hinzufügen */}
           <button
             className="review-add-btn"
             onClick={() => addStichpunkt(abschnitt.id)}
@@ -243,7 +215,6 @@ export const ReviewPage = () => {
         </div>
       ))}
 
-      {/* ── Bestätigen ── */}
       <div className="card review-confirm-card">
         {bestaetigt ? (
           <div className="review-success">
@@ -265,8 +236,6 @@ export const ReviewPage = () => {
           </>
         )}
       </div>
-
-      <Navbar />
-    </div>
+    </>
   );
 };
