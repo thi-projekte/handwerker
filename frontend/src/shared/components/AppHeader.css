@@ -1,14 +1,19 @@
+/* =========================
+   App Header
+   ========================= */
 .app-header {
+  flex-shrink: 0;
+
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  margin-bottom: -50px;
-  margin-top: -40px;
-  padding-left: 4px;
+
+  margin-bottom: 7px;
 }
+
 .app-header-logo {
-  width: 150px;
-  height: auto;
+  height: 35px;
+  width: auto;
   display: block;
   object-fit: contain;
 }

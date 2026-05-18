@@ -1,7 +1,7 @@
 import "./AppHeader.css";
 
-import logoBlack from "@/assets/logos/CraftVoice_Logo_black_text.png";
-import logoWhite from "@/assets/logos/CraftVoice_Logo_white_text.png";
+import logoBlack from "@/assets/logos/CraftVoice_Logo_black.png";
+import logoWhite from "@/assets/logos/CraftVoice_Logo_white.png";
 
 export const AppHeader = () => {
   const currentTheme = document.documentElement.getAttribute("data-theme");
@@ -9,7 +9,7 @@ export const AppHeader = () => {
 
   return (
     <header className="app-header">
-      <img className="app-header-logo" src={logo} alt="CraftVoice Logo" />
+      <img className="app-header-logo" src={logo} alt="CraftVoice" />
     </header>
   );
 };

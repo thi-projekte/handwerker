@@ -1,0 +1,48 @@
+/* =========================
+   App Shell — zentrales Layout
+   ========================= */
+
+/* Der äußere Container passt sich ans Gerät an */
+.shell {
+  /* Volle Bildschirmhöhe, aber nie mehr als ein typisches Handy */
+  height: 100svh;
+  max-height: 100svh;
+
+  /* Breite: auf Handy 100%, auf Desktop zentriert wie bisher */
+  width: 100%;
+  max-width: 430px;
+  margin: 0 auto;
+
+  /* Flex-Column: Header oben, Content mitte, Navbar unten */
+  display: flex;
+  flex-direction: column;
+
+  background: var(--color-surface);
+  backdrop-filter: blur(var(--blur));
+  border: 1px solid var(--color-divider);
+
+  /* Auf Desktop: schöne Rundung und etwas Abstand */
+  @media (min-width: 431px) {
+    height: calc(100svh - 48px);
+    margin: 24px auto;
+    border-radius: 32px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+  }
+}
+
+/* Scrollbarer Inhaltsbereich zwischen Header und Navbar */
+.shell-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 16px 20px;
+
+  /* Scrollbar unsichtbar aber funktional */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.shell-content::-webkit-scrollbar {
+  display: none;
+}
