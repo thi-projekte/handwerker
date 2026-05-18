@@ -1,0 +1,52 @@
+package de.craftvoice.offerservice.offer;
+
+import de.craftvoice.offerservice.common.BaseEntity;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+@Entity
+@Table(name = "offer")
+@JsonInclude(JsonInclude.Include.ALWAYS)
+public class Offer extends BaseEntity {
+
+    @Column(unique = true, nullable = false)
+    public String businessKey;
+
+    // Status Konstanten
+    public static final String STATUS_ERFASST = "ERFASST";
+    public static final String STATUS_IN_BEARBEITUNG = "IN_BEARBEITUNG";
+    public static final String STATUS_KI_BEARBEITUNG_ABGESCHLOSSEN = "KI_BEARBEITUNG_ABGESCHLOSSEN";
+    public static final String STATUS_VERSANDBEREIT = "VERSANDBEREIT";
+    public static final String STATUS_VERSENDET = "VERSENDET";
+    public static final String STATUS_ANGENOMMEN = "ANGENOMMEN";
+    public static final String STATUS_ABGELEHNT = "ABGELEHNT";
+    public static final String STATUS_ABGEBROCHEN = "ABGEBROCHEN";
+
+    @Column(nullable = false)
+    public String status = STATUS_ERFASST;           // Enum-Werte als String: ERFASST, IN_BEARBEITUNG, KI_BEARBEITUNG_ABGESCHLOSSEN, VERSANDBEREIT, VERSENDET, ANGENOMMEN, ABGELEHNT, ABGEBROCHEN
+
+    @Column(columnDefinition = "TEXT")
+    public String kundendaten;      // JSON-String
+
+    @Column(columnDefinition = "TEXT")
+    public String sprachschnipsel;
+
+    @Column(columnDefinition = "TEXT")
+    public String vorlage;          // JSON-String: { leistungen, material, notizen }
+
+    @Column(unique = true)
+    public String annahmeToken;     // UUID für öffentlichen Annahme-Link
+
+    @OneToMany(mappedBy = "offer", cascade = CascadeType.ALL, orphanRemoval = true)
+    public List<OfferPosition> positionen = new ArrayList<>();
+
+    @OneToMany(mappedBy = "offer", cascade = CascadeType.ALL, orphanRemoval = true)
+    public List<OfferStatusHistory> statusHistorie = new ArrayList<>();
+}
