@@ -119,6 +119,16 @@ CREATE DATABASE "new-service-db";
 
 **Option B (automatisiert):** Nutze ein init-Script in `docker-compose.yml` (siehe Sektion "Datenbank-Initialisierung").
 
+⚠️ **Wichtig:** PostgreSQL-Init-Skripte in Docker werden nur beim **ersten Start mit leerem Volume** ausgeführt.
+
+Wenn PostgreSQL bereits läuft oder das Volume schon existiert, muss die Datenbank einmalig manuell erstellt werden:
+
+```bash
+psql -h localhost -U postgres -c 'CREATE DATABASE "offer-db";'
+```
+
+Alternativ kann das Volume gelöscht und PostgreSQL neu initialisiert werden.
+
 ### Schritt 5: Docker neu starten und testen
 
 ```bash
