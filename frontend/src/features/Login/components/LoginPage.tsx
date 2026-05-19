@@ -1,11 +1,9 @@
-import { Navbar } from "@/features/dashboards/components/Navbar";
 import "@/assets/stylesheets/stylesheet.css";
 
 export const LoginPage = () => {
   return (
     <div className="app">
       <div className="card login-card">
-
         <h1>Login</h1>
         <p className="text-secondary">Melde dich in deinem Account an</p>
 
@@ -18,10 +16,11 @@ export const LoginPage = () => {
         <button className="button-secondary">Registrieren</button>
 
         <div className="login-footer">
-          <a href="#" className="text-secondary">Passwort vergessen?</a>
+          <a href="#" className="text-secondary">
+            Passwort vergessen?
+          </a>
         </div>
-
       </div>
     </div>
   );
-}
+};
