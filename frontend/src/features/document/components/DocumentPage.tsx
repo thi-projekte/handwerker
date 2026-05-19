@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { MapPin, Calendar, Wrench, X, Filter, ChevronDown } from "lucide-react";
 import "@/assets/stylesheets/stylesheet.css";
 import "@/features/document/components/DocumentPage.css";
 
@@ -14,7 +15,7 @@ interface Angebot {
   betrag: number;
 }
 
-const MOCK_ANGEBOTE: Angebot[] = [
+const INITIAL_ANGEBOTE: Angebot[] = [
   {
     id: "1",
     auftragsnummer: "ANG-2025-001",
@@ -69,6 +70,13 @@ const STATUS_STYLES: Record<Status, string> = {
   Abgelehnt: "status-abgelehnt",
 };
 
+const STATUS_OPTIONS: Status[] = [
+  "Erstellt",
+  "Versendet",
+  "Angenommen",
+  "Abgelehnt",
+];
+
 function formatDatum(iso: string) {
   const [y, m, d] = iso.split("-");
   return `${d}.${m}.${y}`;
@@ -94,6 +102,38 @@ export const DocumentPage = () => {
   const [sortKey, setSortKey] = useState<SortKey>("datum");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
 
+  // App-Zustände
+  const [angebote, setAngebote] = useState<Angebot[]>(INITIAL_ANGEBOTE);
+  const [filterStatus, setFilterStatus] = useState<Status | null>(null);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
+  // UI-Zustände
+  const [showFilterMenu, setShowFilterMenu] = useState(false);
+  const [activeStatusDropdownId, setActiveStatusDropdownId] = useState<
+    string | null
+  >(null);
+  const [showFilterStatusDropdown, setShowFilterStatusDropdown] =
+    useState(false);
+
+  // Schließt die Card-Dropdowns zuverlässig bei Klicks außerhalb
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (
+        !target.closest(".doc-status-select-tag") &&
+        !target.closest(".doc-card-status-options")
+      ) {
+        setActiveStatusDropdownId(null);
+      }
+      if (!target.closest(".doc-custom-dropdown-container")) {
+        setShowFilterStatusDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
+
   const handleSortKey = (key: SortKey) => {
     if (key === sortKey) {
       setSortDir((d) => (d === "desc" ? "asc" : "desc"));
@@ -103,15 +143,42 @@ export const DocumentPage = () => {
     }
   };
 
+  const handleStatusChange = (id: string, newStatus: Status) => {
+    setAngebote((prev) =>
+      prev.map((a) => (a.id === id ? { ...a, status: newStatus } : a)),
+    );
+    setActiveStatusDropdownId(null);
+  };
+
+  const handleResetFilters = () => {
+    setFilterStatus(null);
+    setStartDate("");
+    setEndDate("");
+  };
+
+  const hasActiveFilters =
+    filterStatus !== null || startDate !== "" || endDate !== "";
+
   const filtered = useMemo(() => {
-    const q = search.toLowerCase();
-    return MOCK_ANGEBOTE.filter(
-      (a) =>
+    return angebote.filter((a) => {
+      const q = search.toLowerCase();
+      const matchesSearch =
         a.auftragsnummer.toLowerCase().includes(q) ||
         a.kundenname.toLowerCase().includes(q) ||
-        a.adresse.toLowerCase().includes(q),
-    );
-  }, [search]);
+        a.adresse.toLowerCase().includes(q);
+
+      let matchesStatus = true;
+      if (filterStatus) {
+        matchesStatus = a.status === filterStatus;
+      }
+
+      let matchesDate = true;
+      if (startDate) matchesDate = matchesDate && a.datum >= startDate;
+      if (endDate) matchesDate = matchesDate && a.datum <= endDate;
+
+      return matchesSearch && matchesStatus && matchesDate;
+    });
+  }, [angebote, search, filterStatus, startDate, endDate]);
 
   const sorted = useMemo(() => {
     const mult = sortDir === "asc" ? 1 : -1;
@@ -135,7 +202,6 @@ export const DocumentPage = () => {
 
   return (
     <div className="doc-page">
-      {/* Sticky Tabs + Suche + Sortierung */}
       <div className="doc-sticky-header">
         <div className="doc-tabs">
           <button
@@ -154,13 +220,96 @@ export const DocumentPage = () => {
 
         {activeTab === "angebote" && (
           <>
-            <input
-              className="input-field doc-search"
-              type="text"
-              placeholder="Suche nach Name, Adresse, Nummer …"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+            {/* Suchzeile mit Filter-Button */}
+            <div className="doc-search-row">
+              <input
+                className="input-field doc-search"
+                type="text"
+                placeholder="Suche nach Name, Adresse, Nummer …"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+
+              <div className="doc-filter-container">
+                <button
+                  className={`doc-filter-btn-toggle ${showFilterMenu ? "menu-open" : ""} ${hasActiveFilters ? "filter-active" : ""}`}
+                  onClick={() => setShowFilterMenu(!showFilterMenu)}
+                >
+                  <Filter size={16} /> Filter
+                </button>
+              </div>
+            </div>
+
+            {/* Inline-Filterbereich verschiebt den Content nach unten */}
+            {showFilterMenu && (
+              <div className="doc-filter-inline-panel card">
+                <div className="doc-filter-grid">
+                  <div className="doc-filter-section">
+                    <label className="doc-filter-label-text">Status</label>
+
+                    {/* Custom Filter Status Dropdown */}
+                    <div className="doc-custom-dropdown-container">
+                      <div
+                        className="doc-custom-dropdown-trigger"
+                        onClick={() =>
+                          setShowFilterStatusDropdown(!showFilterStatusDropdown)
+                        }
+                      >
+                        <span>
+                          {filterStatus ? filterStatus : "Auswählen..."}
+                        </span>
+                        <ChevronDown size={14} />
+                      </div>
+                      {showFilterStatusDropdown && (
+                        <div className="doc-custom-dropdown-options">
+                          {STATUS_OPTIONS.map((opt) => (
+                            <div
+                              key={opt}
+                              className={`doc-custom-dropdown-option ${filterStatus === opt ? "selected" : ""}`}
+                              onClick={() => {
+                                setFilterStatus(opt);
+                                setShowFilterStatusDropdown(false);
+                              }}
+                            >
+                              {opt}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="doc-filter-section">
+                    <label className="doc-filter-label-text">Zeitraum</label>
+                    <div className="doc-filter-date-row">
+                      <input
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        className="doc-custom-date-input"
+                      />
+                      <span className="text-secondary">bis</span>
+                      <input
+                        type="date"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        className="doc-custom-date-input"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {hasActiveFilters && (
+                  <button
+                    className="doc-menu-reset-btn"
+                    onClick={handleResetFilters}
+                  >
+                    <X size={14} /> Filter zurücksetzen
+                  </button>
+                )}
+              </div>
+            )}
+
             <div className="doc-sort-row">
               <span className="text-secondary doc-sort-label">Sortieren:</span>
               {(["datum", "name", "status"] as SortKey[]).map((key) => (
@@ -194,7 +343,12 @@ export const DocumentPage = () => {
       <div className="doc-list">
         {activeTab === "rechnungen" ? (
           <div className="card doc-wip">
-            <span className="doc-wip-icon">🔧</span>
+            <span className="doc-wip-icon">
+              <Wrench
+                size={36}
+                style={{ color: "var(--color-accent)", margin: "0 auto 12px" }}
+              />
+            </span>
             <h2>Im Aufbau</h2>
             <p className="text-secondary">
               Die Rechnungsübersicht ist aktuell noch in Entwicklung.
@@ -202,24 +356,68 @@ export const DocumentPage = () => {
           </div>
         ) : sorted.length === 0 ? (
           <div className="card doc-empty">
-            <p className="text-secondary">Keine Angebote gefunden.</p>
+            <p className="text-secondary">
+              Keine Angebote gefunden mit diesen Filtereinstellungen.
+            </p>
           </div>
         ) : (
           sorted.map((angebot) => (
             <div key={angebot.id} className="card doc-card">
               <div className="doc-card-top">
                 <span className="doc-auftragsnr">{angebot.auftragsnummer}</span>
-                <span className={`tag ${STATUS_STYLES[angebot.status]}`}>
-                  {angebot.status}
-                </span>
+
+                {/* Custom Status-Dropdown auf der Karte */}
+                <div className="doc-status-dropdown-wrapper">
+                  <span
+                    className={`tag ${STATUS_STYLES[angebot.status]} doc-status-select-tag`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveStatusDropdownId(
+                        activeStatusDropdownId === angebot.id
+                          ? null
+                          : angebot.id,
+                      );
+                    }}
+                  >
+                    {angebot.status}{" "}
+                    <ChevronDown
+                      size={12}
+                      style={{
+                        marginLeft: "2px",
+                        display: "inline-block",
+                        verticalAlign: "middle",
+                      }}
+                    />
+                  </span>
+
+                  {activeStatusDropdownId === angebot.id && (
+                    <div className="doc-card-status-options card">
+                      {STATUS_OPTIONS.map((opt) => (
+                        <div
+                          key={opt}
+                          className={`doc-card-status-option-item ${STATUS_STYLES[opt]}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleStatusChange(angebot.id, opt);
+                          }}
+                        >
+                          {opt}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
+
               <div className="doc-card-name">{angebot.kundenname}</div>
               <div className="doc-card-meta">
                 <span className="text-secondary doc-meta-item">
-                  📍 {angebot.adresse}
+                  <MapPin size={14} className="doc-icon-inline" />{" "}
+                  {angebot.adresse}
                 </span>
                 <span className="text-secondary doc-meta-item">
-                  📅 {formatDatum(angebot.datum)}
+                  <Calendar size={14} className="doc-icon-inline" />{" "}
+                  {formatDatum(angebot.datum)}
                 </span>
               </div>
               <hr className="divider" />
