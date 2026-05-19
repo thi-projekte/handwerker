@@ -6,6 +6,7 @@ export const useVoiceInput = () => {
   const [volume, setVolume] = useState(0);
   const [transcript, setTranscript] = useState("");
   const [audioBlobUrl, setAudioBlobUrl] = useState<string | null>(null);
+  const [state, setState] = useState<"idle" | "recording" | "review">("idle");
 
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -33,8 +34,7 @@ export const useVoiceInput = () => {
 
     const update = () => {
       analyser.getByteFrequencyData(dataArray);
-      const avg =
-        dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+      const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
 
       setVolume(avg);
       animationRef.current = requestAnimationFrame(update);
@@ -64,28 +64,36 @@ export const useVoiceInput = () => {
     };
 
     mediaRecorder.start();
-
     setIsRecording(true);
   };
 
   const stop = () => {
-    animationRef.current && cancelAnimationFrame(animationRef.current);
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
+    }
 
-    audioContextRef.current?.close();
-    mediaRecorderRef.current?.stop();
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+    }
+
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+    }
 
     setIsRecording(false);
     setVolume(0);
-
     setState("review");
   };
 
+  // 🔀 Schaltet zwischen Start und Stop um
   const toggle = () => {
-    isRecording ? stop() : start();
+    if (isRecording) {
+      stop();
+    } else {
+      start();
+    }
   };
-  const [state, setState] = useState<
-    "idle" | "recording" | "review"
-  >("idle");
+
   const reset = () => {
     setState("idle");
     setTranscript("");
