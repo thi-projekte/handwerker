@@ -9,9 +9,22 @@ export const UnternehmenPage = () => {
   const [employeeName, setEmployeeName] = useState("");
   const [employeePrice, setEmployeePrice] = useState("");
 
-  const handleLogoUpload = (e: any) => {
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) setLogo(URL.createObjectURL(file));
+
+    // 1. Prüfen, ob überhaupt eine Datei existiert
+    if (!file) return;
+
+    // 2. Sicherheits-Check: Ist es wirklich ein Bild?
+    if (!file.type.startsWith("image/")) {
+      alert("Fehler: Bitte wähle eine Bilddatei (PNG, JPG, WEBP) aus.");
+      // Löscht die falsche Datei aus dem Input-Feld, damit es leer wird
+      e.target.value = "";
+      return;
+    }
+
+    // 3. Wenn es ein Bild ist, URL für die Vorschau erzeugen
+    setLogo(URL.createObjectURL(file));
   };
 
   const addEmployee = () => {
