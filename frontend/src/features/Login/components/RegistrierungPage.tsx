@@ -1,11 +1,9 @@
-import { Navbar } from "@/features/dashboards/components/Navbar";
 import "@/assets/stylesheets/stylesheet.css";
 
 export const RegistrierungPage = () => {
   return (
     <div className="app">
       <div className="card register-card">
-
         <h1>Registrieren</h1>
         <p className="text-secondary">Erstelle deinen Account</p>
 
@@ -19,20 +17,21 @@ export const RegistrierungPage = () => {
         </select>
 
         <input className="input-field" type="text" placeholder="Benutzername" />
-        <input className="input-field" type="email" placeholder="E-Mail-Adresse" />
+        <input
+          className="input-field"
+          type="email"
+          placeholder="E-Mail-Adresse"
+        />
         <input className="input-field" type="password" placeholder="Passwort" />
 
-        <button className="button-primary register-btn">
-          Registrieren
-        </button>
+        <button className="button-primary register-btn">Registrieren</button>
 
         <div className="register-footer">
           <a href="#" className="text-secondary">
             Bereits ein Konto? Einloggen
           </a>
         </div>
-
       </div>
     </div>
   );
-}
+};
