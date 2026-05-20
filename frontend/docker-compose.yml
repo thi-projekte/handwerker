@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+
+  frontend:
+    image: ghcr.io/thi-projekte/craftvoice-frontend:latest
+
+    container_name: craftvoice-frontend
+
+    restart: unless-stopped
+
+    networks:
+      - nginx-reverse-proxy
+
+networks:
+  nginx-reverse-proxy:
+    external: true
