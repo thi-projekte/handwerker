@@ -1,4 +1,4 @@
-name: Backend CI
+name: Frontend CI
 
 on:
   push:
@@ -11,7 +11,6 @@ on:
     branches:
       - main
       - 'sprint*'
-  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
@@ -21,30 +20,41 @@ permissions:
   packages: write
 
 jobs:
-  build:
+  frontend-ci:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        service: [offer-service]
+
+    defaults:
+      run:
+        working-directory: frontend
 
     steps:
       # Repository herunterladen
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      # JDK 21 installieren
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
+      # Node.js installieren
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: maven
-          cache-dependency-path: backend/services/${{ matrix.service }}/pom.xml
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
 
-      - name: Build with Maven
-        run: |
-          cd backend/services/${{ matrix.service }}
-          mvn clean package
+      # Dependencies installieren
+      - name: Install dependencies
+        run: npm ci
+
+      # Linting prüfen
+      - name: Run ESLint
+        run: npm run lint
+
+      # TypeScript-Typen prüfen
+      - name: Run typecheck
+        run: npm run typecheck
+
+      # Produktionsbuild testen
+      - name: Build frontend
+        run: npm run build
 
       # Login in GHCR
       - name: Log in to GitHub Container Registry
@@ -55,24 +65,24 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Metadaten für Docker-Tags extrahieren
-      - name: Extract metadata for ${{ matrix.service }}
+      # Docker-Metadaten
+      - name: Extract metadata
         id: meta
         if: github.event_name == 'push'
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}/${{ matrix.service }}
+          images: ghcr.io/${{ github.repository }}/frontend
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=ref,event=branch
             type=sha,prefix=sha-
 
-      # Docker-Image bauen und pushen
-      - name: Build and push Docker image for ${{ matrix.service }}
+      - name: Build and push Docker image
         if: github.event_name == 'push'
         uses: docker/build-push-action@v6
         with:
-          context: backend/services/${{ matrix.service }}
+          context: frontend
+          file: frontend/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
