@@ -46,6 +46,10 @@ jobs:
           cd backend/services/${{ matrix.service }}
           mvn clean package
 
+      # Buildx aktivieren
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       # Login in GHCR
       - name: Log in to GitHub Container Registry
         if: github.event_name == 'push'

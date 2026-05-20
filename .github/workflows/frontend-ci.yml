@@ -56,6 +56,10 @@ jobs:
       - name: Build frontend
         run: npm run build
 
+      # Buildx aktivieren
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       # Login in GHCR
       - name: Log in to GitHub Container Registry
         if: github.event_name == 'push'
@@ -77,6 +81,7 @@ jobs:
             type=ref,event=branch
             type=sha,prefix=sha-
 
+      # Docker-Image bauen und pushen
       - name: Build and push Docker image
         if: github.event_name == 'push'
         uses: docker/build-push-action@v6
