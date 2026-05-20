@@ -6,7 +6,9 @@ export const useVoiceInput = () => {
   const [volume, setVolume] = useState(0);
   const [transcript, setTranscript] = useState("");
   const [audioBlobUrl, setAudioBlobUrl] = useState<string | null>(null);
-  const [state, setState] = useState<"idle" | "recording" | "review">("idle");
+  const [state, setState] = useState<
+    "idle" | "recording" | "review" | "finished"
+  >("idle");
 
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -48,7 +50,9 @@ export const useVoiceInput = () => {
     chunksRef.current = [];
 
     mediaRecorder.ondataavailable = (e) => {
-      chunksRef.current.push(e.data);
+      if (e.data.size > 0) {
+        chunksRef.current.push(e.data);
+      }
     };
 
     mediaRecorder.onstop = () => {
@@ -67,7 +71,57 @@ export const useVoiceInput = () => {
     setIsRecording(true);
   };
 
-  const stop = () => {
+  // Aufnahme pausieren
+  const pause = () => {
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
+    }
+
+    if (mediaRecorderRef.current?.state === "recording") {
+      mediaRecorderRef.current.pause();
+    }
+
+    setIsRecording(false);
+    setVolume(0);
+    setState("review");
+  };
+
+  // Aufnahme fortsetzen
+  const resume = () => {
+    if (mediaRecorderRef.current?.state === "paused") {
+      mediaRecorderRef.current.resume();
+    }
+
+    // Visualizer neu starten
+    if (analyserRef.current) {
+      const analyser = analyserRef.current;
+
+      const dataArray = new Uint8Array(
+        analyser.frequencyBinCount
+      );
+
+      const update = () => {
+        analyser.getByteFrequencyData(dataArray);
+
+        const avg =
+          dataArray.reduce((a, b) => a + b, 0) /
+          dataArray.length;
+
+        setVolume(avg);
+
+        animationRef.current =
+          requestAnimationFrame(update);
+      };
+
+      update();
+    }
+
+    setIsRecording(true);
+    setState("recording");
+  };
+
+  // Aufnahme endgültig beenden und Blob erstellen
+  const finalizeRecording = () => {
     if (animationRef.current) {
       cancelAnimationFrame(animationRef.current);
     }
@@ -76,21 +130,38 @@ export const useVoiceInput = () => {
       audioContextRef.current.close();
     }
 
-    if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.stop();
-    }
+    if (!mediaRecorderRef.current) return;
+
+    mediaRecorderRef.current.onstop = () => {
+      const blob = new Blob(chunksRef.current, {
+        type: "audio/webm",
+      });
+
+      const url = URL.createObjectURL(blob);
+
+      setAudioBlobUrl(url);
+
+      setState("finished");
+    };
+
+    mediaRecorderRef.current.stop();
+
+    mediaRecorderRef.current.stream
+      .getTracks()
+      .forEach((track) => track.stop());
 
     setIsRecording(false);
     setVolume(0);
-    setState("review");
   };
 
   // 🔀 Schaltet zwischen Start und Stop um
   const toggle = () => {
-    if (isRecording) {
-      stop();
-    } else {
+    if (state === "idle") {
       start();
+    } else if (state === "recording") {
+      pause();
+    } else if (state === "review") {
+      resume();
     }
   };
 
@@ -109,5 +180,8 @@ export const useVoiceInput = () => {
     audioBlobUrl,
     state,
     reset,
+    resume,
+    pause,
+    finalizeRecording,
   };
 };
