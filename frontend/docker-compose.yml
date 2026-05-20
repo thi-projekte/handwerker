@@ -10,7 +10,7 @@ services:
     restart: unless-stopped
 
     networks:
-      - nginx-reverse-proxy
+      - nginx-proxy-manager
 
 networks:
   nginx-proxy-manager:
