@@ -13,5 +13,5 @@ services:
       - nginx-reverse-proxy
 
 networks:
-  nginx-reverse-proxy:
+  nginx-proxy-manager:
     external: true
