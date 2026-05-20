@@ -7,6 +7,7 @@ import { HomeView } from "@/features/voice-input/components/HomeView";
 import { UnternehmenPage } from "@/features/unternehmen/components/UnternehmenPage";
 import { ProfilPage } from "@/features/profil/components/ProfilPage";
 import { ReviewPage } from "@/features/review/components/ReviewPage";
+
 import { LoginPage } from "@/features/Login/components/LoginPage";
 import { PasswortVergessenPage } from "@/features/Login/components/PasswortVergessenPage";
 import { RegistrierungPage } from "@/features/Login/components/RegistrierungPage";
@@ -14,6 +15,8 @@ import { LogoutPage } from "@/features/Logout/components/LogoutPage";
 
 
 import { OfferResultPage } from "@/features/offer-result/components/OfferResultPage";
+import { PasswordChangePage } from "@/features/password-change/components/PasswordChangePage";
+
 export function AppRoutes() {
   return (
     <Routes>
@@ -26,6 +29,7 @@ export function AppRoutes() {
           </AppLayout>
         }
       />
+
       <Route
         path="/angebote"
         element={
@@ -34,6 +38,7 @@ export function AppRoutes() {
           </AppLayout>
         }
       />
+
       <Route
         path="/aufnahme"
         element={
@@ -42,6 +47,7 @@ export function AppRoutes() {
           </AppLayout>
         }
       />
+
       <Route
         path="/unternehmen"
         element={
@@ -50,6 +56,7 @@ export function AppRoutes() {
           </AppLayout>
         }
       />
+
       <Route
         path="/profil"
         element={
@@ -58,6 +65,16 @@ export function AppRoutes() {
           </AppLayout>
         }
       />
+
+      <Route
+        path="/passwort-aendern"
+        element={
+          <AppLayout>
+            <PasswordChangePage />
+          </AppLayout>
+        }
+      />
+
       <Route
         path="/review"
         element={
@@ -85,6 +102,7 @@ export function AppRoutes() {
           </AppLayout>
         }
       />
+
       <Route
         path="/passwortVergessen"
         element={
@@ -93,6 +111,7 @@ export function AppRoutes() {
           </AppLayout>
         }
       />
+
       <Route
         path="/registrierung"
         element={
@@ -101,6 +120,7 @@ export function AppRoutes() {
           </AppLayout>
         }
       />
+
       <Route
         path="/logout"
         element={

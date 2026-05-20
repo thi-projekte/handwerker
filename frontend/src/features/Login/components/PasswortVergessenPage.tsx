@@ -1,14 +1,13 @@
-import { Navbar } from "@/features/dashboards/components/Navbar";
 import "@/assets/stylesheets/stylesheet.css";
 
 export const PasswortVergessenPage = () => {
   return (
     <div className="app">
       <div className="card reset-card">
-        
         <h1>Passwort zurücksetzen</h1>
         <p className="text-secondary">
-          Gib deine E-Mail-Adresse ein und wir senden dir einen Link zum Zurücksetzen.
+          Gib deine E-Mail-Adresse ein und wir senden dir einen Link zum
+          Zurücksetzen.
         </p>
 
         <div className="divider"></div>
@@ -28,8 +27,7 @@ export const PasswortVergessenPage = () => {
             Zurück zum Login
           </a>
         </div>
-
       </div>
     </div>
   );
-}
+};

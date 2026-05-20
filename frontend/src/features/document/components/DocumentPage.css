@@ -292,3 +292,289 @@
   position: static;
   border-radius: 0 0 32px 32px;
 }
+
+/* Suchzeile Layout */
+.doc-search-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.doc-search-row .doc-search {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+/* Filter Button */
+.doc-filter-btn-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--color-divider);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  height: 44px;
+  transition: all 0.2s ease;
+}
+
+.doc-filter-label-text {
+  font-size: 14px;
+  margin: 4px;
+}
+
+.doc-filter-btn-toggle:hover,
+.doc-filter-btn-toggle.menu-open {
+  background: rgba(255, 106, 0, 0.05);
+  color: var(--color-accent);
+  border-color: rgba(255, 106, 0, 0.2);
+}
+
+.doc-filter-btn-toggle.filter-active {
+  background: rgba(255, 106, 0, 0.1);
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+/* NEU: Inline Filter Panel schiebt den Inhalt nach unten */
+/* --- Optimierte Animation für sanfteres Öffnen/Schließen --- */
+.doc-filter-inline-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 12px;
+  margin-bottom: 16px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-divider);
+  border-radius: 16px;
+  /* Von 0.2s auf 0.35s verlangsamt für eine weichere Transition */
+  animation: slideDown 0.35s ease-in-out;
+}
+
+/* --- Platzoptimierung im Grid --- */
+.doc-filter-grid {
+  display: grid;
+  /* Status wird kompakter, Zeitraum bekommt den restlichen Platz */
+  grid-template-columns: 0.8fr 1.2fr;
+  gap: 12px;
+}
+
+@media (max-width: 600px) {
+  .doc-filter-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+/* --- Kompakteres Dropdown für den Status --- */
+.doc-custom-dropdown-trigger {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 5px;
+  border-radius: 12px;
+  border: 1px solid var(--color-divider);
+  font-size: 12px;
+  color: var(--color-text-primary);
+  background: transparent;
+  cursor: pointer;
+  height: 42px;
+  margin-top: 5px;
+}
+
+/* --- Datums-Inputs verkleinern & Kalender-Icon entfernen --- */
+.doc-filter-date-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.doc-custom-date-input {
+  flex: 1;
+  border-radius: 12px;
+  border: 1px solid var(--color-divider);
+  background: transparent;
+  color: var(--color-text-primary);
+  font-size: 12px;
+  height: 42px;
+  margin-top: 5px;
+  text-align: center; /* Zentrierter Text wirkt bei weniger Platz sauberer */
+
+  /* Versteckt das Standard-Kalender-Icon in Chrome, Safari, Edge */
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.doc-custom-date-input::-webkit-calendar-picker-indicator {
+  display: none;
+  -webkit-appearance: none;
+}
+
+/* --- Keyframes leicht angepasst für weicheren Verlauf --- */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Reset Button */
+.doc-menu-reset-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 80, 80, 0.2);
+  background: rgba(255, 80, 80, 0.05);
+  color: #ff5050;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-start;
+  transition: background 0.15s ease;
+}
+
+.doc-menu-reset-btn:hover {
+  background: rgba(255, 80, 80, 0.12);
+}
+
+/* Custom Card-Dropdown für Kartenstatus */
+.doc-status-dropdown-wrapper {
+  position: relative;
+}
+
+.doc-status-select-tag {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.doc-card-status-options {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  border: 1px solid var(--color-divider);
+  background: var(--color-surface);
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  min-width: 130px;
+}
+
+.doc-card-status-option-item {
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: center;
+  transition:
+    transform 0.1s ease,
+    opacity 0.15s ease;
+}
+
+.doc-card-status-option-item:hover {
+  opacity: 0.85;
+  transform: scale(1.02);
+}
+
+/* Keyframes für weiches Aufklappen */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* --- FIX: Absolut positioniertes Status-Dropdown --- */
+.doc-custom-dropdown-container {
+  position: relative; /* Wichtig, damit das Dropdown relativ hierzu positioniert wird */
+}
+
+.doc-custom-dropdown-options {
+  position: absolute;
+  top: calc(100% + 6px); /* Kleiner Abstand zum Trigger-Feld */
+  left: 0;
+  width: 100%;
+
+  /* Styling passend zum restlichen UI */
+  background: var(--color-surface);
+  border: 1px solid var(--color-divider);
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3); /* Hochwertiger Schatten für Tiefenwirkung */
+
+  /* Stapelreihenfolge nach ganz oben setzen, damit es die Datumsfelder überlagert */
+  z-index: 120;
+  overflow: hidden;
+
+  /* Sanftes Einblenden der Optionen */
+  animation: slideDown 0.2s ease-out;
+}
+
+/* --- Einzelne Optionen im Dropdown --- */
+.doc-custom-dropdown-option {
+  padding: 11px 14px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+/* Hover-Effekt mit dezentem Accent-Highlight */
+.doc-custom-dropdown-option:hover {
+  background: rgba(255, 106, 0, 0.08);
+  color: var(--color-accent);
+}
+
+/* Wenn eine Option bereits ausgewählt ist */
+.doc-custom-dropdown-option.selected {
+  background: rgba(255, 106, 0, 0.12);
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+/* --- OPTIONALES DESIGN-FINETUNING --- */
+/* Falls der Trigger-Button ("Auswählen...") noch etwas mehr Padding vertragen kann */
+.doc-custom-dropdown-trigger {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 12px; /* Etwas mehr Luft links und rechts */
+  border-radius: 12px;
+  border: 1px solid var(--color-divider);
+  font-size: 13px; /* Einheitliche Font-Größe mit Datumsfeldern */
+  color: var(--color-text-primary);
+  background: transparent;
+  cursor: pointer;
+  height: 42px;
+  margin-top: 5px;
+  transition: border-color 0.15s ease;
+}
+
+.doc-custom-dropdown-trigger:hover {
+  border-color: rgba(255, 106, 0, 0.3);
+}

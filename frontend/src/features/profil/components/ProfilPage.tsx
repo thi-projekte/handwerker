@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "@/assets/stylesheets/stylesheet.css";
 import "../ProfilePage.css";
 
@@ -13,10 +14,14 @@ type ProfileFormData = {
 };
 
 export const ProfilPage = () => {
+  const navigate = useNavigate();
+
   const [activeTab, setActiveTab] = useState<Tab>("profil");
+
   const [isLightMode, setIsLightMode] = useState(
     () => localStorage.getItem("theme") === "light",
   );
+
   const [formData, setFormData] = useState<ProfileFormData>({
     vorname: "Christian",
     nachname: "Huber",
@@ -53,14 +58,20 @@ export const ProfilPage = () => {
         >
           Profil
         </button>
+
         <button
-          className={`profile-tab ${activeTab === "darstellung" ? "active" : ""}`}
+          className={`profile-tab ${
+            activeTab === "darstellung" ? "active" : ""
+          }`}
           onClick={() => setActiveTab("darstellung")}
         >
           Darstellung
         </button>
+
         <button
-          className={`profile-tab ${activeTab === "benachrichtigungen" ? "active" : ""}`}
+          className={`profile-tab ${
+            activeTab === "benachrichtigungen" ? "active" : ""
+          }`}
           onClick={() => setActiveTab("benachrichtigungen")}
         >
           Benachrichtigungen
@@ -73,6 +84,7 @@ export const ProfilPage = () => {
             <div className="profile-overview-header">
               <div className="profile-image-wrapper">
                 <div className="profile-avatar large">CH</div>
+
                 <button className="profile-image-button" type="button">
                   Bild ändern
                 </button>
@@ -153,7 +165,11 @@ export const ProfilPage = () => {
                 Änderungen speichern
               </button>
 
-              <button className="profile-password-button" type="button">
+              <button
+                className="profile-password-button"
+                type="button"
+                onClick={() => navigate("/passwort-aendern")}
+              >
                 Passwort ändern
               </button>
             </div>
@@ -164,6 +180,7 @@ export const ProfilPage = () => {
       {activeTab === "darstellung" && (
         <section className="card profile-content-card">
           <h2>Darstellung</h2>
+
           <div className="settings-row">
             <div>
               <strong>
@@ -173,6 +190,7 @@ export const ProfilPage = () => {
                 Wechsle zwischen heller und dunkler Darstellung.
               </p>
             </div>
+
             <button
               className="theme-switch"
               onClick={() => setIsLightMode(!isLightMode)}
@@ -189,15 +207,18 @@ export const ProfilPage = () => {
       {activeTab === "benachrichtigungen" && (
         <section className="card profile-content-card">
           <h2>Benachrichtigungen</h2>
+
           <div className="notification-list">
             <label className="notification-item">
               <input type="checkbox" defaultChecked />
               <span>E-Mail bei neuem Angebot</span>
             </label>
+
             <label className="notification-item">
               <input type="checkbox" defaultChecked />
               <span>E-Mail bei fehlenden Pflichtdaten</span>
             </label>
+
             <label className="notification-item">
               <input type="checkbox" />
               <span>Wöchentliche Zusammenfassung</span>
