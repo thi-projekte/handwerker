@@ -145,7 +145,7 @@ export const HomeView = () => {
       )}
 
       {mode === "text" && (
-        <div className="text-section">
+        <div className="voice-section text-section">
           <div className={`text-editor-card ${textError ? "error" : ""}`}>
             <textarea
               className="text-input"
@@ -182,7 +182,7 @@ export const HomeView = () => {
             </div>
           </div>
           <p className="text-secondary">
-            Beschreibe dein Angebot möglichst genau.
+            Beschreibe dein Angebot möglichst genau
           </p>
           {textError && (
             <div className="text-error">
