@@ -1,0 +1,91 @@
+name: Frontend CI
+
+on:
+  push:
+    branches:
+      - main
+      - 'sprint*'
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+      - 'sprint*'
+
+env:
+  REGISTRY: ghcr.io
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  frontend-ci:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      # Repository herunterladen
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Node.js installieren
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      # Dependencies installieren
+      - name: Install dependencies
+        run: npm ci
+
+      # Linting prüfen
+      - name: Run ESLint
+        run: npm run lint
+
+      # TypeScript-Typen prüfen
+      - name: Run typecheck
+        run: npm run typecheck
+
+      # Produktionsbuild testen
+      - name: Build frontend
+        run: npm run build
+
+      # Login in GHCR
+      - name: Log in to GitHub Container Registry
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Docker-Metadaten
+      - name: Extract metadata
+        id: meta
+        if: github.event_name == 'push'
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}/frontend
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=branch
+            type=sha,prefix=sha-
+
+      - name: Build and push Docker image
+        if: github.event_name == 'push'
+        uses: docker/build-push-action@v6
+        with:
+          context: frontend
+          file: frontend/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
