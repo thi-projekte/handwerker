@@ -13,6 +13,8 @@ import { PasswortVergessenPage } from "@/features/Login/components/PasswortVerge
 import { RegistrierungPage } from "@/features/Login/components/RegistrierungPage";
 import { LogoutPage } from "@/features/Logout/components/LogoutPage";
 
+
+import { OfferResultPage } from "@/features/offer-result/components/OfferResultPage";
 import { PasswordChangePage } from "@/features/password-change/components/PasswordChangePage";
 
 export function AppRoutes() {
@@ -81,6 +83,15 @@ export function AppRoutes() {
           </AppLayout>
         }
       />
+
+      <Route
+  path="/angebot-ergebnis"
+  element={
+    <AppLayout>
+      <OfferResultPage />
+    </AppLayout>
+  }
+/>
 
       {/* ── Auth-Seiten OHNE Header + Navbar ── */}
       <Route
