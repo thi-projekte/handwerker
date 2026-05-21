@@ -15,13 +15,7 @@
   max-width: 720px;
 
   padding: 40px 32px;
-
   border-radius: 32px;
-  backdrop-filter: blur(18px);
-
-  box-shadow:
-    0 10px 40px rgba(0, 0, 0, 0.08),
-    0 2px 12px rgba(255, 106, 0, 0.12);
 
   display: flex;
   flex-direction: column;
@@ -441,38 +435,39 @@
 
   border-radius: 28px;
 
-  background:
-    linear-gradient(145deg,
-      rgba(255, 255, 255, 0.85),
-      rgba(255, 255, 255, 0.72));
+  background: var(--color-surface);
 
-  backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 106, 0, 0.28);
 
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(var(--blur));
 
-  box-shadow:
-    0 10px 35px rgba(0, 0, 0, 0.08),
-    0 5px 15px rgba(255, 106, 0, 0.08);
+  box-shadow: var(--shadow);
 
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 16px;
+
+  transition: all 0.3s ease;
+}
+
+.customer-card.collapsed {
+  padding: 16px 20px;
 }
 
 .customer-card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 20px;
+  gap: 10px;
 }
 
 .customer-card-header h3 {
   font-size: 22px;
-  margin-bottom: 6px;
+  margin: 2px 0;
 }
 
 .customer-card-header p {
-  color: var(--color-text-secondary);
+  color: var(--color-text-primary);
   font-size: 14px;
 }
 
@@ -515,8 +510,7 @@
   border-radius: 18px;
 
   border: 1px solid rgba(0, 0, 0, 0.06);
-
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(127, 127, 127, 0.08);
 
   display: flex;
   align-items: center;
@@ -577,6 +571,7 @@
 
 .customer-info strong {
   font-size: 15px;
+  color: var(--color-text-primary);
 }
 
 .customer-info span {
@@ -641,19 +636,6 @@
   text-transform: uppercase;
 
   color: var(--color-text-secondary);
-}
-
-/* =========================
-   COLLAPSED CUSTOMER CARD
-   ========================= */
-
-.customer-card {
-  transition:
-    all 0.3s ease;
-}
-
-.customer-card.collapsed {
-  padding: 16px 20px;
 }
 
 /* Summary Button */
