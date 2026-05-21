@@ -28,18 +28,13 @@ public class Offer extends BaseEntity {
     public static final String STATUS_ANGENOMMEN = "ANGENOMMEN";
     public static final String STATUS_ABGELEHNT = "ABGELEHNT";
     public static final String STATUS_ABGEBROCHEN = "ABGEBROCHEN";
+    public static final String STATUS_STORNIERT = "STORNIERT";
 
     @Column(nullable = false)
-    public String status = STATUS_ERFASST;           // Enum-Werte als String: ERFASST, IN_BEARBEITUNG, KI_BEARBEITUNG_ABGESCHLOSSEN, VERSANDBEREIT, VERSENDET, ANGENOMMEN, ABGELEHNT, ABGEBROCHEN
+    public String status = STATUS_ERFASST;           // Enum-Werte als String: ERFASST, IN_BEARBEITUNG, KI_BEARBEITUNG_ABGESCHLOSSEN, VERSANDBEREIT, VERSENDET, ANGENOMMEN, ABGELEHNT, ABGEBROCHEN, STORNIERT
 
-    @Column(columnDefinition = "TEXT")
-    public String kundendaten;      // JSON-String
-
-    @Column(columnDefinition = "TEXT")
-    public String sprachschnipsel;
-
-    @Column(columnDefinition = "TEXT")
-    public String vorlage;          // JSON-String: { leistungen, material, notizen }
+    @Column(name = "customer_id", nullable = false)
+    public Long customerId;
 
     @Column(unique = true)
     public String annahmeToken;     // UUID für öffentlichen Annahme-Link
