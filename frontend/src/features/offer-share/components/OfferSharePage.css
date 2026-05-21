@@ -1,0 +1,189 @@
+.offer-share-page {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.offer-share-header {
+  text-align: left;
+}
+
+.offer-share-header h1 {
+  margin: 0 0 8px;
+  font-size: 26px;
+}
+
+.offer-share-eyebrow {
+  display: inline-block;
+  margin-bottom: 6px;
+  color: var(--color-accent);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.offer-preview-card {
+  text-align: left;
+}
+
+.offer-preview-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.offer-preview-label {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.offer-preview-top h2 {
+  margin: 0;
+  text-align: left;
+}
+
+.offer-preview-status {
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(255, 106, 0, 0.15);
+  color: var(--color-accent);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.offer-preview-customer {
+  padding: 14px;
+  border: 1px solid var(--color-divider);
+  border-radius: 16px;
+  margin-bottom: 16px;
+}
+
+.offer-preview-customer span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.offer-preview-customer strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.offer-preview-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.offer-preview-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.offer-preview-row span {
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+
+.offer-preview-row strong {
+  color: var(--color-accent);
+  white-space: nowrap;
+}
+
+.offer-preview-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 14px;
+  padding-top: 14px;
+}
+
+.offer-preview-total span {
+  color: var(--color-text-secondary);
+  font-weight: 700;
+}
+
+.offer-preview-total strong {
+  color: var(--color-accent);
+  font-size: 20px;
+}
+
+.share-options-card {
+  text-align: left;
+}
+
+.share-options-card h2 {
+  margin-top: 0;
+  text-align: left;
+}
+
+.share-button-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.share-button {
+  width: 100%;
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid var(--color-divider);
+  color: white;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.whatsapp-button {
+  background: linear-gradient(135deg, #25d366, #128c7e);
+}
+
+.email-button {
+  background: var(--color-accent-gradient);
+}
+
+.other-button {
+  background: transparent;
+  color: var(--color-text-primary);
+}
+
+.share-hint {
+  margin-top: 14px;
+  text-align: center;
+  font-size: 12px;
+}
+
+.offer-share-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.offer-share-actions .button-primary {
+  width: 100%;
+}
+
+.offer-share-secondary-button {
+  width: 100%;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid var(--color-divider);
+  background: transparent;
+  color: var(--color-text-primary);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.offer-share-secondary-button:hover {
+  border-color: var(--color-accent);
+}
