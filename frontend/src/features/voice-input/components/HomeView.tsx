@@ -15,8 +15,8 @@ export const HomeView = () => {
     },
     {
       id: 2,
-      name: "Anna Becker",
-      company: "Becker Logistics",
+      name: "Susi Sorglos",
+      company: "Susi CoKG",
     },
   ];
   const [mode, setMode] = useState<"voice" | "text">("voice");
@@ -226,14 +226,7 @@ export const HomeView = () => {
             {/* HEADER */}
 
             <div className="customer-card-header">
-              <div>
-                <h3>Kunde auswählen</h3>
-
-                <p>
-                  Suche nach einem bestehenden
-                  Kunden oder lege einen neuen an
-                </p>
-              </div>
+              <h3>Kunde auswählen</h3>
 
               <button
                 className="new-customer-btn"
