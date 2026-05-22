@@ -25,7 +25,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [offer-service]
+        include:
+          - service: offer-service
+            dockerfile: docker/Dockerfile.jvm
 
     steps:
       # Repository herunterladen
@@ -77,6 +79,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: backend/services/${{ matrix.service }}
+          file: backend/services/${{ matrix.service }}/${{ matrix.dockerfile }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
