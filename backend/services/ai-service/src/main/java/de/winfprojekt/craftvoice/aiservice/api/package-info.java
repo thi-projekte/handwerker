@@ -13,6 +13,6 @@
  * </ul>
  *
  * <p><b>Nicht erlaubt:</b> Business-Logik, direkte LLM-Aufrufe, Pipeline-Orchestrierung.
- * Diese Verantwortung liegt in {@link de.winfprojekt.aiservice.pipeline}.
+ * Diese Verantwortung liegt in {@link de.winfprojekt.craftvoice.aiservice.pipeline}.
  */
-package de.winfprojekt.aiservice.api;
+package de.winfprojekt.craftvoice.aiservice.api;

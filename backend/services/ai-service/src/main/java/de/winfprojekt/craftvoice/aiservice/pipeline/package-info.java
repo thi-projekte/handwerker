@@ -15,4 +15,4 @@
  * <p>In der Stub-Phase (siehe Ticket #532) liefert diese Schicht eine fest verdrahtete,
  * gültige Antwort, damit das BPMN-Team integrieren kann, bevor die echte KI dranhängt.
  */
-package de.winfprojekt.aiservice.pipeline;
+package de.winfprojekt.craftvoice.aiservice.pipeline;

@@ -13,4 +13,4 @@
  *
  * <p><b>Wichtig:</b> DTOs sind plain Java-Records oder POJOs, keine Business-Logik.
  */
-package de.winfprojekt.aiservice.model;
+package de.winfprojekt.craftvoice.aiservice.model;

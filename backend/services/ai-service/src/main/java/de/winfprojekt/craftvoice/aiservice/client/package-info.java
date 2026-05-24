@@ -14,4 +14,4 @@
  * <p>Konfiguration der URLs erfolgt über {@code application.properties}
  * ({@code camunda.engine.url}, {@code megallm.api.url}, {@code catalog.service.url}).
  */
-package de.winfprojekt.aiservice.client;
+package de.winfprojekt.craftvoice.aiservice.client;
