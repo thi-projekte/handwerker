@@ -10,10 +10,10 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 /**
  * Unit-Tests fuer die Deserialisierung von {@link ProcessRequest}.
  *
- * <p>Stellt sicher, dass die typisierten Records aus {@link ProcessRequest},
- * {@link Vorlage}, {@link Kundendaten}, {@link Angebotsentwurf} und
- * {@link AngebotsPosition} sowohl die Erstangebot- als auch die Korrektur-Payload
- * der Process Engine korrekt parsen.
+ * <p>Die Beispiel-JSONs spiegeln die echte Connector-Payload-Form
+ * aus {@code Sprachschnipselverarbeitung.bpmn} wider (siehe
+ * {@code docs/bpmn-reference/}). KEINE {@code kundendaten}, KEIN
+ * {@code processInstanceId} — nur was die BPMN-Engine wirklich schickt.
  */
 class ProcessRequestParsingTest {
 
@@ -24,11 +24,7 @@ class ProcessRequestParsingTest {
         String json = """
                 {
                   "businessKey": "BK-001",
-                  "processInstanceId": "PI-aaaa-1111",
-                  "kundendaten": {
-                    "name": "Mueller GmbH",
-                    "adresse": "Hauptstrasse 12, 80331 Muenchen"
-                  },
+                  "prompt": "Erstelle ein Erstangebot anhand von Vorlage und Sprachschnipsel.",
                   "vorlage": {
                     "leistungen": ["Fliesenlegen 45 EUR/h", "Verfugen 35 EUR/h"],
                     "material": ["Feinsteinzeug 60x60 matt"],
@@ -41,10 +37,9 @@ class ProcessRequestParsingTest {
         ProcessRequest req = mapper.readValue(json, ProcessRequest.class);
 
         assertEquals("BK-001", req.businessKey());
-        assertEquals("PI-aaaa-1111", req.processInstanceId());
-
-        assertNotNull(req.kundendaten());
-        assertEquals("Mueller GmbH", req.kundendaten().name());
+        assertNotNull(req.prompt());
+        assertEquals("Erstelle ein Erstangebot anhand von Vorlage und Sprachschnipsel.",
+                req.prompt());
 
         assertNotNull(req.vorlage());
         assertEquals(2, req.vorlage().leistungen().size());
@@ -62,10 +57,7 @@ class ProcessRequestParsingTest {
         String json = """
                 {
                   "businessKey": "BK-002",
-                  "processInstanceId": "PI-bbbb-2222",
-                  "kundendaten": {
-                    "name": "Schmidt"
-                  },
+                  "prompt": "Ueberarbeite den Angebotsentwurf anhand des Korrekturschnipsels.",
                   "angebotsentwurf": {
                     "strukturierteAngebotspositionen": [
                       {
@@ -83,8 +75,8 @@ class ProcessRequestParsingTest {
         ProcessRequest req = mapper.readValue(json, ProcessRequest.class);
 
         assertEquals("BK-002", req.businessKey());
-        assertNotNull(req.kundendaten());
-        assertEquals("Schmidt", req.kundendaten().name());
+        assertEquals("Ueberarbeite den Angebotsentwurf anhand des Korrekturschnipsels.",
+                req.prompt());
 
         assertNotNull(req.angebotsentwurf());
         assertEquals(1, req.angebotsentwurf().strukturierteAngebotspositionen().size());
@@ -103,13 +95,15 @@ class ProcessRequestParsingTest {
 
     @Test
     void parses_payload_with_unknown_fields() throws Exception {
-        // Zusaetzliche Top-Level-Felder, die wir nicht modelliert haben,
-        // duerfen den Parser NICHT zum Absturz bringen.
+        // Zusaetzliche Top-Level-Felder, die wir nicht modelliert haben (z.B. kundendaten,
+        // processInstanceId aus alten Versionen oder Debug-Infos), duerfen den Parser
+        // NICHT zum Absturz bringen.
         String json = """
                 {
                   "businessKey": "BK-003",
-                  "debugInfo": "egal",
-                  "irgendwasNeues": { "foo": "bar" }
+                  "kundendaten": { "name": "Mueller" },
+                  "processInstanceId": "PI-veraltet",
+                  "debugInfo": "egal"
                 }
                 """;
 

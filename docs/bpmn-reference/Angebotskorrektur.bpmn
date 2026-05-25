@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0y9nw1t" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.45.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.24.0">
+  <bpmn:collaboration id="Collaboration_1xu5tqs">
+    <bpmn:participant id="pool_04" name="Angebotskorrektur" processRef="angebotskorrektur" />
+    <bpmn:participant id="Participant_16ao5fu" name="CraftVoice-Backend" />
+    <bpmn:messageFlow id="Flow_00pef3r" name="strukturierte Angebots-positionen und Korrektur-schnipsel" sourceRef="Participant_16ao5fu" targetRef="Event_152vaxu" />
+    <bpmn:messageFlow id="Flow_06lg0ec" name="Genehmigung" sourceRef="Participant_16ao5fu" targetRef="Event_0rauegq" />
+  </bpmn:collaboration>
+  <bpmn:process id="angebotskorrektur" isExecutable="true" camunda:historyTimeToLive="10">
+    <bpmn:startEvent id="Event_0ag11bx">
+      <bpmn:outgoing>Flow_17niv5q</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:eventBasedGateway id="Gateway_02rd13u" name="Angebot korrigieren?">
+      <bpmn:incoming>Flow_17niv5q</bpmn:incoming>
+      <bpmn:outgoing>Flow_0ce6u3e</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0hyqud8</bpmn:outgoing>
+    </bpmn:eventBasedGateway>
+    <bpmn:intermediateCatchEvent id="Event_152vaxu" name="strukturierte Angebots-positionen und Korrektur-schnipsel&#10;empfangen">
+      <bpmn:extensionElements>
+        <camunda:executionListener event="end">
+          <camunda:script scriptFormat="JavaScript">var angebotsentwurf = execution.getVariable("angebotsentwurf");
+var korrekturschnipsel = execution.getVariable("korrekturschnipsel");
+
+execution.setVariable("angebotsentwurf", angebotsentwurf);
+execution.setVariable("korrekturschnipsel", korrekturschnipsel);
+
+execution.setVariable("angebotsgenehmigung", false);</camunda:script>
+        </camunda:executionListener>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0ce6u3e</bpmn:incoming>
+      <bpmn:outgoing>Flow_0qs32fn</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_05nwct8" messageRef="Message_1a8dtpo" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:intermediateCatchEvent id="Event_0rauegq" name="Genehmigung empfangen">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:outputParameter name="angebotsgenehmigung">${true}</camunda:outputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0hyqud8</bpmn:incoming>
+      <bpmn:outgoing>Flow_0thqi5y</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_0wlaaoa" messageRef="Message_340suoo" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:serviceTask id="Activity_1ia660s" name="Angebot erstellen">
+      <bpmn:extensionElements>
+        <camunda:connector>
+          <camunda:inputOutput>
+            <camunda:inputParameter name="url">https://webhook.site/c1d3dcf2-e52d-48c8-ae9e-313883a72129</camunda:inputParameter>
+            <camunda:inputParameter name="method">POST</camunda:inputParameter>
+            <camunda:inputParameter name="payload">
+              <camunda:script scriptFormat="JavaScript">var ergebnisKI = execution.getVariable("ergebnisKI");
+var businessKey = execution.getProcessBusinessKey();
+var kundendaten = execution.getVariable("kundendaten");
+
+JSON.stringify({
+  businessKey: businessKey,
+
+  kundendaten: JSON.parse(
+    kundendaten.toString()
+  ),
+
+  angebotspositionen: JSON.parse(
+    ergebnisKI.prop("strukturierteAngebotspositionen").toString()
+  ),
+
+  korrekturvorschlaege: JSON.parse(
+    ergebnisKI.prop("korrekturvorschlaege").toString()
+  )
+});</camunda:script>
+            </camunda:inputParameter>
+          </camunda:inputOutput>
+          <camunda:connectorId>http-connector</camunda:connectorId>
+        </camunda:connector>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_169wxp8</bpmn:incoming>
+      <bpmn:outgoing>Flow_0782qmn</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="Event_157wgkm" name="Angebots-genehmigung nicht erfolgreich">
+      <bpmn:incoming>Flow_0782qmn</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:endEvent id="Event_1oh23wl" name="Angebots-genehmigung erfolgreich">
+      <bpmn:incoming>Flow_0thqi5y</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:callActivity id="Activity_11yb8rn" name="Sprach-schnipsel-verarbeitung" calledElement="sprachschnipselverarbeitung">
+      <bpmn:extensionElements>
+        <camunda:in source="korrekturschnipsel" target="korrekturschnipsel" />
+        <camunda:in source="angebotsentwurf" target="angebotsentwurf" />
+        <camunda:in businessKey="#{execution.processBusinessKey}" />
+        <camunda:out source="ergebnisKI" target="ergebnisKI" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0qs32fn</bpmn:incoming>
+      <bpmn:outgoing>Flow_169wxp8</bpmn:outgoing>
+    </bpmn:callActivity>
+    <bpmn:sequenceFlow id="Flow_17niv5q" sourceRef="Event_0ag11bx" targetRef="Gateway_02rd13u" />
+    <bpmn:sequenceFlow id="Flow_0ce6u3e" sourceRef="Gateway_02rd13u" targetRef="Event_152vaxu" />
+    <bpmn:sequenceFlow id="Flow_0hyqud8" sourceRef="Gateway_02rd13u" targetRef="Event_0rauegq" />
+    <bpmn:sequenceFlow id="Flow_0qs32fn" sourceRef="Event_152vaxu" targetRef="Activity_11yb8rn" />
+    <bpmn:sequenceFlow id="Flow_0thqi5y" sourceRef="Event_0rauegq" targetRef="Event_1oh23wl" />
+    <bpmn:sequenceFlow id="Flow_169wxp8" sourceRef="Activity_11yb8rn" targetRef="Activity_1ia660s" />
+    <bpmn:sequenceFlow id="Flow_0782qmn" sourceRef="Activity_1ia660s" targetRef="Event_157wgkm" />
+  </bpmn:process>
+  <bpmn:message id="Message_1a8dtpo" name="korrekturschnipselUndAngebotsentwurf" />
+  <bpmn:message id="Message_340suoo" name="genehmigungAngebot" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_1xu5tqs">
+      <bpmndi:BPMNShape id="Participant_0xvbw9f_di" bpmnElement="pool_04" isHorizontal="true">
+        <dc:Bounds x="160" y="160" width="900" height="320" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_066gn1r_di" bpmnElement="Event_0ag11bx">
+        <dc:Bounds x="230" y="316" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="180" y="325" width="81" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0nnw2lx_di" bpmnElement="Gateway_02rd13u">
+        <dc:Bounds x="323" y="309" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="280" y="346" width="59" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_152vaxu_di" bpmnElement="Event_152vaxu">
+        <dc:Bounds x="410" y="256" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="393" y="299" width="72" height="80" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0rauegq_di" bpmnElement="Event_0rauegq">
+        <dc:Bounds x="490" y="376" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="473" y="419" width="70" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0k4jqc2_di" bpmnElement="Activity_1ia660s">
+        <dc:Bounds x="778" y="234" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_157wgkm_di" bpmnElement="Event_157wgkm">
+        <dc:Bounds x="940" y="256" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="920" y="299" width="78" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1oh23wl_di" bpmnElement="Event_1oh23wl">
+        <dc:Bounds x="940" y="376" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="925" y="419" width="67" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0ko5kzs_di" bpmnElement="Activity_11yb8rn">
+        <dc:Bounds x="588" y="234" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_17niv5q_di" bpmnElement="Flow_17niv5q">
+        <di:waypoint x="266" y="334" />
+        <di:waypoint x="323" y="334" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ce6u3e_di" bpmnElement="Flow_0ce6u3e">
+        <di:waypoint x="348" y="309" />
+        <di:waypoint x="348" y="274" />
+        <di:waypoint x="410" y="274" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0hyqud8_di" bpmnElement="Flow_0hyqud8">
+        <di:waypoint x="348" y="359" />
+        <di:waypoint x="348" y="394" />
+        <di:waypoint x="490" y="394" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0qs32fn_di" bpmnElement="Flow_0qs32fn">
+        <di:waypoint x="446" y="274" />
+        <di:waypoint x="588" y="274" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0thqi5y_di" bpmnElement="Flow_0thqi5y">
+        <di:waypoint x="526" y="394" />
+        <di:waypoint x="940" y="394" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_169wxp8_di" bpmnElement="Flow_169wxp8">
+        <di:waypoint x="688" y="274" />
+        <di:waypoint x="778" y="274" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0782qmn_di" bpmnElement="Flow_0782qmn">
+        <di:waypoint x="878" y="274" />
+        <di:waypoint x="940" y="274" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Participant_1qijm8u_di" bpmnElement="Participant_16ao5fu" isHorizontal="true">
+        <dc:Bounds x="160" y="70" width="900" height="60" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_00pef3r_di" bpmnElement="Flow_00pef3r">
+        <di:waypoint x="428" y="130" />
+        <di:waypoint x="428" y="256" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="344" y="176" width="72" height="66" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_06lg0ec_di" bpmnElement="Flow_06lg0ec">
+        <di:waypoint x="508" y="130" />
+        <di:waypoint x="508" y="376" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="513" y="183" width="70" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
