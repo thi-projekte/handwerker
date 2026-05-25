@@ -26,7 +26,7 @@ public class OfferStatusHistory extends BaseEntity {
     public String status;
 
     @Column(nullable = false)
-    public LocalDateTime zeitpunkt;
+    public LocalDateTime zeitpunkt = LocalDateTime.now();;
 
     public String notiz;            // optional, z.B. "Vom Kunden abgelehnt"
 }
