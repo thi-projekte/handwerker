@@ -22,16 +22,27 @@ import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.logging.Logger;
 
+import java.util.concurrent.CompletableFuture;
+
 /**
  * REST-Endpoint des ai-service.
  *
  * <p>Wird vom Camunda HTTP-Connector aufgerufen, wenn ein BPMN-Prozess die KI-Verarbeitung
  * eines Sprachschnipsels (Erstangebot) oder einer Korrektur anstoesst.
  *
- * <p><b>Aktueller Zustand (Ticket #533):</b> Endpoint nimmt Payload entgegen, parst sie
- * (#530), unterscheidet Erstangebot vs. Korrektur (#531), erzeugt eine Stub-Antwort
- * (#532) und korreliert diese als {@code ergebnisKI}-Message zurueck an die wartende
- * Prozessinstanz (#533).
+ * <p><b>Wichtig — async-Pattern wegen BPMN-Race-Condition:</b><br>
+ * Der HTTP-Connector in der BPMN-SendTask blockiert die Prozessausfuehrung waehrend
+ * unseres Aufrufs. Erst NACH unserer HTTP-Antwort schaltet Camunda intern auf den
+ * folgenden ReceiveTask um und legt die Subscription fuer die {@code ergebnisKI}-Message
+ * an. Wuerden wir die Message synchron innerhalb des Request-Handlings senden, kaeme sie
+ * an bevor die Subscription existiert -> Camunda HTTP 400.
+ *
+ * <p>Loesung: Wir antworten der HTTP-Connector-Anfrage <b>sofort</b> mit 202, und feuern
+ * die Camunda-Korrelation per {@link CompletableFuture#runAsync} im Hintergrund ab. So
+ * ist die Subscription beim Eintreffen unserer Message zuverlaessig aktiv.
+ *
+ * <p>Aktueller Stand: Tickets #529–#534 sind ueber diese Klasse abgedeckt. Die echte
+ * LLM-Pipeline (#538/#541) ersetzt spaeter den {@link StubResultGenerator}.
  */
 @Path("/ai")
 public class ProcessResource {
@@ -77,28 +88,32 @@ public class ProcessResource {
             case KORREKTUR   -> stubGenerator.forKorrektur(request);
         };
 
+        String ergebnisJson;
         try {
-            sendErgebnisKiToCamunda(businessKey, ergebnis);
+            ergebnisJson = objectMapper.writeValueAsString(ergebnis);
         } catch (JsonProcessingException e) {
             LOG.errorf(e, "Konnte ergebnisKI nicht zu JSON serialisieren (businessKey=%s)",
                     businessKey);
             return Response.serverError()
                     .entity(new ErrorResponse("Interner Fehler bei der Ergebnis-Serialisierung"))
                     .build();
-        } catch (Exception e) {
-            // Connection-Fehler, Timeout, HTTP-Fehler von Camunda etc.
-            LOG.errorf(e, "Camunda-Korrelation fehlgeschlagen (businessKey=%s)", businessKey);
-            return Response.status(Response.Status.BAD_GATEWAY)
-                    .entity(new ErrorResponse("Camunda nicht erreichbar oder Korrelation fehlgeschlagen"))
-                    .build();
         }
+
+        // Fire-and-forget: nach Rueckkehr unserer HTTP-Antwort aktiviert Camunda
+        // intern den ReceiveTask und legt die Subscription an. Unser asynchroner
+        // Send hat dann eine passende Wartestelle.
+        CompletableFuture.runAsync(() -> sendErgebnisKiToCamunda(businessKey, ergebnisJson))
+                .exceptionally(throwable -> {
+                    LOG.errorf(throwable,
+                            "Asynchrone Camunda-Korrelation fehlgeschlagen (businessKey=%s)",
+                            businessKey);
+                    return null;
+                });
 
         return Response.accepted(ProcessResponse.accepted(businessKey)).build();
     }
 
-    private void sendErgebnisKiToCamunda(String businessKey, ErgebnisKi ergebnis)
-            throws JsonProcessingException {
-        String ergebnisJson = objectMapper.writeValueAsString(ergebnis);
+    private void sendErgebnisKiToCamunda(String businessKey, String ergebnisJson) {
         CamundaCorrelationRequest correlation =
                 CamundaCorrelationRequest.ergebnisKI(businessKey, ergebnisJson);
 
@@ -108,11 +123,11 @@ public class ProcessResource {
                 throw new RuntimeException(
                         "Camunda hat Korrelation abgelehnt: HTTP " + status);
             }
-            LOG.infof("ergebnisKI-Message erfolgreich an Camunda korreliert (businessKey=%s, HTTP %d)",
-                    businessKey, status);
+            LOG.infof("ergebnisKI-Message erfolgreich an Camunda korreliert "
+                            + "(businessKey=%s, HTTP %d)", businessKey, status);
         }
     }
 
-    /** Schmales Fehler-DTO fuer 400/500/502-Antworten. */
+    /** Schmales Fehler-DTO fuer 400/500-Antworten. */
     public record ErrorResponse(String error) {}
 }
