@@ -1,11 +1,8 @@
-package de.craftvoice.offerservice.offer;
+package de.winfprojekt.craftvoice.offerservice.offer;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.quarkus.jackson.ObjectMapperCustomizer;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
-import jakarta.validation.Valid;
 
 import java.util.Map;
 

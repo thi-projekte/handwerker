@@ -1,6 +1,6 @@
-package de.craftvoice.offerservice.offer;
+package de.winfprojekt.craftvoice.offerservice.offer;
 
-import de.craftvoice.offerservice.offer.dto.CreateOfferRequest;
+import de.winfprojekt.craftvoice.offerservice.offer.dto.CreateOfferRequest;
 
 import jakarta.inject.Inject;
 import jakarta.ws.rs.POST;

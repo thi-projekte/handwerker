@@ -1,13 +1,10 @@
-package de.craftvoice.offerservice.offer;
+package de.winfprojekt.craftvoice.offerservice.offer;
 
 import jakarta.inject.Inject;
-import de.craftvoice.offerservice.offer.dto.CreateOfferRequest;
+import de.winfprojekt.craftvoice.offerservice.offer.dto.CreateOfferRequest;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import java.util.UUID;
-
-import de.craftvoice.offerservice.offer.ProcessEngineClient;
-import org.hibernate.exception.ConstraintViolationException;
 
 @ApplicationScoped
 public class OfferService {
