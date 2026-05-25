@@ -1,9 +1,11 @@
 package de.winfprojekt.craftvoice.aiservice.api;
 
+import de.winfprojekt.craftvoice.aiservice.model.ErgebnisKi;
 import de.winfprojekt.craftvoice.aiservice.model.ProcessRequest;
 import de.winfprojekt.craftvoice.aiservice.model.ProcessResponse;
 import de.winfprojekt.craftvoice.aiservice.model.ProcessType;
 import de.winfprojekt.craftvoice.aiservice.pipeline.ProcessTypeDetector;
+import de.winfprojekt.craftvoice.aiservice.pipeline.StubResultGenerator;
 
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
@@ -20,10 +22,11 @@ import org.jboss.logging.Logger;
  * <p>Wird vom Camunda HTTP-Connector aufgerufen, wenn ein BPMN-Prozess die KI-Verarbeitung
  * eines Sprachschnipsels (Erstangebot) oder einer Korrektur anstoesst.
  *
- * <p><b>Aktueller Zustand (Ticket #531):</b> Endpoint nimmt Payload entgegen, parst sie
- * (#530), unterscheidet Erstangebot vs. Korrektur ueber {@link ProcessTypeDetector} und
- * leitet an die jeweilige (noch leere) Handler-Methode. Stub-Antwort folgt in #532,
- * Camunda-Korrelation in #533.
+ * <p><b>Aktueller Zustand (Ticket #532):</b> Endpoint nimmt Payload entgegen, parst sie
+ * (#530), unterscheidet Erstangebot vs. Korrektur ueber {@link ProcessTypeDetector}
+ * (#531) und erzeugt eine Stub-Antwort ueber {@link StubResultGenerator} (#532).
+ * Die Korrelation der Stub-Antwort als Camunda-Message folgt in #533 — aktuell wird das
+ * Ergebnis nur geloggt.
  */
 @Path("/ai")
 public class ProcessResource {
@@ -31,9 +34,12 @@ public class ProcessResource {
     private static final Logger LOG = Logger.getLogger(ProcessResource.class);
 
     private final ProcessTypeDetector typeDetector;
+    private final StubResultGenerator stubGenerator;
 
-    public ProcessResource(ProcessTypeDetector typeDetector) {
+    public ProcessResource(ProcessTypeDetector typeDetector,
+                           StubResultGenerator stubGenerator) {
         this.typeDetector = typeDetector;
+        this.stubGenerator = stubGenerator;
     }
 
     @POST
@@ -55,20 +61,18 @@ public class ProcessResource {
         }
 
         LOG.infof("Routing auf %s (businessKey=%s)", type, businessKey);
-        switch (type) {
-            case ERSTANGEBOT -> handleErstangebot(request);
-            case KORREKTUR   -> handleKorrektur(request);
-        }
+        ErgebnisKi ergebnis = switch (type) {
+            case ERSTANGEBOT -> stubGenerator.forErstangebot(request);
+            case KORREKTUR   -> stubGenerator.forKorrektur(request);
+        };
+
+        // TODO #533: ergebnisKI als Message an Camunda korrelieren (per businessKey)
+        LOG.infof("Stub-Ergebnis erzeugt: %d Positionen, %d Korrekturvorschlaege (businessKey=%s)",
+                ergebnis.strukturierteAngebotspositionen().size(),
+                ergebnis.korrekturvorschlaege().size(),
+                businessKey);
 
         return Response.accepted(ProcessResponse.accepted(businessKey)).build();
-    }
-
-    private void handleErstangebot(ProcessRequest request) {
-        // TODO #532: Stub-Antwort erzeugen, in #533 an Camunda korrelieren
-    }
-
-    private void handleKorrektur(ProcessRequest request) {
-        // TODO #532: Stub-Antwort erzeugen, in #533 an Camunda korrelieren
     }
 
     /** Schmales Fehler-DTO fuer 400-Antworten. */
