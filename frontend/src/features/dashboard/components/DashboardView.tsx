@@ -12,7 +12,7 @@ export const DashboardView = () => {
       <header className="card">
         <h1>Dashboard</h1>
         <p className="text-secondary">
-          Hier ist die Übersicht deiner Angebote und Aktivitäten.
+          Hier ist die Übersicht deiner Angebote und Aktivitäten
         </p>
       </header>
       <div className="dashboard-content">
