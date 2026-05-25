@@ -1,5 +1,10 @@
 package de.winfprojekt.craftvoice.aiservice.api;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import de.winfprojekt.craftvoice.aiservice.client.CamundaCorrelationRequest;
+import de.winfprojekt.craftvoice.aiservice.client.CamundaMessageClient;
 import de.winfprojekt.craftvoice.aiservice.model.ErgebnisKi;
 import de.winfprojekt.craftvoice.aiservice.model.ProcessRequest;
 import de.winfprojekt.craftvoice.aiservice.model.ProcessResponse;
@@ -14,6 +19,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.logging.Logger;
 
 /**
@@ -22,11 +28,10 @@ import org.jboss.logging.Logger;
  * <p>Wird vom Camunda HTTP-Connector aufgerufen, wenn ein BPMN-Prozess die KI-Verarbeitung
  * eines Sprachschnipsels (Erstangebot) oder einer Korrektur anstoesst.
  *
- * <p><b>Aktueller Zustand (Ticket #532):</b> Endpoint nimmt Payload entgegen, parst sie
- * (#530), unterscheidet Erstangebot vs. Korrektur ueber {@link ProcessTypeDetector}
- * (#531) und erzeugt eine Stub-Antwort ueber {@link StubResultGenerator} (#532).
- * Die Korrelation der Stub-Antwort als Camunda-Message folgt in #533 — aktuell wird das
- * Ergebnis nur geloggt.
+ * <p><b>Aktueller Zustand (Ticket #533):</b> Endpoint nimmt Payload entgegen, parst sie
+ * (#530), unterscheidet Erstangebot vs. Korrektur (#531), erzeugt eine Stub-Antwort
+ * (#532) und korreliert diese als {@code ergebnisKI}-Message zurueck an die wartende
+ * Prozessinstanz (#533).
  */
 @Path("/ai")
 public class ProcessResource {
@@ -35,11 +40,17 @@ public class ProcessResource {
 
     private final ProcessTypeDetector typeDetector;
     private final StubResultGenerator stubGenerator;
+    private final CamundaMessageClient camundaClient;
+    private final ObjectMapper objectMapper;
 
     public ProcessResource(ProcessTypeDetector typeDetector,
-                           StubResultGenerator stubGenerator) {
+                           StubResultGenerator stubGenerator,
+                           @RestClient CamundaMessageClient camundaClient,
+                           ObjectMapper objectMapper) {
         this.typeDetector = typeDetector;
         this.stubGenerator = stubGenerator;
+        this.camundaClient = camundaClient;
+        this.objectMapper = objectMapper;
     }
 
     @POST
@@ -66,15 +77,42 @@ public class ProcessResource {
             case KORREKTUR   -> stubGenerator.forKorrektur(request);
         };
 
-        // TODO #533: ergebnisKI als Message an Camunda korrelieren (per businessKey)
-        LOG.infof("Stub-Ergebnis erzeugt: %d Positionen, %d Korrekturvorschlaege (businessKey=%s)",
-                ergebnis.strukturierteAngebotspositionen().size(),
-                ergebnis.korrekturvorschlaege().size(),
-                businessKey);
+        try {
+            sendErgebnisKiToCamunda(businessKey, ergebnis);
+        } catch (JsonProcessingException e) {
+            LOG.errorf(e, "Konnte ergebnisKI nicht zu JSON serialisieren (businessKey=%s)",
+                    businessKey);
+            return Response.serverError()
+                    .entity(new ErrorResponse("Interner Fehler bei der Ergebnis-Serialisierung"))
+                    .build();
+        } catch (Exception e) {
+            // Connection-Fehler, Timeout, HTTP-Fehler von Camunda etc.
+            LOG.errorf(e, "Camunda-Korrelation fehlgeschlagen (businessKey=%s)", businessKey);
+            return Response.status(Response.Status.BAD_GATEWAY)
+                    .entity(new ErrorResponse("Camunda nicht erreichbar oder Korrelation fehlgeschlagen"))
+                    .build();
+        }
 
         return Response.accepted(ProcessResponse.accepted(businessKey)).build();
     }
 
-    /** Schmales Fehler-DTO fuer 400-Antworten. */
+    private void sendErgebnisKiToCamunda(String businessKey, ErgebnisKi ergebnis)
+            throws JsonProcessingException {
+        String ergebnisJson = objectMapper.writeValueAsString(ergebnis);
+        CamundaCorrelationRequest correlation =
+                CamundaCorrelationRequest.ergebnisKI(businessKey, ergebnisJson);
+
+        try (Response response = camundaClient.correlate(correlation)) {
+            int status = response.getStatus();
+            if (status >= 400) {
+                throw new RuntimeException(
+                        "Camunda hat Korrelation abgelehnt: HTTP " + status);
+            }
+            LOG.infof("ergebnisKI-Message erfolgreich an Camunda korreliert (businessKey=%s, HTTP %d)",
+                    businessKey, status);
+        }
+    }
+
+    /** Schmales Fehler-DTO fuer 400/500/502-Antworten. */
     public record ErrorResponse(String error) {}
 }
