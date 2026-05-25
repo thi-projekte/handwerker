@@ -9,14 +9,14 @@ import { DashboardActivity } from "@/features/dashboard/components/DashboardActi
 export const DashboardView = () => {
   return (
     <div className="dashboard-page">
-
+      <header className="card">
+        <h1>Dashboard</h1>
+        <p className="text-secondary">
+          Übersicht deiner Angebote und Aktivitäten
+        </p>
+      </header>
       <div className="dashboard-content">
-
-        <div className="dashboard-header">
-          <h1>Dashboard</h1>
-
-          <DashboardFilters />
-        </div>
+        <DashboardFilters />
 
         <DashboardStats />
 
