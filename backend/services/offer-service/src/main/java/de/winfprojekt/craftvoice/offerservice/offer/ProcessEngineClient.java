@@ -6,6 +6,9 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import java.util.Map;
 
+/**
+ * Client zur Kommunikation mit der Process Engine.
+ */
 @ApplicationScoped
 public class ProcessEngineClient {
 
@@ -13,6 +16,14 @@ public class ProcessEngineClient {
     @RestClient
     ProcessEngineRestClient client;
 
+    /**
+     * Übermittelt die Angebotsdaten sowie den Business Key an die Process Engine.
+     *
+     * @param businessKey eindeutiger Business-Key des Angebots
+     * @param customerId ID des zugehörigen Kunden
+     * @param sprachschnipsel erfasster Sprachschnipsel zur Anfrage
+     * @param vorlage optionale Angebotsvorlage
+     */
     public void sendAngebotPayload(String businessKey, Long customerId, String sprachschnipsel, Object vorlage) {
 
         Map<String, Object> payload = Map.of(

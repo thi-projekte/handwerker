@@ -2,6 +2,9 @@ package de.winfprojekt.craftvoice.offerservice.offer.dto;
 
 import jakarta.validation.constraints.NotNull;
 
+/**
+ * Request-DTO zum Erstellen eines neuen Angebots.
+ */
 public class CreateOfferRequest {
     @NotNull
     public Long customerId;

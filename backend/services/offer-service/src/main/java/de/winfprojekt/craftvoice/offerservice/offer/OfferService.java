@@ -6,12 +6,25 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import java.util.UUID;
 
+/**
+ * Service zur Erstellung und Verwaltung von Angeboten.
+ *
+ * Enthält die fachliche Logik zum Anlegen eines Angebots sowie
+ * zur Übergabe der Angebotsdaten an die Process Engine.
+ */
 @ApplicationScoped
 public class OfferService {
 
     @Inject
     ProcessEngineClient processEngineClient;
 
+    /**
+     * Erstellt ein neues Angebot aus den übergebenen Request-Daten, persistiert diese in die DB
+     * und ruft entsprechende Methoden auf, die alle notwendigen Daten an die Process-Engine senden.
+     *
+     * @param request Anfrageobjekt mit Kunden-ID und Sprachschnipsel
+     * @return das erzeugte und persistierte Angebot
+     */
     @Transactional
     public Offer createOffer(CreateOfferRequest request) {
 

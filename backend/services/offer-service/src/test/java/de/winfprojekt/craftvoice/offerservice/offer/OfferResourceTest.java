@@ -18,12 +18,18 @@ import java.util.List;
 import static io.restassured.RestAssured.given;
 import static org.mockito.ArgumentMatchers.any;
 
+/**
+ * Integrationstests für {@link OfferResource}: Prüfung des Angebots-Anlegens sowie einen fehlerhaften Request.
+ */
 @QuarkusTest
 class OfferResourceTest {
 
     @InjectMock
     ProcessEngineClient processEngineClient;
 
+    /**
+     * Prüft, dass ein Angebot erfolgreich erstellt, persistiert und an die Process Engine übermittelt wird.
+     */
     @Test
     void shouldCreateOffer() {
 
@@ -92,17 +98,12 @@ class OfferResourceTest {
                 businessKeyCaptor.getValue()
         );
 
-
-       verify(processEngineClient).sendAngebotPayload(
-                any(),
-                customerIdCaptor.capture(),
-                any(),
-                any()
-        );
-
         assertEquals(1L, customerIdCaptor.getValue());
     }
 
+    /**
+     * Prüft, dass bei fehlendem Sprachschnipsel ein HTTP-Statuscode 400 zurückgegeben wird.
+     */
     @Test
     void shouldReturn400WhenSprachschnipselMissing() {
 

@@ -11,6 +11,11 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.validation.Valid;
 
+/**
+ * REST-Ressource zur Verwaltung von Angeboten.
+ *
+ * Stellt Endpunkte zum Erstellen und Abrufen von Angeboten bereit.
+ */
 @Path("/offers")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
@@ -19,6 +24,12 @@ public class OfferResource {
     @Inject
     OfferService offerService;
 
+    /**
+     * Erstellt ein neues Angebot auf Basis der übergebenen Daten.
+     *
+     * @param request Anfrageobjekt mit den Daten zur Angebotserstellung
+     * @return HTTP-Response mit dem erzeugten Angebot und Statuscode 201
+     */
     @POST
     public Response createOffer(@Valid CreateOfferRequest request) {
 
