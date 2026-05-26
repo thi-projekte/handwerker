@@ -21,6 +21,7 @@ public class OfferPosition extends BaseEntity {
     @JsonIgnore // Prevent infinite recursion during JSON serialization
     public Offer offer;
 
+    public String hersteller;
     public String bezeichnung;
     public String beschreibung;
     public BigDecimal menge;

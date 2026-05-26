@@ -13,9 +13,12 @@ import { PasswortVergessenPage } from "@/features/Login/components/PasswortVerge
 import { RegistrierungPage } from "@/features/Login/components/RegistrierungPage";
 import { LogoutPage } from "@/features/Logout/components/LogoutPage";
 
+import { OfferSharePage } from "@/features/offer-share/components/OfferSharePage";
 
 import { OfferResultPage } from "@/features/offer-result/components/OfferResultPage";
 import { PasswordChangePage } from "@/features/password-change/components/PasswordChangePage";
+
+import { LadenPage } from "@/features/Laden/components/LadenPage";
 
 export function AppRoutes() {
   return (
@@ -84,6 +87,16 @@ export function AppRoutes() {
         }
       />
 
+<Route
+  path="/angebot-teilen"
+  element={
+    <AppLayout>
+      <OfferSharePage />
+    </AppLayout>
+  }
+/>
+
+
       <Route
   path="/angebot-ergebnis"
   element={
@@ -129,6 +142,16 @@ export function AppRoutes() {
           </AppLayout>
         }
       />
+
+      <Route
+        path="/laden"
+        element={
+          <AppLayout hideNav hideHeader>
+            <LadenPage />
+          </AppLayout>
+        }
+      />
+
     </Routes>
   );
 }
