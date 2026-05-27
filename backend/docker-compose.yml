@@ -15,6 +15,31 @@ services:
     networks:
       - internal
 
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - catalog-service
+    networks:
+      - internal
+
+  catalog-service:
+    build:
+      context: ./services/catalog-service
+      dockerfile: src/main/docker/Dockerfile.jvm
+    container_name: catalog-service
+    environment:
+      QUARKUS_DATASOURCE_URL: jdbc:postgresql://db:5432/catalog-db
+      QUARKUS_DATASOURCE_USERNAME: postgres
+      QUARKUS_DATASOURCE_PASSWORD: postgres
+    networks:
+      - internal
+    depends_on:
+      - postgres
+
 volumes:
   postgres_data:
 
