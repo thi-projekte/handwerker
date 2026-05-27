@@ -1,0 +1,255 @@
+# CraftVoice Catalog Service – Aktueller Projektstand & Implementierungskontext
+
+## Projektkontext
+
+Im CraftVoice-Projekt wird eine Microservice-Architektur auf Basis von Quarkus, PostgreSQL, Docker und später Nginx Reverse Proxy aufgebaut.
+
+Der aktuelle Fokus liegt auf dem neuen `catalog-service`.
+
+Der Catalog-Service ist verantwortlich für:
+
+* Produktdaten
+* Materialkataloge
+* CSV-Importe
+* Datanorm-kompatible Datenstrukturen
+* Preislisten
+* Lieferanteninformationen
+* spätere KI-gestützte Produktsuche
+
+Der Service soll als eigenständige Java REST API implementiert werden.
+
+---
+
+# Architekturentscheidungen
+
+## Microservice-Prinzip
+
+Jeder Service besitzt:
+
+* eine eigene dedizierte Datenbank
+* eigene REST API
+* keine direkten DB-Abhängigkeiten zu anderen Services
+
+Alle Services teilen sich jedoch dieselbe PostgreSQL-Instanz innerhalb Docker.
+
+Beispiel:
+
+PostgreSQL Container:
+
+* craftvoice-db
+* offer-db
+* catalog-db
+* weitere Service-Datenbanken
+
+---
+
+# Bereits erledigte Schritte
+
+## 1. Quarkus Service initialisiert
+
+Ein neuer Quarkus-Service wurde erstellt unter:
+
+backend/services/catalogservice
+
+Der Quarkus-Service verwendet:
+
+* RESTEasy Reactive / REST Jackson
+* Hibernate ORM with Panache
+* PostgreSQL JDBC Driver
+* SmallRye Health
+* OpenID Connect (vorerst deaktiviert)
+
+---
+
+## 2. Package-Struktur definiert
+
+Der Service verwendet die Projektkonvention:
+
+de.craftvoice.catalogservice
+
+REST Ressourcen liegen beispielsweise unter:
+
+de.craftvoice.catalogservice.catalog
+
+---
+
+## 3. REST Endpoint erfolgreich getestet
+
+Es wurde ein erster funktionierender REST Endpoint erstellt:
+
+GET /catalog
+
+Dieser liefert erfolgreich einen Test-Response zurück.
+
+Quarkus Dev Mode funktioniert:
+
+* Hot Reload aktiv
+* Service startet korrekt
+* lokale REST Kommunikation funktioniert
+
+---
+
+## 4. PostgreSQL Docker Infrastruktur verstanden
+
+Es existiert bereits ein zentraler PostgreSQL Docker Container:
+
+postgres:15-alpine
+
+docker-compose.yml enthält:
+
+* postgres container
+* volume für persistente Daten
+* internes Docker Netzwerk
+
+
+
+---
+
+## 5. Neue Datenbank erstellt
+
+Im bestehenden PostgreSQL Container wurde erfolgreich eine neue dedizierte Datenbank erstellt:
+
+catalog-db
+
+Die Datenbank wurde manuell erstellt über:
+
+CREATE DATABASE "catalog-db";
+
+Damit besitzt der catalog-service nun seine eigene isolierte Datenbank innerhalb der gemeinsamen PostgreSQL-Instanz.
+
+---
+
+# Datanorm-Architekturentscheidung
+
+Die Material- und Produktstruktur des Catalog-Services soll Datanorm-kompatibel aufgebaut werden.
+
+Wichtige Entscheidung:
+
+* Das interne Datenmodell orientiert sich direkt an Datanorm
+* CSV-Importe werden auf dieselbe Struktur gemappt
+* Kein separates CSV-Domainmodell
+
+Dadurch entsteht:
+
+* ein einheitliches Canonical Model
+* einfachere Integration externer Lieferantenkataloge
+* geringere Mapping-Komplexität
+
+---
+
+# Geplante Architektur des Services
+
+Der Service soll folgende Layer besitzen:
+
+* REST Controller Layer
+* Service Layer
+* Repository Layer
+* DTO Layer
+* Import Layer
+* Security Layer
+
+Architekturprinzipien:
+
+* Clean Architecture
+* REST-first
+* Stateless API
+* Strict Separation of Concerns
+
+---
+
+# Geplante Kernfunktionen
+
+## Produktabfrage
+
+Endpoint:
+
+GET /catalog/{id}
+
+Liefert:
+
+* Produktdaten
+* Kategorien
+* Lieferanteninformationen
+* Preisinformationen
+
+---
+
+## CSV Import
+
+Endpoint:
+
+POST /catalog/import/csv
+
+Funktionen:
+
+* CSV Upload
+* Datanorm Mapping
+* Fehlerhandling pro Zeile
+* Speicherung in catalog-db
+* große Dateien verarbeiten
+
+---
+
+## Datanorm API Key Speicherung
+
+Endpoint:
+
+POST /catalog/config/datanorm
+
+Funktionen:
+
+* API Key speichern
+* sichere Speicherung
+* spätere Datanorm Integration vorbereiten
+
+---
+
+# Geplante Datenbankstruktur
+
+Geplante Tabellen:
+
+* products
+* categories
+* suppliers
+* prices
+* import_logs
+* datanorm_config
+
+---
+
+# Geplante Infrastruktur
+
+Später soll integriert werden:
+
+* Docker Image Build
+* Docker Compose Service Integration
+* Nginx Reverse Proxy
+* OpenID Authentication
+* Structured Logging
+* Health Checks
+
+Geplantes Routing später:
+
+[https://www.meinshop.de/catalog/](https://www.meinshop.de/catalog/)*
+
+→ Nginx Reverse Proxy
+→ catalog-service
+
+---
+
+# Aktueller Stand
+
+Der aktuelle Stand ist:
+
+* Quarkus Service läuft
+* REST funktioniert
+* PostgreSQL läuft in Docker
+* catalog-db existiert
+* Architekturentscheidungen sind getroffen
+
+Der nächste Schritt ist nun:
+
+* echte JPA Entities implementieren
+* Hibernate Persistenz aktiv nutzen
+* erste Tabellen automatisch erzeugen
+* ProductEntity + Repository + Service Layer implementieren
