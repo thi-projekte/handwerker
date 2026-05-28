@@ -11,7 +11,7 @@ import java.util.List;
 public class MaterialRepository implements PanacheRepositoryBase<Material, UUID> {
 
     public List<Material> findByOwnerId(String ownerId) {
-        return find("ownerId", ownerId).list();
+        return find("ownerId = ?1 and active = true", ownerId).list();
     }
 
     public Optional<Material> findByOwnerIdAndArticleNumber(String ownerId, String articleNumber) {

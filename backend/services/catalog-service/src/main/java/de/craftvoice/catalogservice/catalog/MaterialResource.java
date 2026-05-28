@@ -1,5 +1,9 @@
 package de.craftvoice.catalogservice.catalog;
 
+import org.jboss.resteasy.reactive.RestForm;
+import org.jboss.resteasy.reactive.multipart.FileUpload;
+import java.nio.file.Files;
+
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -15,6 +19,9 @@ public class MaterialResource {
 
     @Inject
     MaterialService service;
+
+    @Inject
+    CsvMaterialParser csvMaterialParser;
 
     @Inject
     JsonWebToken jwt;
@@ -54,12 +61,28 @@ public class MaterialResource {
     }
 
     @POST
+    @Path("/import/csv")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    public int importCsv(@RestForm("file") FileUpload file) {
+        try {
+            List<DatanormMaterialDto> materials =
+                    csvMaterialParser.parse(
+                            Files.newInputStream(file.uploadedFile())
+                    );
+
+            return service.importFromCsv(materials, ownerId());
+        } catch (Exception e) {
+            throw new RuntimeException("CSV Import fehlgeschlagen: " + e.getMessage(), e);
+        }
+    }
+
+    @POST
     @Path("/import/datanorm")
     public Material importFromDatanorm(DatanormMaterialDto dto) {
         return service.importFromDatanorm(dto, ownerId());
     }
 
     private String ownerId() {
-        return jwt.getSubject();
+        return "dev-user";
     }
 }

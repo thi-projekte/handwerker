@@ -36,6 +36,18 @@ public class MaterialService {
     }
 
     @Transactional
+    public int importFromCsv(List<DatanormMaterialDto> materials, String ownerId) {
+        int imported = 0;
+
+        for (DatanormMaterialDto dto : materials) {
+            createOrUpdateByArticleNumber(dto, "CSV", ownerId);
+            imported++;
+        }
+
+        return imported;
+    }
+
+    @Transactional
     public Material update(UUID id, DatanormMaterialDto dto, String ownerId) {
 
         Material material = getById(id);
@@ -59,7 +71,8 @@ public class MaterialService {
             throw new NotFoundException("Material not found");
         }
 
-        repository.delete(material);
+        material.active = false;
+        material.updatedAt = Instant.now();
     }
 
     @Transactional
