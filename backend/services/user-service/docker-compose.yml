@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  user-db:
+    image: postgres:15
+    container_name: user-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: user-db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  user-service:
+    build:
+      context: .
+      dockerfile: src/main/docker/Dockerfile.jvm
+    container_name: user-service
+    environment:
+      DB_HOST: user-db
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: user-db
+    depends_on:
+      user-db:
+        condition: service_healthy
