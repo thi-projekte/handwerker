@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [offer-service]
+        service: [offer-service, catalog-service]
 
     steps:
       # Repository herunterladen
