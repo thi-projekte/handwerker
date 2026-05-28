@@ -1,4 +1,4 @@
-package de.craftvoice.offerservice.common;
+package de.winfprojekt.craftvoice.offerservice.common;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 import jakarta.persistence.Column;

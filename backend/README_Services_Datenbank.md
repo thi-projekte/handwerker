@@ -155,10 +155,10 @@ de.craftvoice.<servicename>.<domain>.<classname>
 
 **offer-service:**
 ```
-de.craftvoice.offerservice.offer.Offer                    (Entity)
+offer.de.winfprojekt.craftvoice.offerservice.Offer                    (Entity)
 de.craftvoice.offerservice.offer.OfferRepository          (Data Access)
-de.craftvoice.offerservice.offer.OfferResource            (REST Endpoint)
-de.craftvoice.offerservice.common.BaseEntity              (Shared)
+offer.de.winfprojekt.craftvoice.offerservice.OfferResource            (REST Endpoint)
+common.de.winfprojekt.craftvoice.offerservice.BaseEntity              (Shared)
 ```
 
 **craftsman-service (zukünftig):**

@@ -25,7 +25,12 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [offer-service, catalog-service]
+        include:
+          - service: offer-service
+            dockerfile: docker/Dockerfile.jvm
+            
+          - service: catalog-service
+            dockerfile: src/main/docker/Dockerfile.jvm
 
     steps:
       # Repository herunterladen
@@ -41,10 +46,15 @@ jobs:
           cache: maven
           cache-dependency-path: backend/services/${{ matrix.service }}/pom.xml
 
+      - name: Run tests
+        run: |
+          cd backend/services/${{ matrix.service }}
+          mvn clean test
+
       - name: Build with Maven
         run: |
           cd backend/services/${{ matrix.service }}
-          mvn clean package
+          mvn package -DskipTests
 
       # Buildx aktivieren
       - name: Set up Docker Buildx
@@ -67,9 +77,17 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}/${{ matrix.service }}
           tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
+            # Snapshot-/Dev-Tags
             type=ref,event=branch
             type=sha,prefix=sha-
+            
+            # SemVer-Releases über Git-Tags
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            
+            # latest nur bei echten Releases
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+      
 
       # Docker-Image bauen und pushen
       - name: Build and push Docker image for ${{ matrix.service }}
@@ -77,6 +95,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: backend/services/${{ matrix.service }}
+          file: backend/services/${{ matrix.service }}/${{ matrix.dockerfile }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

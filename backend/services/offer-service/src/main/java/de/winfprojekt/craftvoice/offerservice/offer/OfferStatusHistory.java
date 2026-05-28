@@ -1,6 +1,6 @@
-package de.craftvoice.offerservice.offer;
+package de.winfprojekt.craftvoice.offerservice.offer;
 
-import de.craftvoice.offerservice.common.BaseEntity;
+import de.winfprojekt.craftvoice.offerservice.common.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -26,7 +26,7 @@ public class OfferStatusHistory extends BaseEntity {
     public String status;
 
     @Column(nullable = false)
-    public LocalDateTime zeitpunkt;
+    public LocalDateTime zeitpunkt = LocalDateTime.now();;
 
     public String notiz;            // optional, z.B. "Vom Kunden abgelehnt"
 }

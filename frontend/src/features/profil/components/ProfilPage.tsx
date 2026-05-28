@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "@/assets/stylesheets/stylesheet.css";
 import "../ProfilePage.css";
@@ -15,12 +15,17 @@ type ProfileFormData = {
 
 export const ProfilPage = () => {
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [activeTab, setActiveTab] = useState<Tab>("profil");
 
   const [isLightMode, setIsLightMode] = useState(
     () => localStorage.getItem("theme") === "light",
   );
+
+  const [profileImage, setProfileImage] = useState<string | null>(() => {
+    return localStorage.getItem("profileImage");
+  });
 
   const [formData, setFormData] = useState<ProfileFormData>({
     vorname: "Christian",
@@ -29,6 +34,8 @@ export const ProfilPage = () => {
     telefon: "+49 841 123456",
     rolle: "Inhaber",
   });
+
+  const initials = `${formData.vorname.charAt(0)}${formData.nachname.charAt(0)}`;
 
   useEffect(() => {
     const theme = isLightMode ? "light" : "dark";
@@ -42,6 +49,40 @@ export const ProfilPage = () => {
   ) => {
     const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleProfileImageChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      alert("Bitte eine Bilddatei auswählen.");
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const imageUrl = reader.result as string;
+      setProfileImage(imageUrl);
+      localStorage.setItem("profileImage", imageUrl);
+    };
+
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveProfileImage = () => {
+    setProfileImage(null);
+    localStorage.removeItem("profileImage");
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   return (
@@ -83,11 +124,43 @@ export const ProfilPage = () => {
           <section className="card profile-overview-card">
             <div className="profile-overview-header">
               <div className="profile-image-wrapper">
-                <div className="profile-avatar large">CH</div>
+                <div className="profile-avatar large">
+                  {profileImage ? (
+                    <img
+                      className="profile-avatar-image"
+                      src={profileImage}
+                      alt="Profilbild"
+                    />
+                  ) : (
+                    initials
+                  )}
+                </div>
 
-                <button className="profile-image-button" type="button">
+                <input
+                  ref={fileInputRef}
+                  className="profile-image-input"
+                  type="file"
+                  accept="image/png, image/jpeg, image/jpg"
+                  onChange={handleProfileImageChange}
+                />
+
+                <button
+                  className="profile-image-button"
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                >
                   Bild ändern
                 </button>
+
+                {profileImage && (
+                  <button
+                    className="profile-image-remove-button"
+                    type="button"
+                    onClick={handleRemoveProfileImage}
+                  >
+                    Bild entfernen
+                  </button>
+                )}
               </div>
 
               <div className="profile-main-info">
