@@ -3,9 +3,9 @@ import { PieChart, FileText, Mic, Building2, UserCircle } from "lucide-react";
 import "./navbar-css.css";
 
 const navItems = [
-  { to: "/", label: "Dashboard", icon: PieChart },
+  { to: "/dashboard", label: "Dashboard", icon: PieChart },
   { to: "/angebote", label: "Documents", icon: FileText },
-  { to: "/aufnahme", label: "Aufnahme", icon: Mic },
+  { to: "/", label: "Aufnahme", icon: Mic },
   { to: "/unternehmen", label: "Unternehmen", icon: Building2 },
   { to: "/profil", label: "Profil", icon: UserCircle },
 ];

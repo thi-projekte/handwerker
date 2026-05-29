@@ -18,6 +18,8 @@ import { OfferSharePage } from "@/features/offer-share/components/OfferSharePage
 import { OfferResultPage } from "@/features/offer-result/components/OfferResultPage";
 import { PasswordChangePage } from "@/features/password-change/components/PasswordChangePage";
 
+import { LadenPage } from "@/features/Laden/components/LadenPage";
+
 export function AppRoutes() {
   return (
     <Routes>
@@ -26,7 +28,7 @@ export function AppRoutes() {
         path="/"
         element={
           <AppLayout>
-            <DashboardView />
+            <HomeView />
           </AppLayout>
         }
       />
@@ -41,10 +43,10 @@ export function AppRoutes() {
       />
 
       <Route
-        path="/aufnahme"
+        path="/dashboard"
         element={
           <AppLayout>
-            <HomeView />
+            <DashboardView />
           </AppLayout>
         }
       />
@@ -140,6 +142,16 @@ export function AppRoutes() {
           </AppLayout>
         }
       />
+
+      <Route
+        path="/laden"
+        element={
+          <AppLayout hideNav hideHeader>
+            <LadenPage />
+          </AppLayout>
+        }
+      />
+
     </Routes>
   );
 }

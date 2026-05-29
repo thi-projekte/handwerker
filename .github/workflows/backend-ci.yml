@@ -43,10 +43,15 @@ jobs:
           cache: maven
           cache-dependency-path: backend/services/${{ matrix.service }}/pom.xml
 
+      - name: Run tests
+        run: |
+          cd backend/services/${{ matrix.service }}
+          mvn clean test
+
       - name: Build with Maven
         run: |
           cd backend/services/${{ matrix.service }}
-          mvn clean package
+          mvn package -DskipTests
 
       # Buildx aktivieren
       - name: Set up Docker Buildx
