@@ -1,15 +1,37 @@
 import "./dashboard.css";
+
 import { DashboardStats } from "@/features/dashboard/components/DashboardStats";
-import { QuickActions } from "@/features/dashboard/components/QuickActions";
-import { RecentOffers } from "@/features/dashboard/components/RecentOffers";
+import { DashboardFilters } from "@/features/dashboard/components/DashboardFilters";
+import { DashboardChart } from "@/features/dashboard/components/DashboardChart";
+import { DashboardAttention } from "@/features/dashboard/components/DashboardAttention";
+import { DashboardActivity } from "@/features/dashboard/components/DashboardActivity";
 
 export const DashboardView = () => {
   return (
     <div className="dashboard-page">
-      <h1>Dashboard</h1>
-      <DashboardStats />
-      <QuickActions />
-      <RecentOffers />
+      <header className="card">
+        <h1>Dashboard</h1>
+        <p className="text-secondary">
+          Hier ist die Übersicht deiner Angebote und Aktivitäten
+        </p>
+      </header>
+      <div className="dashboard-content">
+        <DashboardFilters />
+
+        <DashboardStats />
+
+        <DashboardChart />
+
+        <div className="dashboard-grid">
+
+          <DashboardAttention />
+
+          <DashboardActivity />
+
+        </div>
+
+      </div>
+
     </div>
   );
 };

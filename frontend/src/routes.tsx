@@ -28,7 +28,7 @@ export function AppRoutes() {
         path="/"
         element={
           <AppLayout>
-            <DashboardView />
+            <HomeView />
           </AppLayout>
         }
       />
@@ -43,10 +43,10 @@ export function AppRoutes() {
       />
 
       <Route
-        path="/aufnahme"
+        path="/dashboard"
         element={
           <AppLayout>
-            <HomeView />
+            <DashboardView />
           </AppLayout>
         }
       />

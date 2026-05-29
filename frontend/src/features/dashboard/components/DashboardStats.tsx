@@ -3,10 +3,10 @@ import { DashboardCard } from "@/features/dashboard/components/DashboardCard";
 export const DashboardStats = () => {
   return (
     <div className="stats-grid">
-      <DashboardCard title="Angebote erstellt" value="24" />
-      <DashboardCard title="Offene Angebote" value="8" />
-      <DashboardCard title="Exportiert" value="16" />
-      <DashboardCard title="Umsatzpotenzial" value="18.400€" />
+      <DashboardCard title="Angebote gesamt" value="42" />
+      <DashboardCard title="Ohne Rückmeldung" value="11" />
+      <DashboardCard title="Mit Rückmeldung" value="23" />
+      <DashboardCard title="Nicht fertiggestellt" value="8" />
     </div>
   );
 };
