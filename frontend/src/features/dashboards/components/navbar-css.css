@@ -62,7 +62,7 @@
 /* ── Tablet (768px+) ── */
 @media (min-width: 768px) {
   .navbar {
-    padding: 10px 32px;
+    padding: 10px 15px;
     padding-bottom: calc(10px + env(safe-area-inset-bottom));
   }
 
