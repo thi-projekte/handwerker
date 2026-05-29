@@ -154,87 +154,97 @@ export const ReviewPage = () => {
         </p>
       </div>
 
-      {abschnitte.map((abschnitt) => (
-        <div key={abschnitt.id} className="card review-section">
-          <div className="review-section-header">
-            <h2>{abschnitt.titel}</h2>
-            <span className="review-count">{abschnitt.stichpunkte.length}</span>
-          </div>
-          <ul className="review-list">
-            {abschnitt.stichpunkte.map((sp, index) => (
-              <li
-                key={sp.id}
-                className={`review-item ${dragInfo?.fromIndex === index && dragInfo?.abschnittId === abschnitt.id ? "dragging" : ""}`}
-                draggable
-                onDragStart={() => onDragStart(abschnitt.id, index)}
-                onDragOver={(e) => onDragOver(e, abschnitt.id, index)}
-                onDragEnd={() => setDragInfo(null)}
-              >
-                <span className="review-drag-handle" title="Verschieben">
-                  ⠿
-                </span>
-                {editingId === sp.id ? (
-                  <textarea
-                    className="review-textarea"
-                    value={sp.text}
-                    autoFocus
-                    onChange={(e) =>
-                      updateText(abschnitt.id, sp.id, e.target.value)
-                    }
-                    onBlur={() => setEditingId(null)}
-                    rows={2}
-                  />
-                ) : (
-                  <span
-                    className="review-text"
-                    onClick={() => setEditingId(sp.id)}
-                  >
-                    {sp.text || (
-                      <span className="review-placeholder">
-                        Tippen zum Eingeben …
-                      </span>
-                    )}
-                  </span>
-                )}
-                <button
-                  className="review-delete-btn"
-                  onClick={() => deleteStichpunkt(abschnitt.id, sp.id)}
-                  title="Löschen"
+      {/* Grid-Wrapper für Desktop */}
+      <div className="review-sections-grid">
+        {abschnitte.map((abschnitt) => (
+          <div key={abschnitt.id} className="card review-section">
+            <div className="review-section-header">
+              <h2>{abschnitt.titel}</h2>
+              <span className="review-count">
+                {abschnitt.stichpunkte.length}
+              </span>
+            </div>
+            <ul className="review-list">
+              {abschnitt.stichpunkte.map((sp, index) => (
+                <li
+                  key={sp.id}
+                  className={`review-item ${
+                    dragInfo?.fromIndex === index &&
+                    dragInfo?.abschnittId === abschnitt.id
+                      ? "dragging"
+                      : ""
+                  }`}
+                  draggable
+                  onDragStart={() => onDragStart(abschnitt.id, index)}
+                  onDragOver={(e) => onDragOver(e, abschnitt.id, index)}
+                  onDragEnd={() => setDragInfo(null)}
                 >
-                  ✕
-                </button>
-              </li>
-            ))}
-          </ul>
-          <button
-            className="review-add-btn"
-            onClick={() => addStichpunkt(abschnitt.id)}
-          >
-            + Stichpunkt hinzufügen
-          </button>
-        </div>
-      ))}
-
-      <div className="card review-confirm-card">
-        {bestaetigt ? (
-          <div className="review-success">
-            <span className="review-success-icon">✓</span>
-            <p>Wird weitergeleitet …</p>
-          </div>
-        ) : (
-          <>
-            <p className="text-secondary review-confirm-hint">
-              Alles korrekt? Mit der Bestätigung wird das Ergebnis an die
-              nächste KI weitergegeben.
-            </p>
+                  <span className="review-drag-handle" title="Verschieben">
+                    ⠿
+                  </span>
+                  {editingId === sp.id ? (
+                    <textarea
+                      className="review-textarea"
+                      value={sp.text}
+                      autoFocus
+                      onChange={(e) =>
+                        updateText(abschnitt.id, sp.id, e.target.value)
+                      }
+                      onBlur={() => setEditingId(null)}
+                      rows={2}
+                    />
+                  ) : (
+                    <span
+                      className="review-text"
+                      onClick={() => setEditingId(sp.id)}
+                    >
+                      {sp.text || (
+                        <span className="review-placeholder">
+                          Tippen zum Eingeben …
+                        </span>
+                      )}
+                    </span>
+                  )}
+                  <button
+                    className="review-delete-btn"
+                    onClick={() => deleteStichpunkt(abschnitt.id, sp.id)}
+                    title="Löschen"
+                  >
+                    ✕
+                  </button>
+                </li>
+              ))}
+            </ul>
             <button
-              className="button-primary review-confirm-btn"
-              onClick={handleBestaetigen}
+              className="review-add-btn"
+              onClick={() => addStichpunkt(abschnitt.id)}
             >
-              Bestätigen & weiterleiten
+              + Stichpunkt hinzufügen
             </button>
-          </>
-        )}
+          </div>
+        ))}
+
+        <div className="card review-confirm-card">
+          {bestaetigt ? (
+            <div className="review-success">
+              <span className="review-success-icon">✓</span>
+              <p>Wird weitergeleitet …</p>
+            </div>
+          ) : (
+            <>
+              <p className="text-secondary review-confirm-hint">
+                Alles korrekt? Mit der Bestätigung wird das Ergebnis an die
+                nächste KI weitergegeben.
+              </p>
+              <button
+                className="button-primary review-confirm-btn"
+                onClick={handleBestaetigen}
+              >
+                Bestätigen & weiterleiten
+              </button>
+            </>
+          )}
+        </div>
       </div>
     </>
   );
