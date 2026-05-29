@@ -11,6 +11,7 @@
   --color-accent-gradient: linear-gradient(135deg, #ff7a18, #ff4d00);
   --blur: 22px;
   --radius: 26px;
+  --shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
 }
 
 /* =========================
@@ -42,17 +43,30 @@ body {
     sans-serif;
   background: var(--color-bg);
   color: var(--color-text-primary);
-  /* Verhindert horizontales Scrollen auf Mobilgeräten */
   overflow-x: hidden;
+  font-size: 15px;
+}
+
+/* ── Responsive Typografie ── */
+@media (min-width: 768px) {
+  body {
+    font-size: 16px;
+  }
+}
+
+@media (min-width: 1024px) {
+  body {
+    font-size: 16px;
+  }
 }
 
 h1 {
-  font-size: 22px;
+  font-size: clamp(20px, 3vw, 32px);
   margin: 0 0 6px 0;
 }
 
 h2 {
-  font-size: 18px;
+  font-size: clamp(16px, 2vw, 22px);
   margin-bottom: 12px;
 }
 
@@ -61,12 +75,10 @@ p {
 }
 
 /* =========================
-   .app — nur noch Content-Wrapper
-   (kein eigener Container mehr, Shell übernimmt das)
+   .app
    ========================= */
 .app {
-  /* Kein max-width, kein border-radius, kein Padding mehr hier —
-     das macht jetzt AppLayout / .shell */
+  /* Shell übernimmt Layout */
 }
 
 /* =========================
@@ -82,6 +94,19 @@ p {
   box-shadow: var(--shadow);
 }
 
+@media (min-width: 768px) {
+  .card {
+    padding: 20px 24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .card {
+    padding: 24px 28px;
+    border-radius: 20px;
+  }
+}
+
 /* =========================
    Buttons
    ========================= */
@@ -90,13 +115,13 @@ p {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  padding: 16px;
+  padding: 14px 20px;
   border-radius: 16px;
   border: none;
   background: var(--color-accent-gradient);
   color: white;
   font-weight: 600;
-  font-size: 16px;
+  font-size: 15px;
   cursor: pointer;
   box-shadow: 0 8px 20px rgba(255, 106, 0, 0.4);
   transition:
@@ -107,6 +132,13 @@ p {
 .button-primary:hover {
   transform: translateY(-2px);
   box-shadow: 0 12px 25px rgba(255, 106, 0, 0.5);
+}
+
+@media (min-width: 768px) {
+  .button-primary {
+    font-size: 16px;
+    padding: 16px 28px;
+  }
 }
 
 .button-secondary {
@@ -189,6 +221,12 @@ p {
   box-shadow: 0 0 0 2px rgba(255, 106, 0, 0.2);
 }
 
+@media (min-width: 768px) {
+  .input-field {
+    font-size: 16px;
+  }
+}
+
 .select-field {
   appearance: none;
   cursor: pointer;
@@ -229,4 +267,24 @@ p {
 .register-footer {
   text-align: center;
   font-size: 13px;
+}
+
+/* =========================
+   Auth-Seiten zentriert (Login, Register, etc.)
+   ========================= */
+.app.auth-layout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+  padding: 24px;
+}
+
+@media (min-width: 768px) {
+  .login-card,
+  .reset-card,
+  .register-card {
+    max-width: 480px;
+    margin: 0 auto;
+  }
 }
