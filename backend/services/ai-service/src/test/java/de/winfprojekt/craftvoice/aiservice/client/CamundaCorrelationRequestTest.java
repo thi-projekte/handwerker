@@ -35,7 +35,7 @@ class CamundaCorrelationRequestTest {
     }
 
     @Test
-    void process_variable_hat_camunda_Json_typed_value_struktur() throws Exception {
+    void process_variable_hat_camunda_String_typed_value_struktur() throws Exception {
         CamundaCorrelationRequest req = CamundaCorrelationRequest.ergebnisKI(
                 "BK-002", "{\"foo\":\"bar\"}"
         );
@@ -43,10 +43,12 @@ class CamundaCorrelationRequestTest {
         JsonNode variable = mapper.valueToTree(req)
                 .get("processVariables").get("ergebnisKI");
 
-        // Camunda erwartet { "value": "...", "type": "Json" } - exakt diese Schluesselnamen
+        // Laut Schnittstellenvertrag (Stand 29.05.2026) wird ergebnisKI als String-Variable
+        // gesendet; die Process Engine parst den JSON-Inhalt selbst per S()-Spin im
+        // ExecutionListener. Ein Camunda-Typ "Json" wuerde hier zu doppeltem Parsen fuehren.
         assertEquals("{\"foo\":\"bar\"}", variable.get("value").asText());
-        assertEquals("Json", variable.get("type").asText(),
-                "Type MUSS exakt 'Json' (gross J) sein, sonst lehnt Camunda ab");
+        assertEquals("String", variable.get("type").asText(),
+                "Type MUSS exakt 'String' sein — die PE re-parst via S() (siehe JsonVariable)");
     }
 
     @Test

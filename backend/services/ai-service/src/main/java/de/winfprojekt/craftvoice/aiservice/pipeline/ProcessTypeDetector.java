@@ -7,20 +7,21 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 /**
  * Leitet aus den vorhandenen Feldern einer {@link ProcessRequest} ab, ob es sich um
- * ein Erstangebot oder eine Korrektur handelt.
+ * ein Erstangebot oder eine Angebotskorrektur handelt.
  *
- * <p>Hintergrund: Die neue BPMN-Version verzichtet auf ein explizites {@code typ}-Feld
- * im Connector-Payload und unterscheidet die Faelle ueber Feld-Anwesenheit. Das ist
- * implizit und fehleranfaellig — siehe {@link ProcessType} fuer die offene Frage an
- * das BPMN-Team.
+ * <p>Hintergrund: Der Schnittstellenvertrag (Stand 29.05.2026) verzichtet auf ein
+ * explizites {@code typ}-Feld im Connector-Payload und unterscheidet die Faelle ueber
+ * Feld-Anwesenheit — in genau der Reihenfolge, in der auch das BPMN-Script prueft
+ * (Korrektur vor Erstangebot).
  *
  * <p>Regeln:
  * <ul>
- *   <li><b>Erstangebot:</b> {@code vorlage} UND {@code sprachschnipsel} vorhanden,
- *       {@code angebotsentwurf} und {@code korrekturschnipsel} fehlen.</li>
- *   <li><b>Korrektur:</b> {@code angebotsentwurf} UND {@code korrekturschnipsel}
- *       vorhanden.</li>
- *   <li><b>Sonst:</b> {@link IllegalArgumentException} — fail-fast statt raten.</li>
+ *   <li><b>Korrektur:</b> {@code strukturierteAngebotspositionen} UND
+ *       {@code korrekturschnipsel} vorhanden.</li>
+ *   <li><b>Erstangebot:</b> {@code vorlage} UND {@code sprachschnipsel} vorhanden.</li>
+ *   <li><b>Sonst:</b> {@link IllegalArgumentException} — fail-fast statt raten. Das
+ *       greift insbesondere auch fuer die (hier nicht unterstuetzte)
+ *       Rechnungskorrektur-Variante.</li>
  * </ul>
  */
 @ApplicationScoped
@@ -32,7 +33,8 @@ public class ProcessTypeDetector {
         }
 
         boolean hasKorrekturFelder =
-                request.angebotsentwurf() != null && request.korrekturschnipsel() != null;
+                request.strukturierteAngebotspositionen() != null
+                        && request.korrekturschnipsel() != null;
         boolean hasErstangebotFelder =
                 request.vorlage() != null && request.sprachschnipsel() != null;
 
@@ -46,7 +48,8 @@ public class ProcessTypeDetector {
         throw new IllegalArgumentException(
                 "Eingangs-Payload enthaelt weder vollstaendige Erstangebot-Felder "
                         + "(vorlage + sprachschnipsel) noch Korrektur-Felder "
-                        + "(angebotsentwurf + korrekturschnipsel). businessKey="
-                        + request.businessKey());
+                        + "(strukturierteAngebotspositionen + korrekturschnipsel). "
+                        + "Rechnungskorrektur wird ueber diesen Endpoint nicht unterstuetzt. "
+                        + "businessKey=" + request.businessKey());
     }
 }

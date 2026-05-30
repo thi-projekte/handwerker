@@ -15,7 +15,7 @@ import java.util.Map;
  *   "messageName": "ergebnisKI",
  *   "businessKey": "BK-12345",
  *   "processVariables": {
- *     "ergebnisKI": { "value": "{...}", "type": "Json" }
+ *     "ergebnisKI": { "value": "{...}", "type": "String" }
  *   }
  * }
  * </pre>

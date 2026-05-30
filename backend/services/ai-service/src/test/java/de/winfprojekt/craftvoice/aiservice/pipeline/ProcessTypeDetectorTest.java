@@ -1,6 +1,7 @@
 package de.winfprojekt.craftvoice.aiservice.pipeline;
 
-import de.winfprojekt.craftvoice.aiservice.model.Angebotsentwurf;
+import de.winfprojekt.craftvoice.aiservice.model.Angebotspositionen;
+import de.winfprojekt.craftvoice.aiservice.model.Position;
 import de.winfprojekt.craftvoice.aiservice.model.ProcessRequest;
 import de.winfprojekt.craftvoice.aiservice.model.ProcessType;
 import de.winfprojekt.craftvoice.aiservice.model.Vorlage;
@@ -14,91 +15,82 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Unit-Tests fuer die Fallunterscheidung in {@link ProcessTypeDetector}.
- *
- * <p>Wir instanziieren den Detector direkt ohne CDI-Container — die Klasse hat keinen
- * State und keine Abhaengigkeiten, also ist {@code new ...()} hier voellig okay
- * und ein {@code @QuarkusTest} waere Overkill.
- *
- * <p>Reihenfolge der {@link ProcessRequest}-Felder:
- * businessKey, prompt, vorlage, sprachschnipsel, angebotsentwurf, korrekturschnipsel.
+ * Prueft die Routing-Logik des {@link ProcessTypeDetector} — die Fallunterscheidung
+ * Erstangebot vs. Korrektur erfolgt allein ueber Feld-Anwesenheit, daher ist sie der
+ * fehleranfaelligste Punkt der Schnittstelle und gehoert dicht getestet.
  */
 class ProcessTypeDetectorTest {
 
     private final ProcessTypeDetector detector = new ProcessTypeDetector();
 
-    private static Vorlage leereVorlage() {
-        return new Vorlage(List.of(), List.of(), List.of());
+    private static Vorlage vorlage() {
+        return new Vorlage(
+                List.of(new Position("Fliesen verlegen", "Bad", 15.0, "m²")),
+                List.of(new Position("Feinsteinzeug", "60x60", 15.0, "m²")),
+                List.of("Vor Ort prüfen"));
     }
 
-    private static Angebotsentwurf leererEntwurf() {
-        return new Angebotsentwurf(List.of());
+    private static Angebotspositionen positionen() {
+        return new Angebotspositionen(
+                List.of(new Position("Fliesen verlegen", "Bad", 15.0, "m²")),
+                List.of(new Position("Feinsteinzeug", "60x60", 15.0, "m²")),
+                List.of());
     }
 
     @Test
-    void liefert_erstangebot_bei_vorlage_und_sprachschnipsel() {
+    void erkennt_erstangebot_wenn_vorlage_und_sprachschnipsel_gesetzt() {
         ProcessRequest req = new ProcessRequest(
-                "BK-1", "Erstangebot-Prompt", leereVorlage(), "Bad sanieren", null, null
-        );
+                "BK-1", "Erstelle Angebot", vorlage(), "Bad neu fliesen", null, null);
 
         assertEquals(ProcessType.ERSTANGEBOT, detector.determine(req));
     }
 
     @Test
-    void liefert_korrektur_bei_angebotsentwurf_und_korrekturschnipsel() {
+    void erkennt_korrektur_wenn_positionen_und_korrekturschnipsel_gesetzt() {
         ProcessRequest req = new ProcessRequest(
-                "BK-2", "Korrektur-Prompt", null, null, leererEntwurf(), "Bitte Sockel ergaenzen"
-        );
+                "BK-2", "Überarbeite", null, null, positionen(), "Sockelleisten ergänzen");
 
         assertEquals(ProcessType.KORREKTUR, detector.determine(req));
     }
 
     @Test
-    void wirft_exception_wenn_keine_felder_gesetzt() {
+    void korrektur_hat_vorrang_wenn_beide_feldgruppen_vorhanden() {
+        // Spiegelt das BPMN-Script: Korrektur wird vor Erstangebot geprueft.
         ProcessRequest req = new ProcessRequest(
-                "BK-3", null, null, null, null, null
-        );
+                "BK-3", "x", vorlage(), "schnipsel", positionen(), "korrektur");
 
-        IllegalArgumentException ex = assertThrows(
-                IllegalArgumentException.class, () -> detector.determine(req)
-        );
-        assertTrue(ex.getMessage().contains("BK-3"),
-                "Fehlermeldung soll den businessKey enthalten");
+        assertEquals(ProcessType.KORREKTUR, detector.determine(req));
     }
 
     @Test
-    void wirft_exception_wenn_nur_sprachschnipsel_ohne_vorlage() {
-        ProcessRequest req = new ProcessRequest(
-                "BK-4", null, null, "Schnipsel ohne Vorlage", null, null
-        );
-
-        assertThrows(IllegalArgumentException.class, () -> detector.determine(req));
-    }
-
-    @Test
-    void wirft_exception_wenn_nur_vorlage_ohne_sprachschnipsel() {
-        ProcessRequest req = new ProcessRequest(
-                "BK-5", null, leereVorlage(), null, null, null
-        );
-
-        assertThrows(IllegalArgumentException.class, () -> detector.determine(req));
-    }
-
-    @Test
-    void wirft_exception_bei_null_request() {
+    void wirft_wenn_request_null() {
         assertThrows(IllegalArgumentException.class, () -> detector.determine(null));
     }
 
     @Test
-    void bevorzugt_korrektur_wenn_beide_faelle_gleichzeitig_gesetzt() {
-        // Edge-Case: PE schickt fehlerhaft alles. Unser aktuelles Verhalten:
-        // Korrektur gewinnt. Dokumentiert hier, falls jemand das Verhalten aendert.
-        ProcessRequest req = new ProcessRequest(
-                "BK-6", "Beide-Prompt",
-                leereVorlage(), "Spachnipsel-Text",
-                leererEntwurf(), "Korrektur-Text"
-        );
+    void wirft_wenn_keine_feldgruppe_vollstaendig() {
+        // nur businessKey + prompt, keine inhaltlichen Felder
+        ProcessRequest req = new ProcessRequest("BK-4", "x", null, null, null, null);
 
-        assertEquals(ProcessType.KORREKTUR, detector.determine(req));
+        IllegalArgumentException ex =
+                assertThrows(IllegalArgumentException.class, () -> detector.determine(req));
+        assertTrue(ex.getMessage().contains("BK-4"),
+                "Fehlermeldung sollte den businessKey zur Diagnose enthalten");
+    }
+
+    @Test
+    void wirft_wenn_erstangebot_unvollstaendig() {
+        // vorlage ohne sprachschnipsel ist kein gueltiges Erstangebot
+        ProcessRequest req = new ProcessRequest("BK-5", "x", vorlage(), null, null, null);
+
+        assertThrows(IllegalArgumentException.class, () -> detector.determine(req));
+    }
+
+    @Test
+    void wirft_wenn_korrektur_unvollstaendig() {
+        // korrekturschnipsel ohne strukturierteAngebotspositionen ist keine gueltige Korrektur
+        ProcessRequest req = new ProcessRequest("BK-6", "x", null, null, null, "korrektur");
+
+        assertThrows(IllegalArgumentException.class, () -> detector.determine(req));
     }
 }

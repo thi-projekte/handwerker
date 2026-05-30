@@ -3,112 +3,110 @@ package de.winfprojekt.craftvoice.aiservice.model;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Unit-Tests fuer die Deserialisierung von {@link ProcessRequest}.
+ * Stellt sicher, dass das vom Camunda HTTP-Connector geschickte JSON exakt auf unsere
+ * {@link ProcessRequest}-Records gemappt wird — inklusive der Faelle, in denen Felder
+ * fehlen (Jackson soll dann {@code null} setzen, nicht crashen).
  *
- * <p>Die Beispiel-JSONs spiegeln die echte Connector-Payload-Form
- * aus {@code Sprachschnipselverarbeitung.bpmn} wider (siehe
- * {@code docs/bpmn-reference/}). KEINE {@code kundendaten}, KEIN
- * {@code processInstanceId} — nur was die BPMN-Engine wirklich schickt.
+ * <p>Diese Tests sind die Gegenprobe zu den BPMN-Payloads (Schnittstellenvertrag
+ * Stand 29.05.2026): aendert das BPMN-Team die Feldnamen oder die Struktur, brechen
+ * hier die Assertions.
  */
 class ProcessRequestParsingTest {
 
     private final ObjectMapper mapper = new ObjectMapper();
 
     @Test
-    void parses_erstangebot_payload() throws Exception {
+    void erstangebot_payload_wird_vollstaendig_gemappt() throws Exception {
         String json = """
                 {
-                  "businessKey": "BK-001",
+                  "businessKey": "BK-100",
                   "prompt": "Erstelle ein Erstangebot anhand von Vorlage und Sprachschnipsel.",
                   "vorlage": {
-                    "leistungen": ["Fliesenlegen 45 EUR/h", "Verfugen 35 EUR/h"],
-                    "material": ["Feinsteinzeug 60x60 matt"],
-                    "notizen": ["Kunde bevorzugt grosse Formate"]
+                    "leistungen": [
+                      {"bezeichnung": "Fliesen verlegen", "beschreibung": "Stundensatz", "menge": 1, "einheit": "h"}
+                    ],
+                    "material": [
+                      {"bezeichnung": "Feinsteinzeug 60x60", "beschreibung": "grossformatig", "menge": 15, "einheit": "m²"}
+                    ],
+                    "notizen": ["grossformatig"]
                   },
-                  "sprachschnipsel": "Im Bad neue Bodenfliesen verlegen, ca. 15 Quadratmeter, grossformatig."
+                  "sprachschnipsel": "Im Bad neue Bodenfliesen verlegen."
                 }
                 """;
 
         ProcessRequest req = mapper.readValue(json, ProcessRequest.class);
 
-        assertEquals("BK-001", req.businessKey());
-        assertNotNull(req.prompt());
-        assertEquals("Erstelle ein Erstangebot anhand von Vorlage und Sprachschnipsel.",
-                req.prompt());
-
+        assertEquals("BK-100", req.businessKey());
+        assertEquals("Erstelle ein Erstangebot anhand von Vorlage und Sprachschnipsel.", req.prompt());
         assertNotNull(req.vorlage());
-        assertEquals(2, req.vorlage().leistungen().size());
-        assertEquals("Feinsteinzeug 60x60 matt", req.vorlage().material().get(0));
-
-        assertNotNull(req.sprachschnipsel());
-
-        // Erstangebot-Fall: angebotsentwurf + korrekturschnipsel sind null
-        assertNull(req.angebotsentwurf());
+        assertEquals(1, req.vorlage().leistungen().size());
+        assertEquals("Fliesen verlegen", req.vorlage().leistungen().get(0).bezeichnung());
+        assertEquals("Feinsteinzeug 60x60", req.vorlage().material().get(0).bezeichnung());
+        assertEquals(15.0, req.vorlage().material().get(0).menge());
+        assertEquals("Im Bad neue Bodenfliesen verlegen.", req.sprachschnipsel());
+        assertNull(req.strukturierteAngebotspositionen());
         assertNull(req.korrekturschnipsel());
     }
 
     @Test
-    void parses_korrektur_payload() throws Exception {
+    void korrektur_payload_wird_vollstaendig_gemappt() throws Exception {
         String json = """
                 {
-                  "businessKey": "BK-002",
-                  "prompt": "Ueberarbeite den Angebotsentwurf anhand des Korrekturschnipsels.",
-                  "angebotsentwurf": {
-                    "strukturierteAngebotspositionen": [
-                      {
-                        "bezeichnung": "Bodenfliesen Feinsteinzeug 60x60",
-                        "beschreibung": "Verlegung im Badezimmer",
-                        "menge": 15.0,
-                        "einheit": "m2"
-                      }
-                    ]
+                  "businessKey": "BK-200",
+                  "prompt": "Überarbeite die strukturierten Angebotspositionen anhand des Korrekturschnipsels.",
+                  "strukturierteAngebotspositionen": {
+                    "leistungen": [
+                      {"bezeichnung": "Bodenfliesen", "beschreibung": "Feinsteinzeug", "menge": 15.0, "einheit": "m2"}
+                    ],
+                    "material": [],
+                    "notizen": ["bestehender Stand"]
                   },
-                  "korrekturschnipsel": "Bitte zusaetzlich noch Sockelleisten einplanen."
+                  "korrekturschnipsel": "Bitte zusaetzlich Sockelleisten einplanen."
                 }
                 """;
 
         ProcessRequest req = mapper.readValue(json, ProcessRequest.class);
 
-        assertEquals("BK-002", req.businessKey());
-        assertEquals("Ueberarbeite den Angebotsentwurf anhand des Korrekturschnipsels.",
-                req.prompt());
-
-        assertNotNull(req.angebotsentwurf());
-        assertEquals(1, req.angebotsentwurf().strukturierteAngebotspositionen().size());
-
-        AngebotsPosition pos = req.angebotsentwurf().strukturierteAngebotspositionen().get(0);
-        assertEquals("Bodenfliesen Feinsteinzeug 60x60", pos.bezeichnung());
-        assertEquals(15.0, pos.menge());
-        assertEquals("m2", pos.einheit());
-
-        assertNotNull(req.korrekturschnipsel());
-
-        // Korrektur-Fall: vorlage + sprachschnipsel sind null
+        assertEquals("BK-200", req.businessKey());
         assertNull(req.vorlage());
         assertNull(req.sprachschnipsel());
+        assertNotNull(req.strukturierteAngebotspositionen());
+        assertEquals(1, req.strukturierteAngebotspositionen().leistungen().size());
+        assertEquals("Bodenfliesen",
+                req.strukturierteAngebotspositionen().leistungen().get(0).bezeichnung());
+        assertEquals("Bitte zusaetzlich Sockelleisten einplanen.", req.korrekturschnipsel());
     }
 
     @Test
-    void parses_payload_with_unknown_fields() throws Exception {
-        // Zusaetzliche Top-Level-Felder, die wir nicht modelliert haben (z.B. kundendaten,
-        // processInstanceId aus alten Versionen oder Debug-Infos), duerfen den Parser
-        // NICHT zum Absturz bringen.
+    void leeres_json_wird_zu_lauter_null_feldern() throws Exception {
+        ProcessRequest req = mapper.readValue("{}", ProcessRequest.class);
+
+        assertNull(req.businessKey());
+        assertNull(req.vorlage());
+        assertNull(req.sprachschnipsel());
+        assertNull(req.strukturierteAngebotspositionen());
+        assertNull(req.korrekturschnipsel());
+    }
+
+    @Test
+    void unbekannte_felder_brechen_nicht() throws Exception {
+        // Robustheit gegen BPMN-Zusatzfelder (z.B. customerId, das wir bewusst ignorieren)
         String json = """
                 {
-                  "businessKey": "BK-003",
-                  "kundendaten": { "name": "Mueller" },
-                  "processInstanceId": "PI-veraltet",
-                  "debugInfo": "egal"
+                  "businessKey": "BK-300",
+                  "vorlage": {"leistungen": [], "material": [], "notizen": []},
+                  "sprachschnipsel": "test",
+                  "rawSnippet": "etwas, das wir (noch) nicht kennen",
+                  "customerId": 12345
                 }
                 """;
 
         ProcessRequest req = mapper.readValue(json, ProcessRequest.class);
 
-        assertEquals("BK-003", req.businessKey());
+        assertEquals("BK-300", req.businessKey());
+        assertEquals("test", req.sprachschnipsel());
     }
 }
