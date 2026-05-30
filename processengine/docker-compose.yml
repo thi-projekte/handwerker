@@ -1,0 +1,13 @@
+version: "3.8"
+
+services:
+  processengine-cv:
+    image: ghcr.io/thi-projekte/handwerker/processes:SHA
+    container_name: craftvoice-processengine
+    ports:
+      - "8080"
+    environment:
+      DB_URL: jdbc:h2:mem:process-engine
+      DB_USERNAME: sa
+      DB_PASSWORD: ""
+    restart: unless-stopped
