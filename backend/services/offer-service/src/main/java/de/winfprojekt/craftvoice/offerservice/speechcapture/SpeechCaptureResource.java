@@ -1,5 +1,6 @@
 package de.winfprojekt.craftvoice.offerservice.speechcapture;
 
+import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -8,9 +9,14 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.jboss.resteasy.reactive.RestForm;
 import org.jboss.resteasy.reactive.multipart.FileUpload;
+import java.io.IOException;
+import java.nio.file.Files;
 
 @Path("/speech-capture")
 public class SpeechCaptureResource {
+
+    @Inject
+    DeepgramClient deepgramClient;
 
     public record TranscriptionResponse(String transkript) {}
 
@@ -32,10 +38,26 @@ public class SpeechCaptureResource {
                     .build();
         }
 
-        TranscriptionResponse responseBody = new TranscriptionResponse(
-                "Platzhalter-Transkript — Deepgram noch nicht integriert"
-        );
+        try {
+            byte[] audioData = Files.readAllBytes(audio.uploadedFile());
+            String transcript = deepgramClient.transcribe(audioData, contentType);
 
-        return Response.ok(responseBody).build();
+            if (transcript == null || transcript.trim().isEmpty()) {
+                return Response.status(422) // Unprocessable Entity
+                        .entity("Transcription failed: Transcript is empty")
+                        .build();
+            }
+
+            return Response.ok(new TranscriptionResponse(transcript)).build();
+
+        } catch (DeepgramException e) {
+            return Response.status(502) // Bad Gateway
+                    .entity("Deepgram error: " + e.getMessage())
+                    .build();
+        } catch (IOException e) {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("Failed to read audio file: " + e.getMessage())
+                    .build();
+        }
     }
 }
