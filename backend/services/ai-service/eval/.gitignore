@@ -1,0 +1,13 @@
+# Roh-Ergebnisse werden bei jedem Lauf neu erzeugt. Versioniert wird NUR der
+# offizielle Eval-Lauf (Zeitstempel 20-07-54-314Z) als Beleg fuer die Praesentation.
+# Dry-Runs und spaetere Wiederholungen bleiben lokal.
+results/*
+!results/raw-call1-2026-05-31T20-07-54-314Z.jsonl
+!results/scores-2026-05-31T20-07-54-314Z.json
+!results/scores-2026-05-31T20-07-54-314Z.csv
+!results/judge-2026-05-31T20-07-54-314Z.json
+!results/report-call1-2026-05-31T20-07-54-314Z.html
+
+# Kein API-Key, keine .env
+.env
+*.key

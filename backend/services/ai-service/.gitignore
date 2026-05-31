@@ -1,0 +1,6 @@
+# Maven / Quarkus Build-Artefakte
+target/
+
+# Lokale Umgebungs-/Secret-Dateien (NIE committen)
+.env
+*.key
