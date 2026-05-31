@@ -4,7 +4,7 @@ import "./navbar-css.css";
 
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: PieChart },
-  { to: "/angebote", label: "Documents", icon: FileText },
+  { to: "/angebote", label: "Dokumente", icon: FileText },
   { to: "/", label: "Aufnahme", icon: Mic },
   { to: "/unternehmen", label: "Unternehmen", icon: Building2 },
   { to: "/profil", label: "Profil", icon: UserCircle },
@@ -23,14 +23,13 @@ export const Navbar = () => {
           }
         >
           <span className="nav-icon">
-            {/* Das Icon-Bauteil wird hier gerendert */}
             {item.icon ? (
-              <item.icon size={25} strokeWidth={2.5} />
+              <item.icon size={22} strokeWidth={2.5} />
             ) : (
               <span className="fallback-label">{item.label}</span>
             )}
           </span>
-          {/* Das Label unten drunter ist jetzt weg, wie gewünscht */}
+          <span className="nav-label">{item.label}</span>
         </NavLink>
       ))}
     </nav>

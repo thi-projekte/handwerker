@@ -1,11 +1,60 @@
+/* =========================
+   ProfilePage — Responsive Ergänzungen
+   (ergänzt die bestehende ProfilePage.css)
+   ========================= */
+
 .profile-page {
   text-align: center;
 }
 
-/* =========================
-   Header
-   ========================= */
+/* ── Tablet/Desktop: Formular zentriert und breiter ── */
+@media (min-width: 768px) {
+  .profile-overview-card,
+  .profile-content-card {
+    max-width: 640px;
+    margin-left: auto;
+    margin-right: auto;
+  }
 
+  .profile-tab-card {
+    max-width: 640px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+@media (min-width: 1024px) {
+  /* Zweispaltiges Layout: Übersicht links, Formular rechts */
+  .profile-page-content {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 24px;
+    align-items: start;
+    text-align: left;
+  }
+
+  .profile-overview-card,
+  .profile-content-card,
+  .profile-tab-card {
+    max-width: unset;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .profile-form-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  /* Volle Breite für Rolle und Aktionen */
+  .profile-field:last-child,
+  .profile-actions {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Header */
 .profile-header {
   text-align: left;
 }
@@ -16,7 +65,7 @@
 
 .profile-header.compact h1 {
   margin: 0;
-  font-size: 22px;
+  font-size: clamp(18px, 2.5vw, 26px);
 }
 
 .profile-eyebrow {
@@ -29,10 +78,7 @@
   text-transform: uppercase;
 }
 
-/* =========================
-   Tabs
-   ========================= */
-
+/* Tabs */
 .profile-tab-card {
   display: flex;
   gap: 10px;
@@ -40,13 +86,22 @@
 
 .profile-tab {
   flex: 1;
-  padding: 14px 10px;
+  padding: 12px 10px;
   border-radius: 16px;
   border: 1px solid var(--color-divider);
   background: transparent;
   color: var(--color-text-secondary);
   font-weight: 700;
   cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+@media (min-width: 768px) {
+  .profile-tab {
+    font-size: 15px;
+    padding: 14px 20px;
+  }
 }
 
 .profile-tab.active {
@@ -56,10 +111,7 @@
   box-shadow: 0 8px 20px rgba(255, 106, 0, 0.3);
 }
 
-/* =========================
-   Profile Overview
-   ========================= */
-
+/* Overview */
 .profile-overview-card {
   text-align: left;
 }
@@ -86,12 +138,21 @@
   color: white;
   font-weight: 800;
   box-shadow: 0 10px 25px rgba(255, 106, 0, 0.35);
+  overflow: hidden;
 }
 
 .profile-avatar.large {
-  width: 58px;
-  height: 58px;
-  font-size: 15px;
+  width: 64px;
+  height: 64px;
+  font-size: 16px;
+}
+
+@media (min-width: 768px) {
+  .profile-avatar.large {
+    width: 80px;
+    height: 80px;
+    font-size: 20px;
+  }
 }
 
 .profile-image-button {
@@ -117,17 +178,14 @@
 .profile-main-info h2 {
   margin: 0 0 4px;
   text-align: left;
-  font-size: 20px;
+  font-size: clamp(16px, 2vw, 22px);
 }
 
 .profile-main-info p {
   white-space: nowrap;
 }
 
-/* =========================
-   Content
-   ========================= */
-
+/* Content */
 .profile-content-card {
   text-align: left;
 }
@@ -135,7 +193,12 @@
 .profile-content-card h2 {
   margin-top: 0;
   margin-bottom: 18px;
-  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .profile-content-card h2 {
+    text-align: left;
+  }
 }
 
 .profile-form-list {
@@ -167,7 +230,6 @@
 .profile-select {
   appearance: none;
   cursor: pointer;
-
   background-color: var(--color-surface);
   background-image:
     linear-gradient(45deg, transparent 50%, var(--color-text-secondary) 50%),
@@ -179,23 +241,21 @@
     6px 6px,
     6px 6px;
   background-repeat: no-repeat;
-
   color: var(--color-text-primary);
   padding-right: 38px;
 }
 
 .profile-select option {
-  background-color: #1A1A1C;
-  color: #FFFFFF;
+  background-color: #1a1a1c;
+  color: #ffffff;
 }
 
 [data-theme="light"] .profile-select {
-  background-color: #F4F4F5;
+  background-color: #f4f4f5;
   color: #111111;
 }
-
 [data-theme="light"] .profile-select option {
-  background-color: #FFFFFF;
+  background-color: #ffffff;
   color: #111111;
 }
 
@@ -204,6 +264,20 @@
   flex-direction: column;
   gap: 12px;
   margin-top: 22px;
+}
+
+@media (min-width: 768px) {
+  .profile-actions {
+    flex-direction: row;
+  }
+
+  .profile-save-button {
+    flex: 1;
+  }
+
+  .profile-password-button {
+    flex: 1;
+  }
 }
 
 .profile-save-button {
@@ -225,10 +299,7 @@
   border-color: var(--color-accent);
 }
 
-/* =========================
-   Settings
-   ========================= */
-
+/* Settings */
 .settings-row {
   display: flex;
   justify-content: space-between;
@@ -263,14 +334,19 @@
   transform: translateX(26px);
 }
 
-/* =========================
-   Notifications
-   ========================= */
-
+/* Notifications */
 .notification-list {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+@media (min-width: 768px) {
+  .notification-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
 }
 
 .notification-item {
@@ -282,27 +358,7 @@
   border-radius: 16px;
 }
 
-/* =========================
-   Mobile
-   ========================= */
-
-@media (max-width: 600px) {
-  .profile-tab-card {
-    display: grid;
-    grid-template-columns: 1fr;
-  }
-
-  .settings-row {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-}
-
-
-.profile-avatar.large {
-  overflow: hidden;
-}
-
+/* Image */
 .profile-avatar-image {
   width: 100%;
   height: 100%;
@@ -324,4 +380,17 @@
 
 .profile-image-remove-button:hover {
   color: var(--color-accent);
+}
+
+/* Mobile overrides */
+@media (max-width: 600px) {
+  .profile-tab-card {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .settings-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
