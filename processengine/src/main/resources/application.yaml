@@ -1,0 +1,103 @@
+camunda.bpm:
+  history-level: audit
+  authorization:
+    enabled: true
+  filter:
+    create: All tasks
+  oauth2:
+    identity-provider:
+      # starter-security idP must be disabled
+      enabled: false
+
+spring:
+  jersey:
+    application-path: /engine-rest
+  config:
+    import:
+      - optional:classpath:cibseven-webclient.yaml
+      - optional:classpath:cibseven-webclient.properties
+
+# Spring Boot Security configuration for Keycloak Identity Provider + OAuth2.
+# KEYCLOAK_BROWSER_URL is what the user's browser sees (defaults to http://localhost:8180).
+# KEYCLOAK_SERVER_URL is what the app uses for server-to-server calls (token / jwks /
+# userinfo / admin). When running everything in docker-compose it is overridden to
+# http://keycloak:8080 so the app reaches Keycloak via the compose network.
+spring.security:
+  oauth2:
+    client:
+      registration:
+        keycloak:
+          clientId: cib-seven-local
+          clientSecret: cib-seven-secret
+          scope: openid,profile,email,offline_access,roles
+          authorization-grant-type: authorization_code
+          redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+      provider:
+        keycloak:
+          authorization-uri: ${KEYCLOAK_BROWSER_URL:http://localhost:8180}/realms/cib-seven/protocol/openid-connect/auth
+          token-uri: ${KEYCLOAK_SERVER_URL:http://localhost:8180}/realms/cib-seven/protocol/openid-connect/token
+          user-info-uri: ${KEYCLOAK_SERVER_URL:http://localhost:8180}/realms/cib-seven/protocol/openid-connect/userinfo
+          jwk-set-uri: ${KEYCLOAK_SERVER_URL:http://localhost:8180}/realms/cib-seven/protocol/openid-connect/certs
+          user-name-attribute: preferred_username
+    resourceserver:
+      jwt:
+        principal-claim-name: preferred_username
+        # Browser-flow tokens carry iss = KEYCLOAK_BROWSER_URL; validate against that.
+        issuer-uri: ${KEYCLOAK_BROWSER_URL:http://localhost:8180}/realms/cib-seven
+        # ...but fetch JWKs server-side (skips OIDC discovery so the container does
+        # not need to reach the browser URL at startup).
+        jwk-set-uri: ${KEYCLOAK_SERVER_URL:http://localhost:8180}/realms/cib-seven/protocol/openid-connect/certs
+
+logging:
+  level:
+    root: INFO
+
+# CIB seven Keycloak Identity Provider Plugin (server-to-server)
+plugin.identity.keycloak:
+  keycloakIssuerUrl: ${KEYCLOAK_SERVER_URL:http://localhost:8180}/realms/cib-seven
+  keycloakAdminUrl: ${KEYCLOAK_SERVER_URL:http://localhost:8180}/admin/realms/cib-seven
+  clientId: cib-seven-local
+  clientSecret: cib-seven-secret
+  useEmailAsCamundaUserId: false
+  useUsernameAsCamundaUserId: true
+  useGroupPathAsCamundaGroupId: true
+  enforceSubgroupsInGroupQuery: true
+  administratorGroupName: camunda-admin
+  administratorUserId: demo
+  disableSSLCertificateValidation: true
+
+cibseven:
+  bpm:
+    oauth2:
+      identity-provider:
+        enabled: false
+        group-name-attribute:
+  webclient:
+    engineRest:
+      url: http://localhost:8080
+    authentication:
+      tokenValidMinutes: 30
+      tokenProlongMinutes: 10
+    sso:
+      active: true
+      endpoints:
+        authorization: ${KEYCLOAK_BROWSER_URL:http://localhost:8180}/realms/cib-seven/protocol/openid-connect/auth
+        token: ${KEYCLOAK_SERVER_URL:http://localhost:8180}/realms/cib-seven/protocol/openid-connect/token
+        jwks: ${KEYCLOAK_SERVER_URL:http://localhost:8180}/realms/cib-seven/protocol/openid-connect/certs
+        user: ${KEYCLOAK_SERVER_URL:http://localhost:8180}/realms/cib-seven/protocol/openid-connect/userinfo
+      clientId: cib-seven-local
+      clientSecret: cib-seven-secret
+      scopes: openid email profile
+      userIdProperty: preferred_username
+      userNameProperty: name
+      accessTokenToEngineRest: true
+    bpm:
+     provider: org.cibseven.webapp.providers.SevenProvider
+    user:
+     provider: org.cibseven.webapp.auth.KeycloakUserProvider
+
+# Metrics & Health
+management:
+  endpoint.health.probes.enabled: true
+  endpoints:
+    web.exposure.include: env,health,info,metrics

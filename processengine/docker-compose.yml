@@ -2,7 +2,8 @@ version: "3.8"
 
 services:
   processengine-cv:
-    image: ghcr.io/thi-projekte/handwerker/processes:SHA
+    #image: ghcr.io/thi-projekte/handwerker/processes:SHA
+    image: ghcr.io/thi-projekte/handwerker/processes:latest
     container_name: craftvoice-processengine
     ports:
       - "8080"
