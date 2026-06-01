@@ -100,3 +100,17 @@
     max-width: 1200px;
   }
 }
+
+
+/* ----  Swipe Navigation transition ----*/
+
+.shell-content {
+  will-change: transform, opacity;
+  touch-action: pan-y;
+}
+
+.shell-content.swipe-reset {
+  transition:
+    transform 0.16s ease,
+    opacity 0.16s ease;
+}
