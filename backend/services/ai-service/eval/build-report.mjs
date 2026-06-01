@@ -34,8 +34,13 @@ const scores = JSON.parse(readFileSync(scoresFile, "utf8"));
 const judge = existsSync(judgeFile) ? JSON.parse(readFileSync(judgeFile, "utf8")) : null;
 const dataset = JSON.parse(readFileSync(join(__dir, "..", "docs", "eval-datenset-call1.json"), "utf8"));
 
-const scenarios = dataset.scenarios.map((s) => ({ id: s.id, name: s.name }));
+const scenarios = dataset.scenarios.map((s) => ({ id: s.id, name: s.name, schwierigkeit: s.schwierigkeit, prueft: s.prueft }));
 const summary = scores.summary;
+const gewichte = scores.gewichte ?? { vollstaendigkeit: 0.35, mengen: 0.20, schema: 0.20, askVsGuess: 0.15, latenzKosten: 0.10 };
+const anzLaeufe = 5;
+const judgeModelle = judge?.judges ?? ["claude-opus-4-8", "gpt-5.5", "gemini-3.1-pro-preview"];
+// Beispielszenario fuer die Setup-Erklaerung (S1a = der gut verstaendliche Floor-Case)
+const beispielSzenario = dataset.scenarios.find((s) => s.id === "call1-s1a-floor-extraktion") ?? dataset.scenarios[0];
 
 // ---------- Helfer ----------
 const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -168,6 +173,103 @@ function detailSektion() {
   return h;
 }
 
+// ---------- SETUP-Visualisierungen (Methodik oben, vor den Ergebnissen) ----------
+
+// Liste aller getesteten Modelle (ganz oben), gruppiert nach Anbieter.
+// grok-4.1-fast war beim Lauf nicht verfuegbar -> als "(down)" markiert.
+function modellListe() {
+  const klasseLabel = { premium: "Premium", mittel: "Mittel", budget: "Budget", wildcard: "Wildcard" };
+  // aus summary (die real gelaufenen) + den ausgefallenen grok manuell
+  const gelaufen = summary.map((m) => ({ model: m.model, anbieter: m.anbieter, klasse: m.klasse, down: false }));
+  const alle = [...gelaufen, { model: "grok-4.1-fast-non-reasoning", anbieter: "xAI", klasse: "budget", down: true }];
+  // nach Anbieter gruppieren
+  const reihenfolge = ["Anthropic", "OpenAI", "Google", "xAI"];
+  const proAnbieter = {};
+  for (const m of alle) (proAnbieter[m.anbieter] ??= []).push(m);
+  let cols = reihenfolge.filter((a) => proAnbieter[a]).map((a) => {
+    const chips = proAnbieter[a].map((m) =>
+      `<span class="mchip ${m.down ? "down" : ""}">${esc(m.model.replace(/-20251001/, ""))}${m.down ? " (down)" : ""}<i>${klasseLabel[m.klasse] ?? m.klasse}</i></span>`).join("");
+    return `<div class="manbieter"><h4><span class="dot" style="background:${anbieterFarbe[a]}"></span>${a}</h4>${chips}</div>`;
+  }).join("");
+  return `<div class="modellliste">${cols}</div>
+    <div class="note">${summary.length} Modelle erfolgreich getestet · 1 Modell (grok-4.1-fast) war bei MegaLLM nicht verfügbar und fiel aus der Wertung. Drei Größenklassen je Anbieter (Premium/Mittel/Budget) plus ein ultra-günstiger Wildcard.</div>`;
+}
+
+// Donut-Diagramm der Gewichtung (SVG)
+function gewichteDonut() {
+  const dims = [
+    { label: "Vollständigkeit", val: gewichte.vollstaendigkeit, farbe: "#6366f1", art: "hart" },
+    { label: "Mengen-Treue", val: gewichte.mengen, farbe: "#8b5cf6", art: "hart" },
+    { label: "Schema-Konformität", val: gewichte.schema, farbe: "#a855f7", art: "hart" },
+    { label: "Ask-vs-Guess", val: gewichte.askVsGuess, farbe: "#ec4899", art: "weich (Judge)" },
+    { label: "Latenz & Kosten", val: gewichte.latenzKosten, farbe: "#f59e0b", art: "hart" },
+  ];
+  const cx = 90, cy = 90, r = 70, sw = 34;
+  const C = 2 * Math.PI * r;
+  let offset = 0;
+  let ring = "";
+  for (const d of dims) {
+    const len = d.val * C;
+    ring += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${d.farbe}" stroke-width="${sw}" stroke-dasharray="${len.toFixed(2)} ${(C - len).toFixed(2)}" stroke-dashoffset="${(-offset).toFixed(2)}" transform="rotate(-90 ${cx} ${cy})"><title>${d.label}: ${Math.round(d.val * 100)}%</title></circle>`;
+    offset += len;
+  }
+  let legende = dims.map((d) =>
+    `<div class="grow"><span class="dot" style="background:${d.farbe}"></span><b>${Math.round(d.val * 100)}%</b> ${d.label} <span class="tag ${d.art.startsWith("weich") ? "soft" : "hard"}">${d.art}</span></div>`).join("");
+  return `<div class="donutwrap"><svg viewBox="0 0 180 180" class="donut"><circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#f1f5f9" stroke-width="${sw}"/>${ring}</svg><div class="glegend">${legende}</div></div>`;
+}
+
+// Hart-vs-Weich-Erklaerung (zwei Karten)
+function hartWeichKarten() {
+  return `<div class="hwgrid">
+    <div class="hwcard hard"><h4>⚙️ Harte Kriterien — automatisch, binär</h4>
+      <p>Per Code geprüft, 100% reproduzierbar. Kein Interpretationsspielraum.</p>
+      <ul>
+        <li><b>Vollständigkeit:</b> Sind alle erwarteten Positionen da? (Recall gegen Gold)</li>
+        <li><b>Mengen-Treue:</b> Stimmen Zahlen & Einheiten exakt? (z.B. "3 Steckdosen", "18 lfm")</li>
+        <li><b>Schema:</b> Valides JSON in unserer Struktur, kein Preis-Feld?</li>
+        <li><b>K.O.-Regeln:</b> Preis ausgegeben / Abdichtung vergessen / halluziniert → Lauf = 0</li>
+      </ul></div>
+    <div class="hwcard soft"><h4>🧑‍⚖️ Weiche Kriterien — Judge-Panel, semantisch</h4>
+      <p>Was Code nicht messen kann: fachliches Mitdenken & Sprachqualität. Bewertet von 3 KI-Richtern.</p>
+      <ul>
+        <li><b>Ask-vs-Guess:</b> Erkennt das Modell Mehrdeutigkeit und fragt nach — statt blind zu raten?</li>
+        <li><b>Sprachqualität:</b> Sind Bezeichnungen fachlich plausibel & professionell?</li>
+        <li><b>Nützlichkeit:</b> Sind die Korrekturvorschläge konkret statt Floskeln?</li>
+      </ul></div>
+  </div>`;
+}
+
+// Judge-Panel-Visualisierung (3 Richter -> Mittel)
+function judgePanelViz() {
+  const farbe = (m) => m.includes("opus") ? anbieterFarbe.Anthropic : m.includes("gpt") ? anbieterFarbe.OpenAI : anbieterFarbe.Google;
+  const haus = (m) => m.includes("opus") ? "Anthropic" : m.includes("gpt") ? "OpenAI" : "Google";
+  const richter = judgeModelle.map((m) =>
+    `<div class="richter" style="border-color:${farbe(m)}"><span class="dot" style="background:${farbe(m)}"></span><b>${esc(m.replace(/-preview|-20251001/g, ""))}</b><span class="haus">${haus(m)}</span></div>`).join(`<span class="plus">+</span>`);
+  const spann = judge ? (judge.runs.reduce((a, r) => a + r.spannweite, 0) / judge.runs.length).toFixed(1) : "-";
+  return `<div class="panelviz">${richter}<span class="arrow">→</span><div class="richter avg"><b>Ø Mittelwert</b><span class="haus">neutralisiert Bias</span></div></div>
+    <div class="note">Drei Richter aus <b>drei konkurrierenden Häusern</b> bewerten jeden Output unabhängig. Der Mittelwert hebt die Tendenz jedes Hauses, die eigene Familie zu bevorzugen, gegenseitig auf. Die Richter waren sich im Schnitt nur <b>${spann}/10 Punkte</b> uneinig → das Urteil ist belastbar.</div>`;
+}
+
+// Beispielszenario kompakt (Input + Gold-Prinzip)
+function beispielSzenarioViz() {
+  const s = beispielSzenario;
+  const inp = s.input?.sprachschnipsel ?? JSON.stringify(s.input).slice(0, 300);
+  const gold = s.gold ?? {};
+  const pflichtL = (gold.pflichtLeistungen ?? []).map((x) => x.katalogEintrag ?? x).slice(0, 4);
+  const pflichtM = (gold.pflichtMaterial ?? []).map((x) => x.katalogEintrag ?? x).slice(0, 4);
+  const ko = (gold.ko ?? []).slice(0, 3);
+  return `<div class="bsp">
+    <div class="bspcol"><h4>🎤 Eingabe (gesprochen, roh)</h4><blockquote>„${esc(inp)}"</blockquote>
+      <p class="muted">+ Vorlage (Stammdaten-Katalog des Handwerkers)</p></div>
+    <div class="bspcol"><h4>🥇 Gold-Referenz (Soll)</h4>
+      <div class="goldbox">
+        ${pflichtL.length ? `<div><b>Pflicht-Leistungen:</b> ${pflichtL.map(esc).join(", ")}</div>` : ""}
+        ${pflichtM.length ? `<div><b>Pflicht-Material:</b> ${pflichtM.map(esc).join(", ")}</div>` : ""}
+        ${ko.length ? `<div class="koline"><b>K.O. bei:</b> ${ko.map(esc).join(" · ")}</div>` : ""}
+      </div></div>
+  </div>`;
+}
+
 // ---------- Blind-Review (Daten als JSON ins Script) ----------
 const blindJSON = JSON.stringify(blindData.map((b) => ({
   label: b.label, model: b.model,
@@ -214,66 +316,156 @@ const html = `<!DOCTYPE html>
   .kpi{display:flex;gap:20px;flex-wrap:wrap;margin:8px 0}
   .kpi .box{background:#f9fafb;border:1px solid var(--line);border-radius:10px;padding:14px 18px;min-width:150px}
   .kpi .box .v{font-size:1.5rem;font-weight:700;color:var(--accent)} .kpi .box .l{font-size:.78rem;color:var(--muted)}
+  /* Setup-Bausteine */
+  .setupgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:14px 0}
+  .setupgrid .box{background:#f9fafb;border:1px solid var(--line);border-radius:10px;padding:16px;text-align:center}
+  .setupgrid .box .v{font-size:1.8rem;font-weight:700;color:var(--accent)} .setupgrid .box .l{font-size:.8rem;color:var(--muted);margin-top:4px}
+  .donutwrap{display:flex;gap:28px;align-items:center;flex-wrap:wrap} .donut{width:180px;height:180px;flex-shrink:0}
+  .glegend{display:flex;flex-direction:column;gap:8px} .grow{font-size:.9rem}
+  .tag{font-size:.68rem;padding:2px 7px;border-radius:10px;margin-left:4px;vertical-align:middle}
+  .tag.hard{background:#eef2ff;color:#4338ca} .tag.soft{background:#fce7f3;color:#be185d}
+  .hwgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px}
+  @media(max-width:720px){.hwgrid{grid-template-columns:1fr}}
+  .hwcard{border:1px solid var(--line);border-radius:10px;padding:16px} .hwcard.hard{background:#fafaff;border-color:#c7d2fe} .hwcard.soft{background:#fdf4f9;border-color:#fbcfe8}
+  .hwcard h4{margin:0 0 6px} .hwcard p{font-size:.84rem;color:var(--muted);margin:0 0 8px} .hwcard ul{margin:0;padding-left:18px;font-size:.84rem} .hwcard li{margin:4px 0}
+  .panelviz{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:14px 0}
+  .richter{display:flex;flex-direction:column;border:2px solid;border-radius:10px;padding:10px 16px;background:#fff;min-width:120px}
+  .richter b{font-size:.9rem} .richter .haus{font-size:.72rem;color:var(--muted)} .richter.avg{border-color:var(--accent);border-style:dashed;background:#f5f3ff}
+  .plus{font-size:1.3rem;color:var(--muted);font-weight:700} .arrow{font-size:1.5rem;color:var(--accent)}
+  .bsp{display:grid;grid-template-columns:1fr 1fr;gap:18px} @media(max-width:720px){.bsp{grid-template-columns:1fr}}
+  .bspcol h4{margin:0 0 8px;font-size:.95rem} .bspcol blockquote{margin:0;padding:12px 16px;background:#fffbeb;border-left:3px solid #f59e0b;border-radius:6px;font-style:italic;font-size:.9rem}
+  .goldbox{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px;font-size:.85rem} .goldbox>div{margin:5px 0}
+  .koline{color:#b91c1c;border-top:1px dashed #fecaca;padding-top:6px;margin-top:8px!important}
+  .muted{font-size:.8rem;color:var(--muted)}
+  .stepflow{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;margin:14px 0}
+  .step{flex:1;min-width:130px;background:#f9fafb;border:1px solid var(--line);border-radius:10px;padding:12px;position:relative}
+  .step .n{display:inline-block;width:22px;height:22px;line-height:22px;text-align:center;background:var(--accent);color:#fff;border-radius:50%;font-size:.78rem;font-weight:700;margin-bottom:6px}
+  .step h4{margin:2px 0;font-size:.86rem} .step p{margin:0;font-size:.76rem;color:var(--muted)}
+  .step::after{content:"→";position:absolute;right:-13px;top:50%;transform:translateY(-50%);color:var(--accent);font-weight:700;z-index:1}
+  .step:last-child::after{content:""}
+  details.ergebnis{background:var(--card);border:1px solid var(--line);border-radius:12px;margin:16px 0;box-shadow:0 1px 3px rgba(0,0,0,.04);overflow:hidden}
+  details.ergebnis>summary{cursor:pointer;padding:20px 24px;font-size:1.2rem;font-weight:700;list-style:none;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff}
+  details.ergebnis>summary::-webkit-details-marker{display:none}
+  details.ergebnis>summary::before{content:"▶ ";font-size:.8rem} details.ergebnis[open]>summary::before{content:"▼ "}
+  details.ergebnis>section{margin:0;border:none;box-shadow:none;border-radius:0}
+  .modellliste{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin:8px 0}
+  .manbieter h4{margin:0 0 8px;font-size:.92rem;display:flex;align-items:center}
+  .mchip{display:block;background:#f9fafb;border:1px solid var(--line);border-radius:7px;padding:6px 10px;margin:5px 0;font-size:.82rem;position:relative}
+  .mchip i{display:block;font-style:normal;font-size:.68rem;color:var(--muted)}
+  .mchip.down{opacity:.5;text-decoration:line-through;background:#fef2f2;border-color:#fecaca}
+  .mchip.down i{text-decoration:none}
 </style></head>
 <body>
 <header>
   <h1>KI-Modell-Evaluation — LLM-Call 1</h1>
-  <p>Sprachschnipsel → strukturierte Angebotspositionen · ${summary.length} Modelle · ${scenarios.length} Szenarien · 5 Läufe · Stand ${esc(stamp.slice(0, 10))}</p>
+  <p>Welches Sprachmodell wandelt einen gesprochenen Auftrag am besten in strukturierte Angebotspositionen um? — So haben wir es getestet.</p>
 </header>
 <main>
 
 <section>
-  <h2>Auf einen Blick</h2>
-  <div class="kpi">
-    <div class="box"><div class="v">${esc(summary[0].model.replace(/-preview|-20251001/g, ""))}</div><div class="l">Gesamtsieger (${summary[0].gesamtPct}%)</div></div>
-    <div class="box"><div class="v">${fmtUSD(summary[0].kostenProCallUSD)}</div><div class="l">Kosten/Aufruf des Siegers</div></div>
-    <div class="box"><div class="v">${(summary[summary.length-1].kostenProCallUSD / summary[0].kostenProCallUSD).toFixed(0)}×</div><div class="l">teuerstes vs. günstigstes Modell</div></div>
-    ${judge ? `<div class="box"><div class="v">${(judge.runs.reduce((a,r)=>a+r.spannweite,0)/judge.runs.length).toFixed(1)}</div><div class="l">Ø Richter-Spannweite (0-10, niedrig=einig)</div></div>` : ""}
+  <h2>Die getesteten Modelle</h2>
+  ${modellListe()}
+</section>
+
+<section>
+  <h2>Das Setup in Zahlen</h2>
+  <div class="setupgrid">
+    <div class="box"><div class="v">${summary.length}</div><div class="l">getestete Modelle<br>(4 Anbieter)</div></div>
+    <div class="box"><div class="v">${scenarios.length}</div><div class="l">realistische<br>Test-Szenarien</div></div>
+    <div class="box"><div class="v">${anzLaeufe}×</div><div class="l">Läufe je Szenario<br>(misst Konsistenz)</div></div>
+    <div class="box"><div class="v">${summary.length * scenarios.length * anzLaeufe}</div><div class="l">API-Aufrufe<br>gesamt</div></div>
+    <div class="box"><div class="v">3</div><div class="l">KI-Richter<br>(Judge-Panel)</div></div>
   </div>
-  <div class="note">Bewertung: Vollständigkeit 35% · Mengen 20% · Schema 20% · Ask-vs-Guess 15% (Judge-Panel) · Latenz/Kosten 10%. Ein harter K.O. (Preis, Abdichtung vergessen, Halluzination) setzt den jeweiligen Lauf auf 0.</div>
+  <div class="note">Jedes Modell bekam <b>denselben</b> System-Prompt, dieselbe Temperatur (0.2) und dieselben Eingaben — faire, identische Bedingungen für alle.</div>
 </section>
 
 <section>
-  <h2>🏆 Scoreboard</h2>
-  ${scoreboard()}
+  <h2>⚖️ Wie wir bewerten — die Gewichtung</h2>
+  ${gewichteDonut()}
 </section>
 
 <section>
-  <h2>📊 Qualität vs. Kosten</h2>
-  <h3>Die Kernfrage: Lohnt teuer?</h3>
-  ${scatterSVG()}
-  <div class="legend">${Object.entries(anbieterFarbe).map(([k, v]) => `<span><span class="dot" style="background:${v}"></span>${k}</span>`).join("")}</div>
-  <div class="note">Oben-links = ideal (hohe Qualität, niedrige Kosten). Punkte weit rechts (teuer) ohne Höhenvorteil zeigen: höherer Preis ⇏ besseres Ergebnis.</div>
+  <h2>Harte vs. weiche Kriterien</h2>
+  <p style="font-size:.9rem;color:var(--muted)">Der Kern unserer Methodik: Was sich <b>objektiv messen</b> lässt, prüft Code. Was <b>Urteilsvermögen</b> braucht, prüfen drei KI-Richter.</p>
+  ${hartWeichKarten()}
 </section>
 
 <section>
-  <h2>🔥 Heatmap: Modelle × Szenarien</h2>
-  <p style="font-size:.85rem;color:var(--muted)">Gesamtscore je Szenario (grün = stark, rot = schwach).</p>
-  ${heatmap()}
+  <h2>🥇 Wie entstehen die "Gold-Referenzen"?</h2>
+  <p style="font-size:.9rem">Zu jedem Szenario haben wir <b>vorab</b> definiert, was eine gute Antwort enthalten <i>muss</i> — die Soll-Lösung. Daran wird jeder Modell-Output automatisch gemessen (Treffer = Punkte, Erfundenes = Abzug). Beispiel:</p>
+  ${beispielSzenarioViz()}
+  <div class="note"><b>Wichtig:</b> Bewertet wird <b>Strukturierung</b>, nicht Preiskalkulation — die KI bekommt nie Preise. Erstellt projektintern; eine fachliche Gegenprüfung durch einen Handwerksbetrieb steht noch aus (offene Limitation).</div>
 </section>
 
 <section>
-  <h2>🕵️ Blind-Review</h2>
+  <h2>🧑‍⚖️ Die weichen Kriterien: das Judge-Panel</h2>
+  <p style="font-size:.9rem">Ob ein Modell bei Unklarheit <b>sinnvoll nachfragt</b> statt zu raten, kann kein simpler Code messen. Dafür bewerten drei starke KI-Modelle aus drei Häusern jeden Output — und wir mitteln:</p>
+  ${judgePanelViz()}
+</section>
+
+<section>
+  <h2>🔄 Der Ablauf</h2>
+  <div class="stepflow">
+    <div class="step"><span class="n">1</span><h4>Eingabe</h4><p>Sprachschnipsel + Vorlage an alle Modelle</p></div>
+    <div class="step"><span class="n">2</span><h4>Sammeln</h4><p>${summary.length * scenarios.length * anzLaeufe} Antworten + Latenz + Tokens geloggt</p></div>
+    <div class="step"><span class="n">3</span><h4>Hart prüfen</h4><p>Code: Vollständigkeit, Mengen, Schema vs. Gold</p></div>
+    <div class="step"><span class="n">4</span><h4>Weich prüfen</h4><p>3 Richter: Ask-vs-Guess + Sprache</p></div>
+    <div class="step"><span class="n">5</span><h4>Gewichten</h4><p>Score je Modell + Konsistenz</p></div>
+  </div>
+</section>
+
+<hr style="margin:40px 0;border:none;border-top:2px dashed var(--line)">
+<p style="text-align:center;color:var(--muted);font-size:.9rem">⬇️ &nbsp;Ab hier die <b>Ergebnisse</b> — eingeklappt, zum gemeinsamen Aufdecken in der Präsentation&nbsp; ⬇️</p>
+
+<section>
+  <h2>🕵️ Erst selbst urteilen: Blind-Review</h2>
   <h3>Szenario: ${esc(scenarios.find((s) => s.id === blindScenario)?.name ?? blindScenario)}</h3>
-  <p style="font-size:.88rem">Bewertet die Outputs, ohne zu wissen, welches Modell dahintersteckt. Diskutiert im Team — dann aufdecken.</p>
+  <p style="font-size:.88rem">Bewertet die Outputs, <b>ohne</b> zu wissen, welches Modell dahintersteckt. Diskutiert im Team — welches ist das beste? Dann aufdecken.</p>
   <button id="revealBtn">Modelle aufdecken</button>
   <div class="blindgrid" id="blindGrid"></div>
 </section>
 
-<section>
-  <h2>🔍 Detail je Modell + Belege</h2>
-  <p style="font-size:.85rem;color:var(--muted)">Aufklappen für Dimensions-Aufschlüsselung, echte Beispiel-Outputs und Judge-Begründungen.</p>
-  ${detailSektion()}
-</section>
+<details class="ergebnis">
+  <summary>🏆 Ergebnis aufdecken: Scoreboard & Ranking</summary>
+  <section>
+    <div class="note">Bewertung: Vollständigkeit ${Math.round(gewichte.vollstaendigkeit*100)}% · Mengen ${Math.round(gewichte.mengen*100)}% · Schema ${Math.round(gewichte.schema*100)}% · Ask-vs-Guess ${Math.round(gewichte.askVsGuess*100)}% (Judge) · Latenz/Kosten ${Math.round(gewichte.latenzKosten*100)}%. Harter K.O. → Lauf = 0.</div>
+    ${scoreboard()}
+  </section>
+</details>
+
+<details class="ergebnis">
+  <summary>📊 Qualität vs. Kosten — lohnt sich "teuer"?</summary>
+  <section>
+    ${scatterSVG()}
+    <div class="legend">${Object.entries(anbieterFarbe).map(([k, v]) => `<span><span class="dot" style="background:${v}"></span>${k}</span>`).join("")}</div>
+    <div class="note">Oben-links = ideal (hohe Qualität, niedrige Kosten). Punkte weit rechts (teuer) ohne Höhenvorteil zeigen: höherer Preis ⇏ besseres Ergebnis.</div>
+  </section>
+</details>
+
+<details class="ergebnis">
+  <summary>🔥 Heatmap: Modelle × Szenarien</summary>
+  <section>
+    <p style="font-size:.85rem;color:var(--muted)">Gesamtscore je Szenario (grün = stark, rot = schwach).</p>
+    ${heatmap()}
+  </section>
+</details>
+
+<details class="ergebnis">
+  <summary>🔍 Detail je Modell + echte Beleg-Outputs</summary>
+  <section>
+    <p style="font-size:.85rem;color:var(--muted)">Aufklappen für Dimensions-Aufschlüsselung, echte Beispiel-Outputs und Judge-Begründungen.</p>
+    ${detailSektion()}
+  </section>
+</details>
 
 <section>
-  <h2>⚠️ Methodik & Grenzen</h2>
+  <h2>⚠️ Methodik-Notizen & Grenzen</h2>
   <ul style="font-size:.88rem">
-    <li><b>Judge-Panel:</b> Ask-vs-Guess (15%) von 3 Richtern aus 3 Häusern (opus, gpt-5.5, gemini-pro) bewertet & gemittelt → neutralisiert Self-Preference-Bias. Ø Richter-Spannweite ${judge ? (judge.runs.reduce((a,r)=>a+r.spannweite,0)/judge.runs.length).toFixed(1) : "-"}/10 = hohe Einigkeit.</li>
-    <li><b>Gold-Referenzen:</b> von Felix erstellt, fachlich noch NICHT extern (Handwerker) validiert — offene Limitation.</li>
-    <li><b>Schema-Treue:</b> MegaLLM erzwingt <code>response_format</code> nicht für alle Modelle; daher als echtes Modell-Kriterium gemessen (exakt/fences/kein-wrapper/kaputt).</li>
-    <li><b>Latenz:</b> kein hartes K.O., fließt mit 10% ein; einzelne langsame Läufe (z.B. gemma) verzerren nicht.</li>
-    <li><b>Stichprobe Judge:</b> 2 Läufe je Modell/Szenario (Kostengründe), Hard-Kriterien über alle 5 Läufe.</li>
+    <li><b>Judge-Panel:</b> Ask-vs-Guess (${Math.round(gewichte.askVsGuess*100)}%) von 3 Richtern aus 3 Häusern bewertet & gemittelt → neutralisiert Self-Preference-Bias. Ø Richter-Spannweite ${judge ? (judge.runs.reduce((a,r)=>a+r.spannweite,0)/judge.runs.length).toFixed(1) : "-"}/10 = hohe Einigkeit.</li>
+    <li><b>Gold-Referenzen:</b> projektintern erstellt, fachlich noch NICHT extern (Handwerker) validiert — offene Limitation.</li>
+    <li><b>Schema-Treue:</b> MegaLLM erzwingt <code>response_format</code> nicht für alle Modelle; daher als echtes Modell-Kriterium gemessen.</li>
+    <li><b>Latenz:</b> kein hartes K.O., fließt mit ${Math.round(gewichte.latenzKosten*100)}% ein; einzelne langsame Läufe verzerren nicht.</li>
+    <li><b>Stichprobe Judge:</b> 2 Läufe je Modell/Szenario (Kostengründe), Hard-Kriterien über alle ${anzLaeufe} Läufe.</li>
   </ul>
 </section>
 
