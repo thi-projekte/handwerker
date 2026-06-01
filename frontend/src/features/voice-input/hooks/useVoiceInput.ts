@@ -6,6 +6,9 @@ export const useVoiceInput = () => {
   const [volume, setVolume] = useState(0);
   const [transcript, setTranscript] = useState("");
   const [audioBlobUrl, setAudioBlobUrl] = useState<string | null>(null);
+  const [state, setState] = useState<
+    "idle" | "recording" | "review" | "finished"
+  >("idle");
 
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -33,8 +36,7 @@ export const useVoiceInput = () => {
 
     const update = () => {
       analyser.getByteFrequencyData(dataArray);
-      const avg =
-        dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+      const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
 
       setVolume(avg);
       animationRef.current = requestAnimationFrame(update);
@@ -48,7 +50,9 @@ export const useVoiceInput = () => {
     chunksRef.current = [];
 
     mediaRecorder.ondataavailable = (e) => {
-      chunksRef.current.push(e.data);
+      if (e.data.size > 0) {
+        chunksRef.current.push(e.data);
+      }
     };
 
     mediaRecorder.onstop = () => {
@@ -64,28 +68,103 @@ export const useVoiceInput = () => {
     };
 
     mediaRecorder.start();
-
     setIsRecording(true);
   };
 
-  const stop = () => {
-    animationRef.current && cancelAnimationFrame(animationRef.current);
+  // Aufnahme pausieren
+  const pause = () => {
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
+    }
 
-    audioContextRef.current?.close();
-    mediaRecorderRef.current?.stop();
+    if (mediaRecorderRef.current?.state === "recording") {
+      mediaRecorderRef.current.pause();
+    }
 
     setIsRecording(false);
     setVolume(0);
-
     setState("review");
   };
 
-  const toggle = () => {
-    isRecording ? stop() : start();
+  // Aufnahme fortsetzen
+  const resume = () => {
+    if (mediaRecorderRef.current?.state === "paused") {
+      mediaRecorderRef.current.resume();
+    }
+
+    // Visualizer neu starten
+    if (analyserRef.current) {
+      const analyser = analyserRef.current;
+
+      const dataArray = new Uint8Array(
+        analyser.frequencyBinCount
+      );
+
+      const update = () => {
+        analyser.getByteFrequencyData(dataArray);
+
+        const avg =
+          dataArray.reduce((a, b) => a + b, 0) /
+          dataArray.length;
+
+        setVolume(avg);
+
+        animationRef.current =
+          requestAnimationFrame(update);
+      };
+
+      update();
+    }
+
+    setIsRecording(true);
+    setState("recording");
   };
-  const [state, setState] = useState<
-    "idle" | "recording" | "review"
-  >("idle");
+
+  // Aufnahme endgültig beenden und Blob erstellen
+  const finalizeRecording = () => {
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current);
+    }
+
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+    }
+
+    if (!mediaRecorderRef.current) return;
+
+    mediaRecorderRef.current.onstop = () => {
+      const blob = new Blob(chunksRef.current, {
+        type: "audio/webm",
+      });
+
+      const url = URL.createObjectURL(blob);
+
+      setAudioBlobUrl(url);
+
+      setState("finished");
+    };
+
+    mediaRecorderRef.current.stop();
+
+    mediaRecorderRef.current.stream
+      .getTracks()
+      .forEach((track) => track.stop());
+
+    setIsRecording(false);
+    setVolume(0);
+  };
+
+  // 🔀 Schaltet zwischen Start und Stop um
+  const toggle = () => {
+    if (state === "idle") {
+      start();
+    } else if (state === "recording") {
+      pause();
+    } else if (state === "review") {
+      resume();
+    }
+  };
+
   const reset = () => {
     setState("idle");
     setTranscript("");
@@ -101,5 +180,8 @@ export const useVoiceInput = () => {
     audioBlobUrl,
     state,
     reset,
+    resume,
+    pause,
+    finalizeRecording,
   };
 };

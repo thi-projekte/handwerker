@@ -2,9 +2,26 @@
    ReviewPage
    ========================= */
 
+.review-sections-grid {
+  display: grid;
+  grid-template-columns: 1fr; /* Nur eine Spalte auf dem Handy */
+  gap: 20px;
+}
+
+/* ── Desktop: zwei Spalten ── */
+@media (min-width: 1024px) {
+  /* Alle Abschnitte in einem 2-spaltigen Grid */
+  .review-sections-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: stretch; /* Bewirkt, dass Boxen in derselben Zeile gleich hoch gezerrt werden */
+  }
+}
+
 /* Header */
 .review-header {
-  margin-bottom: 0;
+  margin-bottom: 5;
 }
 
 .review-header-top {
@@ -41,7 +58,11 @@
 
 /* Abschnitt */
 .review-section {
-  margin-top: 12px;
+  margin-top: 0;
+  margin-bottom: 12px;
+
+  display: flex;
+  flex-direction: column;
 }
 
 .review-section-header {
@@ -128,7 +149,7 @@
   font-style: italic;
 }
 
-/* Textarea beim Editieren */
+/* Textarea */
 .review-textarea {
   flex: 1;
   background: transparent;
@@ -190,8 +211,17 @@
 
 /* Bestätigen */
 .review-confirm-card {
-  margin-top: 12px;
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
+}
+
+@media (min-width: 1024px) {
+  .review-confirm-card {
+    grid-column: 1 / -1;
+  }
 }
 
 .review-confirm-hint {
@@ -201,6 +231,12 @@
 
 .review-confirm-btn {
   width: 100%;
+}
+
+@media (min-width: 768px) {
+  .review-confirm-btn {
+    max-width: 400px;
+  }
 }
 
 /* Erfolg-Animation */

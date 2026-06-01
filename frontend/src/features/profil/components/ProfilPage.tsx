@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Navbar } from "@/features/dashboards/components/Navbar";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "@/assets/stylesheets/stylesheet.css";
 import "../ProfilePage.css";
 
@@ -11,27 +11,20 @@ type ProfileFormData = {
   email: string;
   telefon: string;
   rolle: string;
-  firmenname: string;
-  branche: string;
-  ustId: string;
-  website: string;
-  strasse: string;
-  hausnummer: string;
-  plz: string;
-  ort: string;
-  land: string;
-  iban: string;
-  bic: string;
-  steuernummer: string;
-  angebotPrefix: string;
-  standardZahlungsziel: string;
 };
 
 export const ProfilPage = () => {
+  const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
   const [activeTab, setActiveTab] = useState<Tab>("profil");
 
-  const [isLightMode, setIsLightMode] = useState(() => {
-    return localStorage.getItem("theme") === "light";
+  const [isLightMode, setIsLightMode] = useState(
+    () => localStorage.getItem("theme") === "light",
+  );
+
+  const [profileImage, setProfileImage] = useState<string | null>(() => {
+    return localStorage.getItem("profileImage");
   });
 
   const [formData, setFormData] = useState<ProfileFormData>({
@@ -40,54 +33,63 @@ export const ProfilPage = () => {
     email: "christian.huber@craftvoice.de",
     telefon: "+49 841 123456",
     rolle: "Inhaber",
-    firmenname: "Huber Handwerk GmbH",
-    branche: "Maler & Innenausbau",
-    ustId: "DE123456789",
-    website: "www.huber-handwerk.de",
-    strasse: "Musterstraße",
-    hausnummer: "12",
-    plz: "85049",
-    ort: "Ingolstadt",
-    land: "Deutschland",
-    iban: "DE12 3456 7890 1234 5678 90",
-    bic: "GENODEF1ING",
-    steuernummer: "123/456/78901",
-    angebotPrefix: "ANG",
-    standardZahlungsziel: "14 Tage",
   });
+
+  const initials = `${formData.vorname.charAt(0)}${formData.nachname.charAt(0)}`;
 
   useEffect(() => {
     const theme = isLightMode ? "light" : "dark";
+
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("theme", theme);
   }, [isLightMode]);
 
   const handleInputChange = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = event.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+  const handleProfileImageChange = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      alert("Bitte eine Bilddatei auswählen.");
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const imageUrl = reader.result as string;
+      setProfileImage(imageUrl);
+      localStorage.setItem("profileImage", imageUrl);
+    };
+
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveProfileImage = () => {
+    setProfileImage(null);
+    localStorage.removeItem("profileImage");
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   return (
     <div className="app profile-page">
-      <header className="card profile-header">
-        <div className="profile-header-top">
-          <div className="profile-avatar">CH</div>
-
-          <div className="profile-title-area">
-            <span className="profile-eyebrow">CraftVoice Konto</span>
-            <h1>Profil & Einstellungen</h1>
-            <p className="text-secondary">
-              Verwalte persönliche Daten, Unternehmensinformationen und
-              Einstellungen zentral an einem Ort.
-            </p>
-          </div>
-        </div>
+      <header className="card profile-header compact">
+        <span className="profile-eyebrow">CraftVoice Konto</span>
+        <h1>Profil & Einstellungen</h1>
       </header>
 
       <section className="card profile-tab-card">
@@ -121,29 +123,51 @@ export const ProfilPage = () => {
         <>
           <section className="card profile-overview-card">
             <div className="profile-overview-header">
-              <div className="profile-avatar small">CH</div>
-              <div>
-                <h2>{formData.vorname} {formData.nachname}</h2>
-                <p className="text-secondary">{formData.rolle}</p>
-              </div>
-            </div>
+              <div className="profile-image-wrapper">
+                <div className="profile-avatar large">
+                  {profileImage ? (
+                    <img
+                      className="profile-avatar-image"
+                      src={profileImage}
+                      alt="Profilbild"
+                    />
+                  ) : (
+                    initials
+                  )}
+                </div>
 
-            <div className="profile-summary-grid">
-              <div className="summary-item">
-                <span className="summary-label">Unternehmen</span>
-                <strong>{formData.firmenname}</strong>
+                <input
+                  ref={fileInputRef}
+                  className="profile-image-input"
+                  type="file"
+                  accept="image/png, image/jpeg, image/jpg"
+                  onChange={handleProfileImageChange}
+                />
+
+                <button
+                  className="profile-image-button"
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  Bild ändern
+                </button>
+
+                {profileImage && (
+                  <button
+                    className="profile-image-remove-button"
+                    type="button"
+                    onClick={handleRemoveProfileImage}
+                  >
+                    Bild entfernen
+                  </button>
+                )}
               </div>
-              <div className="summary-item">
-                <span className="summary-label">Branche</span>
-                <strong>{formData.branche}</strong>
-              </div>
-              <div className="summary-item">
-                <span className="summary-label">E-Mail</span>
-                <strong>{formData.email}</strong>
-              </div>
-              <div className="summary-item">
-                <span className="summary-label">Telefon</span>
-                <strong>{formData.telefon}</strong>
+
+              <div className="profile-main-info">
+                <h2>
+                  {formData.vorname} {formData.nachname}
+                </h2>
+                <p className="text-secondary">{formData.rolle}</p>
               </div>
             </div>
           </section>
@@ -151,169 +175,77 @@ export const ProfilPage = () => {
           <section className="card profile-content-card">
             <h2>Persönliche Daten</h2>
 
-            <div className="profile-form-grid">
-              <input
-                className="input-field"
-                name="vorname"
-                placeholder="Vorname"
-                value={formData.vorname}
-                onChange={handleInputChange}
-              />
-              <input
-                className="input-field"
-                name="nachname"
-                placeholder="Nachname"
-                value={formData.nachname}
-                onChange={handleInputChange}
-              />
-              <input
-                className="input-field"
-                name="email"
-                placeholder="E-Mail"
-                value={formData.email}
-                onChange={handleInputChange}
-              />
-              <input
-                className="input-field"
-                name="telefon"
-                placeholder="Telefon"
-                value={formData.telefon}
-                onChange={handleInputChange}
-              />
-              <input
-                className="input-field profile-full-width"
-                name="rolle"
-                placeholder="Rolle im Unternehmen"
-                value={formData.rolle}
-                onChange={handleInputChange}
-              />
+            <div className="profile-form-list">
+              <label className="profile-field">
+                <span>Vorname</span>
+                <input
+                  className="input-field"
+                  name="vorname"
+                  value={formData.vorname}
+                  onChange={handleInputChange}
+                />
+              </label>
+
+              <label className="profile-field">
+                <span>Nachname</span>
+                <input
+                  className="input-field"
+                  name="nachname"
+                  value={formData.nachname}
+                  onChange={handleInputChange}
+                />
+              </label>
+
+              <label className="profile-field">
+                <span>E-Mail</span>
+                <input
+                  className="input-field"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                />
+              </label>
+
+              <label className="profile-field">
+                <span>Telefonnummer</span>
+                <input
+                  className="input-field no-wrap-input"
+                  name="telefon"
+                  type="tel"
+                  value={formData.telefon}
+                  onChange={handleInputChange}
+                />
+              </label>
+
+              <label className="profile-field">
+                <span>Rolle</span>
+                <select
+                  className="input-field profile-select"
+                  name="rolle"
+                  value={formData.rolle}
+                  onChange={handleInputChange}
+                >
+                  <option value="Inhaber">Inhaber</option>
+                  <option value="Mitarbeiter">Mitarbeiter</option>
+                  <option value="Büro / Verwaltung">Büro / Verwaltung</option>
+                </select>
+              </label>
             </div>
-          </section>
 
-          <section className="card profile-content-card">
-            <h2>Unternehmensdaten</h2>
+            <div className="profile-actions">
+              <button className="button-primary profile-save-button">
+                Änderungen speichern
+              </button>
 
-            <div className="profile-form-grid">
-              <input
-                className="input-field"
-                name="firmenname"
-                placeholder="Firmenname"
-                value={formData.firmenname}
-                onChange={handleInputChange}
-              />
-              <input
-                className="input-field"
-                name="branche"
-                placeholder="Branche"
-                value={formData.branche}
-                onChange={handleInputChange}
-              />
-              <input
-                className="input-field"
-                name="ustId"
-                placeholder="USt-IdNr."
-                value={formData.ustId}
-                onChange={handleInputChange}
-              />
-              <input
-                className="input-field"
-                name="website"
-                placeholder="Website"
-                value={formData.website}
-                onChange={handleInputChange}
-              />
-            </div>
-          </section>
-
-          <section className="card profile-content-card">
-            <h2>Adresse</h2>
-
-            <div className="profile-form-grid">
-              <input
-                className="input-field"
-                name="strasse"
-                placeholder="Straße"
-                value={formData.strasse}
-                onChange={handleInputChange}
-              />
-              <input
-                className="input-field"
-                name="hausnummer"
-                placeholder="Hausnummer"
-                value={formData.hausnummer}
-                onChange={handleInputChange}
-              />
-              <input
-                className="input-field"
-                name="plz"
-                placeholder="PLZ"
-                value={formData.plz}
-                onChange={handleInputChange}
-              />
-              <input
-                className="input-field"
-                name="ort"
-                placeholder="Ort"
-                value={formData.ort}
-                onChange={handleInputChange}
-              />
-              <input
-                className="input-field profile-full-width"
-                name="land"
-                placeholder="Land"
-                value={formData.land}
-                onChange={handleInputChange}
-              />
-            </div>
-          </section>
-
-          <section className="card profile-content-card">
-            <h2>Rechnungs- & Geschäftsdaten</h2>
-
-            <div className="profile-form-grid">
-              <input
-                className="input-field"
-                name="steuernummer"
-                placeholder="Steuernummer"
-                value={formData.steuernummer}
-                onChange={handleInputChange}
-              />
-              <input
-                className="input-field"
-                name="angebotPrefix"
-                placeholder="Angebots-Präfix"
-                value={formData.angebotPrefix}
-                onChange={handleInputChange}
-              />
-              <input
-                className="input-field"
-                name="iban"
-                placeholder="IBAN"
-                value={formData.iban}
-                onChange={handleInputChange}
-              />
-              <input
-                className="input-field"
-                name="bic"
-                placeholder="BIC"
-                value={formData.bic}
-                onChange={handleInputChange}
-              />
-              <select
-                className="input-field profile-full-width"
-                name="standardZahlungsziel"
-                value={formData.standardZahlungsziel}
-                onChange={handleInputChange}
+              <button
+                className="profile-password-button"
+                type="button"
+                onClick={() => navigate("/passwort-aendern")}
               >
-                <option value="7 Tage">7 Tage</option>
-                <option value="14 Tage">14 Tage</option>
-                <option value="30 Tage">30 Tage</option>
-              </select>
+                Passwort ändern
+              </button>
             </div>
-
-            <button className="button-primary profile-save-button">
-              Änderungen speichern
-            </button>
           </section>
         </>
       )}
@@ -367,8 +299,6 @@ export const ProfilPage = () => {
           </div>
         </section>
       )}
-
-      <Navbar />
     </div>
   );
 };

@@ -1,36 +1,41 @@
 import { useState } from "react";
-import { Navbar } from "@/features/dashboards/components/Navbar";
 import "@/assets/stylesheets/stylesheet.css";
 
 export const UnternehmenPage = () => {
   const [logo, setLogo] = useState<string | null>(null);
-  const [employees, setEmployees] = useState<
-    { name: string; price: string }[]
-  >([]);
+  const [employees, setEmployees] = useState<{ name: string; price: string }[]>(
+    [],
+  );
   const [employeeName, setEmployeeName] = useState("");
   const [employeePrice, setEmployeePrice] = useState("");
 
-  const handleLogoUpload = (e: any) => {
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setLogo(URL.createObjectURL(file));
+
+    // 1. Prüfen, ob überhaupt eine Datei existiert
+    if (!file) return;
+
+    // 2. Sicherheits-Check: Ist es wirklich ein Bild?
+    if (!file.type.startsWith("image/")) {
+      alert("Fehler: Bitte wähle eine Bilddatei (PNG, JPG, WEBP) aus.");
+      // Löscht die falsche Datei aus dem Input-Feld, damit es leer wird
+      e.target.value = "";
+      return;
     }
+
+    // 3. Wenn es ein Bild ist, URL für die Vorschau erzeugen
+    setLogo(URL.createObjectURL(file));
   };
 
   const addEmployee = () => {
     if (!employeeName || !employeePrice) return;
-
-    setEmployees([
-      ...employees,
-      { name: employeeName, price: employeePrice },
-    ]);
-
+    setEmployees([...employees, { name: employeeName, price: employeePrice }]);
     setEmployeeName("");
     setEmployeePrice("");
   };
 
   return (
-    <div className="app">
+    <>
       <header className="card">
         <h1>Unternehmen</h1>
         <p className="text-secondary">
@@ -38,14 +43,9 @@ export const UnternehmenPage = () => {
         </p>
       </header>
 
-      {/* Logo */}
       <div className="card">
         <h2>Firmenlogo</h2>
-
-        {logo && (
-          <img src={logo} alt="Logo" className="company-logo" />
-        )}
-
+        {logo && <img src={logo} alt="Logo" className="company-logo" />}
         <input
           className="input-field"
           type="file"
@@ -54,10 +54,8 @@ export const UnternehmenPage = () => {
         />
       </div>
 
-      {/* Mitarbeiter */}
       <div className="card">
         <h2>Mitarbeiter & Preise</h2>
-
         <input
           className="input-field"
           type="text"
@@ -65,8 +63,6 @@ export const UnternehmenPage = () => {
           value={employeeName}
           onChange={(e) => setEmployeeName(e.target.value)}
         />
-
-        {/* Preis */}
         <input
           className="input-field"
           type="text"
@@ -75,41 +71,27 @@ export const UnternehmenPage = () => {
           value={employeePrice}
           onChange={(e) => setEmployeePrice(e.target.value)}
         />
-
         <button className="button-primary" onClick={addEmployee}>
           Mitarbeiter hinzufügen
         </button>
-
-        <div className="divider"></div>
-
+        <div className="divider" />
         {employees.length === 0 && (
           <p className="text-secondary empty-state">
             Noch keine Mitarbeiter hinzugefügt
           </p>
         )}
-
         {employees.map((emp, index) => (
           <div className="card employee-card" key={index}>
             <strong>{emp.name}</strong>
-            <p className="text-secondary">
-              {emp.price} € / Stunde
-            </p>
+            <p className="text-secondary">{emp.price} € / Stunde</p>
           </div>
         ))}
       </div>
 
-      {/* Preisliste */}
       <div className="card">
         <h2>Preisliste</h2>
-
-        <input
-          className="input-field"
-          type="file"
-          accept=".pdf,.jpg,.png"
-        />
+        <input className="input-field" type="file" accept=".pdf,.jpg,.png" />
       </div>
-
-      <Navbar />
-    </div>
+    </>
   );
 };
