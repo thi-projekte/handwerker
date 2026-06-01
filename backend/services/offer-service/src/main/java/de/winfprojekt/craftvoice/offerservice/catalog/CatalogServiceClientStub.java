@@ -1,3 +1,6 @@
+// Platzhalter
+// Kann gelöscht werden, sobald der eigentliche Catalog-Service steht.
+
 package de.winfprojekt.craftvoice.offerservice.catalog;
 
 import jakarta.enterprise.context.ApplicationScoped;
