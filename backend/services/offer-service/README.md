@@ -40,17 +40,24 @@ Befolge diese Schritte, um die Entwicklungsumgebung zu starten:
 
 1. **Docker-Daemon starten** (z.B. Docker Desktop).
 
-2. **Datenbank starten** (aus dem Verzeichnis `backend/`):
+2. **Deepgram API-Key konfigurieren:**
+   Kopiere die Vorlage `.env.deepgram_example` in diesem Verzeichnis als `.env`:
+   ```bash
+   cp .env.deepgram_example .env
+   ```
+   Öffne die neue `.env`-Datei und trage deinen echten API-Key ein.
+
+3. **Datenbank starten** (aus dem Verzeichnis `backend/`):
    ```bash
    docker compose -f docker-compose.dev.yml up -d
    ```
 
-3. **Service im Dev-Modus starten** (aus diesem Verzeichnis `backend/services/offer-service/`):
+4. **Service im Dev-Modus starten** (aus diesem Verzeichnis `backend/services/offer-service/`):
    ```bash
    ./mvnw quarkus:dev
    ```
 
-4. **Verfügbarkeit prüfen**:
+5. **Verfügbarkeit prüfen**:
    Der Service läuft auf Port **8081**. Du kannst den Status hier abrufen:
    `http://localhost:8081/q/health`
 
@@ -60,11 +67,11 @@ Befolge diese Schritte, um die Entwicklungsumgebung zu starten:
 
 ## 🔧 4. Wichtige Konfigurationen (INFRA-1)
 
-Der Service nutzt folgende wichtige Properties (konfigurierbar über Umgebungsvariablen):
+Der Service nutzt folgende wichtige Properties (konfigurierbar über Umgebungsvariablen oder die lokale `.env`-Datei):
 
 *   **HTTP Port**: `8081` (Vermeidet Konflikt mit CIB seven auf 8080)
 *   **Process Engine URL**: `${PE_URL:http://localhost:8080/engine-rest}`
-*   **Deepgram API-Key**: `${DEEPGRAM_API_KEY:changeme}`
+*   **Deepgram API-Key**: `${DEEPGRAM_API_KEY:changeme}` (Lokal konfigurierbar über die `.env`-Datei)
 *   **Datenbank**: Name `offer-db`, User `postgres`, PW `postgres` (Defaults für lokal)
 
 ---
