@@ -21,9 +21,8 @@ services:
       - "8080:80"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
-      - ./index.html:/usr/share/nginx/html/index.html
     depends_on:
-      - catalog-service
+      - postgres
     networks:
       - internal
 
