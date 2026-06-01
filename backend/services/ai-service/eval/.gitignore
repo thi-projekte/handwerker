@@ -8,6 +8,10 @@ results/*
 !results/judge-2026-05-31T20-07-54-314Z.json
 !results/report-call1-2026-05-31T20-07-54-314Z.html
 
+# Offizieller Call-2-Lauf (2026-06-01): LLM-Beleg (5 Runs) + Report
+!results/call2-llm-2026-06-01T16-59-59-713Z.json
+!results/report-call2-2026-06-01T17-11-45-132Z.html
+
 # Kein API-Key, keine .env
 .env
 *.key
