@@ -75,7 +75,7 @@ export const LoginPage = () => {
         </button>
 
         <div className="login-footer">
-          <a href="PasswortVergessen" className="text-secondary">
+          <a href="/passwortVergessen" className="text-secondary">
             Passwort vergessen?
           </a>
         </div>

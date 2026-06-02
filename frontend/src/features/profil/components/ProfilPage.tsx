@@ -241,7 +241,7 @@ export const ProfilPage = () => {
               <button
                 className="profile-password-button"
                 type="button"
-                onClick={() => navigate("/passwort-aendern")}
+                onClick={() => navigate("/passwortAendern")}
               >
                 Passwort ändern
               </button>

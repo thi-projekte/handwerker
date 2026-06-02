@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
 import "./UnternehmenPage.css";
 
 type Tab =
@@ -23,7 +24,21 @@ type Material = {
 };
 
 export const UnternehmenPage = () => {
-  const [activeTab, setActiveTab] = useState<Tab>("allgemein");
+  const location = useLocation();
+
+  const [activeTab, setActiveTab] = useState<Tab>(() => {
+    const tab = new URLSearchParams(location.search).get("tab");
+    return tab === "kunde" || tab === "stundensatz" || tab === "preisliste"
+      ? tab
+      : "allgemein";
+  });
+
+  useEffect(() => {
+    const tab = new URLSearchParams(location.search).get("tab");
+    if (tab === "kunde" || tab === "stundensatz" || tab === "preisliste") {
+      setActiveTab(tab);
+    }
+  }, [location.search]);
 
   const [logo, setLogo] = useState<string | null>(null);
 
