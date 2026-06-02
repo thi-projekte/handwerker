@@ -1,19 +1,20 @@
 /* =========================
-   Navigationsleiste
+   Navigation
+   Mobile/Tablet: Leiste unten
+   Desktop:       Sidebar links
    ========================= */
+
+/* ── Base (Mobile) ── */
 .navbar {
   flex-shrink: 0;
-
   display: flex;
+  flex-direction: row;
   justify-content: space-around;
   align-items: center;
-
   padding: 10px 0;
   padding-bottom: calc(10px + env(safe-area-inset-bottom));
-
   background: var(--color-surface);
   backdrop-filter: blur(var(--blur));
-
   border-top: 1px solid var(--color-divider);
 }
 
@@ -21,13 +22,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-
   flex: 1;
   padding: 6px 0;
-
   color: var(--color-text-secondary);
   text-decoration: none;
-
   transition: color 0.2s ease;
 }
 
@@ -43,12 +41,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-
   width: 52px;
   height: 34px;
-
   border-radius: 12px;
-
   transition:
     background 0.2s ease,
     transform 0.15s ease;
@@ -57,4 +52,107 @@
 .nav-item.active .nav-icon {
   background: rgba(255, 106, 0, 0.12);
   transform: translateY(-2px);
+}
+
+/* Nav-Label: auf Mobile ausgeblendet */
+.nav-label {
+  display: none;
+}
+
+/* ── Tablet (768px+) ── */
+@media (min-width: 768px) {
+  .navbar {
+    padding: 10px 15px;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  }
+
+  .nav-item {
+    flex-direction: row;
+    gap: 8px;
+    flex: unset;
+    padding: 10px 18px;
+    border-radius: 14px;
+  }
+
+  .nav-label {
+    display: inline;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .nav-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .nav-item.active .nav-icon {
+    transform: none;
+  }
+}
+
+/* ── Desktop (1024px+): Sidebar ── */
+@media (min-width: 1024px) {
+  .navbar {
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    width: 240px;
+    min-width: 240px;
+    height: 100%;
+    padding: 32px 16px 24px;
+    border-top: none;
+    border-right: 1px solid var(--color-divider);
+    gap: 4px;
+    overflow-y: auto;
+  }
+
+  /* Logo-Platzhalter oben in der Sidebar */
+  .navbar::before {
+    content: "CraftVoice";
+    display: block;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--color-accent);
+    letter-spacing: -0.5px;
+    padding: 0 12px 28px;
+    border-bottom: 1px solid var(--color-divider);
+    margin-bottom: 16px;
+  }
+
+  .nav-item {
+    flex-direction: row;
+    gap: 12px;
+    flex: unset;
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 14px;
+    justify-content: flex-start;
+  }
+
+  .nav-item:hover {
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--color-text-primary);
+  }
+
+  .nav-item.active {
+    background: rgba(255, 106, 0, 0.12);
+    color: var(--color-accent);
+  }
+
+  .nav-item.active .nav-icon {
+    background: transparent;
+    transform: none;
+  }
+
+  .nav-icon {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+  }
+
+  .nav-label {
+    display: inline;
+    font-size: 15px;
+    font-weight: 600;
+  }
 }

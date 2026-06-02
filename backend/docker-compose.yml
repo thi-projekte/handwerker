@@ -15,8 +15,30 @@ services:
     networks:
       - internal
 
+  document-service:
+    build:
+      context: ./services/document-service
+      dockerfile: src/main/docker/Dockerfile.jvm
+    container_name: document-service
+    restart: unless-stopped
+    environment:
+      DB_HOST: postgres
+      DB_NAME: document-db
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      OFFER_SERVICE_URL: http://offer-service:8080
+      USER_SERVICE_URL: http://user-service:8080
+      DOCUMENT_STORAGE_PATH: /data/documents
+    volumes:
+      - document_files:/data/documents
+    depends_on:
+      - postgres
+    networks:
+      - internal
+
 volumes:
   postgres_data:
+  document_files:
 
 networks:
   internal:

@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_052ckjh" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.45.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.24.0">
+  <bpmn:collaboration id="Collaboration_13w5r0a">
+    <bpmn:participant id="pool_06" name="Angebotsversand" processRef="angebotsversand" />
+    <bpmn:participant id="Participant_1g6mume" name="Verteil-Service" />
+    <bpmn:messageFlow id="Flow_0kxurh5" name="Angebot" sourceRef="Activity_09xtlrv" targetRef="Participant_1g6mume" />
+  </bpmn:collaboration>
+  <bpmn:process id="angebotsversand" isExecutable="true" camunda:historyTimeToLive="10">
+    <bpmn:startEvent id="Event_1g2j0m2" name="Angebot muss verschickt werden">
+      <bpmn:outgoing>Flow_14uke9r</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sendTask id="Activity_09xtlrv" name="Angebot versenden">
+      <bpmn:extensionElements>
+        <camunda:connector>
+          <camunda:inputOutput>
+            <camunda:inputParameter name="url">https://webhook.site/c1d3dcf2-e52d-48c8-ae9e-313883a72129</camunda:inputParameter>
+            <camunda:inputParameter name="method">POST</camunda:inputParameter>
+            <camunda:inputParameter name="payload">
+              <camunda:script scriptFormat="JavaScript">var kundendaten = execution.getVariable("kundendaten");
+
+var businessKey = execution.getProcessBusinessKey();
+var processInstanceId = execution.getProcessInstanceId();
+
+var payload = {
+  businessKey: businessKey,
+  processInstanceId: processInstanceId,
+
+  kundendaten: JSON.parse(kundendaten.toString()),
+
+  pdf: {
+    variableName: "pdf",
+    downloadUrl: "/engine-rest/process-instance/" 
+      + processInstanceId 
+      + "/variables/pdf/data"
+  }
+};
+
+JSON.stringify(payload);</camunda:script>
+            </camunda:inputParameter>
+          </camunda:inputOutput>
+          <camunda:connectorId>http-connector</camunda:connectorId>
+        </camunda:connector>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_14uke9r</bpmn:incoming>
+      <bpmn:outgoing>Flow_0rjimwc</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:endEvent id="Event_0wiueb8" name="Angebot erfolgreich versendet">
+      <bpmn:incoming>Flow_0rjimwc</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_14uke9r" sourceRef="Event_1g2j0m2" targetRef="Activity_09xtlrv" />
+    <bpmn:sequenceFlow id="Flow_0rjimwc" sourceRef="Activity_09xtlrv" targetRef="Event_0wiueb8" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_13w5r0a">
+      <bpmndi:BPMNShape id="Participant_0m7yyio_di" bpmnElement="pool_06" isHorizontal="true">
+        <dc:Bounds x="130" y="173" width="690" height="250" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_1qx179k" bpmnElement="Event_1g2j0m2">
+        <dc:Bounds x="200" y="320" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="174" y="363" width="89" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1d6osfx_di" bpmnElement="Activity_09xtlrv">
+        <dc:Bounds x="408" y="298" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0wiueb8_di" bpmnElement="Event_0wiueb8">
+        <dc:Bounds x="680" y="320" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="672" y="363" width="52" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_14uke9r_di" bpmnElement="Flow_14uke9r">
+        <di:waypoint x="236" y="338" />
+        <di:waypoint x="408" y="338" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0rjimwc_di" bpmnElement="Flow_0rjimwc">
+        <di:waypoint x="508" y="338" />
+        <di:waypoint x="680" y="338" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Participant_0hfqe7w_di" bpmnElement="Participant_1g6mume" isHorizontal="true">
+        <dc:Bounds x="130" y="80" width="686" height="60" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0kxurh5_di" bpmnElement="Flow_0kxurh5">
+        <di:waypoint x="458" y="298" />
+        <di:waypoint x="458" y="140" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="469" y="233" width="41" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

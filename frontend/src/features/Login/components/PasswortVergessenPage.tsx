@@ -1,9 +1,13 @@
-import "@/assets/stylesheets/stylesheet.css";
+import "../Login.css";
+import logo from "/src/assets/logos/CraftVoice_Logo_white_text.png";
 
 export const PasswortVergessenPage = () => {
   return (
     <div className="app">
       <div className="card reset-card">
+        <div className="logo-container">
+          <img src={logo} alt="Logo" className="logo" />
+        </div>
         <h1>Passwort zurücksetzen</h1>
         <p className="text-secondary">
           Gib deine E-Mail-Adresse ein und wir senden dir einen Link zum
@@ -23,7 +27,7 @@ export const PasswortVergessenPage = () => {
         </button>
 
         <div className="reset-footer">
-          <a href="#" className="text-secondary">
+          <a href="/login" className="text-secondary">
             Zurück zum Login
           </a>
         </div>

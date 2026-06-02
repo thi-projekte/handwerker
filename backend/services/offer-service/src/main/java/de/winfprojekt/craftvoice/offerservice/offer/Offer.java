@@ -40,9 +40,12 @@ public class Offer extends BaseEntity {
     @Column(unique = true)
     public String annahmeToken;     // UUID für öffentlichen Annahme-Link
 
-    @OneToMany(mappedBy = "offer", cascade = CascadeType.ALL, orphanRemoval = true)
-    public List<OfferPosition> positionen = new ArrayList<>();
+    @Column(name = "speech_snippet", columnDefinition = "TEXT")
+    public String speechSnippet;
 
     @OneToMany(mappedBy = "offer", cascade = CascadeType.ALL, orphanRemoval = true)
-    public List<OfferStatusHistory> statusHistorie = new ArrayList<>();
+    public List<OfferPosition> positions = new ArrayList<>();
+
+    @OneToMany(mappedBy = "offer", cascade = CascadeType.ALL, orphanRemoval = true)
+    public List<OfferStatusHistory> statusHistory = new ArrayList<>();
 }
