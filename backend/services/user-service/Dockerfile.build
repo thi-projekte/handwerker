@@ -2,19 +2,26 @@
 FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /usr/src/app
 
-# Kopiere die pom.xml zuerst (für effizientes Caching)
+# Wir erstellen eine minimale settings.xml, die KEIN Enterprise-Profil enthält
+RUN echo '<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"><profiles></profiles></settings>' > /usr/src/app/clean-settings.xml
+
+# Kopiere die pom.xml
 COPY pom.xml .
-# Versuche alle Abhängigkeiten zu laden (ohne Enterprise Profile)
-RUN mvn dependency:go-offline -B || true
+
+# Lade Abhängigkeiten NUR mit der sauberen settings.xml
+RUN mvn dependency:go-offline -B -s /usr/src/app/clean-settings.xml || true
 
 # Kopiere den Quellcode
 COPY src ./src
 
-# Baue das Projekt und ignoriere das Enterprise-Profil explizit
-RUN mvn package -DskipTests -B
+# Baue das Projekt und erzwinge die Nutzung der sauberen settings.xml
+# Das ignoriert alle Enterprise-Anforderungen des Projekts
+RUN mvn package -DskipTests -B -s /usr/src/app/clean-settings.xml
 
 # Stage 2: Runtime
 FROM registry.access.redhat.com/ubi9/openjdk-17-runtime:latest
+ENV LANGUAGE='en_US:en'
+
 COPY --from=build /usr/src/app/target/quarkus-app/lib/ /deployments/lib/
 COPY --from=build /usr/src/app/target/quarkus-app/*.jar /deployments/
 COPY --from=build /usr/src/app/target/quarkus-app/app/ /deployments/app/
