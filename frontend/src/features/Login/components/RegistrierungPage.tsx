@@ -26,7 +26,7 @@ export const RegistrierungPage = () => {
     if (!validateEmail(email.trim())) return setError("Bitte gib eine gültige E-Mail-Adresse ein.");
     if (password.length < 6) return setError("Das Passwort muss mindestens 6 Zeichen haben.");
 
-    navigate("/dashboard");
+    navigate("/home");
   };
 
   useEffect(() => {

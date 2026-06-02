@@ -16,7 +16,7 @@ export const LoginPage = () => {
     if (!username.trim()) return setError("Bitte gib deinen Benutzernamen ein.");
     if (!password) return setError("Bitte gib dein Passwort ein.");
 
-    navigate("/dashboard");
+    navigate("/home");
   };
 
   // Fehler nach 5 Sekunden ausblenden

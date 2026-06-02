@@ -4,6 +4,7 @@ import { AppLayout } from "@/shared/components/AppLayout";
 import { DashboardView } from "@/features/dashboard/components/DashboardView";
 import { DocumentPage } from "@/features/document/components/DocumentPage";
 import { HomeView } from "@/features/voice-input/components/HomeView";
+import { LandingPage } from "@/features/landing/components/LandingPage";
 import { UnternehmenPage } from "@/features/unternehmen/components/UnternehmenPage";
 import { ProfilPage } from "@/features/profil/components/ProfilPage";
 import { ReviewPage } from "@/features/review/components/ReviewPage";
@@ -26,6 +27,15 @@ export function AppRoutes() {
       {/* ── Seiten MIT Header + Navbar ── */}
       <Route
         path="/"
+        element={
+          <AppLayout hideNav hideHeader>
+            <LandingPage />
+          </AppLayout>
+        }
+      />
+
+      <Route
+        path="/home"
         element={
           <AppLayout>
             <HomeView />

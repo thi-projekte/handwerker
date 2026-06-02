@@ -1,0 +1,335 @@
+.landing-page {
+    width: 100%;
+    padding-bottom: 40px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.landing-hero {
+    display: flex;
+    justify-content: center;
+}
+
+.landing-hero-content {
+    width: min(1200px, 100%);
+    max-width: 1200px;
+    padding: 42px;
+    border-radius: 36px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-divider);
+    box-shadow: var(--shadow);
+    display: grid;
+    grid-template-columns: minmax(320px, 400px) 1fr;
+    gap: 48px;
+    align-items: center;
+    box-sizing: border-box;
+}
+
+/* Logo Card and Animation */
+.landing-logo-card {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    max-width: 360px;
+    min-height: 360px;
+    overflow: hidden;
+}
+
+.landing-logo-ring {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    pointer-events: none;
+}
+
+.landing-logo-ring span {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: calc(100% + 80px);
+    height: calc(100% + 80px);
+    border-radius: 20%;
+    border: 1px solid transparent;
+    border-top-color: rgba(255, 255, 255, 0.35);
+    border-right-color: rgba(255, 255, 255, 0.16);
+    box-shadow: 0 0 30px rgba(255, 255, 255, 0.08);
+    animation: orbit 12s linear infinite;
+    transform-origin: center center;
+    --orbit-scale: 1;
+}
+
+.landing-logo-ring span:nth-child(1) {
+    width: calc(100% + 100px);
+    height: calc(100% + 100px);
+    --orbit-scale: 0.9;
+    animation-duration: 10s;
+}
+
+.landing-logo-ring span:nth-child(2) {
+    width: calc(100% + 60px);
+    height: calc(100% + 60px);
+    --orbit-scale: 0.72;
+    animation-duration: 14s;
+}
+
+.landing-logo-ring span:nth-child(3) {
+    width: calc(100% + 40px);
+    height: calc(100% + 40px);
+    --orbit-scale: 0.54;
+    animation-duration: 18s;
+}
+
+@keyframes orbit {
+    from {
+        transform: translate(-50%, -50%) rotate(0deg) scale(var(--orbit-scale));
+    }
+
+    to {
+        transform: translate(-50%, -50%) rotate(360deg) scale(var(--orbit-scale));
+    }
+}
+
+.landing-logo {
+    width: 48%;
+
+    z-index: 2;
+
+    animation:
+        logoFloat 4s ease-in-out infinite,
+        logoGlow 2.2s ease-in-out infinite;
+}
+
+@keyframes logoFloat {
+
+    0%,
+    100% {
+        transform:
+            translateY(0px) scale(1);
+    }
+
+    50% {
+        transform:
+            translateY(-16px) scale(1.08);
+    }
+}
+
+@keyframes logoGlow {
+
+    0%,
+    100% {
+        filter:
+            drop-shadow(0 0 20px rgba(255, 106, 0, .2));
+    }
+
+    50% {
+        filter:
+            drop-shadow(0 0 40px rgba(255, 106, 0, .7)) drop-shadow(0 0 80px rgba(255, 106, 0, .4));
+    }
+}
+
+.landing-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.landing-eyebrow {
+    width: fit-content;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: rgba(255, 106, 0, 0.12);
+    border: 1px solid rgba(255, 106, 0, 0.25);
+    color: var(--color-accent);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0 auto;
+}
+
+.landing-copy h1 {
+    font-size: clamp(2rem, 1.5vw, 4rem);
+}
+
+.landing-copy p {
+    color: rgba(255, 255, 255, 0.76);
+    max-width: 640px;
+    line-height: 1.7;
+    font-size: 1rem;
+}
+
+.landing-actions {
+    display: grid;
+    gap: 16px;
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
+}
+
+.landing-actions button {
+    width: 100%;
+}
+
+.landing-info-grid {
+    display: grid;
+    gap: 18px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.landing-info-card {
+    padding: 28px;
+
+    border-radius: 28px;
+
+    background: var(--color-surface);
+
+    border: 1px solid var(--color-divider);
+
+    box-shadow: var(--shadow);
+
+    transition:
+        transform .2s ease,
+        border-color .2s ease;
+}
+
+.landing-info-card:hover {
+    transform: translateY(-4px);
+
+    border-color:
+        rgba(255, 106, 0, .25);
+}
+
+.landing-info-card strong {
+    display: block;
+    margin-bottom: 12px;
+    font-size: 1rem;
+}
+
+.landing-info-card p {
+    color: rgba(255, 255, 255, 0.72);
+    line-height: 1.7;
+}
+
+.landing-pricing-section {
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+}
+
+.landing-pricing-header h2 {
+    margin: 0;
+    font-size: clamp(1.8rem, 3vw, 2.5rem);
+}
+
+.landing-pricing-header p {
+    color: rgba(255, 255, 255, 0.72);
+    margin-top: 10px;
+    max-width: 600px;
+}
+
+.landing-pricing-grid {
+    display: grid;
+    gap: 18px;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.pricing-card {
+    border-radius: 26px;
+    padding: 26px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.14);
+    display: grid;
+    gap: 14px;
+}
+
+.pricing-card.featured {
+    transform: scale(1.04);
+    background:
+        rgba(255, 106, 0, .08);
+    border-color:
+        rgba(255, 106, 0, .35);
+    box-shadow:
+        0 20px 60px rgba(255, 106, 0, .18);
+}
+
+.pricing-title {
+    font-weight: 700;
+    color: #fff;
+}
+
+.pricing-card strong {
+    display: block;
+    font-size: 2rem;
+    color: white;
+}
+
+.pricing-subtitle {
+    color: rgba(255, 255, 255, 0.72);
+}
+
+@media (max-width: 900px) {
+    .landing-hero-content {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+
+    .landing-actions {
+        justify-items: center;
+    }
+
+    .landing-logo-card {
+        max-width: 300px;
+        min-height: 300px;
+        margin: 0 auto;
+    }
+}
+
+@media (min-width: 1024px) {
+    .landing-actions {
+        margin: 0;
+    }
+
+    .landing-eyebrow {
+        margin: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .landing-hero-content {
+        padding: 28px;
+        gap: 32px;
+    }
+
+    .landing-copy p {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 520px) {
+    .landing-copy h1 {
+        font-size: 2.4rem;
+    }
+}
+
+/* Style CraftVoice */
+.landing-brand {
+    display: block;
+    font-size: 42px;
+    font-weight: 700;
+    letter-spacing: -0.05em;
+    line-height: 1;
+}
+
+.landing-brand-craft {
+    color: var(--color-text-primary);
+}
+
+.landing-brand-voice {
+    color: var(--color-accent);
+}
