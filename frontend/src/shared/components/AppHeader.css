@@ -3,11 +3,9 @@
    ========================= */
 .app-header {
   flex-shrink: 0;
-
   display: flex;
   align-items: center;
   justify-content: flex-start;
-
   margin-bottom: 7px;
 }
 
@@ -16,4 +14,22 @@
   width: auto;
   display: block;
   object-fit: contain;
+}
+
+/* Tablet: etwas mehr Logo-Größe */
+@media (min-width: 768px) {
+  .app-header-logo {
+    height: 40px;
+  }
+
+  .app-header {
+    margin-bottom: 12px;
+  }
+}
+
+/* Desktop: Header ausblenden – Sidebar hat Branding */
+@media (min-width: 1024px) {
+  .app-header {
+    display: none;
+  }
 }

@@ -10,20 +10,20 @@ import java.time.LocalDateTime;
 @MappedSuperclass
 public abstract class BaseEntity extends PanacheEntity {
 
-    @Column(name = "erstellt_am", updatable = false)
-    public LocalDateTime erstelltAm;
+    @Column(name = "created_at", updatable = false)
+    public LocalDateTime createdAt;
 
-    @Column(name = "aktualisiert_am")
-    public LocalDateTime aktualisiertAm;
+    @Column(name = "updated_at")
+    public LocalDateTime updatedAt;
 
     @PrePersist
-    void beiPersistierung() {
-        erstelltAm = LocalDateTime.now();
-        aktualisiertAm = LocalDateTime.now();
+    void onPersist() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
     }
 
     @PreUpdate
-    void beiAktualisierung() {
-        aktualisiertAm = LocalDateTime.now();
+    void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 }

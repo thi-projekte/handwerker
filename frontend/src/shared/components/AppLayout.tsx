@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { AppHeader } from "@/shared/components/AppHeader";
 import { Navbar } from "@/features/dashboards/components/Navbar";
+import { useSwipeNavigation } from "@/shared/hooks/useSwipeNavigation";
 import "./AppLayout.css";
 
 interface AppLayoutProps {
@@ -16,6 +17,8 @@ export const AppLayout = ({
   hideNav = false,
   hideHeader = false,
 }: AppLayoutProps) => {
+  useSwipeNavigation(!hideNav);
+
   return (
     <div className="shell">
       <main className="shell-content">

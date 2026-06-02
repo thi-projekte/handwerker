@@ -11,17 +11,17 @@ export const LadenPage = () => {
             className="logo-image"
           />
         </div>
-<br />
+        <br />
         <h1>KI analysiert deine Aufnahme</h1>
-<br />
+        <br />
         <p>
           Bitte warte einen Moment.
           <br />
           <br />
           Die Ergebnisse werden verarbeitet und vorbereitet.
         </p>
-<br />
-<br />
+        <br />
+        <br />
         <div className="loader">
           <span></span>
           <span></span>

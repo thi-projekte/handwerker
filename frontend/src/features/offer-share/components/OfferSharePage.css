@@ -1,7 +1,25 @@
+/* =========================
+   OfferSharePage — Responsive
+   ========================= */
+
 .offer-share-page {
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+
+@media (min-width: 1024px) {
+  .offer-share-page {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+
+  .offer-share-header,
+  .offer-share-actions {
+    grid-column: 1 / -1;
+  }
 }
 
 .offer-share-header {
@@ -10,7 +28,7 @@
 
 .offer-share-header h1 {
   margin: 0 0 8px;
-  font-size: 26px;
+  font-size: clamp(20px, 3vw, 30px);
 }
 
 .offer-share-eyebrow {
@@ -94,7 +112,6 @@
   color: var(--color-text-primary);
   font-weight: 600;
 }
-
 .offer-preview-row strong {
   color: var(--color-accent);
   white-space: nowrap;
@@ -112,7 +129,6 @@
   color: var(--color-text-secondary);
   font-weight: 700;
 }
-
 .offer-preview-total strong {
   color: var(--color-accent);
   font-size: 20px;
@@ -133,6 +149,16 @@
   gap: 12px;
 }
 
+@media (min-width: 768px) {
+  .share-button-list {
+    flex-direction: row;
+  }
+
+  .share-button {
+    flex: 1;
+  }
+}
+
 .share-button {
   width: 100%;
   padding: 16px;
@@ -147,11 +173,9 @@
 .whatsapp-button {
   background: linear-gradient(135deg, #25d366, #128c7e);
 }
-
 .email-button {
   background: var(--color-accent-gradient);
 }
-
 .other-button {
   background: transparent;
   color: var(--color-text-primary);
@@ -167,6 +191,17 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+@media (min-width: 768px) {
+  .offer-share-actions {
+    flex-direction: row;
+  }
+
+  .offer-share-actions .button-primary,
+  .offer-share-secondary-button {
+    flex: 1;
+  }
 }
 
 .offer-share-actions .button-primary {

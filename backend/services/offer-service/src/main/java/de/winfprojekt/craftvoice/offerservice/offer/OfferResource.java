@@ -1,10 +1,13 @@
 package de.winfprojekt.craftvoice.offerservice.offer;
 
 import de.winfprojekt.craftvoice.offerservice.offer.dto.CreateOfferRequest;
+import de.winfprojekt.craftvoice.offerservice.offer.dto.OfferResponse;
 
 import jakarta.inject.Inject;
 import jakarta.ws.rs.POST;
+import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
@@ -33,10 +36,36 @@ public class OfferResource {
     @POST
     public Response createOffer(@Valid CreateOfferRequest request) {
 
-        Offer offer = offerService.createOffer(request);
+        OfferResponse response = offerService.createOffer(request);
 
         return Response.status(201)
-                .entity(offer)
+                .entity(response)
                 .build();
+    }
+
+    /**
+     * Gibt eine Liste aller Angebote zurück, sortiert nach Erstellungsdatum absteigend (neueste zuerst).
+     *
+     * @return HTTP-Response mit Statuscode 200 und der Liste aller Angebote
+     */
+    @GET
+    public Response getAllOffers() {
+        return Response.ok(offerService.getAllOffersSorted()).build();
+    }
+
+    /**
+     * Gibt das Angebot mit der angegebenen ID zurück, falls es existiert.
+     *
+     * @param id ID des gesuchten Angebots
+     * @return HTTP-Response mit Statuscode 200 und dem gefundenen Angebot, oder Statuscode 404
+     */
+    @GET
+    @Path("/{id}")
+    public Response getOfferById(@PathParam("id") Long id) {
+        OfferResponse response = offerService.getOfferById(id);
+        if (response == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+        return Response.ok(response).build();
     }
 }

@@ -2,20 +2,50 @@
    DocumentPage
    ========================= */
 
+.doc-page {
+  display: flex;
+  flex-direction: column;
+  /* Mobile: füllt den Shell-Content */
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* ── Desktop: keine fixed height mehr nötig ── */
+@media (min-width: 1024px) {
+  .doc-page {
+    max-height: unset;
+    height: 100%;
+  }
+}
+
+/* Sticky Header */
 .doc-sticky-header {
   position: sticky;
   top: 0;
   z-index: 10;
-
   background: var(--color-surface);
   backdrop-filter: blur(var(--blur));
-
-  padding: 16px 0 10px;
-  margin: -20px -20px 0;
-  padding-inline: 20px;
-
+  padding: 16px 20px 10px;
+  margin: -16px -20px 0;
   border-bottom: 1px solid var(--color-divider);
-  border-radius: 32px 32px 0 0;
+  border-radius: 20px 20px 0 0;
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  .doc-sticky-header {
+    padding: 20px 32px 12px;
+    margin: -24px -32px 0;
+  }
+}
+
+@media (min-width: 1024px) {
+  .doc-sticky-header {
+    padding: 24px 0 14px;
+    margin: -40px 0 0;
+    border-radius: 0;
+  }
 }
 
 /* Tab-Buttons */
@@ -28,22 +58,26 @@
 .doc-tab {
   flex: 1;
   padding: 12px 10px;
-
   border-radius: 14px;
   border: 1px solid var(--color-divider);
-
   background: transparent;
   color: var(--color-text-secondary);
-
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-
   transition:
     background 0.2s ease,
     color 0.2s ease,
     border-color 0.2s ease,
     box-shadow 0.2s ease;
+}
+
+@media (min-width: 768px) {
+  .doc-tab {
+    flex: unset;
+    padding: 12px 28px;
+    font-size: 15px;
+  }
 }
 
 .doc-tab.active {
@@ -53,9 +87,196 @@
   box-shadow: 0 6px 18px rgba(255, 106, 0, 0.35);
 }
 
-/* Suchleiste */
+/* Suchzeile */
+.doc-search-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.doc-search-row .doc-search {
+  flex: 1;
+  margin-bottom: 0;
+}
+
 .doc-search {
   margin-bottom: 10px;
+}
+
+/* Filter-Button */
+.doc-filter-btn-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--color-divider);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  height: 44px;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.doc-filter-label-text {
+  font-size: 14px;
+  margin: 4px;
+}
+
+.doc-filter-btn-toggle:hover,
+.doc-filter-btn-toggle.menu-open {
+  background: rgba(255, 106, 0, 0.05);
+  color: var(--color-accent);
+  border-color: rgba(255, 106, 0, 0.2);
+}
+
+.doc-filter-btn-toggle.filter-active {
+  background: rgba(255, 106, 0, 0.1);
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+/* Inline Filter Panel */
+.doc-filter-inline-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 12px;
+  margin-bottom: 16px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-divider);
+  border-radius: 16px;
+  animation: slideDown 0.25s ease-out;
+}
+
+.doc-filter-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+@media (min-width: 600px) {
+  .doc-filter-grid {
+    grid-template-columns: 0.8fr 1.2fr;
+  }
+}
+
+.doc-filter-section {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Custom Dropdown */
+.doc-custom-dropdown-container {
+  position: relative;
+}
+
+.doc-custom-dropdown-trigger {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--color-divider);
+  font-size: 13px;
+  color: var(--color-text-primary);
+  background: transparent;
+  cursor: pointer;
+  height: 42px;
+  margin-top: 5px;
+  transition: border-color 0.15s ease;
+}
+
+.doc-custom-dropdown-trigger:hover {
+  border-color: rgba(255, 106, 0, 0.3);
+}
+
+.doc-custom-dropdown-options {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 100%;
+  background: var(--color-surface);
+  border: 1px solid var(--color-divider);
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  z-index: 120;
+  overflow: hidden;
+  animation: slideDown 0.2s ease-out;
+}
+
+.doc-custom-dropdown-option {
+  padding: 11px 14px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.doc-custom-dropdown-option:hover {
+  background: rgba(255, 106, 0, 0.08);
+  color: var(--color-accent);
+}
+
+.doc-custom-dropdown-option.selected {
+  background: rgba(255, 106, 0, 0.12);
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+/* Datum-Inputs */
+.doc-filter-date-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.doc-custom-date-input {
+  flex: 1;
+  border-radius: 12px;
+  border: 1px solid var(--color-divider);
+  background: transparent;
+  color: var(--color-text-primary);
+  font-size: 12px;
+  height: 42px;
+  margin-top: 5px;
+  text-align: center;
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 0 8px;
+}
+
+.doc-custom-date-input::-webkit-calendar-picker-indicator {
+  display: none;
+  -webkit-appearance: none;
+}
+
+/* Reset Button */
+.doc-menu-reset-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 80, 80, 0.2);
+  background: rgba(255, 80, 80, 0.05);
+  color: #ff5050;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-start;
+  transition: background 0.15s ease;
+}
+
+.doc-menu-reset-btn:hover {
+  background: rgba(255, 80, 80, 0.12);
 }
 
 /* Sortier-Row */
@@ -76,14 +297,11 @@
   padding: 5px 12px;
   border-radius: 999px;
   border: 1px solid var(--color-divider);
-
   background: transparent;
   color: var(--color-text-secondary);
-
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-
   transition:
     background 0.15s ease,
     color 0.15s ease,
@@ -101,21 +319,17 @@
   margin-left: 1px;
 }
 
-/* Richtungs-Toggle */
 .doc-dir-btn {
   margin-left: auto;
   padding: 5px 12px;
   border-radius: 999px;
   border: 1px solid var(--color-divider);
-
   background: transparent;
   color: var(--color-text-secondary);
-
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-
   transition:
     background 0.15s ease,
     color 0.15s ease,
@@ -128,15 +342,58 @@
   border-color: rgba(255, 106, 0, 0.3);
 }
 
-/* Scroll-Liste */
+/* =========================
+   Scroll-Liste
+   ========================= */
+
 .doc-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 25px 20px 8px;
   display: flex;
   flex-direction: column;
   gap: 0;
-  padding-top: 16px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
-/* Angebots-Card */
+.doc-list::-webkit-scrollbar {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .doc-list {
+    padding: 35px 32px 16px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .doc-list {
+    padding: 50px 0 16px;
+    /* Auf Desktop: 2-spaltig */
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    align-content: start;
+  }
+
+  /* Leerer State & WIP über volle Breite */
+  .doc-empty,
+  .doc-wip {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 1280px) {
+  .doc-list {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* =========================
+   Angebots-Card
+   ========================= */
+
 .doc-card {
   cursor: pointer;
   transition:
@@ -198,14 +455,11 @@
   padding: 7px 14px;
   border-radius: 10px;
   border: 1px solid var(--color-divider);
-
   background: transparent;
   color: var(--color-accent);
-
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-
   transition: background 0.15s ease;
 }
 
@@ -218,17 +472,14 @@
   background: rgba(100, 149, 237, 0.15);
   color: #6495ed;
 }
-
 .status-versendet {
   background: rgba(255, 200, 0, 0.15);
   color: #ffc800;
 }
-
 .status-angenommen {
   background: rgba(100, 200, 120, 0.15);
   color: #64c878;
 }
-
 .status-abgelehnt {
   background: rgba(255, 80, 80, 0.15);
   color: #ff5050;
@@ -246,210 +497,12 @@
   margin-bottom: 12px;
 }
 
-/* Leere Suche */
 .doc-empty {
   text-align: center;
   padding: 24px;
 }
 
-.doc-page {
-  /* Feste Höhe damit der Container nicht mit dem Inhalt wächst */
-  height: calc(100svh - 80px);
-  max-height: 860px;
-
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-/* Sticky Header bleibt oben */
-.doc-page .doc-sticky-header {
-  flex-shrink: 0;
-  border-radius: 32px 32px 0 0;
-  margin: 0;
-  padding: 16px 20px 10px;
-}
-
-/* Scrollbarer Bereich zwischen Header und Navbar */
-.doc-page .doc-list {
-  flex: 1;
-  overflow-y: auto;
-  padding: 16px 20px 8px;
-
-  /* Scrollbar verstecken aber scrollbar lassen */
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.doc-page .doc-list::-webkit-scrollbar {
-  display: none;
-}
-
-/* Navbar bleibt am unteren Rand des Containers */
-.doc-page .navbar {
-  flex-shrink: 0;
-  position: static;
-  border-radius: 0 0 32px 32px;
-}
-
-/* Suchzeile Layout */
-.doc-search-row {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.doc-search-row .doc-search {
-  flex: 1;
-  margin-bottom: 0;
-}
-
-/* Filter Button */
-.doc-filter-btn-toggle {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 16px;
-  border-radius: 14px;
-  border: 1px solid var(--color-divider);
-  background: transparent;
-  color: var(--color-text-secondary);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  height: 44px;
-  transition: all 0.2s ease;
-}
-
-.doc-filter-label-text {
-  font-size: 14px;
-  margin: 4px;
-}
-
-.doc-filter-btn-toggle:hover,
-.doc-filter-btn-toggle.menu-open {
-  background: rgba(255, 106, 0, 0.05);
-  color: var(--color-accent);
-  border-color: rgba(255, 106, 0, 0.2);
-}
-
-.doc-filter-btn-toggle.filter-active {
-  background: rgba(255, 106, 0, 0.1);
-  color: var(--color-accent);
-  border-color: var(--color-accent);
-}
-
-/* NEU: Inline Filter Panel schiebt den Inhalt nach unten */
-/* --- Optimierte Animation für sanfteres Öffnen/Schließen --- */
-.doc-filter-inline-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 12px;
-  margin-bottom: 16px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-divider);
-  border-radius: 16px;
-  /* Von 0.2s auf 0.35s verlangsamt für eine weichere Transition */
-  animation: slideDown 0.35s ease-in-out;
-}
-
-/* --- Platzoptimierung im Grid --- */
-.doc-filter-grid {
-  display: grid;
-  /* Status wird kompakter, Zeitraum bekommt den restlichen Platz */
-  grid-template-columns: 0.8fr 1.2fr;
-  gap: 12px;
-}
-
-@media (max-width: 600px) {
-  .doc-filter-grid {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-}
-
-/* --- Kompakteres Dropdown für den Status --- */
-.doc-custom-dropdown-trigger {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 5px 5px;
-  border-radius: 12px;
-  border: 1px solid var(--color-divider);
-  font-size: 12px;
-  color: var(--color-text-primary);
-  background: transparent;
-  cursor: pointer;
-  height: 42px;
-  margin-top: 5px;
-}
-
-/* --- Datums-Inputs verkleinern & Kalender-Icon entfernen --- */
-.doc-filter-date-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.doc-custom-date-input {
-  flex: 1;
-  border-radius: 12px;
-  border: 1px solid var(--color-divider);
-  background: transparent;
-  color: var(--color-text-primary);
-  font-size: 12px;
-  height: 42px;
-  margin-top: 5px;
-  text-align: center; /* Zentrierter Text wirkt bei weniger Platz sauberer */
-
-  /* Versteckt das Standard-Kalender-Icon in Chrome, Safari, Edge */
-  appearance: none;
-  -webkit-appearance: none;
-}
-
-.doc-custom-date-input::-webkit-calendar-picker-indicator {
-  display: none;
-  -webkit-appearance: none;
-}
-
-/* --- Keyframes leicht angepasst für weicheren Verlauf --- */
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Reset Button */
-.doc-menu-reset-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 10px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 80, 80, 0.2);
-  background: rgba(255, 80, 80, 0.05);
-  color: #ff5050;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  align-self: flex-start;
-  transition: background 0.15s ease;
-}
-
-.doc-menu-reset-btn:hover {
-  background: rgba(255, 80, 80, 0.12);
-}
-
-/* Custom Card-Dropdown für Kartenstatus */
+/* Status-Dropdown auf der Karte */
 .doc-status-dropdown-wrapper {
   position: relative;
 }
@@ -494,7 +547,7 @@
   transform: scale(1.02);
 }
 
-/* Keyframes für weiches Aufklappen */
+/* Animations */
 @keyframes slideDown {
   from {
     opacity: 0;
@@ -504,77 +557,4 @@
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-/* --- FIX: Absolut positioniertes Status-Dropdown --- */
-.doc-custom-dropdown-container {
-  position: relative; /* Wichtig, damit das Dropdown relativ hierzu positioniert wird */
-}
-
-.doc-custom-dropdown-options {
-  position: absolute;
-  top: calc(100% + 6px); /* Kleiner Abstand zum Trigger-Feld */
-  left: 0;
-  width: 100%;
-
-  /* Styling passend zum restlichen UI */
-  background: var(--color-surface);
-  border: 1px solid var(--color-divider);
-  border-radius: 14px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3); /* Hochwertiger Schatten für Tiefenwirkung */
-
-  /* Stapelreihenfolge nach ganz oben setzen, damit es die Datumsfelder überlagert */
-  z-index: 120;
-  overflow: hidden;
-
-  /* Sanftes Einblenden der Optionen */
-  animation: slideDown 0.2s ease-out;
-}
-
-/* --- Einzelne Optionen im Dropdown --- */
-.doc-custom-dropdown-option {
-  padding: 11px 14px;
-  font-size: 13px;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  transition:
-    background 0.15s ease,
-    color 0.15s ease;
-}
-
-/* Hover-Effekt mit dezentem Accent-Highlight */
-.doc-custom-dropdown-option:hover {
-  background: rgba(255, 106, 0, 0.08);
-  color: var(--color-accent);
-}
-
-/* Wenn eine Option bereits ausgewählt ist */
-.doc-custom-dropdown-option.selected {
-  background: rgba(255, 106, 0, 0.12);
-  color: var(--color-accent);
-  font-weight: 600;
-}
-
-/* --- OPTIONALES DESIGN-FINETUNING --- */
-/* Falls der Trigger-Button ("Auswählen...") noch etwas mehr Padding vertragen kann */
-.doc-custom-dropdown-trigger {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 12px; /* Etwas mehr Luft links und rechts */
-  border-radius: 12px;
-  border: 1px solid var(--color-divider);
-  font-size: 13px; /* Einheitliche Font-Größe mit Datumsfeldern */
-  color: var(--color-text-primary);
-  background: transparent;
-  cursor: pointer;
-  height: 42px;
-  margin-top: 5px;
-  transition: border-color 0.15s ease;
-}
-
-.doc-custom-dropdown-trigger:hover {
-  border-color: rgba(255, 106, 0, 0.3);
 }

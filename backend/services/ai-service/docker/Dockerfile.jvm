@@ -1,0 +1,33 @@
+####
+# Dockerfile.jvm — ai-service (Quarkus JVM-Mode)
+#
+# Build:
+#   cd backend/services/ai-service
+#   ./mvnw package
+#   docker build -f docker/Dockerfile.jvm -t craftvoice/ai-service .
+#
+# Run:
+#   docker run -i --rm -p 8081:8081 craftvoice/ai-service
+#
+# Hinweis: ai-service laeuft auf Port 8081 (lokal belegt 8080 die Camunda/CIB-seven-
+# Instanz). Der Port kommt aus application.properties (quarkus.http.port=${HTTP_PORT:8081}).
+#
+# Base-Image und Layout bewusst identisch zu offer-service/docker/Dockerfile.jvm
+# (sprint3) gehalten — nur EXPOSE/Port unterscheiden sich.
+####
+FROM registry.access.redhat.com/ubi9/openjdk-25-runtime:1.24
+
+ENV LANGUAGE='en_US:en'
+
+# Vier getrennte Layer, damit bei reinen App-Aenderungen die Lib-Layer gecacht bleiben.
+COPY --chown=185 target/quarkus-app/lib/ /deployments/lib/
+COPY --chown=185 target/quarkus-app/*.jar /deployments/
+COPY --chown=185 target/quarkus-app/app/ /deployments/app/
+COPY --chown=185 target/quarkus-app/quarkus/ /deployments/quarkus/
+
+EXPOSE 8081
+USER 185
+ENV JAVA_OPTS_APPEND="-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager"
+ENV JAVA_APP_JAR="/deployments/quarkus-run.jar"
+
+ENTRYPOINT [ "/opt/jboss/container/java/run/run-java.sh" ]

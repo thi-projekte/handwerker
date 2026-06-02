@@ -28,7 +28,9 @@ jobs:
         include:
           - service: offer-service
             dockerfile: docker/Dockerfile.jvm
-            
+          - service: ai-service
+            dockerfile: docker/Dockerfile.jvm
+
           - service: catalog-service
             dockerfile: src/main/docker/Dockerfile.jvm
 

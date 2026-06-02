@@ -1,48 +1,116 @@
 /* =========================
-   App Shell — zentrales Layout
+   App Shell — Responsive Layout
+   Mobile:  320–767px   → Card-Optik, Navbar unten
+   Tablet:  768–1023px  → breiter, Navbar unten
+   Desktop: 1024px+     → volle Breite, Sidebar links
    ========================= */
 
-/* Der äußere Container passt sich ans Gerät an */
+/* ── Base (Mobile-first) ── */
 .shell {
-  /* Volle Bildschirmhöhe, aber nie mehr als ein typisches Handy */
   height: 100svh;
   max-height: 100svh;
-
-  /* Breite: auf Handy 100%, auf Desktop zentriert wie bisher */
   width: 100%;
   max-width: 430px;
   margin: 0 auto;
 
-  /* Flex-Column: Header oben, Content mitte, Navbar unten */
   display: flex;
   flex-direction: column;
 
   background: var(--color-surface);
   backdrop-filter: blur(var(--blur));
   border: 1px solid var(--color-divider);
-
-  /* Auf Desktop: schöne Rundung und etwas Abstand */
-  @media (min-width: 431px) {
-    height: calc(100svh - 48px);
-    margin: 24px auto;
-    border-radius: 32px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-    overflow: hidden;
-  }
+  overflow: hidden;
 }
 
-/* Scrollbarer Inhaltsbereich zwischen Header und Navbar */
+/* Scrollbarer Inhaltsbereich */
 .shell-content {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
   padding: 16px 20px;
-
-  /* Scrollbar unsichtbar aber funktional */
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
 
 .shell-content::-webkit-scrollbar {
   display: none;
+}
+
+/* ── Tablet (768px+) ── */
+@media (min-width: 768px) {
+  .shell {
+    max-width: 720px;
+    height: calc(100svh - 48px);
+    margin: 24px auto;
+    border-radius: 32px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  }
+
+  .shell-content {
+    padding: 24px 32px;
+  }
+}
+
+/* ── Desktop (1024px+) ── */
+@media (min-width: 1024px) {
+  /* Vollbild: kein zentrierter Container mehr */
+  .shell {
+    max-width: 100%;
+    width: 100%;
+    height: 100svh;
+    max-height: 100svh;
+    margin: 0;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+
+    /* Sidebar links, Content rechts */
+    flex-direction: row;
+  }
+
+  /* Sidebar nimmt feste Breite */
+  .shell > nav.navbar {
+    width: 240px;
+    min-width: 240px;
+    height: 100%;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    padding: 32px 16px;
+    border-top: none;
+    border-right: 1px solid var(--color-divider);
+    border-radius: 0;
+    gap: 4px;
+    overflow-y: auto;
+  }
+
+  /* Scrollbarer Content-Bereich */
+  .shell-content {
+    flex: 1;
+    height: 100%;
+    padding: 40px 48px;
+    overflow-y: auto;
+  }
+}
+
+/* ── Large Desktop (1280px+) ── */
+@media (min-width: 1280px) {
+  .shell-content {
+    padding: 48px 64px;
+    max-width: 1200px;
+  }
+}
+
+
+/* ----  Swipe Navigation transition ----*/
+
+.shell-content {
+  will-change: transform, opacity;
+  touch-action: pan-y;
+}
+
+.shell-content.swipe-reset {
+  transition:
+    transform 0.16s ease,
+    opacity 0.16s ease;
 }
