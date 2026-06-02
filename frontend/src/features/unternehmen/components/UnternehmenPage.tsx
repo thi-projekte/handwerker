@@ -110,7 +110,7 @@ export const UnternehmenPage = () => {
       .filter(Boolean);
 
     const parsed: Material[] = rows.map((row) => {
-      const [name, description, price, , unit] =
+      const [name, description, price, size, unit] =
         row.split(",");
 
       return {
@@ -163,6 +163,7 @@ export const UnternehmenPage = () => {
     branche: "Handwerk",
 
     iban: "",
+    BIK: "",
     bankname: "",
     kontoinhaber: "",
 
