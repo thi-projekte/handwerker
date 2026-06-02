@@ -19,9 +19,7 @@ services:
 
   # 2. Der User-Service (Quarkus Microservice)
   user-service:
-    build:
-      context: .
-      dockerfile: src/main/docker/Dockerfile.jvm
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER_LC}/${GITHUB_REPOSITORY_NAME_LC}/user-service:main
     container_name: user-service
     environment:
       DB_HOST: user-db
