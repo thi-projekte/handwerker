@@ -2,9 +2,17 @@ package de.winfprojekt.craftvoice.offerservice.offer;
 
 import jakarta.inject.Inject;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.CreateOfferRequest;
+import de.winfprojekt.craftvoice.offerservice.offer.dto.AiResultRequest;
+import de.winfprojekt.craftvoice.offerservice.offer.dto.StructuredOfferPositionDTO;
+import de.winfprojekt.craftvoice.offerservice.catalog.CatalogServiceClient;
+import de.winfprojekt.craftvoice.offerservice.catalog.CatalogPriceResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import jakarta.ws.rs.WebApplicationException;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.OfferResponse;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
+import java.math.BigDecimal;
 import java.util.UUID;
 import java.util.List;
 
@@ -19,6 +27,12 @@ public class OfferService {
 
     @Inject
     ProcessEngineClient processEngineClient;
+
+    @Inject
+    CatalogServiceClient catalogServiceClient;
+
+    @Inject
+    ObjectMapper objectMapper;
 
     /**
      * Erstellt ein neues Angebot aus den übergebenen Request-Daten, persistiert diese in die DB
@@ -74,5 +88,76 @@ public class OfferService {
     public OfferResponse getOfferById(Long id) {
         Offer offer = Offer.findById(id);
         return offer != null ? OfferResponse.fromEntity(offer) : null;
+    }
+
+    /**
+     * Verarbeitet das KI-Ergebnis für ein Angebot:
+     * - Prüft, ob das Angebot existiert und sich im Status IN_BEARBEITUNG befindet.
+     * - Lädt für jede Position den Preis vom catalog-service (Stub).
+     * - Persistiert alle Positionen.
+     * - Setzt den Status des Angebots auf KI_FERTIG und legt einen OfferStatusHistory-Eintrag an.
+     * - Sendet das Ergebnis (ohne Preise) als JSON-String an die Process Engine.
+     *
+     * @param id ID des Angebots
+     * @param request AI-Result-Daten
+     */
+    @Transactional
+    public void processAiResult(Long id, AiResultRequest request) {
+        Offer offer = Offer.findById(id);
+        if (offer == null) {
+            throw new WebApplicationException("Angebot mit ID " + id + " nicht gefunden", 404);
+        }
+
+        if (!Offer.STATUS_IN_BEARBEITUNG.equals(offer.status)) {
+            throw new WebApplicationException("Angebot mit ID " + id + " befindet sich nicht im Status IN_BEARBEITUNG", 409);
+        }
+
+        int reihenfolge = 1;
+        for (StructuredOfferPositionDTO posDto : request.strukturierteAngebotspositionen) {
+            BigDecimal preis = BigDecimal.ZERO;
+            if (posDto.katalogProduktId != null) {
+                CatalogPriceResponse priceResponse = catalogServiceClient.getPreis(posDto.katalogProduktId);
+                if (priceResponse != null && priceResponse.preis != null) {
+                    preis = priceResponse.preis;
+                }
+            }
+
+            OfferPosition position = new OfferPosition();
+            position.offer = offer;
+            position.hersteller = posDto.hersteller;
+            position.bezeichnung = posDto.bezeichnung;
+            position.beschreibung = posDto.beschreibung;
+            position.menge = posDto.menge;
+            position.einheit = posDto.einheit;
+            position.katalogProduktId = posDto.katalogProduktId;
+            position.preis = preis;
+            position.reihenfolge = reihenfolge++;
+
+            // Map price back to DTO for serialization in sendAiResult
+            posDto.preis = preis;
+
+            offer.positions.add(position);
+        }
+
+        offer.status = Offer.STATUS_KI_FERTIG;
+
+        OfferStatusHistory history = new OfferStatusHistory();
+        history.offer = offer;
+        history.status = Offer.STATUS_KI_FERTIG;
+        offer.statusHistory.add(history);
+
+        offer.persist();
+
+        // Include customer ID in the result sent back to the Process Engine
+        request.customerId = offer.customerId;
+
+        String ergebnisKiJsonString;
+        try {
+            ergebnisKiJsonString = objectMapper.writeValueAsString(request);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Fehler beim Serialisieren des AI-Ergebnisses zu JSON", e);
+        }
+
+        processEngineClient.sendAiResult(offer.businessKey, ergebnisKiJsonString);
     }
 }

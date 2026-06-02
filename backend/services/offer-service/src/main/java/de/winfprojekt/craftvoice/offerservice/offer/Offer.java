@@ -23,6 +23,7 @@ public class Offer extends BaseEntity {
     public static final String STATUS_ERFASST = "ERFASST";
     public static final String STATUS_IN_BEARBEITUNG = "IN_BEARBEITUNG";
     public static final String STATUS_KI_BEARBEITUNG_ABGESCHLOSSEN = "KI_BEARBEITUNG_ABGESCHLOSSEN";
+    public static final String STATUS_KI_FERTIG = "KI_FERTIG";
     public static final String STATUS_VERSANDBEREIT = "VERSANDBEREIT";
     public static final String STATUS_VERSENDET = "VERSENDET";
     public static final String STATUS_ANGENOMMEN = "ANGENOMMEN";
