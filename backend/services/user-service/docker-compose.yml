@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # 1. Datenbank für den User-Service (Lokale Benutzerdaten)
+  # 1. Datenbank für den User-Service
   user-db:
     image: postgres:15
     container_name: user-db
@@ -17,9 +17,11 @@ services:
     networks:
       - intern
 
-  # 2. Der User-Service (Quarkus Microservice)
+  # 2. Der User-Service (Baut sich in Portainer selbst!)
   user-service:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER_LC}/${GITHUB_REPOSITORY_NAME_LC}/user-service:main
+    build:
+      context: .
+      dockerfile: Dockerfile.build
     container_name: user-service
     environment:
       DB_HOST: user-db
@@ -35,7 +37,7 @@ services:
       - nginx-reverse-proxy
       - intern
 
-  # 3. Keycloak (Zentraler Identity Provider)
+  # 3. Keycloak
   keycloak:
     image: quay.io/keycloak/keycloak:26.2
     container_name: keycloak
@@ -45,11 +47,9 @@ services:
       KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
       KC_DB_USERNAME: keycloak
       KC_DB_PASSWORD: ${KC_DB_PASSWORD}
-      # Öffentlicher Hostname für den Proxy
       KC_HOSTNAME: id-craftvoice.winfprojekt.de
       KC_HTTP_ENABLED: "true"
       KC_PROXY_HEADERS: xforwarded
-      # Admin-Zugang (nur beim ersten Start)
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
     depends_on:
@@ -78,10 +78,8 @@ services:
       - intern
 
 networks:
-  # Externes Netzwerk für Nginx Proxy Manager
   nginx-reverse-proxy:
     external: true
-  # Internes Netzwerk für DB-Kommunikation
   intern:
     driver: bridge
 
