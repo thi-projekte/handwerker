@@ -161,6 +161,7 @@ class OfferResourceTest {
                   "strukturierteAngebotspositionen": [
                     {
                       "bezeichnung": "Badrenovierung",
+                      "hersteller": "Knauf",
                       "beschreibung": "Komplette Sanierung",
                       "menge": 2,
                       "einheit": "Pauschal",
@@ -183,6 +184,7 @@ class OfferResourceTest {
             assertEquals(1, updatedOffer.positionen.size());
 
             OfferPosition position = updatedOffer.positionen.get(0);
+            assertEquals("Knauf", position.hersteller);
             assertEquals("Badrenovierung", position.bezeichnung);
             assertEquals("Komplette Sanierung", position.beschreibung);
             assertEquals(new BigDecimal("2").setScale(0), position.menge.setScale(0));
@@ -197,10 +199,16 @@ class OfferResourceTest {
         });
 
         // ProcessEngineClient prüfen
+        ArgumentCaptor<String> jsonCaptor = ArgumentCaptor.forClass(String.class);
         verify(processEngineClient, times(1)).sendAiResult(
                 Mockito.eq(businessKey),
-                Mockito.contains("Badrenovierung")
+                jsonCaptor.capture()
         );
+        String sentJson = jsonCaptor.getValue();
+        assertTrue(sentJson.contains("Badrenovierung"));
+        assertTrue(sentJson.contains("Knauf"));
+        assertTrue(sentJson.contains("49.99"));
+        assertTrue(sentJson.contains("\"customerId\":1"));
     }
 
     /**

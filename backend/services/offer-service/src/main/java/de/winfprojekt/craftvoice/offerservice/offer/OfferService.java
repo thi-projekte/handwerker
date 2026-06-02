@@ -94,6 +94,7 @@ public class OfferService {
 
             OfferPosition position = new OfferPosition();
             position.offer = offer;
+            position.hersteller = posDto.hersteller;
             position.bezeichnung = posDto.bezeichnung;
             position.beschreibung = posDto.beschreibung;
             position.menge = posDto.menge;
@@ -101,6 +102,9 @@ public class OfferService {
             position.katalogProduktId = posDto.katalogProduktId;
             position.preis = preis;
             position.reihenfolge = reihenfolge++;
+
+            // Map price back to DTO for serialization in sendAiResult
+            posDto.preis = preis;
 
             offer.positionen.add(position);
         }
@@ -113,6 +117,9 @@ public class OfferService {
         offer.statusHistorie.add(history);
 
         offer.persist();
+
+        // Include customer ID in the result sent back to the Process Engine
+        request.customerId = offer.customerId;
 
         String ergebnisKiJsonString;
         try {

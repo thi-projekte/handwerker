@@ -11,6 +11,8 @@ public class StructuredOfferPositionDTO {
     @NotNull
     public String bezeichnung;
 
+    public String hersteller;
+
     public String beschreibung;
 
     @NotNull
@@ -20,4 +22,6 @@ public class StructuredOfferPositionDTO {
     public String einheit;
 
     public Long katalogProduktId;
+
+    public BigDecimal preis;
 }
