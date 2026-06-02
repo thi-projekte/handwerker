@@ -2,7 +2,6 @@ package de.winfprojekt.craftvoice.offerservice.offer;
 
 import de.winfprojekt.craftvoice.offerservice.offer.dto.AiResultRequest;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.CreateOfferRequest;
-import jakarta.ws.rs.PathParam;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.OfferResponse;
 
 import jakarta.inject.Inject;
@@ -60,11 +59,15 @@ public class OfferResource {
         offerService.processAiResult(id, request);
 
         return Response.status(200).build();
+    }
+
+    /**
      * Gibt eine Liste aller Angebote zurück, sortiert nach Erstellungsdatum absteigend (neueste zuerst).
      *
      * @return HTTP-Response mit Statuscode 200 und der Liste aller Angebote
      */
     @GET
+    @Path("/offers")
     public Response getAllOffers() {
         return Response.ok(offerService.getAllOffersSorted()).build();
     }
@@ -76,7 +79,7 @@ public class OfferResource {
      * @return HTTP-Response mit Statuscode 200 und dem gefundenen Angebot, oder Statuscode 404
      */
     @GET
-    @Path("/{id}")
+    @Path("/offers/{id}")
     public Response getOfferById(@PathParam("id") Long id) {
         OfferResponse response = offerService.getOfferById(id);
         if (response == null) {

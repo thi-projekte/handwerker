@@ -136,7 +136,7 @@ public class OfferService {
             // Map price back to DTO for serialization in sendAiResult
             posDto.preis = preis;
 
-            offer.positionen.add(position);
+            offer.positions.add(position);
         }
 
         offer.status = Offer.STATUS_KI_FERTIG;
@@ -144,7 +144,7 @@ public class OfferService {
         OfferStatusHistory history = new OfferStatusHistory();
         history.offer = offer;
         history.status = Offer.STATUS_KI_FERTIG;
-        offer.statusHistorie.add(history);
+        offer.statusHistory.add(history);
 
         offer.persist();
 

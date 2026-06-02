@@ -207,9 +207,9 @@ class OfferResourceTest {
             Offer updatedOffer = Offer.findById(offerId);
             assertNotNull(updatedOffer);
             assertEquals(Offer.STATUS_KI_FERTIG, updatedOffer.status);
-            assertEquals(1, updatedOffer.positionen.size());
+            assertEquals(1, updatedOffer.positions.size());
 
-            OfferPosition position = updatedOffer.positionen.get(0);
+            OfferPosition position = updatedOffer.positions.get(0);
             assertEquals("Knauf", position.hersteller);
             assertEquals("Badrenovierung", position.bezeichnung);
             assertEquals("Komplette Sanierung", position.beschreibung);
@@ -266,7 +266,55 @@ class OfferResourceTest {
     }
 
     /**
-     * Prüft, dass bei unbekannter ID ein HTTP 404 zurückgegeben wird.
+     * Prüft, dass bei unbekannter ID bei der KI-Ergebnisverarbeitung ein HTTP 404 zurückgegeben wird.
+     */
+    @Test
+    void shouldReturn404WhenOfferNotFoundForAiResult() {
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+                {
+                  "strukturierteAngebotspositionen": [],
+                  "korrekturvorschlaege": []
+                }
+                """)
+                .when()
+                .post("/angebote/{id}/ki-ergebnis", 999999L)
+                .then()
+                .statusCode(404);
+    }
+
+    /**
+     * Prüft das Laden aller Angebote, sortiert nach createdAt DESC.
+     */
+    @Test
+    void shouldGetAllOffersSortedByCreatedAtDesc() throws Exception {
+        Mockito.doNothing()
+                .when(processEngineClient)
+                .sendAngebotPayload(any(), any(), any(), any());
+
+        // Erstes Angebot anlegen
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+                {
+                  "customerId": 10,
+                  "speechSnippet": "Erstes Angebot"
+                }
+                """)
+                .when()
+                .post("/offers")
+                .then()
+                .statusCode(201);
+
+        // Kleiner Sleep um sicherzustellen, dass die timestamps unterschiedlich sind
+        Thread.sleep(50);
+
+        // Zweites Angebot anlegen
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+                {
                   "customerId": 20,
                   "speechSnippet": "Zweites Angebot"
                 }
@@ -349,15 +397,6 @@ class OfferResourceTest {
     @Test
     void shouldReturn404WhenOfferNotFound() {
         given()
-                .contentType(ContentType.JSON)
-                .body("""
-                {
-                  "strukturierteAngebotspositionen": [],
-                  "korrekturvorschlaege": []
-                }
-                """)
-                .when()
-                .post("/angebote/{id}/ki-ergebnis", 999999L)
                 .when()
                 .get("/offers/999999")
                 .then()
