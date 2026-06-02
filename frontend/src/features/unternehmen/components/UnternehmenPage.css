@@ -241,6 +241,7 @@ textarea.input-field {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  margin-top: 16px;
 }
 
 .employee-card-modern {
@@ -301,6 +302,7 @@ textarea.input-field {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
+    margine-bottom: 12px;
   }
 
   .employee-edit-button {
@@ -350,6 +352,8 @@ select.input-field option {
   display: flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
+  flex: 1;
 }
 
 .card-actions {
@@ -390,6 +394,10 @@ select.input-field option {
 
 .customer-email {
   font-size: 11px;
+   max-width: 22ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .small-icon{
@@ -400,3 +408,53 @@ select.input-field option {
 .small-text{
   font-size: clamp(10px, 2vw, 21px);
 }
+.customer-name {
+  display: block;
+  max-width: 14ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.employee-name {
+  display: block;
+  max-width: 21ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.employee-role {
+  max-width: 20ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.material-name {
+  display: block;
+  max-width: 20ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.material-description {
+  max-width: 24ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.general-employee-name {
+  display: block;
+  max-width: 20ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.general-employee-role {
+  max-width: 20ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+

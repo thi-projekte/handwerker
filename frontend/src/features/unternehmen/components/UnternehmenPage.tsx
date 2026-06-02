@@ -19,6 +19,7 @@ type Material = {
   description: string;
   price: string;
   size: string;
+  unit: string;
 };
 
 export const UnternehmenPage = () => {
@@ -70,7 +71,7 @@ export const UnternehmenPage = () => {
     });
 
   const handleChange = <
-    T extends Record<string, any>
+    T extends Record<string, string>
   >(
     setState: React.Dispatch<React.SetStateAction<T>>
   ) => (
@@ -109,7 +110,7 @@ export const UnternehmenPage = () => {
       .filter(Boolean);
 
     const parsed: Material[] = rows.map((row) => {
-      const [name, description, price, size] =
+      const [name, description, price, , unit] =
         row.split(",");
 
       return {
@@ -117,6 +118,7 @@ export const UnternehmenPage = () => {
         description: description ?? "",
         price: price ?? "",
         size: size ?? "",
+        unit: unit ?? "",
       };
     });
 
@@ -210,6 +212,7 @@ export const UnternehmenPage = () => {
     description: "",
     price: "",
     size: "",
+    unit: "",
   });
   const handleMaterialChange = handleChange(setMaterialData);
   const isMaterialValid =
@@ -217,6 +220,7 @@ export const UnternehmenPage = () => {
     materialData.description &&
     materialData.price &&
     materialData.size;
+    materialData.unit;
 
   return (
     <div className="app company-page">
@@ -347,18 +351,9 @@ export const UnternehmenPage = () => {
               <label className="company-field">
                 <span>Rolle / Berechtigung</span>
 
-                <select
-                  className="input-field"
-                  name="rolle"
-                  value={companyData.rolle}
-                  onChange={handleCompanyChange}
-                >
-                  <option>Inhaber</option>
-                  <option>Meister</option>
-                  <option>Mitarbeiter</option>
-                  <option>Büro / Verwaltung</option>
-                  <option>Admin</option>
-                </select>
+                <div className="input-field readonly-field">
+                   {companyData.rolle}
+                </div>
               </label>
             </div>
           </section>
@@ -398,11 +393,11 @@ export const UnternehmenPage = () => {
                   <div key={index} className="employee-card-modern employee-card">
 
                     <div>
-                      <strong>
+                      <strong className="general-employee-name">
                         {e.vorname} {e.nachname}
                       </strong>
 
-                      <p className="text-secondary">
+                      <p className="text-secondary general-employee-role">
                         {e.rolle}
                       </p>
                     </div>
@@ -657,23 +652,6 @@ export const UnternehmenPage = () => {
             </div>
           </section>
 
-          {/* Rechnungsadresse */}
-          <section className="card company-content-card">
-            <h2>Rechnungsadresse</h2>
-
-            <label className="company-field">
-              <span>Rechnungsadresse</span>
-
-              <textarea
-                className="input-field"
-                rows={4}
-                name="rechnungsadresse"
-                value={companyData.rechnungsadresse}
-                onChange={handleCompanyChange}
-              />
-            </label>
-          </section>
-
           {/* Kontakt */}
           <section className="card company-content-card">
             <h2>Kontakt</h2>
@@ -737,6 +715,16 @@ export const UnternehmenPage = () => {
                         .replace(/[^A-Z0-9]/g, ""),
                     }))
                   }
+                />
+              </label>
+
+            <label className="company-field">
+                <span>BIK</span>
+                <input
+                  className="input-field"
+                  name="BIK"
+                  value={companyData.BIK}
+                  onChange={handleCompanyChange}
                 />
               </label>
 
@@ -855,7 +843,7 @@ export const UnternehmenPage = () => {
                     </div>
 
                     <div>
-                      <strong>
+                      <strong className="customer-name">
                         {c.vorname} {c.nachname}
                       </strong>
                       <p className="text-secondary customer-email">{c.email}</p>
@@ -1064,12 +1052,12 @@ export const UnternehmenPage = () => {
                       className="employee-card-modern employee-card"
                     >
                       <div>
-                        <strong>
+                        <strong className="employee-name">
                           {employee.vorname}{" "}
                           {employee.nachname}
                         </strong>
 
-                        <p className="text-secondary">
+                        <p className="text-secondary employee-role">
                           {employee.rolle}
                         </p>
 
@@ -1251,6 +1239,7 @@ export const UnternehmenPage = () => {
                   description: "",
                   price: "",
                   size: "",
+                  unit: "",
                 });
               }}
             >
@@ -1272,9 +1261,9 @@ export const UnternehmenPage = () => {
                 <div key={index} className="employee-card-modern">
 
                   <div>
-                    <strong>{m.name}</strong>
+                    <strong className="material-name">{m.name}</strong>
 
-                    <p className="text-secondary">
+                    <p className="text-secondary material-description">
                       {m.description}
                     </p>
 
@@ -1362,6 +1351,19 @@ export const UnternehmenPage = () => {
                 }
               />
 
+              <input
+  className="input-field"
+  name="unit"
+  placeholder="Einheit (z.B. Stück, Liter, m²)"
+  value={materialData.unit}
+  onChange={(e) =>
+    setMaterialData((prev) => ({
+      ...prev,
+      unit: e.target.value,
+    }))
+  }
+/>
+
               <button
                 className="button-primary company-add-button"
                 disabled={!isMaterialValid}
@@ -1383,6 +1385,7 @@ export const UnternehmenPage = () => {
                     description: "",
                     price: "",
                     size: "",
+                    unit: "",
                   });
 
                   setEditingMaterialIndex(null);
