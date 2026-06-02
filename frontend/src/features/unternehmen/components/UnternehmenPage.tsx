@@ -216,11 +216,11 @@ export const UnternehmenPage = () => {
   });
   const handleMaterialChange = handleChange(setMaterialData);
   const isMaterialValid =
-    materialData.name &&
-    materialData.description &&
-    materialData.price &&
-    materialData.size;
-    materialData.unit;
+  !!materialData.name &&
+  !!materialData.description &&
+  !!materialData.price &&
+  !!materialData.size &&
+  !!materialData.unit;
 
   return (
     <div className="app company-page">
