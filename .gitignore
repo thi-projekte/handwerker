@@ -1,9 +1,12 @@
 .idea/vcs.xml
+
 backend/docker-compose.dev.yml
 
-.idea/
+.idea
 
 *.patch
+
+.vscode
 
 # --- Root-weit ergaenzt (Cleanup 2026-06-01) ---
 # Node-Dependencies gehoeren nicht ins Repo (Frontend hat eigene frontend/package-lock.json)
