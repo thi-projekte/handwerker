@@ -1,0 +1,402 @@
+.company-page {
+  text-align: center;
+
+}
+
+.company-page,
+.company-header,
+.company-overview-card,
+.company-tab-card,
+.company-content-card {
+  text-align: left;
+  align-items: flex-start;
+
+
+}
+
+.company-header.compact {
+  padding: 14px 16px;
+}
+
+.company-header.compact h1 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.company-eyebrow {
+  display: inline-block;
+  margin-bottom: 4px;
+  color: var(--color-accent);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.company-tab-card,
+.company-content-card,
+.company-overview-card {
+  border: 1px solid var(--color-divider);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(10px);
+}
+
+.company-tab-card {
+  display: flex;
+  gap: 10px;
+
+
+}
+
+.company-tab {
+  flex: 1;
+  padding: 14px 10px;
+  border-radius: 16px;
+  border: 1px solid var(--color-divider);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .2s ease, transform .15s ease;
+}
+
+.company-tab:hover {
+  transform: translateY(-1px);
+}
+
+.company-tab.active {
+  background: var(--color-accent-gradient);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 8px 20px rgba(255, 106, 0, .3);
+}
+
+.company-overview-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.company-logo-wrapper,
+.customer-image-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.company-logo-wrapper {
+  flex-shrink: 0;
+}
+
+.company-main-info {
+  min-width: 0;
+}
+
+.company-main-info h2 {
+  margin: 0 0 4px;
+  font-size: 20px;
+}
+
+.company-logo-placeholder,
+.company-logo-preview,
+.customer-image-preview,
+.customer-image-placeholder {
+  width: clamp(72px, 18vw, 120px);
+  height: clamp(72px, 18vw, 120px);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  object-fit: cover;
+
+  
+  background: var(--color-accent-gradient);
+  color: #fff;
+  font-weight: 800;
+
+  border: 2px solid var(--color-divider);
+  box-shadow: 0 10px 25px rgba(255, 106, 0, .25);
+
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.company-logo-placeholder,
+.customer-image-placeholder {
+  font-size: clamp(20px, 5vw, 42px);
+}
+
+.company-logo-preview:hover,
+.company-logo-placeholder:hover,
+.customer-image-preview:hover,
+.customer-image-placeholder:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(255, 106, 0, .35);
+}
+
+.company-logo-button,
+.employee-edit-button,
+.employee-remove-button {
+  border: 1px solid var(--color-divider);
+  background: transparent;
+  cursor: pointer;
+  transition: all .2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.company-logo-button {
+  padding: 12px 16px;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+
+.employee-edit-button {
+  width: 56px;
+  height: 56px;
+  min-width: 56px;
+  min-height: 56px;
+  border-radius: 14px;
+  font-size: 18px;
+  color: #ff4d4d;
+}
+
+.employee-remove-button {
+  width: 56px;
+  height: 56px;
+  min-width: 56px;
+  min-height: 56px;
+  border-radius: 14px;
+  font-size: 18px;
+  color: #ff4d4d;
+}
+
+.company-logo-button:hover {
+  color: var(--color-text-primary);
+  border-color: var(--color-accent);
+  transform: translateY(-2px) scale(1.03);
+}
+
+.employee-edit-button:hover {
+  border-color: var(--color-accent);
+  background: rgba(255, 106, 0, .08);
+  transform: translateY(-2px) scale(1.03);
+}
+
+.employee-remove-button:hover {
+  border-color: #ff4d4d;
+  transform: translateY(-2px) scale(1.03);
+}
+
+.company-form-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.company-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.company-field span {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+
+.input-field,
+select.input-field,
+textarea.input-field {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--color-divider);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  outline: none;
+  transition: all .2s ease;
+}
+
+.input-field:hover {
+  border-color: var(--color-accent);
+}
+
+.input-field:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 4px rgba(255, 106, 0, .15);
+  transform: translateY(-1px);
+}
+
+.employee-list,
+.employee-input-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.employee-card-modern {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--color-divider);
+  border-radius: 18px;
+  background: var(--color-surface);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .08);
+  transition: all .2s ease;
+}
+
+.employee-card-modern:hover {
+  transform: translateY(-1px);
+}
+
+.price-upload-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 28px;
+  min-height: 160px;
+  border: 2px dashed var(--color-divider);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, .02);
+  cursor: pointer;
+  transition: all .2s ease;
+}
+
+.price-upload-area:hover {
+  border-color: var(--color-accent);
+  background: rgba(255, 106, 0, .05);
+  transform: translateY(-1px);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 12px 0;
+}
+
+@media (max-width: 600px) {
+  .company-tab-card {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .company-overview-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .employee-card-modern {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .employee-edit-button {
+    flex: 1;
+  }
+
+  .employee-remove-button {
+    width: 100%;
+  }
+}
+
+select.input-field {
+  appearance: none;
+  padding-right: 40px;
+  cursor: pointer;
+
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--color-text-secondary) 50%),
+    linear-gradient(135deg, var(--color-text-secondary) 50%, transparent 50%);
+  background-position: calc(100% - 18px) center, calc(100% - 12px) center;
+  background-size: 6px 6px;
+  background-repeat: no-repeat;
+}
+
+select.input-field option {
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+}
+
+[data-theme="light"] select.input-field {
+  background-color: #f4f4f5;
+  color: #111;
+}
+
+.section-title {
+  margin: 0;
+}
+
+.customer-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.customer-card-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.employee-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.material-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.csv-upload-field {
+  margin-top: 16px;
+  margin-bottom: 16px;
+}
+
+.section-title-no-margin {
+  margin: 0;
+}
+
+.emp-edit {
+  display: flex;
+  gap: 8px;
+}
+
+.employee-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.customer-email {
+  font-size: 11px;
+}
+
+.small-icon{
+  width: clamp(36px, 9vw, 60px);
+  height: clamp(36px, 9vw, 60px);
+}
+
+.small-text{
+  font-size: clamp(10px, 2vw, 21px);
+}
