@@ -1,0 +1,223 @@
+.select {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 12px;
+
+  border-radius: 14px;
+  border: 1px solid var(--color-divider);
+
+  background: transparent;
+  color: var(--color-text-primary);
+
+  outline: none;
+  font-size: 15px;
+  font-family: inherit;
+
+  cursor: pointer;
+
+  transition:
+    border 0.2s ease,
+    box-shadow 0.2s ease;
+
+  /* Dropdown Pfeil ersetzen */
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  /* Custom Arrow rechts */
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--color-text-secondary) 50%),
+    linear-gradient(135deg, var(--color-text-secondary) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) 50%,
+    calc(100% - 12px) 50%;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+}
+
+.select:hover {
+  border-color: var(--color-accent);
+}
+
+.select:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(255, 106, 0, 0.15);
+}
+
+/* Options (browser limitiert) */
+.select option {
+  background-color: #1a1a1c;
+  color: #ffffff;
+}
+
+/* Light Mode */
+[data-theme="light"] .select {
+  background-color: transparent;
+  color: #111111;
+}
+
+[data-theme="light"] .select option {
+  background-color: #ffffff;
+  color: #111111;
+}
+
+.card {
+  background: var(--color-surface);
+  backdrop-filter: blur(var(--blur));
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+  border: 1px solid var(--color-divider);
+  box-shadow: var(--shadow);
+}
+
+.register-card {
+  padding: 20px;
+}
+
+.text-secondary {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.divider {
+  height: 1px;
+  background: var(--color-divider);
+  margin: 12px 0;
+  border: none;
+}
+
+.input-field {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 12px;
+  border-radius: 14px;
+  border: 1px solid var(--color-divider);
+  background: transparent;
+  color: var(--color-text-primary);
+  outline: none;
+  font-size: 15px;
+  font-family: inherit;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input-field:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px rgba(255, 106, 0, 0.2);
+}
+
+.select-field {
+  appearance: none;
+  cursor: pointer;
+}
+
+.button-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border-radius: 16px;
+  border: none;
+  background: var(--color-accent-gradient);
+  color: white;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(255, 106, 0, 0.4);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.button-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 25px rgba(255, 106, 0, 0.5);
+}
+
+.register-btn {
+  width: 100%;
+  margin-bottom: 14px;
+}
+
+.register-footer {
+  text-align: center;
+  font-size: 13px;
+}
+
+.logo-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  max-height: 90px;     
+
+  margin: 0 0 6px 0; 
+  padding: 0;
+}
+
+.logo {
+  max-height: 100%;     
+  width: 80%;         
+  display: block;
+}
+/* ===== ERROR BANNER ===== */
+.error-banner {
+  background: linear-gradient(135deg, #ffdddd, #ffe6e6);
+  color: #a10000;
+  border: 1px solid #ff4d4d;
+  border-left: 6px solid #ff0000;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin: 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  animation: slideFade 0.25s ease-out;
+}
+
+/* Icon */
+.error-icon {
+  font-size: 18px;
+}
+
+/* Animation */
+@keyframes slideFade {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+.input-error {
+  border: 1px solid #ff4d4d !important;
+  box-shadow: 0 0 0 2px rgba(255, 77, 77, 0.15);
+}
+.login-btn {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.login-footer {
+  text-align: center;
+  font-size: 13px;
+}
+
+.reset-card {
+  padding: 20px;
+}
+.reset-btn {
+  width: 100%;
+  margin-bottom: 14px;
+}
+.reset-footer {
+  text-align: center;
+  font-size: 13px;
+}

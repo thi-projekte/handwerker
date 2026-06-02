@@ -227,47 +227,7 @@ p {
   }
 }
 
-.select-field {
-  appearance: none;
-  cursor: pointer;
-}
 
-/* =========================
-   Login / Auth
-   ========================= */
-.login-btn {
-  width: 100%;
-  margin-bottom: 10px;
-}
-
-.login-footer {
-  text-align: center;
-  font-size: 13px;
-}
-
-.reset-card {
-  padding: 20px;
-}
-.reset-btn {
-  width: 100%;
-  margin-bottom: 14px;
-}
-.reset-footer {
-  text-align: center;
-  font-size: 13px;
-}
-
-.register-card {
-  padding: 20px;
-}
-.register-btn {
-  width: 100%;
-  margin-bottom: 14px;
-}
-.register-footer {
-  text-align: center;
-  font-size: 13px;
-}
 
 /* =========================
    Auth-Seiten zentriert (Login, Register, etc.)
