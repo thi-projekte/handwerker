@@ -1,16 +1,20 @@
-# Stage 1: Build the application with Maven
+# Stage 1: Build with Maven
 FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /usr/src/app
-# Kopiere alle Dateien (inkl. pom.xml und src)
-COPY . .
-# Baue das Quarkus Projekt
-RUN mvn package -DskipTests
 
-# Stage 2: Final runtime image
+# Kopiere die pom.xml zuerst (für effizientes Caching)
+COPY pom.xml .
+# Versuche alle Abhängigkeiten zu laden (ohne Enterprise Profile)
+RUN mvn dependency:go-offline -B || true
+
+# Kopiere den Quellcode
+COPY src ./src
+
+# Baue das Projekt und ignoriere das Enterprise-Profil explizit
+RUN mvn package -DskipTests -B
+
+# Stage 2: Runtime
 FROM registry.access.redhat.com/ubi9/openjdk-17-runtime:latest
-ENV LANGUAGE='en_US:en'
-
-# Kopiere die gebauten Dateien aus Stage 1
 COPY --from=build /usr/src/app/target/quarkus-app/lib/ /deployments/lib/
 COPY --from=build /usr/src/app/target/quarkus-app/*.jar /deployments/
 COPY --from=build /usr/src/app/target/quarkus-app/app/ /deployments/app/
