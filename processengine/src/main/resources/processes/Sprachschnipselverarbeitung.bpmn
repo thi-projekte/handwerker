@@ -2,7 +2,7 @@
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0ejgl0b" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.45.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.24.0">
   <bpmn:collaboration id="Collaboration_042vbpn">
     <bpmn:participant id="pool_03" name="Sprachschnipselverarbeitung" processRef="sprachschnipselverarbeitung" />
-    <bpmn:participant id="Participant_09kwgqt" name="KI-Backend" />
+    <bpmn:participant id="Participant_09kwgqt" name="Backend" />
     <bpmn:messageFlow id="Flow_19wur4r" name="Sprachschnipsel&#10;und Vorlage" sourceRef="Activity_3.1" targetRef="Participant_09kwgqt" />
     <bpmn:messageFlow id="Flow_0n6lggq" name="strukturierte Angebots-positionen und Korrektur-vorschläge" sourceRef="Participant_09kwgqt" targetRef="Activity_3.2" />
   </bpmn:collaboration>
@@ -17,11 +17,12 @@
       <bpmn:extensionElements>
         <camunda:connector>
           <camunda:inputOutput>
-            <camunda:inputParameter name="url">https://webhook.site/c1d3dcf2-e52d-48c8-ae9e-313883a72129</camunda:inputParameter>
+            <camunda:inputParameter name="url">https://webhook.site/8ffe7a5c-320f-4839-af43-6c010f6e937f</camunda:inputParameter>
             <camunda:inputParameter name="method">POST</camunda:inputParameter>
             <camunda:inputParameter name="payload">
               <camunda:script scriptFormat="JavaScript">var korrekturschnipsel = execution.getVariable("korrekturschnipsel");
-var angebotsentwurf = execution.getVariable("angebotsentwurf");
+var strukturierteAngebotspositionen = execution.getVariable("strukturierteAngebotspositionen");
+
 var vorlage = execution.getVariable("vorlage");
 var sprachschnipsel = execution.getVariable("sprachschnipsel");
 
@@ -31,12 +32,12 @@ var payload = {};
 
 payload.businessKey = businessKey;
 
-if (korrekturschnipsel !== null &amp;&amp; angebotsentwurf !== null) {
+if (korrekturschnipsel !== null &amp;&amp; strukturierteAngebotspositionen !== null) {
 
-  payload.prompt = "Überarbeite den Angebotsentwurf anhand des Korrekturschnipsels.";
+  payload.prompt = "Überarbeite die strukturierten Angebotspositionen anhand des Korrekturschnipsels.";
 
-  payload.angebotsentwurf = JSON.parse(
-    angebotsentwurf.toString()
+  payload.strukturierteAngebotspositionen = JSON.parse(
+    strukturierteAngebotspositionen.toString()
   );
 
   payload.korrekturschnipsel = korrekturschnipsel.toString();

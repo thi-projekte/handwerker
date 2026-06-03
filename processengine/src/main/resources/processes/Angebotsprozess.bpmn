@@ -4,7 +4,7 @@
     <bpmn:participant id="pool_01" name="Angebotsprozess" processRef="angebotsprozess">
       <bpmn:documentation>© 2026 Emanuel Mrazek, Lasse Hoffmann</bpmn:documentation>
     </bpmn:participant>
-    <bpmn:participant id="Participant_1qnp1x8" name="CraftVoice Backend" />
+    <bpmn:participant id="Participant_1qnp1x8" name="Craftvoice Backend" />
     <bpmn:messageFlow id="Flow_0pgfajl" name="Angebotsbedarf mit Kundeninformationen und Sprachschnipsel&#10;und Vorlage" sourceRef="Participant_1qnp1x8" targetRef="StartEvent_01" />
     <bpmn:textAnnotation id="TextAnnotation_174368c">
       <bpmn:extensionElements />
@@ -28,21 +28,9 @@ Test before = true</bpmn:text>
     <bpmn:startEvent id="StartEvent_01" name="Angebotsbedarf mit Kundeninformationen und Sprachschnipsel  und Vorlage empfangen">
       <bpmn:extensionElements>
         <camunda:executionListener event="start">
-          <camunda:script scriptFormat="JavaScript">var kundendaten = execution.getVariable("kundendaten");
+          <camunda:script scriptFormat="JavaScript">var kundendaten = execution.getVariable("customerId");
 var sprachschnipsel = execution.getVariable("sprachschnipsel");
 var vorlage = execution.getVariable("vorlage");
-
-if (kundendaten == null) {
-  throw "Variable kundendaten fehlt";
-}
-
-if (sprachschnipsel == null) {
-  throw "Variable sprachschnipsel fehlt";
-}
-
-if (vorlage == null) {
-  throw "Variable vorlage fehlt";
-}
 
 execution.setVariable("angebotsgenehmigung", false);</camunda:script>
         </camunda:executionListener>
@@ -52,10 +40,12 @@ execution.setVariable("angebotsgenehmigung", false);</camunda:script>
     </bpmn:startEvent>
     <bpmn:callActivity id="Activity_1.1" name="Erstangebot-erstellung" calledElement="erstangebotserstellung">
       <bpmn:extensionElements>
-        <camunda:in source="kundendaten" target="kundendaten" />
+        <camunda:in source="customerId" target="customerId" />
         <camunda:in source="sprachschnipsel" target="sprachschnipsel" />
         <camunda:in source="vorlage" target="vorlage" />
         <camunda:in businessKey="#{execution.processBusinessKey}" />
+        <camunda:out source="ergebnisKI" target="ergebnisKI" />
+        <camunda:out source="angebotsentwurf" target="angebotsentwurf" />
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_0kvsphi</bpmn:incoming>
       <bpmn:outgoing>Flow_1ph56zt</bpmn:outgoing>
@@ -83,9 +73,13 @@ execution.setVariable("angebotsgenehmigung", false);</camunda:script>
     <bpmn:sequenceFlow id="Flow_1ph56zt" sourceRef="Activity_1.1" targetRef="Activity_1.2" />
     <bpmn:callActivity id="Activity_1.2" name="Angebots-korrektur" calledElement="angebotskorrektur">
       <bpmn:extensionElements>
-        <camunda:in source="kundendaten" target="kundendaten" />
+        <camunda:in source="customerId" target="customerId" />
         <camunda:in businessKey="#{execution.processBusinessKey}" />
+        <camunda:in source="ergebnisKI" target="ergebnisKI" />
+        <camunda:in source="angebotsentwurf" target="angebotsentwurf" />
         <camunda:out source="angebotsgenehmigung" target="angebotsgenehmigung" />
+        <camunda:out source="ergebnisKI" target="ergebnisKI" />
+        <camunda:out source="angebotsentwurf" target="angebotsentwurf" />
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_1ph56zt</bpmn:incoming>
       <bpmn:outgoing>Flow_1wq7rno</bpmn:outgoing>
@@ -103,13 +97,11 @@ execution.setVariable("angebotsgenehmigung", false);</camunda:script>
         <bpmn:completionCondition xsi:type="bpmn:tFormalExpression">${angebotsgenehmigung == true}</bpmn:completionCondition>
       </bpmn:multiInstanceLoopCharacteristics>
     </bpmn:callActivity>
-    <bpmn:endEvent id="EndEvent_01" name="Angebot erfolgreich versendet">
-      <bpmn:incoming>Flow_0fiyzfx</bpmn:incoming>
-    </bpmn:endEvent>
     <bpmn:callActivity id="Activity_1.3" name="Kontaktauf-nahme und Versandprozess" calledElement="kontaktaufnahmeUndVersandprozess">
       <bpmn:extensionElements>
-        <camunda:in source="kundendaten" target="kundendaten" />
+        <camunda:in source="customerId" target="customerId" />
         <camunda:in businessKey="#{execution.processBusinessKey}" />
+        <camunda:in source="angebotsentwurf" target="angebotsentwurf" />
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_1wq7rno</bpmn:incoming>
       <bpmn:outgoing>Flow_0fiyzfx</bpmn:outgoing>
@@ -121,16 +113,19 @@ execution.setVariable("angebotsgenehmigung", false);</camunda:script>
     </bpmn:callActivity>
     <bpmn:dataObjectReference id="DataObjectReference_0dbieie" name="Kundendaten" dataObjectRef="DataObject_127vt9q" />
     <bpmn:dataObject id="DataObject_127vt9q" />
+    <bpmn:endEvent id="EndEvent_01" name="Angebot erfolgreich versendet">
+      <bpmn:incoming>Flow_0fiyzfx</bpmn:incoming>
+    </bpmn:endEvent>
   </bpmn:process>
   <bpmn:message id="Message_0l62g53" name="angebotPayload" />
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_0skkfwd">
       <bpmndi:BPMNShape id="BPMNShape_1sgfbn1" bpmnElement="pool_01" isHorizontal="true">
-        <dc:Bounds x="160" y="180" width="1048" height="400" />
+        <dc:Bounds x="160" y="180" width="1050" height="400" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="BPMNShape_1saqtwr" bpmnElement="Lane_0l4perl" isHorizontal="true">
-        <dc:Bounds x="190" y="180" width="1018" height="400" />
+        <dc:Bounds x="190" y="180" width="1020" height="400" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="BPMNShape_02wye3z" bpmnElement="StartEvent_01">
@@ -159,12 +154,6 @@ execution.setVariable("angebotsgenehmigung", false);</camunda:script>
         <dc:Bounds x="660" y="350" width="100" height="80" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BPMNShape_0ag84xq" bpmnElement="EndEvent_01">
-        <dc:Bounds x="1072" y="372" width="36" height="36" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="1064" y="415" width="52" height="40" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="BPMNShape_039qs6z" bpmnElement="Activity_1.3">
         <dc:Bounds x="900" y="350" width="100" height="80" />
         <bpmndi:BPMNLabel />
@@ -175,13 +164,19 @@ execution.setVariable("angebotsgenehmigung", false);</camunda:script>
           <dc:Bounds x="977" y="253" width="66" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_0ag84xq" bpmnElement="EndEvent_01">
+        <dc:Bounds x="1092" y="372" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1084" y="415" width="52" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="BPMNEdge_1206tve" bpmnElement="Flow_0kvsphi">
         <di:waypoint x="358" y="390" />
         <di:waypoint x="420" y="390" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="BPMNEdge_05p2ipr" bpmnElement="Flow_0fiyzfx">
         <di:waypoint x="1000" y="390" />
-        <di:waypoint x="1072" y="390" />
+        <di:waypoint x="1092" y="390" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="BPMNEdge_1lu7v5n" bpmnElement="Flow_1wq7rno">
         <di:waypoint x="760" y="390" />
@@ -192,7 +187,7 @@ execution.setVariable("angebotsgenehmigung", false);</camunda:script>
         <di:waypoint x="660" y="390" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="BPMNShape_13814hl" bpmnElement="Participant_1qnp1x8" isHorizontal="true">
-        <dc:Bounds x="160" y="80" width="898" height="60" />
+        <dc:Bounds x="190" y="80" width="300" height="60" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="BPMNShape_1ayci07" bpmnElement="TextAnnotation_174368c">

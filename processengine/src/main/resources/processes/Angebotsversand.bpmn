@@ -2,37 +2,28 @@
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_052ckjh" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.45.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.24.0">
   <bpmn:collaboration id="Collaboration_13w5r0a">
     <bpmn:participant id="pool_06" name="Angebotsversand" processRef="angebotsversand" />
-    <bpmn:participant id="Participant_1g6mume" name="Verteil-Service" />
-    <bpmn:messageFlow id="Flow_0kxurh5" name="Angebot" sourceRef="Activity_09xtlrv" targetRef="Participant_1g6mume" />
+    <bpmn:participant id="Participant_1g6mume" name="Backend" />
+    <bpmn:messageFlow id="Flow_0kxurh5" name="Angebot" sourceRef="Activity_6.1" targetRef="Participant_1g6mume" />
   </bpmn:collaboration>
   <bpmn:process id="angebotsversand" isExecutable="true" camunda:historyTimeToLive="10">
     <bpmn:startEvent id="Event_1g2j0m2" name="Angebot muss verschickt werden">
       <bpmn:outgoing>Flow_14uke9r</bpmn:outgoing>
     </bpmn:startEvent>
-    <bpmn:sendTask id="Activity_09xtlrv" name="Angebot versenden">
+    <bpmn:sendTask id="Activity_6.1" name="Angebot versenden">
       <bpmn:extensionElements>
         <camunda:connector>
           <camunda:inputOutput>
-            <camunda:inputParameter name="url">https://webhook.site/c1d3dcf2-e52d-48c8-ae9e-313883a72129</camunda:inputParameter>
+            <camunda:inputParameter name="url">https://webhook.site/8ffe7a5c-320f-4839-af43-6c010f6e937f</camunda:inputParameter>
             <camunda:inputParameter name="method">POST</camunda:inputParameter>
             <camunda:inputParameter name="payload">
-              <camunda:script scriptFormat="JavaScript">var kundendaten = execution.getVariable("kundendaten");
+              <camunda:script scriptFormat="JavaScript">var customerId = execution.getVariable("customerId");
 
 var businessKey = execution.getProcessBusinessKey();
-var processInstanceId = execution.getProcessInstanceId();
 
 var payload = {
   businessKey: businessKey,
-  processInstanceId: processInstanceId,
 
-  kundendaten: JSON.parse(kundendaten.toString()),
-
-  pdf: {
-    variableName: "pdf",
-    downloadUrl: "/engine-rest/process-instance/" 
-      + processInstanceId 
-      + "/variables/pdf/data"
-  }
+  customerId: customerId
 };
 
 JSON.stringify(payload);</camunda:script>
@@ -47,8 +38,8 @@ JSON.stringify(payload);</camunda:script>
     <bpmn:endEvent id="Event_0wiueb8" name="Angebot erfolgreich versendet">
       <bpmn:incoming>Flow_0rjimwc</bpmn:incoming>
     </bpmn:endEvent>
-    <bpmn:sequenceFlow id="Flow_14uke9r" sourceRef="Event_1g2j0m2" targetRef="Activity_09xtlrv" />
-    <bpmn:sequenceFlow id="Flow_0rjimwc" sourceRef="Activity_09xtlrv" targetRef="Event_0wiueb8" />
+    <bpmn:sequenceFlow id="Flow_14uke9r" sourceRef="Event_1g2j0m2" targetRef="Activity_6.1" />
+    <bpmn:sequenceFlow id="Flow_0rjimwc" sourceRef="Activity_6.1" targetRef="Event_0wiueb8" />
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_13w5r0a">
@@ -62,7 +53,7 @@ JSON.stringify(payload);</camunda:script>
           <dc:Bounds x="174" y="363" width="89" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_1d6osfx_di" bpmnElement="Activity_09xtlrv">
+      <bpmndi:BPMNShape id="Activity_1d6osfx_di" bpmnElement="Activity_6.1">
         <dc:Bounds x="408" y="298" width="100" height="80" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
