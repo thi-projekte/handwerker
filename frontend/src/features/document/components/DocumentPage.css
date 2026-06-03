@@ -1,5 +1,5 @@
 /* =========================
-   DocumentPage — Fluid
+   DocumentPage — Fluid & Polished
    ========================= */
 
 .doc-page {
@@ -10,36 +10,36 @@
   overflow: hidden;
 }
 
-/* Sticky Header */
+/* ── Sticky Header — transparent ── */
 .doc-sticky-header {
   position: sticky;
   top: 0;
   z-index: 10;
-  background: var(--color-surface);
-  backdrop-filter: blur(var(--blur));
-  padding: clamp(14px, 2vw, 24px) clamp(16px, 3vw, 32px) 10px;
-  margin: clamp(-16px, -2vw, -24px) clamp(-16px, -3vw, -32px) 0;
-  border-bottom: 1px solid var(--color-divider);
-  border-radius: 20px 20px 0 0;
+  background: transparent;
+  padding: clamp(12px, 2vw, 20px) 0 10px;
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(10px, 1.5vw, 14px);
 }
 
-@media (min-width: 1024px) {
+/* Mobile/Tablet: etwas mehr seitlicher Abstand */
+@media (max-width: 1023px) {
   .doc-sticky-header {
-    border-radius: 0;
+    padding-left: clamp(8px, 3vw, 16px);
+    padding-right: clamp(8px, 3vw, 16px);
   }
 }
 
-/* Tab-Buttons */
+/* ── Tab Buttons ── */
 .doc-tabs {
   display: flex;
-  gap: 10px;
-  margin-bottom: 14px;
+  gap: 8px;
 }
 
 .doc-tab {
   flex: 1;
-  padding: clamp(10px, 1.2vw, 14px) clamp(10px, 1.5vw, 20px);
+  padding: clamp(10px, 1.2vw, 13px) clamp(10px, 2vw, 24px);
   border-radius: 14px;
   border: 1px solid var(--color-divider);
   background: transparent;
@@ -54,10 +54,10 @@
     box-shadow 0.2s ease;
 }
 
-@media (min-width: 640px) {
+@media (min-width: 560px) {
   .doc-tab {
     flex: unset;
-    padding: 12px clamp(20px, 2.5vw, 36px);
+    padding: clamp(10px, 1.2vw, 13px) clamp(24px, 3vw, 40px);
   }
 }
 
@@ -68,12 +68,11 @@
   box-shadow: 0 6px 18px rgba(255, 106, 0, 0.35);
 }
 
-/* Suchzeile */
+/* ── Search Row ── */
 .doc-search-row {
   display: flex;
   gap: 10px;
   align-items: center;
-  margin-bottom: 12px;
 }
 
 .doc-search-row .doc-search {
@@ -81,16 +80,12 @@
   margin-bottom: 0;
 }
 
-.doc-search {
-  margin-bottom: 10px;
-}
-
-/* Filter-Button */
+/* ── Filter Toggle Button ── */
 .doc-filter-btn-toggle {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 10px 16px;
+  padding: 0 clamp(12px, 1.5vw, 18px);
   border-radius: 14px;
   border: 1px solid var(--color-divider);
   background: transparent;
@@ -98,21 +93,18 @@
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  height: 44px;
+  /* Gleiche Höhe wie .input-field (padding 14px oben+unten + font 15px + border) */
+  height: calc(14px * 2 + 15px * 1.4 + 2px);
+  align-self: stretch;
   white-space: nowrap;
   transition: all 0.2s ease;
-}
-
-.doc-filter-label-text {
-  font-size: 14px;
-  margin: 4px;
 }
 
 .doc-filter-btn-toggle:hover,
 .doc-filter-btn-toggle.menu-open {
   background: rgba(255, 106, 0, 0.05);
   color: var(--color-accent);
-  border-color: rgba(255, 106, 0, 0.2);
+  border-color: rgba(255, 106, 0, 0.25);
 }
 
 .doc-filter-btn-toggle.filter-active {
@@ -121,17 +113,27 @@
   border-color: var(--color-accent);
 }
 
-/* Inline Filter Panel */
+/* ── Filter Panel ── */
 .doc-filter-inline-panel {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 12px;
-  margin-bottom: 16px;
+  gap: 14px;
+  padding: clamp(12px, 1.5vw, 16px);
   background: var(--color-surface);
   border: 1px solid var(--color-divider);
-  border-radius: 16px;
-  animation: slideDown 0.25s ease-out;
+  border-radius: 18px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  animation: slideDown 0.22s ease-out;
+}
+
+.doc-filter-label-text {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-secondary);
+  margin-bottom: 6px;
+  display: block;
 }
 
 .doc-filter-grid {
@@ -142,7 +144,7 @@
 
 @media (min-width: 560px) {
   .doc-filter-grid {
-    grid-template-columns: 0.8fr 1.2fr;
+    grid-template-columns: 1fr 1.4fr;
   }
 }
 
@@ -151,7 +153,7 @@
   flex-direction: column;
 }
 
-/* Custom Dropdown */
+/* ── Custom Filter Dropdown ── */
 .doc-custom-dropdown-container {
   position: relative;
 }
@@ -167,55 +169,55 @@
   color: var(--color-text-primary);
   background: transparent;
   cursor: pointer;
-  height: 42px;
-  margin-top: 5px;
+  height: 40px;
   transition: border-color 0.15s ease;
+  user-select: none;
 }
 
 .doc-custom-dropdown-trigger:hover {
-  border-color: rgba(255, 106, 0, 0.3);
+  border-color: rgba(255, 106, 0, 0.35);
 }
 
 .doc-custom-dropdown-options {
   position: absolute;
   top: calc(100% + 6px);
   left: 0;
-  width: 100%;
+  min-width: 100%;
   background: var(--color-surface);
   border: 1px solid var(--color-divider);
   border-radius: 14px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
   z-index: 120;
   overflow: hidden;
-  animation: slideDown 0.2s ease-out;
+  animation: slideDown 0.18s ease-out;
 }
 
 .doc-custom-dropdown-option {
-  padding: 11px 14px;
+  padding: 10px 14px;
   font-size: 13px;
   color: var(--color-text-secondary);
   cursor: pointer;
   transition:
-    background 0.15s ease,
-    color 0.15s ease;
+    background 0.12s ease,
+    color 0.12s ease;
 }
 
 .doc-custom-dropdown-option:hover {
-  background: rgba(255, 106, 0, 0.08);
+  background: rgba(255, 106, 0, 0.07);
   color: var(--color-accent);
 }
 
 .doc-custom-dropdown-option.selected {
-  background: rgba(255, 106, 0, 0.12);
+  background: rgba(255, 106, 0, 0.1);
   color: var(--color-accent);
-  font-weight: 600;
+  font-weight: 700;
 }
 
-/* Datum-Inputs */
+/* ── Date Inputs ── */
 .doc-filter-date-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .doc-custom-date-input {
@@ -225,12 +227,17 @@
   background: transparent;
   color: var(--color-text-primary);
   font-size: 12px;
-  height: 42px;
-  margin-top: 5px;
+  height: 40px;
   text-align: center;
   appearance: none;
   -webkit-appearance: none;
-  padding: 0 8px;
+  padding: 0 6px;
+  transition: border-color 0.15s ease;
+}
+
+.doc-custom-date-input:focus {
+  outline: none;
+  border-color: rgba(255, 106, 0, 0.35);
 }
 
 .doc-custom-date-input::-webkit-calendar-picker-indicator {
@@ -238,18 +245,17 @@
   -webkit-appearance: none;
 }
 
-/* Reset Button */
+/* ── Reset Button ── */
 .doc-menu-reset-btn {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 6px;
-  padding: 10px;
-  border-radius: 12px;
+  padding: 8px 14px;
+  border-radius: 10px;
   border: 1px solid rgba(255, 80, 80, 0.2);
   background: rgba(255, 80, 80, 0.05);
   color: #ff5050;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   align-self: flex-start;
@@ -257,32 +263,46 @@
 }
 
 .doc-menu-reset-btn:hover {
-  background: rgba(255, 80, 80, 0.12);
+  background: rgba(255, 80, 80, 0.1);
 }
 
-/* Sortier-Row */
+/* ── Sort Row ── */
 .doc-sort-row {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding-bottom: 4px;
-  flex-wrap: wrap;
+  gap: 4px;
+  flex-wrap: nowrap;
+  padding-bottom: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.doc-sort-row::-webkit-scrollbar {
+  display: none;
 }
 
 .doc-sort-label {
-  font-size: 12px;
+  font-size: 12px !important;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   white-space: nowrap;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
 }
 
 .doc-sort-btn {
-  padding: 5px 12px;
+  padding: 4px clamp(7px, 1.5vw, 12px);
   border-radius: 999px;
   border: 1px solid var(--color-divider);
   background: transparent;
   color: var(--color-text-secondary);
-  font-size: 12px;
+  font-size: clamp(11px, 1.2vw, 12px);
   font-weight: 500;
   cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
   transition:
     background 0.15s ease,
     color 0.15s ease,
@@ -290,27 +310,28 @@
 }
 
 .doc-sort-btn.active {
-  background: rgba(255, 106, 0, 0.12);
+  background: rgba(255, 106, 0, 0.1);
   color: var(--color-accent);
   border-color: rgba(255, 106, 0, 0.3);
 }
 
 .doc-sort-arrow {
-  font-size: 11px;
+  font-size: 10px;
   margin-left: 1px;
 }
 
 .doc-dir-btn {
   margin-left: auto;
-  padding: 5px 12px;
+  padding: 4px clamp(7px, 1.5vw, 12px);
   border-radius: 999px;
   border: 1px solid var(--color-divider);
   background: transparent;
   color: var(--color-text-secondary);
-  font-size: 12px;
+  font-size: clamp(11px, 1.2vw, 12px);
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
+  flex-shrink: 0;
   transition:
     background 0.15s ease,
     color 0.15s ease,
@@ -318,104 +339,158 @@
 }
 
 .doc-dir-btn:hover {
-  background: rgba(255, 106, 0, 0.08);
+  background: rgba(255, 106, 0, 0.07);
   color: var(--color-accent);
-  border-color: rgba(255, 106, 0, 0.3);
+  border-color: rgba(255, 106, 0, 0.25);
 }
 
 /* =========================
-   Scroll-Liste — fluid Grid
+   Card List — Fluid Grid
    ========================= */
 
 .doc-list {
   flex: 1;
   overflow-y: auto;
-  padding: clamp(20px, 3vw, 40px) clamp(16px, 3vw, 32px) 16px;
+  padding: clamp(16px, 2.5vw, 28px) 0 clamp(16px, 2vw, 24px);
   display: grid;
-  /* Fluid: ab ~300px pro Karte */
   grid-template-columns: repeat(
     auto-fill,
     minmax(clamp(260px, 28vw, 480px), 1fr)
   );
-  gap: clamp(12px, 1.5vw, 20px);
+  gap: clamp(12px, 1.5vw, 18px);
   align-content: start;
   scrollbar-width: none;
   -ms-overflow-style: none;
+}
+
+@media (max-width: 1023px) {
+  .doc-list {
+    padding-left: clamp(8px, 3vw, 16px);
+    padding-right: clamp(8px, 3vw, 16px);
+  }
 }
 
 .doc-list::-webkit-scrollbar {
   display: none;
 }
 
-/* Leerer State & WIP über volle Breite */
 .doc-empty,
 .doc-wip {
   grid-column: 1 / -1;
 }
 
 /* =========================
-   Angebots-Card
+   Angebots/Rechnungs-Card
    ========================= */
 
 .doc-card {
-  cursor: pointer;
+  cursor: default;
   transition:
     transform 0.15s ease,
     box-shadow 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(8px, 1vw, 11px);
 }
 
 .doc-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.22);
 }
 
+/* Card Top Row */
 .doc-card-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 6px;
+  gap: 8px;
 }
 
-.doc-auftragsnr {
+.doc-nummer {
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--color-text-secondary);
 }
 
+/* Customer Name */
 .doc-card-name {
-  font-size: 16px;
+  font-size: clamp(15px, 1.4vw, 17px);
   font-weight: 700;
   color: var(--color-text-primary);
-  margin-bottom: 8px;
+  line-height: 1.3;
 }
 
+/* Meta Info */
 .doc-card-meta {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  margin-bottom: 4px;
 }
 
 .doc-meta-item {
-  font-size: 13px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  line-height: 1.4;
 }
 
+.doc-icon-inline {
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+/* Footer */
 .doc-card-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
 }
 
 .doc-betrag {
-  font-size: 17px;
+  font-size: clamp(15px, 1.5vw, 18px);
   font-weight: 800;
   color: var(--color-text-primary);
 }
 
+.doc-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Invoice-to-bill Icon Button */
+.doc-invoice-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--color-divider);
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.doc-invoice-btn:hover {
+  background: rgba(255, 106, 0, 0.08);
+  color: var(--color-accent);
+  border-color: rgba(255, 106, 0, 0.3);
+  transform: translateY(-1px);
+}
+
+/* Details Button */
 .doc-detail-btn {
-  padding: 7px 14px;
+  padding: 7px clamp(12px, 1.5vw, 18px);
   border-radius: 10px;
   border: 1px solid var(--color-divider);
   background: transparent;
@@ -423,101 +498,164 @@
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease;
+  white-space: nowrap;
 }
 
 .doc-detail-btn:hover {
-  background: rgba(255, 106, 0, 0.08);
+  background: rgba(255, 106, 0, 0.07);
+  transform: translateY(-1px);
 }
 
-/* Status Tags */
-.status-erstellt {
-  background: rgba(100, 149, 237, 0.15);
-  color: #6495ed;
-}
-.status-versendet {
-  background: rgba(255, 200, 0, 0.15);
-  color: #ffc800;
-}
-.status-angenommen {
-  background: rgba(100, 200, 120, 0.15);
-  color: #64c878;
-}
-.status-abgelehnt {
-  background: rgba(255, 80, 80, 0.15);
-  color: #ff5050;
-}
+/* =========================
+   Status Dropdown — Polished
+   ========================= */
 
-/* Im-Aufbau Card */
-.doc-wip {
-  text-align: center;
-  padding: 32px 20px;
-}
-
-.doc-wip-icon {
-  font-size: 36px;
-  display: block;
-  margin-bottom: 12px;
-}
-
-.doc-empty {
-  text-align: center;
-  padding: 24px;
-}
-
-/* Status-Dropdown auf der Karte */
 .doc-status-dropdown-wrapper {
   position: relative;
 }
 
-.doc-status-select-tag {
+/* The badge/trigger button */
+.doc-status-badge {
   display: inline-flex;
   align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: none;
+  font-size: 11px;
+  font-weight: 700;
   cursor: pointer;
   user-select: none;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+  white-space: nowrap;
 }
 
-.doc-card-status-options {
+.doc-status-badge:hover {
+  opacity: 0.85;
+  transform: translateY(-1px);
+}
+
+.doc-status-chevron {
+  transition: transform 0.2s ease;
+  opacity: 0.7;
+}
+
+.doc-status-chevron.open {
+  transform: rotate(180deg);
+}
+
+/* Dropdown Panel */
+.doc-status-dropdown {
   position: absolute;
   top: calc(100% + 6px);
   right: 0;
   z-index: 50;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   padding: 6px;
-  border: 1px solid var(--color-divider);
+  min-width: 160px;
   background: var(--color-surface);
-  border-radius: 12px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-  min-width: 130px;
+  border: 1px solid var(--color-divider);
+  border-radius: 14px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.25);
+  animation: fadeDropdown 0.18s ease-out;
 }
 
-.doc-card-status-option-item {
+/* Each option */
+.doc-status-option {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
   padding: 8px 12px;
+  border: none;
+  border-radius: 9px;
   font-size: 12px;
-  font-weight: 600;
-  border-radius: 8px;
+  font-weight: 700;
   cursor: pointer;
-  text-align: center;
+  text-align: left;
   transition:
-    transform 0.1s ease,
-    opacity 0.15s ease;
+    opacity 0.12s ease,
+    transform 0.12s ease,
+    filter 0.12s ease;
 }
 
-.doc-card-status-option-item:hover {
-  opacity: 0.85;
-  transform: scale(1.02);
+.doc-status-option:not(.is-current):hover {
+  opacity: 0.82;
+  transform: translateX(2px);
 }
 
-/* Animations */
+/* =========================
+   Status Color Tokens
+   ========================= */
+
+/* Shared base — used both on badge and dropdown option */
+.tag {
+  border-radius: 999px;
+}
+
+.status-erstellt {
+  background: rgba(100, 149, 237, 0.15);
+  color: #6495ed;
+}
+.status-versendet {
+  background: rgba(255, 200, 0, 0.15);
+  color: #e6b800;
+}
+.status-angenommen {
+  background: rgba(80, 200, 120, 0.15);
+  color: #50c878;
+}
+.status-abgelehnt {
+  background: rgba(255, 80, 80, 0.15);
+  color: #ff5050;
+}
+.status-bezahlt {
+  background: rgba(60, 210, 150, 0.15);
+  color: #3cd296;
+}
+.status-verzug {
+  background: rgba(255, 130, 0, 0.15);
+  color: #ff8200;
+}
+
+/* =========================
+   Empty State
+   ========================= */
+
+.doc-empty {
+  text-align: center;
+  padding: clamp(24px, 4vw, 40px);
+}
+
+/* =========================
+   Animations
+   ========================= */
+
 @keyframes slideDown {
   from {
     opacity: 0;
-    transform: translateY(-8px);
+    transform: translateY(-6px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes fadeDropdown {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }

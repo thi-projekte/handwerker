@@ -1,81 +1,212 @@
 import { useState, useMemo, useEffect } from "react";
-import { MapPin, Calendar, Wrench, X, Filter, ChevronDown } from "lucide-react";
+import {
+  MapPin,
+  Calendar,
+  ChevronDown,
+  X,
+  Filter,
+  FileText,
+} from "lucide-react";
 import "@/assets/stylesheets/stylesheet.css";
 import "@/features/document/components/DocumentPage.css";
 
-type Status = "Erstellt" | "Versendet" | "Angenommen" | "Abgelehnt";
+// ── Types ──────────────────────────────────────────────────────────────────
+
+type AngebotStatus = "Erstellt" | "Versendet" | "Angenommen" | "Abgelehnt";
+type RechnungStatus =
+  | "Erstellt"
+  | "Versendet"
+  | "Bezahlt"
+  | "Im Zahlungsverzug";
 
 interface Angebot {
   id: string;
-  auftragsnummer: string;
-  kundenname: string;
-  adresse: string;
+  angebotsnummer: string;
+  vorname: string;
+  nachname: string;
+  strasse: string;
+  hausnummer: string;
+  plz: string;
+  ort: string;
   datum: string;
-  status: Status;
+  status: AngebotStatus;
   betrag: number;
 }
+
+interface Rechnung {
+  id: string;
+  rechnungsnummer: string;
+  vorname: string;
+  nachname: string;
+  strasse: string;
+  hausnummer: string;
+  plz: string;
+  ort: string;
+  erstelldatum: string;
+  faelligkeitsdatum: string;
+  status: RechnungStatus;
+  betrag: number;
+}
+
+// ── Mock Data ──────────────────────────────────────────────────────────────
 
 const INITIAL_ANGEBOTE: Angebot[] = [
   {
     id: "1",
-    auftragsnummer: "ANG-2025-001",
-    kundenname: "Thomas Müller",
-    adresse: "Hauptstraße 12, 80331 München",
+    angebotsnummer: "ANG-2025-001",
+    vorname: "Thomas",
+    nachname: "Müller",
+    strasse: "Hauptstraße",
+    hausnummer: "12",
+    plz: "80331",
+    ort: "München",
     datum: "2025-04-02",
     status: "Versendet",
     betrag: 3480.0,
   },
   {
     id: "2",
-    auftragsnummer: "ANG-2025-002",
-    kundenname: "Sabine Hoffmann",
-    adresse: "Gartenweg 5, 70174 Stuttgart",
+    angebotsnummer: "ANG-2025-002",
+    vorname: "Sabine",
+    nachname: "Hoffmann",
+    strasse: "Gartenweg",
+    hausnummer: "5",
+    plz: "70174",
+    ort: "Stuttgart",
     datum: "2025-03-28",
     status: "Erstellt",
     betrag: 1250.5,
   },
   {
     id: "3",
-    auftragsnummer: "ANG-2025-003",
-    kundenname: "Klaus Becker",
-    adresse: "Kirchplatz 3, 50667 Köln",
+    angebotsnummer: "ANG-2025-003",
+    vorname: "Klaus",
+    nachname: "Becker",
+    strasse: "Kirchplatz",
+    hausnummer: "3",
+    plz: "50667",
+    ort: "Köln",
     datum: "2025-03-14",
     status: "Angenommen",
     betrag: 8920.0,
   },
   {
     id: "4",
-    auftragsnummer: "ANG-2025-004",
-    kundenname: "Maria Schmidt",
-    adresse: "Rosenstraße 8, 60311 Frankfurt",
+    angebotsnummer: "ANG-2025-004",
+    vorname: "Maria",
+    nachname: "Schmidt",
+    strasse: "Rosenstraße",
+    hausnummer: "8",
+    plz: "60311",
+    ort: "Frankfurt",
     datum: "2025-04-10",
     status: "Erstellt",
     betrag: 540.0,
   },
   {
     id: "5",
-    auftragsnummer: "ANG-2025-005",
-    kundenname: "Peter Wagner",
-    adresse: "Bahnhofstraße 21, 90402 Nürnberg",
+    angebotsnummer: "ANG-2025-005",
+    vorname: "Peter",
+    nachname: "Wagner",
+    strasse: "Bahnhofstraße",
+    hausnummer: "21",
+    plz: "90402",
+    ort: "Nürnberg",
     datum: "2025-02-19",
     status: "Abgelehnt",
     betrag: 2100.0,
   },
 ];
 
-const STATUS_STYLES: Record<Status, string> = {
+const INITIAL_RECHNUNGEN: Rechnung[] = [
+  {
+    id: "r1",
+    rechnungsnummer: "REC-2025-001",
+    vorname: "Klaus",
+    nachname: "Becker",
+    strasse: "Kirchplatz",
+    hausnummer: "3",
+    plz: "50667",
+    ort: "Köln",
+    erstelldatum: "2025-03-20",
+    faelligkeitsdatum: "2025-04-20",
+    status: "Bezahlt",
+    betrag: 8920.0,
+  },
+  {
+    id: "r2",
+    rechnungsnummer: "REC-2025-002",
+    vorname: "Thomas",
+    nachname: "Müller",
+    strasse: "Hauptstraße",
+    hausnummer: "12",
+    plz: "80331",
+    ort: "München",
+    erstelldatum: "2025-04-05",
+    faelligkeitsdatum: "2025-05-05",
+    status: "Im Zahlungsverzug",
+    betrag: 3480.0,
+  },
+  {
+    id: "r3",
+    rechnungsnummer: "REC-2025-003",
+    vorname: "Anna",
+    nachname: "Krause",
+    strasse: "Lindenallee",
+    hausnummer: "7",
+    plz: "10115",
+    ort: "Berlin",
+    erstelldatum: "2025-04-12",
+    faelligkeitsdatum: "2025-05-12",
+    status: "Versendet",
+    betrag: 1870.0,
+  },
+  {
+    id: "r4",
+    rechnungsnummer: "REC-2025-004",
+    vorname: "Markus",
+    nachname: "Fischer",
+    strasse: "Marktplatz",
+    hausnummer: "1",
+    plz: "70173",
+    ort: "Stuttgart",
+    erstelldatum: "2025-04-18",
+    faelligkeitsdatum: "2025-05-18",
+    status: "Erstellt",
+    betrag: 4250.0,
+  },
+];
+
+// ── Style Maps ─────────────────────────────────────────────────────────────
+
+const ANGEBOT_STATUS_STYLES: Record<AngebotStatus, string> = {
   Erstellt: "status-erstellt",
   Versendet: "status-versendet",
   Angenommen: "status-angenommen",
   Abgelehnt: "status-abgelehnt",
 };
 
-const STATUS_OPTIONS: Status[] = [
+const RECHNUNG_STATUS_STYLES: Record<RechnungStatus, string> = {
+  Erstellt: "status-erstellt",
+  Versendet: "status-versendet",
+  Bezahlt: "status-bezahlt",
+  "Im Zahlungsverzug": "status-verzug",
+};
+
+const ANGEBOT_STATUS_OPTIONS: AngebotStatus[] = [
   "Erstellt",
   "Versendet",
   "Angenommen",
   "Abgelehnt",
 ];
+const RECHNUNG_STATUS_OPTIONS: RechnungStatus[] = [
+  "Erstellt",
+  "Versendet",
+  "Bezahlt",
+  "Im Zahlungsverzug",
+];
+
+// ── Helpers ────────────────────────────────────────────────────────────────
 
 function formatDatum(iso: string) {
   const [y, m, d] = iso.split("-");
@@ -96,19 +227,85 @@ const SORT_LABELS: Record<SortKey, string> = {
   status: "Status",
 };
 
+// ── Status Dropdown Component ──────────────────────────────────────────────
+
+interface StatusDropdownProps<T extends string> {
+  currentStatus: T;
+  options: T[];
+  styleMap: Record<T, string>;
+  onSelect: (status: T) => void;
+  isOpen: boolean;
+  onToggle: () => void;
+}
+
+function StatusDropdown<T extends string>({
+  currentStatus,
+  options,
+  styleMap,
+  onSelect,
+  isOpen,
+  onToggle,
+}: StatusDropdownProps<T>) {
+  return (
+    <div className="doc-status-dropdown-wrapper">
+      <button
+        className={`doc-status-badge tag ${styleMap[currentStatus]}`}
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggle();
+        }}
+        aria-expanded={isOpen}
+        aria-haspopup="listbox"
+      >
+        <span>{currentStatus}</span>
+        <ChevronDown
+          size={11}
+          className={`doc-status-chevron ${isOpen ? "open" : ""}`}
+        />
+      </button>
+
+      {isOpen && (
+        <div className="doc-status-dropdown" role="listbox">
+          {options
+            .filter((opt) => opt !== currentStatus)
+            .map((opt) => (
+              <button
+                key={opt}
+                role="option"
+                aria-selected={false}
+                className={`doc-status-option ${styleMap[opt]}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelect(opt);
+                }}
+              >
+                {opt}
+              </button>
+            ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Main Component ─────────────────────────────────────────────────────────
+
 export const DocumentPage = () => {
   const [activeTab, setActiveTab] = useState<Tab>("angebote");
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("datum");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
 
-  // App-Zustände
   const [angebote, setAngebote] = useState<Angebot[]>(INITIAL_ANGEBOTE);
-  const [filterStatus, setFilterStatus] = useState<Status | null>(null);
+  const [rechnungen, setRechnungen] = useState<Rechnung[]>(INITIAL_RECHNUNGEN);
+
+  const [filterAngebotStatus, setFilterAngebotStatus] =
+    useState<AngebotStatus | null>(null);
+  const [filterRechnungStatus, setFilterRechnungStatus] =
+    useState<RechnungStatus | null>(null);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-  // UI-Zustände
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [activeStatusDropdownId, setActiveStatusDropdownId] = useState<
     string | null
@@ -116,13 +313,12 @@ export const DocumentPage = () => {
   const [showFilterStatusDropdown, setShowFilterStatusDropdown] =
     useState(false);
 
-  // Schließt die Card-Dropdowns zuverlässig bei Klicks außerhalb
   useEffect(() => {
     const handleOutsideClick = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
       if (
-        !target.closest(".doc-status-select-tag") &&
-        !target.closest(".doc-card-status-options")
+        !target.closest(".doc-status-badge") &&
+        !target.closest(".doc-status-dropdown")
       ) {
         setActiveStatusDropdownId(null);
       }
@@ -134,6 +330,18 @@ export const DocumentPage = () => {
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
 
+  // Reset filter when switching tabs
+  useEffect(() => {
+    setSearch("");
+    setFilterAngebotStatus(null);
+    setFilterRechnungStatus(null);
+    setStartDate("");
+    setEndDate("");
+    setShowFilterMenu(false);
+    setSortKey("datum");
+    setSortDir("desc");
+  }, [activeTab]);
+
   const handleSortKey = (key: SortKey) => {
     if (key === sortKey) {
       setSortDir((d) => (d === "desc" ? "asc" : "desc"));
@@ -143,53 +351,98 @@ export const DocumentPage = () => {
     }
   };
 
-  const handleStatusChange = (id: string, newStatus: Status) => {
+  const handleAngebotStatusChange = (id: string, newStatus: AngebotStatus) => {
     setAngebote((prev) =>
       prev.map((a) => (a.id === id ? { ...a, status: newStatus } : a)),
     );
     setActiveStatusDropdownId(null);
   };
 
+  const handleRechnungStatusChange = (
+    id: string,
+    newStatus: RechnungStatus,
+  ) => {
+    setRechnungen((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, status: newStatus } : r)),
+    );
+    setActiveStatusDropdownId(null);
+  };
+
   const handleResetFilters = () => {
-    setFilterStatus(null);
+    setFilterAngebotStatus(null);
+    setFilterRechnungStatus(null);
     setStartDate("");
     setEndDate("");
   };
 
   const hasActiveFilters =
-    filterStatus !== null || startDate !== "" || endDate !== "";
+    filterAngebotStatus !== null ||
+    filterRechnungStatus !== null ||
+    startDate !== "" ||
+    endDate !== "";
 
-  const filtered = useMemo(() => {
+  // ── Filtered & Sorted Angebote ──
+  const filteredAngebote = useMemo(() => {
     return angebote.filter((a) => {
       const q = search.toLowerCase();
+      const fullName = `${a.vorname} ${a.nachname}`.toLowerCase();
+      const adresse =
+        `${a.strasse} ${a.hausnummer}, ${a.plz} ${a.ort}`.toLowerCase();
       const matchesSearch =
-        a.auftragsnummer.toLowerCase().includes(q) ||
-        a.kundenname.toLowerCase().includes(q) ||
-        a.adresse.toLowerCase().includes(q);
-
-      let matchesStatus = true;
-      if (filterStatus) {
-        matchesStatus = a.status === filterStatus;
-      }
-
+        a.angebotsnummer.toLowerCase().includes(q) ||
+        fullName.includes(q) ||
+        adresse.includes(q);
+      const matchesStatus =
+        !filterAngebotStatus || a.status === filterAngebotStatus;
       let matchesDate = true;
       if (startDate) matchesDate = matchesDate && a.datum >= startDate;
       if (endDate) matchesDate = matchesDate && a.datum <= endDate;
-
       return matchesSearch && matchesStatus && matchesDate;
     });
-  }, [angebote, search, filterStatus, startDate, endDate]);
+  }, [angebote, search, filterAngebotStatus, startDate, endDate]);
 
-  const sorted = useMemo(() => {
+  const sortedAngebote = useMemo(() => {
     const mult = sortDir === "asc" ? 1 : -1;
-    return [...filtered].sort((a, b) => {
+    return [...filteredAngebote].sort((a, b) => {
       if (sortKey === "datum") return mult * a.datum.localeCompare(b.datum);
       if (sortKey === "status") return mult * a.status.localeCompare(b.status);
       if (sortKey === "name")
-        return mult * a.kundenname.localeCompare(b.kundenname);
+        return mult * a.nachname.localeCompare(b.nachname);
       return 0;
     });
-  }, [filtered, sortKey, sortDir]);
+  }, [filteredAngebote, sortKey, sortDir]);
+
+  // ── Filtered & Sorted Rechnungen ──
+  const filteredRechnungen = useMemo(() => {
+    return rechnungen.filter((r) => {
+      const q = search.toLowerCase();
+      const fullName = `${r.vorname} ${r.nachname}`.toLowerCase();
+      const adresse =
+        `${r.strasse} ${r.hausnummer}, ${r.plz} ${r.ort}`.toLowerCase();
+      const matchesSearch =
+        r.rechnungsnummer.toLowerCase().includes(q) ||
+        fullName.includes(q) ||
+        adresse.includes(q);
+      const matchesStatus =
+        !filterRechnungStatus || r.status === filterRechnungStatus;
+      let matchesDate = true;
+      if (startDate) matchesDate = matchesDate && r.erstelldatum >= startDate;
+      if (endDate) matchesDate = matchesDate && r.erstelldatum <= endDate;
+      return matchesSearch && matchesStatus && matchesDate;
+    });
+  }, [rechnungen, search, filterRechnungStatus, startDate, endDate]);
+
+  const sortedRechnungen = useMemo(() => {
+    const mult = sortDir === "asc" ? 1 : -1;
+    return [...filteredRechnungen].sort((a, b) => {
+      if (sortKey === "datum")
+        return mult * a.erstelldatum.localeCompare(b.erstelldatum);
+      if (sortKey === "status") return mult * a.status.localeCompare(b.status);
+      if (sortKey === "name")
+        return mult * a.nachname.localeCompare(b.nachname);
+      return 0;
+    });
+  }, [filteredRechnungen, sortKey, sortDir]);
 
   const dirLabel =
     sortKey === "datum"
@@ -200,8 +453,21 @@ export const DocumentPage = () => {
         ? "↑ A–Z"
         : "↓ Z–A";
 
+  const currentStatusOptions =
+    activeTab === "angebote" ? ANGEBOT_STATUS_OPTIONS : RECHNUNG_STATUS_OPTIONS;
+
+  const currentFilterStatus =
+    activeTab === "angebote" ? filterAngebotStatus : filterRechnungStatus;
+
+  const setCurrentFilterStatus =
+    activeTab === "angebote"
+      ? (v: string | null) => setFilterAngebotStatus(v as AngebotStatus | null)
+      : (v: string | null) =>
+          setFilterRechnungStatus(v as RechnungStatus | null);
+
   return (
     <div className="doc-page">
+      {/* ── Sticky Header ── */}
       <div className="doc-sticky-header">
         <div className="doc-tabs">
           <button
@@ -218,187 +484,62 @@ export const DocumentPage = () => {
           </button>
         </div>
 
-        {activeTab === "angebote" && (
-          <>
-            {/* Suchzeile mit Filter-Button */}
-            <div className="doc-search-row">
-              <input
-                className="input-field doc-search"
-                type="text"
-                placeholder="Suche nach Name, Adresse, Nummer …"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
+        {/* Search Row */}
+        <div className="doc-search-row">
+          <input
+            className="input-field doc-search"
+            type="text"
+            placeholder={
+              activeTab === "angebote"
+                ? "Suche nach Name, Adresse, Nummer …"
+                : "Suche nach Name, Adresse, Rechnungsnummer …"
+            }
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <button
+            className={`doc-filter-btn-toggle ${showFilterMenu ? "menu-open" : ""} ${hasActiveFilters ? "filter-active" : ""}`}
+            onClick={() => setShowFilterMenu(!showFilterMenu)}
+          >
+            <Filter size={15} />
+            Filter
+          </button>
+        </div>
 
-              <div className="doc-filter-container">
-                <button
-                  className={`doc-filter-btn-toggle ${showFilterMenu ? "menu-open" : ""} ${hasActiveFilters ? "filter-active" : ""}`}
-                  onClick={() => setShowFilterMenu(!showFilterMenu)}
-                >
-                  <Filter size={16} /> Filter
-                </button>
-              </div>
-            </div>
-
-            {/* Inline-Filterbereich verschiebt den Content nach unten */}
-            {showFilterMenu && (
-              <div className="doc-filter-inline-panel card">
-                <div className="doc-filter-grid">
-                  <div className="doc-filter-section">
-                    <label className="doc-filter-label-text">Status</label>
-
-                    {/* Custom Filter Status Dropdown */}
-                    <div className="doc-custom-dropdown-container">
+        {/* Inline Filter Panel */}
+        {showFilterMenu && (
+          <div className="doc-filter-inline-panel">
+            <div className="doc-filter-grid">
+              <div className="doc-filter-section">
+                <label className="doc-filter-label-text">Status</label>
+                <div className="doc-custom-dropdown-container">
+                  <div
+                    className="doc-custom-dropdown-trigger"
+                    onClick={() =>
+                      setShowFilterStatusDropdown(!showFilterStatusDropdown)
+                    }
+                  >
+                    <span>{currentFilterStatus ?? "Alle"}</span>
+                    <ChevronDown size={13} />
+                  </div>
+                  {showFilterStatusDropdown && (
+                    <div className="doc-custom-dropdown-options">
                       <div
-                        className="doc-custom-dropdown-trigger"
-                        onClick={() =>
-                          setShowFilterStatusDropdown(!showFilterStatusDropdown)
-                        }
+                        className={`doc-custom-dropdown-option ${!currentFilterStatus ? "selected" : ""}`}
+                        onClick={() => {
+                          setCurrentFilterStatus(null);
+                          setShowFilterStatusDropdown(false);
+                        }}
                       >
-                        <span>
-                          {filterStatus ? filterStatus : "Auswählen..."}
-                        </span>
-                        <ChevronDown size={14} />
+                        Alle
                       </div>
-                      {showFilterStatusDropdown && (
-                        <div className="doc-custom-dropdown-options">
-                          {STATUS_OPTIONS.map((opt) => (
-                            <div
-                              key={opt}
-                              className={`doc-custom-dropdown-option ${filterStatus === opt ? "selected" : ""}`}
-                              onClick={() => {
-                                setFilterStatus(opt);
-                                setShowFilterStatusDropdown(false);
-                              }}
-                            >
-                              {opt}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="doc-filter-section">
-                    <label className="doc-filter-label-text">Zeitraum</label>
-                    <div className="doc-filter-date-row">
-                      <input
-                        type="date"
-                        value={startDate}
-                        onChange={(e) => setStartDate(e.target.value)}
-                        className="doc-custom-date-input"
-                      />
-                      <span className="text-secondary">bis</span>
-                      <input
-                        type="date"
-                        value={endDate}
-                        onChange={(e) => setEndDate(e.target.value)}
-                        className="doc-custom-date-input"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {hasActiveFilters && (
-                  <button
-                    className="doc-menu-reset-btn"
-                    onClick={handleResetFilters}
-                  >
-                    <X size={14} /> Filter zurücksetzen
-                  </button>
-                )}
-              </div>
-            )}
-
-            <div className="doc-sort-row">
-              <span className="text-secondary doc-sort-label">Sortieren:</span>
-              {(["datum", "name", "status"] as SortKey[]).map((key) => (
-                <button
-                  key={key}
-                  className={`doc-sort-btn ${sortKey === key ? "active" : ""}`}
-                  onClick={() => handleSortKey(key)}
-                >
-                  {SORT_LABELS[key]}
-                  {sortKey === key && (
-                    <span className="doc-sort-arrow">
-                      {sortDir === "asc" ? " ↑" : " ↓"}
-                    </span>
-                  )}
-                </button>
-              ))}
-              <button
-                className="doc-dir-btn"
-                onClick={() =>
-                  setSortDir((d) => (d === "asc" ? "desc" : "asc"))
-                }
-              >
-                {dirLabel}
-              </button>
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* Liste */}
-      <div className="doc-list">
-        {activeTab === "rechnungen" ? (
-          <div className="card doc-wip">
-            <span className="doc-wip-icon">
-              <Wrench
-                size={36}
-                style={{ color: "var(--color-accent)", margin: "0 auto 12px" }}
-              />
-            </span>
-            <h2>Im Aufbau</h2>
-            <p className="text-secondary">
-              Die Rechnungsübersicht ist aktuell noch in Entwicklung.
-            </p>
-          </div>
-        ) : sorted.length === 0 ? (
-          <div className="card doc-empty">
-            <p className="text-secondary">
-              Keine Angebote gefunden mit diesen Filtereinstellungen.
-            </p>
-          </div>
-        ) : (
-          sorted.map((angebot) => (
-            <div key={angebot.id} className="card doc-card">
-              <div className="doc-card-top">
-                <span className="doc-auftragsnr">{angebot.auftragsnummer}</span>
-
-                {/* Custom Status-Dropdown auf der Karte */}
-                <div className="doc-status-dropdown-wrapper">
-                  <span
-                    className={`tag ${STATUS_STYLES[angebot.status]} doc-status-select-tag`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setActiveStatusDropdownId(
-                        activeStatusDropdownId === angebot.id
-                          ? null
-                          : angebot.id,
-                      );
-                    }}
-                  >
-                    {angebot.status}{" "}
-                    <ChevronDown
-                      size={12}
-                      style={{
-                        marginLeft: "2px",
-                        display: "inline-block",
-                        verticalAlign: "middle",
-                      }}
-                    />
-                  </span>
-
-                  {activeStatusDropdownId === angebot.id && (
-                    <div className="doc-card-status-options card">
-                      {STATUS_OPTIONS.map((opt) => (
+                      {currentStatusOptions.map((opt) => (
                         <div
                           key={opt}
-                          className={`doc-card-status-option-item ${STATUS_STYLES[opt]}`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleStatusChange(angebot.id, opt);
+                          className={`doc-custom-dropdown-option ${currentFilterStatus === opt ? "selected" : ""}`}
+                          onClick={() => {
+                            setCurrentFilterStatus(opt);
+                            setShowFilterStatusDropdown(false);
                           }}
                         >
                           {opt}
@@ -409,23 +550,181 @@ export const DocumentPage = () => {
                 </div>
               </div>
 
-              <div className="doc-card-name">{angebot.kundenname}</div>
+              <div className="doc-filter-section">
+                <label className="doc-filter-label-text">Zeitraum</label>
+                <div className="doc-filter-date-row">
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="doc-custom-date-input"
+                  />
+                  <span className="text-secondary">–</span>
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="doc-custom-date-input"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {hasActiveFilters && (
+              <button
+                className="doc-menu-reset-btn"
+                onClick={handleResetFilters}
+              >
+                <X size={13} /> Filter zurücksetzen
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Sort Row */}
+        <div className="doc-sort-row">
+          <span className="text-secondary doc-sort-label">Sortieren:</span>
+          {(["datum", "name", "status"] as SortKey[]).map((key) => (
+            <button
+              key={key}
+              className={`doc-sort-btn ${sortKey === key ? "active" : ""}`}
+              onClick={() => handleSortKey(key)}
+            >
+              {SORT_LABELS[key]}
+              {sortKey === key && (
+                <span className="doc-sort-arrow">
+                  {sortDir === "asc" ? " ↑" : " ↓"}
+                </span>
+              )}
+            </button>
+          ))}
+          <button
+            className="doc-dir-btn"
+            onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}
+          >
+            {dirLabel}
+          </button>
+        </div>
+      </div>
+
+      {/* ── Card List ── */}
+      <div className="doc-list">
+        {activeTab === "angebote" ? (
+          sortedAngebote.length === 0 ? (
+            <div className="card doc-empty">
+              <p className="text-secondary">Keine Angebote gefunden.</p>
+            </div>
+          ) : (
+            sortedAngebote.map((angebot) => (
+              <div key={angebot.id} className="card doc-card">
+                <div className="doc-card-top">
+                  <span className="doc-nummer">{angebot.angebotsnummer}</span>
+                  <StatusDropdown
+                    currentStatus={angebot.status}
+                    options={ANGEBOT_STATUS_OPTIONS}
+                    styleMap={ANGEBOT_STATUS_STYLES}
+                    onSelect={(s) => handleAngebotStatusChange(angebot.id, s)}
+                    isOpen={activeStatusDropdownId === angebot.id}
+                    onToggle={() =>
+                      setActiveStatusDropdownId(
+                        activeStatusDropdownId === angebot.id
+                          ? null
+                          : angebot.id,
+                      )
+                    }
+                  />
+                </div>
+
+                <div className="doc-card-name">
+                  {angebot.vorname} {angebot.nachname}
+                </div>
+
+                <div className="doc-card-meta">
+                  <span className="text-secondary doc-meta-item">
+                    <MapPin size={13} className="doc-icon-inline" />
+                    {angebot.strasse} {angebot.hausnummer}, {angebot.plz}{" "}
+                    {angebot.ort}
+                  </span>
+                  <span className="text-secondary doc-meta-item">
+                    <Calendar size={13} className="doc-icon-inline" />
+                    {formatDatum(angebot.datum)}
+                  </span>
+                </div>
+
+                <hr className="divider" />
+
+                <div className="doc-card-footer">
+                  <span className="doc-betrag">
+                    {formatBetrag(angebot.betrag)}
+                  </span>
+                  <div className="doc-card-actions">
+                    <button
+                      className="doc-invoice-btn"
+                      title="In Rechnung umwandeln"
+                    >
+                      <FileText size={15} />
+                    </button>
+                    <button className="doc-detail-btn">Details →</button>
+                  </div>
+                </div>
+              </div>
+            ))
+          )
+        ) : /* ── Rechnungen Tab ── */
+        sortedRechnungen.length === 0 ? (
+          <div className="card doc-empty">
+            <p className="text-secondary">Keine Rechnungen gefunden.</p>
+          </div>
+        ) : (
+          sortedRechnungen.map((rechnung) => (
+            <div key={rechnung.id} className="card doc-card">
+              <div className="doc-card-top">
+                <span className="doc-nummer">{rechnung.rechnungsnummer}</span>
+                <StatusDropdown
+                  currentStatus={rechnung.status}
+                  options={RECHNUNG_STATUS_OPTIONS}
+                  styleMap={RECHNUNG_STATUS_STYLES}
+                  onSelect={(s) => handleRechnungStatusChange(rechnung.id, s)}
+                  isOpen={activeStatusDropdownId === rechnung.id}
+                  onToggle={() =>
+                    setActiveStatusDropdownId(
+                      activeStatusDropdownId === rechnung.id
+                        ? null
+                        : rechnung.id,
+                    )
+                  }
+                />
+              </div>
+
+              <div className="doc-card-name">
+                {rechnung.vorname} {rechnung.nachname}
+              </div>
+
               <div className="doc-card-meta">
                 <span className="text-secondary doc-meta-item">
-                  <MapPin size={14} className="doc-icon-inline" />{" "}
-                  {angebot.adresse}
+                  <MapPin size={13} className="doc-icon-inline" />
+                  {rechnung.strasse} {rechnung.hausnummer}, {rechnung.plz}{" "}
+                  {rechnung.ort}
                 </span>
                 <span className="text-secondary doc-meta-item">
-                  <Calendar size={14} className="doc-icon-inline" />{" "}
-                  {formatDatum(angebot.datum)}
+                  <Calendar size={13} className="doc-icon-inline" />
+                  Erstellt: {formatDatum(rechnung.erstelldatum)}
+                </span>
+                <span className="text-secondary doc-meta-item">
+                  <Calendar size={13} className="doc-icon-inline" />
+                  Fällig: {formatDatum(rechnung.faelligkeitsdatum)}
                 </span>
               </div>
+
               <hr className="divider" />
+
               <div className="doc-card-footer">
                 <span className="doc-betrag">
-                  {formatBetrag(angebot.betrag)}
+                  {formatBetrag(rechnung.betrag)}
                 </span>
-                <button className="doc-detail-btn">Details →</button>
+                <div className="doc-card-actions">
+                  <button className="doc-detail-btn">Details →</button>
+                </div>
               </div>
             </div>
           ))
