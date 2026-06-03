@@ -5,7 +5,7 @@ import "./navbar-css.css";
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: PieChart },
   { to: "/angebote", label: "Dokumente", icon: FileText },
-  { to: "/", label: "Aufnahme", icon: Mic },
+  { to: "/home", label: "Aufnahme", icon: Mic },
   { to: "/unternehmen", label: "Unternehmen", icon: Building2 },
   { to: "/profil", label: "Profil", icon: UserCircle },
 ];

@@ -110,7 +110,7 @@ export const OfferResultPage = () => {
 
         <button
           className="offer-result-secondary-button"
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/home")}
         >
           Zurück zum Dashboard
         </button>

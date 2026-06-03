@@ -8,11 +8,11 @@ import {
 } from "recharts";
 
 const data = [
-  { month: "Jan", angebote: 4 },
-  { month: "Feb", angebote: 7 },
-  { month: "Mär", angebote: 12 },
-  { month: "Apr", angebote: 9 },
-  { month: "Mai", angebote: 15 },
+  { month: "Jan", Angebote: 4 },
+  { month: "Feb", Angebote: 7 },
+  { month: "Mär", Angebote: 12 },
+  { month: "Apr", Angebote: 9 },
+  { month: "Mai", Angebote: 15 },
 ];
 
 export const DashboardChart = () => {
@@ -38,7 +38,7 @@ export const DashboardChart = () => {
 
           <Line
             type="monotone"
-            dataKey="angebote"
+            dataKey="Angebote"
             stroke="#ff6a00"
             strokeWidth={3}
           />

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-const swipeRoutes = ["/dashboard", "/angebote", "/", "/unternehmen", "/profil"];
+const swipeRoutes = ["/dashboard", "/angebote", "/home", "/unternehmen", "/profil"];
 
 const MIN_SWIPE_DISTANCE = 45;
 const MAX_VERTICAL_DISTANCE = 80;
