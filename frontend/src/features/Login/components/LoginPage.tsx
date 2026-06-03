@@ -69,13 +69,13 @@ export const LoginPage = () => {
 
         <button
           className="button-secondary"
-          onClick={() => navigate("/registrierung")}
+          onClick={() => navigate("/registrieren")}
         >
           Registrieren
         </button>
 
         <div className="login-footer">
-          <a href="PasswortVergessen" className="text-secondary">
+          <a href="/passwortVergessen" className="text-secondary">
             Passwort vergessen?
           </a>
         </div>

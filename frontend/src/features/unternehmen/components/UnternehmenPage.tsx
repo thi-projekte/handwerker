@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
 import "./UnternehmenPage.css";
 import "./UnternehmenPage-additions.css";
 
@@ -20,7 +21,17 @@ type Material = {
 };
 
 export const UnternehmenPage = () => {
-  const [activeTab, setActiveTab] = useState<Tab>("allgemein");
+  const location = useLocation();
+
+  const [activeTab, setActiveTab] = useState<Tab>(() => {
+    const tab = new URLSearchParams(location.search).get("tab");
+
+    return tab === "kunde" ||
+      tab === "stundensatz" ||
+      tab === "preisliste"
+      ? tab
+      : "allgemein";
+  });
 
   const [logo, setLogo] = useState<string | null>(null);
 
@@ -228,33 +239,47 @@ export const UnternehmenPage = () => {
 
       <section className="card company-tab-card">
         <button
-          className={`company-tab ${activeTab === "allgemein" ? "active" : ""}`}
-          onClick={() => setActiveTab("allgemein")}
+          className={`company-tab ${activeTab === "allgemein"
+            ? "active"
+            : ""
+            }`}
+          onClick={() =>
+            setActiveTab("allgemein")
+          }
         >
           Allgemein
         </button>
 
         <button
-          className={`company-tab ${activeTab === "kunde" ? "active" : ""}`}
+          className={`company-tab ${activeTab === "kunde"
+            ? "active"
+            : ""
+            }`}
           onClick={() => setActiveTab("kunde")}
         >
           Kunde
         </button>
 
         <button
-          className={`company-tab ${
-            activeTab === "stundensatz" ? "active" : ""
-          }`}
-          onClick={() => setActiveTab("stundensatz")}
+          className={`company-tab ${activeTab === "stundensatz"
+            ? "active"
+            : ""
+            }`}
+          onClick={() =>
+            setActiveTab("stundensatz")
+          }
         >
           Stundensatz
         </button>
 
         <button
-          className={`company-tab ${
-            activeTab === "preisliste" ? "active" : ""
-          }`}
-          onClick={() => setActiveTab("preisliste")}
+          className={`company-tab ${activeTab === "preisliste"
+            ? "active"
+            : ""
+            }`}
+          onClick={() =>
+            setActiveTab("preisliste")
+          }
         >
           Preisliste
         </button>

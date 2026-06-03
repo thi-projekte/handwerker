@@ -80,7 +80,7 @@ export function AppRoutes() {
       />
 
       <Route
-        path="/passwort-aendern"
+        path="/passwortAendern"
         element={
           <AppLayout>
             <PasswordChangePage />
@@ -98,7 +98,7 @@ export function AppRoutes() {
       />
 
 <Route
-  path="/angebot-teilen"
+  path="/angebotTeilen"
   element={
     <AppLayout>
       <OfferSharePage />
@@ -108,7 +108,7 @@ export function AppRoutes() {
 
 
       <Route
-  path="/angebot-ergebnis"
+  path="/angebotErgebnis"
   element={
     <AppLayout>
       <OfferResultPage />
@@ -136,7 +136,7 @@ export function AppRoutes() {
       />
 
       <Route
-        path="/registrierung"
+        path="/registrieren"
         element={
           <AppLayout hideNav hideHeader>
             <RegistrierungPage />
