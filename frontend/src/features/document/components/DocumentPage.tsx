@@ -330,8 +330,7 @@ export const DocumentPage = () => {
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
 
-  // Reset filter when switching tabs
-  useEffect(() => {
+  const resetFiltersAndSearch = () => {
     setSearch("");
     setFilterAngebotStatus(null);
     setFilterRechnungStatus(null);
@@ -340,7 +339,7 @@ export const DocumentPage = () => {
     setShowFilterMenu(false);
     setSortKey("datum");
     setSortDir("desc");
-  }, [activeTab]);
+  };
 
   const handleSortKey = (key: SortKey) => {
     if (key === sortKey) {
@@ -472,13 +471,19 @@ export const DocumentPage = () => {
         <div className="doc-tabs">
           <button
             className={`doc-tab ${activeTab === "angebote" ? "active" : ""}`}
-            onClick={() => setActiveTab("angebote")}
+            onClick={() => {
+              setActiveTab("angebote");
+              resetFiltersAndSearch();
+            }}
           >
             Angebote
           </button>
           <button
             className={`doc-tab ${activeTab === "rechnungen" ? "active" : ""}`}
-            onClick={() => setActiveTab("rechnungen")}
+            onClick={() => {
+              setActiveTab("rechnungen");
+              resetFiltersAndSearch();
+            }}
           >
             Rechnungen
           </button>
