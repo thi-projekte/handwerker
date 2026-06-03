@@ -68,7 +68,8 @@ Vorfilter (BM25) liefert 15 Kandidaten **ohne Preise**, das Modell wählt einen 
 - Schema-Treue 98, Vollständigkeit 100.
 
 ### Call 2 → `gemini-3-flash-preview` (dasselbe Modell)
-- Erreicht wie alle 100 % Trefferquote; ein eigenes, billigeres Modell (gemma) brächte nur Centbruchteile Ersparnis bei mehr Betriebs-Komplexität.
+- Erreicht wie alle Modelle 100 % Trefferquote → Entscheidung nach **Kosten + Latenz**.
+- **Schneller UND billiger als gemma** bei Call 2: $0,00041 vs. $0,00048/Call, **3,6 s vs. 7,9 s**. gemmas Output-Preisvorteil verpufft, weil Call 2 fast keinen Output hat → **gemma für Call 2 bewusst verworfen** (zu langsam, relevant bei vielen Positionen).
 - **Ein Modell für beide Calls = einfacher Betrieb** (eine ID, eine Fehlerbehandlung, ein Monitoring).
 
 ### Bewusst NICHT gewählt
@@ -83,6 +84,8 @@ Vorfilter (BM25) liefert 15 Kandidaten **ohne Preise**, das Modell wählt einen 
 
 - **Call 2 lohnt sich, aber mit billigem Modell** — er muss nicht eingespart oder mit Call 1 zusammengelegt werden (Bezug zu Emanuels Frage „2 Calls → 1"): Kosten pro Position ~0,05 Cent.
 - **Der Hebel liegt im Vorfilter (Retrieval), nicht im Modell.** Künftiger Aufwand → semantische Suche / Embedding ([#543](https://github.com/thi-projekte/handwerker/issues/543)), nicht teureres Modell.
+- **Latenz skaliert mit den Positionen, nicht der Preis:** Call 1 = EIN Aufruf; Call 2 läuft 1× pro Material-Position. Bei großen Angeboten (40–60 Pos.) ist **sequenzielles** Call 2 inakzeptabel (~3 min) → **Call-2-Aufrufe MÜSSEN parallel laufen** (alle gleichzeitig ≈ 4 s). Für #541 von Anfang an einplanen. Optional **Hybrid**: Programmierung (Attribut-Matching) für eindeutige Positionen, LLM nur bei Unsicherheit → noch weniger Calls.
+- **Kosten pro Angebot:** klein (~5 Pos.) ~0,5 Cent · groß (40–60 Pos.) ~3–4 Cent. 40-€-Budget reicht je nach Angebotsgröße für grob **2.000–8.000 Angebote** (Detail für #132).
 
 ## 5. Offene Punkte / Vorbehalte
 
