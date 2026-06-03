@@ -1,42 +1,26 @@
 /* =========================
-   Startscreen / HomeView
+   Startscreen / HomeView — Fluid
    ========================= */
-
-.voice-app {
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 40px 20px;
-}
 
 .voice-container {
   width: 100%;
-  padding: 24px 0;
+  padding: clamp(16px, 2.5vw, 32px) 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  gap: 20px;
+  gap: clamp(16px, 2vw, 24px);
 }
 
-/* ── Tablet ── */
-@media (min-width: 768px) {
-  .voice-container {
-    padding: 32px 0;
-    gap: 24px;
-  }
-}
-
-/* ── Desktop: zweispaltig (Mic + Kunde nebeneinander) ── */
+/* ── Desktop: zweispaltig ── */
 @media (min-width: 1024px) {
   .voice-container {
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: auto auto 1fr;
     align-items: start;
-    column-gap: 40px;
-    row-gap: 20px;
+    column-gap: clamp(24px, 3vw, 48px);
+    row-gap: clamp(16px, 2vw, 24px);
     padding: 0;
   }
 
@@ -50,13 +34,11 @@
     max-width: 320px;
   }
 
-  /* Voice/Text-Bereich links */
   .voice-section,
   .text-section {
     grid-column: 1;
   }
 
-  /* Kunden-Card rechts */
   .customer-card {
     grid-column: 2;
     grid-row: 3;
@@ -75,12 +57,12 @@
    ========================= */
 
 .mic-button {
-  margin: 24px 0;
-  width: 110px;
-  height: 110px;
+  margin: clamp(16px, 2.5vw, 28px) 0;
+  width: clamp(90px, 12vw, 130px);
+  height: clamp(90px, 12vw, 130px);
   border-radius: 50%;
   border: none;
-  font-size: 40px;
+  font-size: clamp(32px, 5vw, 44px);
   background: var(--color-accent-gradient);
   color: white;
   display: flex;
@@ -100,13 +82,6 @@
 
 .mic-button.active {
   animation: pulse 1.5s infinite;
-}
-
-@media (min-width: 768px) {
-  .mic-button {
-    width: 130px;
-    height: 130px;
-  }
 }
 
 /* =========================
@@ -220,7 +195,7 @@
 }
 
 .voice-section h2 {
-  font-size: 20px;
+  font-size: clamp(18px, 2vw, 22px);
   font-weight: 600;
   margin-top: 10px;
 }
@@ -252,7 +227,6 @@
 .audio-actions button:last-child {
   background: var(--color-accent-gradient);
 }
-
 .audio-actions button:first-child {
   background: var(--color-text-secondary);
 }
@@ -271,7 +245,7 @@
 
 .text-editor-card {
   width: 100%;
-  padding: 20px;
+  padding: clamp(16px, 2.5vw, 28px);
   border-radius: 24px;
   background: linear-gradient(
     145deg,
@@ -283,31 +257,18 @@
   box-shadow: 0 10px 35px rgba(0, 0, 0, 0.15);
 }
 
-@media (min-width: 768px) {
-  .text-editor-card {
-    padding: 24px;
-  }
-}
-
 .text-input {
   width: 100%;
-  min-height: 150px;
+  min-height: clamp(140px, 18vw, 240px);
   border: none;
   outline: none;
   resize: none;
   background: transparent;
-  font-size: 15px;
+  font-size: clamp(14px, 1.2vw, 16px);
   line-height: 1.7;
   color: var(--color-text-primary);
   font-family: inherit;
   padding: 0;
-}
-
-@media (min-width: 768px) {
-  .text-input {
-    min-height: 200px;
-    font-size: 16px;
-  }
 }
 
 .text-input::placeholder {
@@ -358,7 +319,6 @@
 .continue-button:hover {
   transform: translateY(-2px);
 }
-
 .continue-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -371,7 +331,7 @@
 
 .customer-card {
   width: 100%;
-  padding: 20px;
+  padding: clamp(16px, 2vw, 24px);
   border-radius: 24px;
   background: var(--color-surface);
   border: 1px solid rgba(255, 106, 0, 0.18);
@@ -395,14 +355,8 @@
 }
 
 .customer-card-header h3 {
-  font-size: 18px;
+  font-size: clamp(16px, 1.8vw, 20px);
   margin: 0;
-}
-
-@media (min-width: 768px) {
-  .customer-card-header h3 {
-    font-size: 20px;
-  }
 }
 
 .customer-card-header p {
