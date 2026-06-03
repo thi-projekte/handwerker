@@ -1,30 +1,16 @@
 /* =========================
-   Dashboard Layout
+   Dashboard Layout — Fluid
    ========================= */
 
 .dashboard-page {
   width: 100%;
-  padding-bottom: 40px;
+  padding-bottom: clamp(24px, 4vw, 48px);
 }
 
 .dashboard-content {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-}
-
-/* ── Tablet ── */
-@media (min-width: 768px) {
-  .dashboard-content {
-    gap: 24px;
-  }
-}
-
-/* ── Desktop ── */
-@media (min-width: 1024px) {
-  .dashboard-content {
-    gap: 28px;
-  }
+  gap: clamp(16px, 2vw, 28px);
 }
 
 /* =========================
@@ -37,7 +23,7 @@
   gap: 12px;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 640px) {
   .dashboard-filters {
     flex-direction: row;
     align-items: center;
@@ -95,32 +81,22 @@
 }
 
 /* =========================
-   Stats Grid
+   Stats Grid — fluid auto-fill
    ========================= */
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-}
-
-@media (min-width: 768px) {
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .stats-grid {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
-  }
+  /* Fluid: ab 180px pro Karte, füllt immer die volle Breite */
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(clamp(140px, 18vw, 260px), 1fr)
+  );
+  gap: clamp(10px, 1.5vw, 20px);
 }
 
 .dashboard-card {
-  padding: 20px;
-  border-radius: 24px;
+  padding: clamp(16px, 2vw, 24px);
+  border-radius: clamp(18px, 2vw, 28px);
   background: var(--color-surface);
   backdrop-filter: blur(var(--blur));
   border: 1px solid var(--color-divider);
@@ -137,14 +113,14 @@
 
 .card-title {
   margin-bottom: 10px;
-  font-size: 13px;
+  font-size: clamp(11px, 1vw, 13px);
   font-weight: 500;
   color: var(--color-text-secondary);
 }
 
 .dashboard-card h2 {
   margin: 0;
-  font-size: clamp(22px, 3vw, 32px);
+  font-size: clamp(20px, 2.5vw, 34px);
   font-weight: 800;
   line-height: 1;
 }
@@ -154,17 +130,11 @@
    ========================= */
 
 .dashboard-chart {
-  padding: 22px;
-  border-radius: 28px;
+  padding: clamp(18px, 2.5vw, 32px);
+  border-radius: clamp(22px, 2.5vw, 32px);
   background: var(--color-surface);
   border: 1px solid var(--color-divider);
   box-shadow: var(--shadow);
-}
-
-@media (min-width: 1024px) {
-  .dashboard-chart {
-    padding: 28px 32px;
-  }
 }
 
 .chart-header {
@@ -258,18 +228,14 @@
    ========================= */
 
 .dashboard-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-@media (min-width: 1024px) {
-  .dashboard-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
-    align-items: start;
-  }
+  display: grid;
+  /* fluid: ab ~360px pro Widget zweispaltig */
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(clamp(280px, 30vw, 600px), 1fr)
+  );
+  gap: clamp(16px, 2vw, 24px);
+  align-items: start;
 }
 
 /* =========================
@@ -278,8 +244,8 @@
 
 .dashboard-attention,
 .dashboard-activity {
-  padding: 22px;
-  border-radius: 28px;
+  padding: clamp(18px, 2vw, 28px);
+  border-radius: clamp(22px, 2.5vw, 32px);
   background: var(--color-surface);
   border: 1px solid var(--color-divider);
   box-shadow: var(--shadow);
@@ -291,7 +257,7 @@
 
 .section-header h2 {
   margin: 0;
-  font-size: 18px;
+  font-size: clamp(16px, 1.5vw, 20px);
   font-weight: 700;
 }
 
