@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import "./UnternehmenPage.css";
 
@@ -28,17 +28,13 @@ export const UnternehmenPage = () => {
 
   const [activeTab, setActiveTab] = useState<Tab>(() => {
     const tab = new URLSearchParams(location.search).get("tab");
-    return tab === "kunde" || tab === "stundensatz" || tab === "preisliste"
+
+    return tab === "kunde" ||
+      tab === "stundensatz" ||
+      tab === "preisliste"
       ? tab
       : "allgemein";
   });
-
-  useEffect(() => {
-    const tab = new URLSearchParams(location.search).get("tab");
-    if (tab === "kunde" || tab === "stundensatz" || tab === "preisliste") {
-      setActiveTab(tab);
-    }
-  }, [location.search]);
 
   const [logo, setLogo] = useState<string | null>(null);
 
@@ -232,11 +228,11 @@ export const UnternehmenPage = () => {
   });
   const handleMaterialChange = handleChange(setMaterialData);
   const isMaterialValid =
-  !!materialData.name &&
-  !!materialData.description &&
-  !!materialData.price &&
-  !!materialData.size &&
-  !!materialData.unit;
+    !!materialData.name &&
+    !!materialData.description &&
+    !!materialData.price &&
+    !!materialData.size &&
+    !!materialData.unit;
 
   return (
     <div className="app company-page">
@@ -251,8 +247,8 @@ export const UnternehmenPage = () => {
       <section className="card company-tab-card">
         <button
           className={`company-tab ${activeTab === "allgemein"
-              ? "active"
-              : ""
+            ? "active"
+            : ""
             }`}
           onClick={() =>
             setActiveTab("allgemein")
@@ -263,8 +259,8 @@ export const UnternehmenPage = () => {
 
         <button
           className={`company-tab ${activeTab === "kunde"
-              ? "active"
-              : ""
+            ? "active"
+            : ""
             }`}
           onClick={() => setActiveTab("kunde")}
         >
@@ -273,8 +269,8 @@ export const UnternehmenPage = () => {
 
         <button
           className={`company-tab ${activeTab === "stundensatz"
-              ? "active"
-              : ""
+            ? "active"
+            : ""
             }`}
           onClick={() =>
             setActiveTab("stundensatz")
@@ -285,8 +281,8 @@ export const UnternehmenPage = () => {
 
         <button
           className={`company-tab ${activeTab === "preisliste"
-              ? "active"
-              : ""
+            ? "active"
+            : ""
             }`}
           onClick={() =>
             setActiveTab("preisliste")
@@ -368,7 +364,7 @@ export const UnternehmenPage = () => {
                 <span>Rolle / Berechtigung</span>
 
                 <div className="input-field readonly-field">
-                   {companyData.rolle}
+                  {companyData.rolle}
                 </div>
               </label>
             </div>
@@ -734,7 +730,7 @@ export const UnternehmenPage = () => {
                 />
               </label>
 
-            <label className="company-field">
+              <label className="company-field">
                 <span>BIK</span>
                 <input
                   className="input-field"
@@ -1368,17 +1364,17 @@ export const UnternehmenPage = () => {
               />
 
               <input
-  className="input-field"
-  name="unit"
-  placeholder="Einheit (z.B. Stück, Liter, m²)"
-  value={materialData.unit}
-  onChange={(e) =>
-    setMaterialData((prev) => ({
-      ...prev,
-      unit: e.target.value,
-    }))
-  }
-/>
+                className="input-field"
+                name="unit"
+                placeholder="Einheit (z.B. Stück, Liter, m²)"
+                value={materialData.unit}
+                onChange={(e) =>
+                  setMaterialData((prev) => ({
+                    ...prev,
+                    unit: e.target.value,
+                  }))
+                }
+              />
 
               <button
                 className="button-primary company-add-button"

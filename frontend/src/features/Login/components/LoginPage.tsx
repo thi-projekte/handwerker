@@ -69,7 +69,7 @@ export const LoginPage = () => {
 
         <button
           className="button-secondary"
-          onClick={() => navigate("/registrierung")}
+          onClick={() => navigate("/registrieren")}
         >
           Registrieren
         </button>

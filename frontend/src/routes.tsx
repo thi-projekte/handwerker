@@ -126,7 +126,7 @@ export function AppRoutes() {
       />
 
       <Route
-        path="/registrierung"
+        path="/registrieren"
         element={
           <AppLayout hideNav hideHeader>
             <RegistrierungPage />
