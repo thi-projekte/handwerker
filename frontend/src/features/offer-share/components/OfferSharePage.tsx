@@ -100,7 +100,7 @@ export const OfferSharePage = () => {
         <button
           className="offer-share-secondary-button"
           type="button"
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/home")}
         >
           Zurück zum Dashboard
         </button>

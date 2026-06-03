@@ -1,22 +1,13 @@
 /* =========================
-   DocumentPage
+   DocumentPage — Fluid
    ========================= */
 
 .doc-page {
   display: flex;
   flex-direction: column;
-  /* Mobile: füllt den Shell-Content */
   height: 100%;
   padding: 0;
   overflow: hidden;
-}
-
-/* ── Desktop: keine fixed height mehr nötig ── */
-@media (min-width: 1024px) {
-  .doc-page {
-    max-height: unset;
-    height: 100%;
-  }
 }
 
 /* Sticky Header */
@@ -26,24 +17,15 @@
   z-index: 10;
   background: var(--color-surface);
   backdrop-filter: blur(var(--blur));
-  padding: 16px 20px 10px;
-  margin: -16px -20px 0;
+  padding: clamp(14px, 2vw, 24px) clamp(16px, 3vw, 32px) 10px;
+  margin: clamp(-16px, -2vw, -24px) clamp(-16px, -3vw, -32px) 0;
   border-bottom: 1px solid var(--color-divider);
   border-radius: 20px 20px 0 0;
   flex-shrink: 0;
 }
 
-@media (min-width: 768px) {
-  .doc-sticky-header {
-    padding: 20px 32px 12px;
-    margin: -24px -32px 0;
-  }
-}
-
 @media (min-width: 1024px) {
   .doc-sticky-header {
-    padding: 24px 0 14px;
-    margin: -40px 0 0;
     border-radius: 0;
   }
 }
@@ -57,12 +39,12 @@
 
 .doc-tab {
   flex: 1;
-  padding: 12px 10px;
+  padding: clamp(10px, 1.2vw, 14px) clamp(10px, 1.5vw, 20px);
   border-radius: 14px;
   border: 1px solid var(--color-divider);
   background: transparent;
   color: var(--color-text-secondary);
-  font-size: 14px;
+  font-size: clamp(13px, 1vw, 15px);
   font-weight: 600;
   cursor: pointer;
   transition:
@@ -72,11 +54,10 @@
     box-shadow 0.2s ease;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 640px) {
   .doc-tab {
     flex: unset;
-    padding: 12px 28px;
-    font-size: 15px;
+    padding: 12px clamp(20px, 2.5vw, 36px);
   }
 }
 
@@ -159,7 +140,7 @@
   gap: 12px;
 }
 
-@media (min-width: 600px) {
+@media (min-width: 560px) {
   .doc-filter-grid {
     grid-template-columns: 0.8fr 1.2fr;
   }
@@ -343,16 +324,21 @@
 }
 
 /* =========================
-   Scroll-Liste
+   Scroll-Liste — fluid Grid
    ========================= */
 
 .doc-list {
   flex: 1;
   overflow-y: auto;
-  padding: 25px 20px 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
+  padding: clamp(20px, 3vw, 40px) clamp(16px, 3vw, 32px) 16px;
+  display: grid;
+  /* Fluid: ab ~300px pro Karte */
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(clamp(260px, 28vw, 480px), 1fr)
+  );
+  gap: clamp(12px, 1.5vw, 20px);
+  align-content: start;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -361,33 +347,10 @@
   display: none;
 }
 
-@media (min-width: 768px) {
-  .doc-list {
-    padding: 35px 32px 16px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .doc-list {
-    padding: 50px 0 16px;
-    /* Auf Desktop: 2-spaltig */
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    align-content: start;
-  }
-
-  /* Leerer State & WIP über volle Breite */
-  .doc-empty,
-  .doc-wip {
-    grid-column: 1 / -1;
-  }
-}
-
-@media (min-width: 1280px) {
-  .doc-list {
-    grid-template-columns: repeat(3, 1fr);
-  }
+/* Leerer State & WIP über volle Breite */
+.doc-empty,
+.doc-wip {
+  grid-column: 1 / -1;
 }
 
 /* =========================
