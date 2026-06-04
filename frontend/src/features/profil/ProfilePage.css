@@ -394,3 +394,30 @@
     align-items: flex-start;
   }
 }
+
+
+.profile-readonly-field {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid var(--color-divider);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-text-secondary);
+  font-weight: 700;
+}
+
+.profile-field-hint {
+  margin: -2px 0 0;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.profile-save-success {
+  margin: 4px 0 0;
+  text-align: center;
+  color: #64c878;
+  font-size: 13px;
+  font-weight: 800;
+}
