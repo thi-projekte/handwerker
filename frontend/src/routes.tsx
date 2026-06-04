@@ -44,7 +44,7 @@ export function AppRoutes() {
       />
 
       <Route
-        path="/angebote"
+        path="/dokumente"
         element={
           <AppLayout>
             <DocumentPage />
@@ -97,24 +97,23 @@ export function AppRoutes() {
         }
       />
 
-<Route
-  path="/angebotTeilen"
-  element={
-    <AppLayout>
-      <OfferSharePage />
-    </AppLayout>
-  }
-/>
-
+      <Route
+        path="/angebotTeilen"
+        element={
+          <AppLayout>
+            <OfferSharePage />
+          </AppLayout>
+        }
+      />
 
       <Route
-  path="/angebotErgebnis"
-  element={
-    <AppLayout>
-      <OfferResultPage />
-    </AppLayout>
-  }
-/>
+        path="/angebotErgebnis"
+        element={
+          <AppLayout>
+            <OfferResultPage />
+          </AppLayout>
+        }
+      />
 
       {/* ── Auth-Seiten OHNE Header + Navbar ── */}
       <Route
@@ -161,7 +160,6 @@ export function AppRoutes() {
           </AppLayout>
         }
       />
-
     </Routes>
   );
 }
