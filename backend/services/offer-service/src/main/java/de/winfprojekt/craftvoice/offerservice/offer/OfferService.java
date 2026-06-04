@@ -4,6 +4,8 @@ import jakarta.inject.Inject;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.CreateOfferRequest;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.AiResultRequest;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.StructuredOfferPositionDTO;
+import de.winfprojekt.craftvoice.offerservice.offer.dto.OfferAcceptanceRequest;
+import de.winfprojekt.craftvoice.offerservice.offer.dto.OfferAcceptanceResponse;
 import de.winfprojekt.craftvoice.offerservice.catalog.CatalogServiceClient;
 import de.winfprojekt.craftvoice.offerservice.catalog.CatalogPriceResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -159,5 +161,46 @@ public class OfferService {
         }
 
         processEngineClient.sendAiResult(offer.businessKey, ergebnisKiJsonString);
+    }
+
+    /**
+     * Nimmt ein Angebot über den Annahme-Token an oder lehnt es ab.
+     *
+     * @param token Der Annahme-Token des Angebots
+     * @param request Die Entscheidung des Kunden ("angenommen" oder "abgelehnt")
+     * @return DTO mit dem Ergebnis der Entscheidung
+     */
+    @Transactional
+    public OfferAcceptanceResponse acceptOrRejectOffer(String token, OfferAcceptanceRequest request) {
+        if (token == null || token.trim().isEmpty()) {
+            throw new WebApplicationException("Token darf nicht leer sein", 400);
+        }
+
+        Offer offer = Offer.find("annahmeToken", token).firstResult();
+        if (offer == null) {
+            throw new WebApplicationException("Angebot mit Token nicht gefunden", 404);
+        }
+
+        if (!Offer.STATUS_VERSENDET.equals(offer.status)) {
+            throw new WebApplicationException("Angebot befindet sich nicht im Status VERSENDET", 409);
+        }
+
+        String entscheidung = request.entscheidung;
+        if (!"angenommen".equals(entscheidung) && !"abgelehnt".equals(entscheidung)) {
+            throw new WebApplicationException("Ungültige Entscheidung. Erlaubt sind 'angenommen' oder 'abgelehnt'.", 400);
+        }
+
+        String newStatus = "angenommen".equals(entscheidung) ? Offer.STATUS_ANGENOMMEN : Offer.STATUS_ABGELEHNT;
+        offer.status = newStatus;
+
+        OfferStatusHistory history = new OfferStatusHistory();
+        history.offer = offer;
+        history.status = newStatus;
+        history.notiz = "Entscheidung über öffentlichen Link: " + entscheidung;
+        offer.statusHistory.add(history);
+
+        offer.persist();
+
+        return new OfferAcceptanceResponse(entscheidung);
     }
 }

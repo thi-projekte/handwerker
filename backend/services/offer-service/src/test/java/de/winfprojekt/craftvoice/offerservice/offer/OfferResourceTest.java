@@ -341,6 +341,9 @@ class OfferResourceTest {
         java.util.Map<?, ?> firstOffer = (java.util.Map<?, ?>) offers.get(0);
         java.util.Map<?, ?> secondOffer = (java.util.Map<?, ?>) offers.get(1);
 
+        assertNotNull(firstOffer);
+        assertNotNull(secondOffer);
+
         assertEquals(20, ((Number) firstOffer.get("customerId")).intValue());
         assertEquals(10, ((Number) secondOffer.get("customerId")).intValue());
     }
@@ -401,6 +404,149 @@ class OfferResourceTest {
                 .get("/offers/999999")
                 .then()
                 .statusCode(404);
+    }
+
+    @Test
+    void shouldAcceptOfferSuccessfully() {
+        Offer offer = new Offer();
+        offer.customerId = 1L;
+        offer.businessKey = "angebot-" + UUID.randomUUID().toString();
+        offer.annahmeToken = UUID.randomUUID().toString();
+        offer.status = Offer.STATUS_VERSENDET;
+
+        QuarkusTransaction.requiringNew().run(() -> {
+            offer.persist();
+        });
+
+        final Long offerId = offer.id;
+        final String token = offer.annahmeToken;
+
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+                {
+                  "entscheidung": "angenommen"
+                }
+                """)
+                .when()
+                .post("/angebote/annahme/{token}", token)
+                .then()
+                .statusCode(200)
+                .body("ergebnis", org.hamcrest.Matchers.equalTo("angenommen"));
+
+        QuarkusTransaction.requiringNew().run(() -> {
+            Offer updatedOffer = Offer.findById(offerId);
+            assertNotNull(updatedOffer);
+            assertEquals(Offer.STATUS_ANGENOMMEN, updatedOffer.status);
+
+            List<OfferStatusHistory> history =
+                    OfferStatusHistory.find("offer.id", offerId).list();
+            assertTrue(history.stream().anyMatch(h -> Offer.STATUS_ANGENOMMEN.equals(h.status)));
+        });
+    }
+
+    @Test
+    void shouldRejectOfferSuccessfully() {
+        Offer offer = new Offer();
+        offer.customerId = 1L;
+        offer.businessKey = "angebot-" + UUID.randomUUID().toString();
+        offer.annahmeToken = UUID.randomUUID().toString();
+        offer.status = Offer.STATUS_VERSENDET;
+
+        QuarkusTransaction.requiringNew().run(() -> {
+            offer.persist();
+        });
+
+        final Long offerId = offer.id;
+        final String token = offer.annahmeToken;
+
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+                {
+                  "entscheidung": "abgelehnt"
+                }
+                """)
+                .when()
+                .post("/angebote/annahme/{token}", token)
+                .then()
+                .statusCode(200)
+                .body("ergebnis", org.hamcrest.Matchers.equalTo("abgelehnt"));
+
+        QuarkusTransaction.requiringNew().run(() -> {
+            Offer updatedOffer = Offer.findById(offerId);
+            assertNotNull(updatedOffer);
+            assertEquals(Offer.STATUS_ABGELEHNT, updatedOffer.status);
+
+            List<OfferStatusHistory> history =
+                    OfferStatusHistory.find("offer.id", offerId).list();
+            assertTrue(history.stream().anyMatch(h -> Offer.STATUS_ABGELEHNT.equals(h.status)));
+        });
+    }
+
+    @Test
+    void shouldReturn404WhenTokenUnknown() {
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+                {
+                  "entscheidung": "angenommen"
+                }
+                """)
+                .when()
+                .post("/angebote/annahme/{token}", "unknown-token-12345")
+                .then()
+                .statusCode(404);
+    }
+
+    @Test
+    void shouldReturn409WhenOfferNotVersendet() {
+        Offer offer = new Offer();
+        offer.customerId = 1L;
+        offer.businessKey = "angebot-" + UUID.randomUUID().toString();
+        offer.annahmeToken = UUID.randomUUID().toString();
+        offer.status = Offer.STATUS_ERFASST;
+
+        QuarkusTransaction.requiringNew().run(() -> {
+            offer.persist();
+        });
+
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+                {
+                  "entscheidung": "angenommen"
+                }
+                """)
+                .when()
+                .post("/angebote/annahme/{token}", offer.annahmeToken)
+                .then()
+                .statusCode(409);
+    }
+
+    @Test
+    void shouldReturn400WhenDecisionInvalid() {
+        Offer offer = new Offer();
+        offer.customerId = 1L;
+        offer.businessKey = "angebot-" + UUID.randomUUID().toString();
+        offer.annahmeToken = UUID.randomUUID().toString();
+        offer.status = Offer.STATUS_VERSENDET;
+
+        QuarkusTransaction.requiringNew().run(() -> {
+            offer.persist();
+        });
+
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+                {
+                  "entscheidung": "invalid-value"
+                }
+                """)
+                .when()
+                .post("/angebote/annahme/{token}", offer.annahmeToken)
+                .then()
+                .statusCode(400);
     }
 
 }
