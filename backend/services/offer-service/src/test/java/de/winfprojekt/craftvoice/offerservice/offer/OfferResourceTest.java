@@ -15,6 +15,11 @@ import org.mockito.Mockito;
 
 import de.winfprojekt.craftvoice.offerservice.catalog.CatalogPriceResponse;
 import de.winfprojekt.craftvoice.offerservice.catalog.CatalogServiceClient;
+import de.winfprojekt.craftvoice.offerservice.user.UserServiceClient;
+import de.winfprojekt.craftvoice.offerservice.user.StundensatzResponse;
+import de.winfprojekt.craftvoice.offerservice.user.AnfahrtskostenKonfiguration;
+import de.winfprojekt.craftvoice.offerservice.routing.OsrmClient;
+import de.winfprojekt.craftvoice.offerservice.routing.RoutingException;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -22,6 +27,7 @@ import java.util.List;
 
 import static io.restassured.RestAssured.given;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 
 /**
  * Integrationstests für {@link OfferResource}: Prüfung des Angebots-Anlegens sowie einen fehlerhaften Request.
@@ -154,6 +160,12 @@ class OfferResourceTest {
     @InjectMock
     CatalogServiceClient catalogServiceClient;
 
+    @InjectMock
+    UserServiceClient userServiceClient;
+
+    @InjectMock
+    OsrmClient osrmClient;
+
     /**
      * Prüft die erfolgreiche Verarbeitung des KI-Ergebnisses.
      */
@@ -207,16 +219,21 @@ class OfferResourceTest {
             Offer updatedOffer = Offer.findById(offerId);
             assertNotNull(updatedOffer);
             assertEquals(Offer.STATUS_KI_FERTIG, updatedOffer.status);
-            assertEquals(1, updatedOffer.positions.size());
 
-            OfferPosition position = updatedOffer.positions.get(0);
-            assertEquals("Knauf", position.hersteller);
-            assertEquals("Badrenovierung", position.bezeichnung);
-            assertEquals("Komplette Sanierung", position.beschreibung);
-            assertEquals(new BigDecimal("2").setScale(0), position.menge.setScale(0));
-            assertEquals("Pauschal", position.einheit);
-            assertEquals(42L, position.katalogProduktId);
-            assertEquals(new BigDecimal("49.99"), position.preis);
+            // Materialposition muss vorhanden sein
+            assertTrue(updatedOffer.positions.stream()
+                    .anyMatch(p -> "Badrenovierung".equals(p.bezeichnung)),
+                    "Materialposition 'Badrenovierung' muss vorhanden sein");
+
+            OfferPosition materialPosition = updatedOffer.positions.stream()
+                    .filter(p -> "Badrenovierung".equals(p.bezeichnung))
+                    .findFirst().orElseThrow();
+            assertEquals("Knauf", materialPosition.hersteller);
+            assertEquals("Komplette Sanierung", materialPosition.beschreibung);
+            assertEquals(new BigDecimal("2").setScale(0), materialPosition.menge.setScale(0));
+            assertEquals("Pauschal", materialPosition.einheit);
+            assertEquals(42L, materialPosition.katalogProduktId);
+            assertEquals(new BigDecimal("49.99"), materialPosition.preis);
 
             // Status-Historie prüfen
             List<OfferStatusHistory> history =
@@ -547,6 +564,319 @@ class OfferResourceTest {
                 .post("/angebote/annahme/{token}", offer.annahmeToken)
                 .then()
                 .statusCode(400);
+    }
+
+    // =========================================================================
+    // KOST-1: Arbeitszeit-Tests
+    // =========================================================================
+
+    /**
+     * Happy Path: geschaetzteArbeitsdauerStunden gesetzt → Arbeitszeit-Position wird angelegt.
+     * Stundensatz-Mock: 65,00 €/h × 2 h = 130,00 €
+     */
+    @Test
+    void shouldCreateArbeitszeitPositionWhenDauerSet() throws RoutingException {
+        Offer offer = new Offer();
+        offer.customerId = 1L;
+        offer.businessKey = "angebot-" + UUID.randomUUID().toString();
+        offer.status = Offer.STATUS_IN_BEARBEITUNG;
+        QuarkusTransaction.requiringNew().run(() -> offer.persist());
+        final Long offerId = offer.id;
+
+        // Catalog-Mock
+        Mockito.when(catalogServiceClient.getPreis(any())).thenReturn(null);
+
+        // UserService-Mock: 65 €/h
+        StundensatzResponse stundensatzResponse = new StundensatzResponse();
+        stundensatzResponse.stundensatz = new BigDecimal("65.00");
+        Mockito.when(userServiceClient.getStundensatz()).thenReturn(stundensatzResponse);
+
+        // UserService-Mock: Anfahrt NUR_KM (wird berechnet aber separater Test)
+        AnfahrtskostenKonfiguration konfig = new AnfahrtskostenKonfiguration();
+        konfig.modell = "NUR_KM";
+        konfig.kmSatz = new BigDecimal("0.30");
+        konfig.adresse = "Maximilianstraße 1, 80538 München";
+        Mockito.when(userServiceClient.getAnfahrtskostenKonfiguration()).thenReturn(konfig);
+
+        // OsrmClient-Mock: 10 km
+        Mockito.when(osrmClient.getDistanzKm(anyString(), anyString()))
+                .thenReturn(new BigDecimal("10.00"));
+
+        // ProcessEngine-Mock
+        Mockito.doNothing().when(processEngineClient).sendAiResult(any(), any());
+
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+                {
+                  "strukturierteAngebotspositionen": [],
+                  "korrekturvorschlaege": [],
+                  "geschaetzteArbeitsdauerStunden": 2
+                }
+                """)
+                .when()
+                .post("/angebote/{id}/ki-ergebnis", offerId)
+                .then()
+                .statusCode(200);
+
+        QuarkusTransaction.requiringNew().run(() -> {
+            Offer updatedOffer = Offer.findById(offerId);
+            assertTrue(updatedOffer.positions.stream()
+                    .anyMatch(p -> "Arbeitszeit".equals(p.bezeichnung)),
+                    "Arbeitszeit-Position muss vorhanden sein");
+
+            OfferPosition arbeit = updatedOffer.positions.stream()
+                    .filter(p -> "Arbeitszeit".equals(p.bezeichnung))
+                    .findFirst().orElseThrow();
+            assertEquals("h", arbeit.einheit);
+            assertEquals(new BigDecimal("2").setScale(0), arbeit.menge.setScale(0));
+            assertEquals(new BigDecimal("130.00"), arbeit.preis);
+        });
+    }
+
+    /**
+     * Kein Arbeitsdauer-Feld → keine Arbeitszeit-Position, HTTP 200.
+     */
+    @Test
+    void shouldNotCreateArbeitszeitPositionWhenDauerNull() throws RoutingException {
+        Offer offer = new Offer();
+        offer.customerId = 1L;
+        offer.businessKey = "angebot-" + UUID.randomUUID().toString();
+        offer.status = Offer.STATUS_IN_BEARBEITUNG;
+        QuarkusTransaction.requiringNew().run(() -> offer.persist());
+        final Long offerId = offer.id;
+
+        Mockito.when(catalogServiceClient.getPreis(any())).thenReturn(null);
+
+        AnfahrtskostenKonfiguration konfig = new AnfahrtskostenKonfiguration();
+        konfig.modell = "NUR_KM";
+        konfig.kmSatz = new BigDecimal("0.30");
+        konfig.adresse = "Maximilianstraße 1, 80538 München";
+        Mockito.when(userServiceClient.getAnfahrtskostenKonfiguration()).thenReturn(konfig);
+        Mockito.when(osrmClient.getDistanzKm(anyString(), anyString()))
+                .thenReturn(new BigDecimal("10.00"));
+        Mockito.doNothing().when(processEngineClient).sendAiResult(any(), any());
+
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+                {
+                  "strukturierteAngebotspositionen": [],
+                  "korrekturvorschlaege": []
+                }
+                """)
+                .when()
+                .post("/angebote/{id}/ki-ergebnis", offerId)
+                .then()
+                .statusCode(200);
+
+        QuarkusTransaction.requiringNew().run(() -> {
+            Offer updatedOffer = Offer.findById(offerId);
+            assertFalse(updatedOffer.positions.stream()
+                    .anyMatch(p -> "Arbeitszeit".equals(p.bezeichnung)),
+                    "Keine Arbeitszeit-Position erwartet");
+        });
+    }
+
+    // =========================================================================
+    // KOST-1: Anfahrtskosten-Tests
+    // =========================================================================
+
+    /**
+     * Modell PAUSCHALE: preis = Pauschalbetrag, menge = 1, einheit = "pauschal".
+     */
+    @Test
+    void shouldCalculateAnfahrtskostenPauschale() throws RoutingException {
+        Offer offer = new Offer();
+        offer.customerId = 1L;
+        offer.businessKey = "angebot-" + UUID.randomUUID().toString();
+        offer.status = Offer.STATUS_IN_BEARBEITUNG;
+        QuarkusTransaction.requiringNew().run(() -> offer.persist());
+        final Long offerId = offer.id;
+
+        Mockito.when(catalogServiceClient.getPreis(any())).thenReturn(null);
+        Mockito.doNothing().when(processEngineClient).sendAiResult(any(), any());
+
+        AnfahrtskostenKonfiguration konfig = new AnfahrtskostenKonfiguration();
+        konfig.modell = "PAUSCHALE";
+        konfig.pauschale = new BigDecimal("50.00");
+        konfig.adresse = "Maximilianstraße 1, 80538 München";
+        Mockito.when(userServiceClient.getAnfahrtskostenKonfiguration()).thenReturn(konfig);
+        Mockito.when(osrmClient.getDistanzKm(anyString(), anyString()))
+                .thenReturn(new BigDecimal("15.00"));
+
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+                {
+                  "strukturierteAngebotspositionen": [],
+                  "korrekturvorschlaege": []
+                }
+                """)
+                .when()
+                .post("/angebote/{id}/ki-ergebnis", offerId)
+                .then()
+                .statusCode(200);
+
+        QuarkusTransaction.requiringNew().run(() -> {
+            Offer updatedOffer = Offer.findById(offerId);
+            OfferPosition anfahrt = updatedOffer.positions.stream()
+                    .filter(p -> "Anfahrtskosten".equals(p.bezeichnung))
+                    .findFirst()
+                    .orElseThrow(() -> new AssertionError("Anfahrtskosten-Position fehlt"));
+
+            assertEquals("pauschal", anfahrt.einheit);
+            assertEquals(0, BigDecimal.ONE.compareTo(anfahrt.menge));
+            assertEquals(new BigDecimal("50.00"), anfahrt.preis);
+        });
+    }
+
+    /**
+     * Modell PAUSCHALE_PLUS_KM: preis = pauschale + (km × kmSatz).
+     */
+    @Test
+    void shouldCalculateAnfahrtskostenPauschalePlusKm() throws RoutingException {
+        Offer offer = new Offer();
+        offer.customerId = 1L;
+        offer.businessKey = "angebot-" + UUID.randomUUID().toString();
+        offer.status = Offer.STATUS_IN_BEARBEITUNG;
+        QuarkusTransaction.requiringNew().run(() -> offer.persist());
+        final Long offerId = offer.id;
+
+        Mockito.when(catalogServiceClient.getPreis(any())).thenReturn(null);
+        Mockito.doNothing().when(processEngineClient).sendAiResult(any(), any());
+
+        AnfahrtskostenKonfiguration konfig = new AnfahrtskostenKonfiguration();
+        konfig.modell = "PAUSCHALE_PLUS_KM";
+        konfig.pauschale = new BigDecimal("20.00");
+        konfig.kmSatz = new BigDecimal("0.30");
+        konfig.adresse = "Maximilianstraße 1, 80538 München";
+        Mockito.when(userServiceClient.getAnfahrtskostenKonfiguration()).thenReturn(konfig);
+        // 20 km → 20.00 + (20 × 0.30) = 26.00
+        Mockito.when(osrmClient.getDistanzKm(anyString(), anyString()))
+                .thenReturn(new BigDecimal("20.00"));
+
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+                {
+                  "strukturierteAngebotspositionen": [],
+                  "korrekturvorschlaege": []
+                }
+                """)
+                .when()
+                .post("/angebote/{id}/ki-ergebnis", offerId)
+                .then()
+                .statusCode(200);
+
+        QuarkusTransaction.requiringNew().run(() -> {
+            Offer updatedOffer = Offer.findById(offerId);
+            OfferPosition anfahrt = updatedOffer.positions.stream()
+                    .filter(p -> "Anfahrtskosten".equals(p.bezeichnung))
+                    .findFirst()
+                    .orElseThrow(() -> new AssertionError("Anfahrtskosten-Position fehlt"));
+
+            assertEquals("km", anfahrt.einheit);
+            assertEquals(new BigDecimal("26.00"), anfahrt.preis);
+        });
+    }
+
+    /**
+     * Modell NUR_KM: preis = km × kmSatz.
+     */
+    @Test
+    void shouldCalculateAnfahrtskostenNurKm() throws RoutingException {
+        Offer offer = new Offer();
+        offer.customerId = 1L;
+        offer.businessKey = "angebot-" + UUID.randomUUID().toString();
+        offer.status = Offer.STATUS_IN_BEARBEITUNG;
+        QuarkusTransaction.requiringNew().run(() -> offer.persist());
+        final Long offerId = offer.id;
+
+        Mockito.when(catalogServiceClient.getPreis(any())).thenReturn(null);
+        Mockito.doNothing().when(processEngineClient).sendAiResult(any(), any());
+
+        AnfahrtskostenKonfiguration konfig = new AnfahrtskostenKonfiguration();
+        konfig.modell = "NUR_KM";
+        konfig.kmSatz = new BigDecimal("0.30");
+        konfig.adresse = "Maximilianstraße 1, 80538 München";
+        Mockito.when(userServiceClient.getAnfahrtskostenKonfiguration()).thenReturn(konfig);
+        // 15 km → 15 × 0.30 = 4.50
+        Mockito.when(osrmClient.getDistanzKm(anyString(), anyString()))
+                .thenReturn(new BigDecimal("15.00"));
+
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+                {
+                  "strukturierteAngebotspositionen": [],
+                  "korrekturvorschlaege": []
+                }
+                """)
+                .when()
+                .post("/angebote/{id}/ki-ergebnis", offerId)
+                .then()
+                .statusCode(200);
+
+        QuarkusTransaction.requiringNew().run(() -> {
+            Offer updatedOffer = Offer.findById(offerId);
+            OfferPosition anfahrt = updatedOffer.positions.stream()
+                    .filter(p -> "Anfahrtskosten".equals(p.bezeichnung))
+                    .findFirst()
+                    .orElseThrow(() -> new AssertionError("Anfahrtskosten-Position fehlt"));
+
+            assertEquals("km", anfahrt.einheit);
+            assertEquals(new BigDecimal("4.50"), anfahrt.preis);
+        });
+    }
+
+    /**
+     * Fehlerfall: OSRM nicht erreichbar → HTTP 200, keine Anfahrtsposition.
+     * Das Angebot wird trotzdem erfolgreich erstellt.
+     */
+    @Test
+    void shouldSkipAnfahrtskostenWhenOsrmFails() throws RoutingException {
+        Offer offer = new Offer();
+        offer.customerId = 1L;
+        offer.businessKey = "angebot-" + UUID.randomUUID().toString();
+        offer.status = Offer.STATUS_IN_BEARBEITUNG;
+        QuarkusTransaction.requiringNew().run(() -> offer.persist());
+        final Long offerId = offer.id;
+
+        Mockito.when(catalogServiceClient.getPreis(any())).thenReturn(null);
+        Mockito.doNothing().when(processEngineClient).sendAiResult(any(), any());
+
+        AnfahrtskostenKonfiguration konfig = new AnfahrtskostenKonfiguration();
+        konfig.modell = "NUR_KM";
+        konfig.kmSatz = new BigDecimal("0.30");
+        konfig.adresse = "Maximilianstraße 1, 80538 München";
+        Mockito.when(userServiceClient.getAnfahrtskostenKonfiguration()).thenReturn(konfig);
+
+        // OsrmClient wirft RoutingException
+        Mockito.when(osrmClient.getDistanzKm(anyString(), anyString()))
+                .thenThrow(new RoutingException("OSRM nicht erreichbar (Testfehler)"));
+
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+                {
+                  "strukturierteAngebotspositionen": [],
+                  "korrekturvorschlaege": []
+                }
+                """)
+                .when()
+                .post("/angebote/{id}/ki-ergebnis", offerId)
+                .then()
+                .statusCode(200);
+
+        QuarkusTransaction.requiringNew().run(() -> {
+            Offer updatedOffer = Offer.findById(offerId);
+            assertEquals(Offer.STATUS_KI_FERTIG, updatedOffer.status,
+                    "Angebot muss trotz OSRM-Fehler KI_FERTIG sein");
+            assertFalse(updatedOffer.positions.stream()
+                    .anyMatch(p -> "Anfahrtskosten".equals(p.bezeichnung)),
+                    "Keine Anfahrtskosten-Position bei OSRM-Fehler");
+        });
     }
 
 }

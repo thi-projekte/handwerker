@@ -8,6 +8,10 @@ import de.winfprojekt.craftvoice.offerservice.offer.dto.OfferAcceptanceRequest;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.OfferAcceptanceResponse;
 import de.winfprojekt.craftvoice.offerservice.catalog.CatalogServiceClient;
 import de.winfprojekt.craftvoice.offerservice.catalog.CatalogPriceResponse;
+import de.winfprojekt.craftvoice.offerservice.user.UserServiceClient;
+import de.winfprojekt.craftvoice.offerservice.user.AnfahrtskostenKonfiguration;
+import de.winfprojekt.craftvoice.offerservice.routing.OsrmClient;
+import de.winfprojekt.craftvoice.offerservice.routing.RoutingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.ws.rs.WebApplicationException;
@@ -15,8 +19,10 @@ import de.winfprojekt.craftvoice.offerservice.offer.dto.OfferResponse;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.UUID;
 import java.util.List;
+import org.jboss.logging.Logger;
 
 /**
  * Service zur Erstellung und Verwaltung von Angeboten.
@@ -27,11 +33,19 @@ import java.util.List;
 @ApplicationScoped
 public class OfferService {
 
+    private static final Logger LOG = Logger.getLogger(OfferService.class);
+
     @Inject
     ProcessEngineClient processEngineClient;
 
     @Inject
     CatalogServiceClient catalogServiceClient;
+
+    @Inject
+    UserServiceClient userServiceClient;
+
+    @Inject
+    OsrmClient osrmClient;
 
     @Inject
     ObjectMapper objectMapper;
@@ -141,6 +155,70 @@ public class OfferService {
             offer.positions.add(position);
         }
 
+        // --- Arbeitszeit-Position ---
+        if (request.geschaetzteArbeitsdauerStunden != null
+                && request.geschaetzteArbeitsdauerStunden.compareTo(BigDecimal.ZERO) > 0) {
+
+            BigDecimal stundensatz = userServiceClient.getStundensatz().stundensatz;
+            BigDecimal arbeitspreis = stundensatz
+                    .multiply(request.geschaetzteArbeitsdauerStunden)
+                    .setScale(2, RoundingMode.HALF_UP);
+
+            OfferPosition arbeitszeitPosition = new OfferPosition();
+            arbeitszeitPosition.offer = offer;
+            arbeitszeitPosition.bezeichnung = "Arbeitszeit";
+            arbeitszeitPosition.einheit = "h";
+            arbeitszeitPosition.menge = request.geschaetzteArbeitsdauerStunden;
+            arbeitszeitPosition.preis = arbeitspreis;
+            arbeitszeitPosition.katalogProduktId = null;
+            arbeitszeitPosition.reihenfolge = reihenfolge++;
+
+            offer.positions.add(arbeitszeitPosition);
+            LOG.debugf("Arbeitszeit-Position angelegt: %s h × %s €/h = %s €",
+                    request.geschaetzteArbeitsdauerStunden, stundensatz, arbeitspreis);
+        }
+
+        // --- Anfahrtskosten-Position ---
+        try {
+            AnfahrtskostenKonfiguration konfig = userServiceClient.getAnfahrtskostenKonfiguration();
+
+            // Kundenadresse: vorerst Stub-Adresse (Abstimmungspunkt 1 — customer-service/user-service)
+            String kundenadresse = ermittleKundenadresse(offer.customerId);
+
+            BigDecimal distanzKm = osrmClient.getDistanzKm(konfig.adresse, kundenadresse);
+            BigDecimal anfahrtspreis = berechneAnfahrtskosten(konfig, distanzKm);
+
+            String einheit;
+            BigDecimal menge;
+            if ("PAUSCHALE".equals(konfig.modell)) {
+                einheit = "pauschal";
+                menge = BigDecimal.ONE;
+            } else {
+                einheit = "km";
+                menge = distanzKm;
+            }
+
+            OfferPosition anfahrtsPosition = new OfferPosition();
+            anfahrtsPosition.offer = offer;
+            anfahrtsPosition.bezeichnung = "Anfahrtskosten";
+            anfahrtsPosition.einheit = einheit;
+            anfahrtsPosition.menge = menge;
+            anfahrtsPosition.preis = anfahrtspreis;
+            anfahrtsPosition.katalogProduktId = null;
+            anfahrtsPosition.reihenfolge = reihenfolge++;
+
+            offer.positions.add(anfahrtsPosition);
+            LOG.debugf("Anfahrtskosten-Position angelegt: Modell=%s, Distanz=%s km, Preis=%s €",
+                    konfig.modell, distanzKm, anfahrtspreis);
+
+        } catch (RoutingException e) {
+            LOG.warnf("Anfahrtskosten konnten nicht berechnet werden, Position wird übersprungen: %s",
+                    e.getMessage());
+        } catch (Exception e) {
+            LOG.warnf("Unerwarteter Fehler bei Anfahrtskostenberechnung, Position wird übersprungen: %s",
+                    e.getMessage());
+        }
+
         offer.status = Offer.STATUS_KI_FERTIG;
 
         OfferStatusHistory history = new OfferStatusHistory();
@@ -161,6 +239,41 @@ public class OfferService {
         }
 
         processEngineClient.sendAiResult(offer.businessKey, ergebnisKiJsonString);
+    }
+
+    /**
+     * Ermittelt die Kundenadresse anhand der customerId.
+     *
+     * <p>Vorerst Stub-Implementierung (Abstimmungspunkt 1 — noch ungeklärt,
+     * ob customer-service oder user-service die Adresse liefert).
+     * Wird ersetzt, sobald der zuständige Service-Endpunkt bekannt ist.
+     *
+     * @param customerId ID des Kunden
+     * @return Adresse als String für die Geocodierung
+     */
+    private String ermittleKundenadresse(Long customerId) {
+        // TODO: Abstimmungspunkt 1 — echten Service-Call implementieren
+        return "Marienplatz 1, 80331 München";
+    }
+
+    /**
+     * Berechnet den Anfahrtskostenbetrag je nach konfiguriertem Modell.
+     *
+     * @param konfig  Anfahrtskostenkonfiguration vom user-service
+     * @param distanzKm ermittelte Fahrdistanz in km
+     * @return berechneter Betrag in Euro, gerundet auf 2 Dezimalstellen
+     */
+    private BigDecimal berechneAnfahrtskosten(AnfahrtskostenKonfiguration konfig, BigDecimal distanzKm) {
+        return switch (konfig.modell) {
+            case "PAUSCHALE" -> konfig.pauschale.setScale(2, RoundingMode.HALF_UP);
+            case "PAUSCHALE_PLUS_KM" -> konfig.pauschale
+                    .add(distanzKm.multiply(konfig.kmSatz))
+                    .setScale(2, RoundingMode.HALF_UP);
+            case "NUR_KM" -> distanzKm.multiply(konfig.kmSatz)
+                    .setScale(2, RoundingMode.HALF_UP);
+            default -> throw new IllegalArgumentException(
+                    "Unbekanntes Anfahrtskostenmodell: " + konfig.modell);
+        };
     }
 
     /**
