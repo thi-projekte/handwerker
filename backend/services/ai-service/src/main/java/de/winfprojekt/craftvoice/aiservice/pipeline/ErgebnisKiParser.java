@@ -68,10 +68,13 @@ public class ErgebnisKiParser {
         List<Position> material = readPositions(sap, "material");
         List<String> notizen = readStrings(sap, "notizen");
         List<String> korrekturvorschlaege = readStrings(root, "korrekturvorschlaege");
+        // Nur gesetzt, wenn der Handwerker eine Dauer ausgesprochen hat (#538-Folge); sonst null.
+        Double geschaetzteArbeitsdauerStunden = readNumber(root, "geschaetzteArbeitsdauerStunden");
 
         return new ErgebnisKi(
                 new Angebotspositionen(leistungen, material, notizen),
-                korrekturvorschlaege);
+                korrekturvorschlaege,
+                geschaetzteArbeitsdauerStunden);
     }
 
     private List<Position> readPositions(JsonNode parent, String field) {

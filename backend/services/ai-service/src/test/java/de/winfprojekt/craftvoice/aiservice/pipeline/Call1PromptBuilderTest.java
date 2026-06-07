@@ -72,4 +72,16 @@ class Call1PromptBuilderTest {
         assertTrue(user.contains("korrekturschnipsel"));
         assertTrue(user.contains("strukturierteAngebotspositionen"));
     }
+
+    @Test
+    void systemPrompt_enthaeltArbeitsdauerRegel_nichtSelbstSchaetzen() {
+        String erst = builder.systemPrompt(ProcessType.ERSTANGEBOT);
+        assertTrue(erst.contains("geschaetzteArbeitsdauerStunden"),
+                "Schema muss das Stunden-Feld enthalten.");
+        assertTrue(erst.contains("NIEMALS selbst"),
+                "Regel muss klarstellen: KI schaetzt die Dauer nicht selbst.");
+
+        String korr = builder.systemPrompt(ProcessType.KORREKTUR);
+        assertTrue(korr.contains("geschaetzteArbeitsdauerStunden"));
+    }
 }

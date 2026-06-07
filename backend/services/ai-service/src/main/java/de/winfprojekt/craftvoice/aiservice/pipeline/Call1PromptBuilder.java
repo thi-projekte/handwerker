@@ -39,7 +39,8 @@ public class Call1PromptBuilder {
                 "material": [ {"bezeichnung": "...", "beschreibung": "...", "menge": <Zahl|null>, "einheit": "..."} ],
                 "notizen": [ "..." ]
               },
-              "korrekturvorschlaege": [ "..." ]
+              "korrekturvorschlaege": [ "..." ],
+              "geschaetzteArbeitsdauerStunden": <Zahl|null>
             }
             2. NIEMALS Preise, Kosten, Stundensaetze oder Geldbetraege ausgeben. Kein 'preis'-Feld, keine Eurobetraege in Texten. Preise werden spaeter aus einer Datenbank ergaenzt.
             3. 'menge' ist immer eine Zahl (z.B. 15 oder 2.5), niemals Text wie 'ca. 15'. Ist eine Menge unbekannt, setze null und weise in 'korrekturvorschlaege' darauf hin.
@@ -48,7 +49,8 @@ public class Call1PromptBuilder {
             6. Erfinde KEINE fremden Gewerke. Erschliesse nur, was fachlich zum genannten Auftrag gehoert.
             7. Bei einer echten fachlichen Weiche, die das Ergebnis stark aendert (z.B. Neuinstallation vs. Geraeteaustausch), rate nicht: triff eine begruendete Annahme und dokumentiere sie in 'korrekturvorschlaege', oder stelle dort die noetige Rueckfrage.
             8. Ignoriere Fuellwoerter, Selbstgespraeche und Stoerungen ('aehm', 'Moment', 'der Kundenname egal'). Verarbeite keine Kundendaten.
-            9. Antworte auf Deutsch.""";
+            9. Antworte auf Deutsch.
+            10. 'geschaetzteArbeitsdauerStunden': NUR ausfuellen, wenn der Handwerker eine Arbeitszeit/Dauer AUSSPRICHT (z.B. 'zwei Stunden' = 2, 'anderthalb Stunden' = 1.5). Gib die Gesamtdauer als EINE Zahl in Stunden an; nennt er mehrere Zeiten, summiere sie. Schaetze die Dauer NIEMALS selbst — wird keine Dauer genannt, setze null. Stunden sind Aufwand, KEIN Preis.""";
 
     static final String SYSTEM_KORREKTUR = """
             Du bist ein erfahrener Kalkulator im deutschen Handwerk. Du ueberarbeitest bestehende strukturierte Angebotspositionen anhand einer gesprochenen Korrektur (Korrekturschnipsel).
@@ -61,7 +63,8 @@ public class Call1PromptBuilder {
                 "material": [ {"bezeichnung": "...", "beschreibung": "...", "menge": <Zahl|null>, "einheit": "..."} ],
                 "notizen": [ "..." ]
               },
-              "korrekturvorschlaege": [ "..." ]
+              "korrekturvorschlaege": [ "..." ],
+              "geschaetzteArbeitsdauerStunden": <Zahl|null>
             }
             2. NIEMALS Preise, Kosten, Stundensaetze oder Geldbetraege ausgeben. Kein 'preis'-Feld, keine Eurobetraege in Texten. Preise werden spaeter aus einer Datenbank ergaenzt.
             3. 'menge' ist immer eine Zahl (z.B. 15 oder 2.5), niemals Text wie 'ca. 15'. Ist eine Menge unbekannt, setze null und weise in 'korrekturvorschlaege' darauf hin.
@@ -70,7 +73,8 @@ public class Call1PromptBuilder {
             6. Erfinde KEINE fremden Gewerke. Ergaenzungen muessen fachlich zum bestehenden Auftrag passen.
             7. Ist eine Korrektur mehrdeutig, rate nicht: triff eine begruendete Annahme und dokumentiere sie in 'korrekturvorschlaege', oder stelle dort die noetige Rueckfrage.
             8. Ignoriere Fuellwoerter, Selbstgespraeche und Stoerungen. Verarbeite keine Kundendaten.
-            9. Antworte auf Deutsch.""";
+            9. Antworte auf Deutsch.
+            10. 'geschaetzteArbeitsdauerStunden': NUR ausfuellen, wenn der Handwerker im Korrekturschnipsel eine Arbeitszeit/Dauer AUSSPRICHT (z.B. 'zwei Stunden' = 2, 'anderthalb Stunden' = 1.5). Gib die Gesamtdauer als EINE Zahl in Stunden an; nennt er mehrere Zeiten, summiere sie. Schaetze die Dauer NIEMALS selbst — wird keine Dauer genannt, setze null. Stunden sind Aufwand, KEIN Preis.""";
 
     private static final String INTRO_ERSTANGEBOT =
             "Hier der Eingangs-Payload (so wie ihn die Process Engine schickt). "
