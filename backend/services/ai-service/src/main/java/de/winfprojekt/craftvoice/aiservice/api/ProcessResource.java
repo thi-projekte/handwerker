@@ -9,6 +9,7 @@ import de.winfprojekt.craftvoice.aiservice.model.ErgebnisKi;
 import de.winfprojekt.craftvoice.aiservice.model.ProcessRequest;
 import de.winfprojekt.craftvoice.aiservice.model.ProcessResponse;
 import de.winfprojekt.craftvoice.aiservice.model.ProcessType;
+import de.winfprojekt.craftvoice.aiservice.pipeline.Call2Selector;
 import de.winfprojekt.craftvoice.aiservice.pipeline.LlmCall1Generator;
 import de.winfprojekt.craftvoice.aiservice.pipeline.ProcessTypeDetector;
 
@@ -45,9 +46,10 @@ import java.util.concurrent.CompletableFuture;
  * Sekunden dauern. Er laeuft daher ebenfalls im Hintergrund-Teil (nach der 202) — der
  * HTTP-Connector wird nicht blockiert und das Subscription-Timing oben bleibt gewahrt.
  *
- * <p>Aktueller Stand: Tickets #529–#534 (Geruest/Routing/Camunda) sowie #538 (echter
- * LLM-Call 1 mit Stub-Fallback) sind ueber diese Klasse abgedeckt; #541 (LLM-Call 2)
- * folgt.
+ * <p>Aktueller Stand: Tickets #529–#534 (Geruest/Routing/Camunda), #538 (echter LLM-Call 1
+ * mit Stub-Fallback) und #541 (LLM-Call 2: Produktauswahl, {@link Call2Selector}) sind ueber
+ * diese Klasse abgedeckt. Call 2 reichert die Materialpositionen nach Call 1 (im Hintergrund)
+ * um Katalog-IDs an, bevor das Ergebnis an Camunda geht.
  */
 @Path("/ai")
 public class ProcessResource {
@@ -56,15 +58,18 @@ public class ProcessResource {
 
     private final ProcessTypeDetector typeDetector;
     private final LlmCall1Generator llmGenerator;
+    private final Call2Selector call2Selector;
     private final CamundaMessageClient camundaClient;
     private final ObjectMapper objectMapper;
 
     public ProcessResource(ProcessTypeDetector typeDetector,
                            LlmCall1Generator llmGenerator,
+                           Call2Selector call2Selector,
                            @RestClient CamundaMessageClient camundaClient,
                            ObjectMapper objectMapper) {
         this.typeDetector = typeDetector;
         this.llmGenerator = llmGenerator;
+        this.call2Selector = call2Selector;
         this.camundaClient = camundaClient;
         this.objectMapper = objectMapper;
     }
@@ -116,6 +121,9 @@ public class ProcessResource {
             case ERSTANGEBOT -> llmGenerator.forErstangebot(request);
             case KORREKTUR   -> llmGenerator.forKorrektur(request);
         };
+
+        // LLM-Call 2 (#541): Materialpositionen um Katalog-IDs anreichern (parallel).
+        ergebnis = call2Selector.enrich(ergebnis);
 
         String ergebnisJson;
         try {
