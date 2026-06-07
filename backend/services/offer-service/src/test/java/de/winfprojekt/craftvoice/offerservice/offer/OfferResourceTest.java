@@ -239,19 +239,15 @@ class OfferResourceTest {
             List<OfferStatusHistory> history =
                     OfferStatusHistory.find("offer.id", offerId).list();
             assertTrue(history.stream().anyMatch(h -> Offer.STATUS_KI_FERTIG.equals(h.status)));
+
+            // Keine Arbeitszeit-Position: wird erst via /arbeitsstunden gesetzt
+            assertFalse(updatedOffer.positions.stream()
+                    .anyMatch(p -> "Arbeitszeit".equals(p.bezeichnung)),
+                    "Keine Arbeitszeit-Position bei ki-ergebnis erwartet");
         });
 
-        // ProcessEngineClient prüfen
-        ArgumentCaptor<String> jsonCaptor = ArgumentCaptor.forClass(String.class);
-        verify(processEngineClient, times(1)).sendAiResult(
-                Mockito.eq(businessKey),
-                jsonCaptor.capture()
-        );
-        String sentJson = jsonCaptor.getValue();
-        assertTrue(sentJson.contains("Badrenovierung"));
-        assertTrue(sentJson.contains("Knauf"));
-        assertTrue(sentJson.contains("49.99"));
-        assertTrue(sentJson.contains("\"customerId\":1"));
+        // sendAiResult darf NICHT durch ki-ergebnis aufgerufen werden (erst durch /arbeitsstunden)
+        verify(processEngineClient, org.mockito.Mockito.never()).sendAiResult(anyString(), anyString());
     }
 
     /**
@@ -571,36 +567,24 @@ class OfferResourceTest {
     // =========================================================================
 
     /**
-     * Happy Path: geschaetzteArbeitsdauerStunden gesetzt → Arbeitszeit-Position wird angelegt.
-     * Stundensatz-Mock: 65,00 €/h × 2 h = 130,00 €
+     * Happy Path: Handwerker trägt 2 Stunden ein → Arbeitszeit-Position wird angelegt.
+     * Stundensatz-Mock: 65,00 €/h × 2 h = 130,00 €.
+     * sendAiResult() wird genau einmal aufgerufen.
      */
     @Test
     void shouldCreateArbeitszeitPositionWhenDauerSet() throws RoutingException {
         Offer offer = new Offer();
         offer.customerId = 1L;
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
-        offer.status = Offer.STATUS_IN_BEARBEITUNG;
+        offer.status = Offer.STATUS_KI_FERTIG;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
         final Long offerId = offer.id;
-
-        // Catalog-Mock
-        Mockito.when(catalogServiceClient.getPreis(any())).thenReturn(null);
+        final String businessKey = offer.businessKey;
 
         // UserService-Mock: 65 €/h
         StundensatzResponse stundensatzResponse = new StundensatzResponse();
         stundensatzResponse.stundensatz = new BigDecimal("65.00");
         Mockito.when(userServiceClient.getStundensatz()).thenReturn(stundensatzResponse);
-
-        // UserService-Mock: Anfahrt NUR_KM (wird berechnet aber separater Test)
-        AnfahrtskostenKonfiguration konfig = new AnfahrtskostenKonfiguration();
-        konfig.modell = "NUR_KM";
-        konfig.kmSatz = new BigDecimal("0.30");
-        konfig.adresse = "Maximilianstraße 1, 80538 München";
-        Mockito.when(userServiceClient.getAnfahrtskostenKonfiguration()).thenReturn(konfig);
-
-        // OsrmClient-Mock: 10 km
-        Mockito.when(osrmClient.getDistanzKm(anyString(), anyString()))
-                .thenReturn(new BigDecimal("10.00"));
 
         // ProcessEngine-Mock
         Mockito.doNothing().when(processEngineClient).sendAiResult(any(), any());
@@ -609,13 +593,11 @@ class OfferResourceTest {
                 .contentType(ContentType.JSON)
                 .body("""
                 {
-                  "strukturierteAngebotspositionen": [],
-                  "korrekturvorschlaege": [],
-                  "geschaetzteArbeitsdauerStunden": 2
+                  "arbeitsdauerStunden": 2
                 }
                 """)
                 .when()
-                .post("/angebote/{id}/ki-ergebnis", offerId)
+                .post("/angebote/{id}/arbeitsstunden", offerId)
                 .then()
                 .statusCode(200);
 
@@ -632,41 +614,35 @@ class OfferResourceTest {
             assertEquals(new BigDecimal("2").setScale(0), arbeit.menge.setScale(0));
             assertEquals(new BigDecimal("130.00"), arbeit.preis);
         });
+
+        // sendAiResult muss durch /arbeitsstunden aufgerufen werden
+        verify(processEngineClient, times(1)).sendAiResult(Mockito.eq(businessKey), anyString());
     }
 
     /**
-     * Kein Arbeitsdauer-Feld → keine Arbeitszeit-Position, HTTP 200.
+     * Handwerker trägt 0 Stunden ein → keine Arbeitszeit-Position, aber sendAiResult() wird trotzdem aufgerufen.
      */
     @Test
-    void shouldNotCreateArbeitszeitPositionWhenDauerNull() throws RoutingException {
+    void shouldNotCreateArbeitszeitPositionWhenDauerNull() {
         Offer offer = new Offer();
         offer.customerId = 1L;
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
-        offer.status = Offer.STATUS_IN_BEARBEITUNG;
+        offer.status = Offer.STATUS_KI_FERTIG;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
         final Long offerId = offer.id;
+        final String businessKey = offer.businessKey;
 
-        Mockito.when(catalogServiceClient.getPreis(any())).thenReturn(null);
-
-        AnfahrtskostenKonfiguration konfig = new AnfahrtskostenKonfiguration();
-        konfig.modell = "NUR_KM";
-        konfig.kmSatz = new BigDecimal("0.30");
-        konfig.adresse = "Maximilianstraße 1, 80538 München";
-        Mockito.when(userServiceClient.getAnfahrtskostenKonfiguration()).thenReturn(konfig);
-        Mockito.when(osrmClient.getDistanzKm(anyString(), anyString()))
-                .thenReturn(new BigDecimal("10.00"));
         Mockito.doNothing().when(processEngineClient).sendAiResult(any(), any());
 
         given()
                 .contentType(ContentType.JSON)
                 .body("""
                 {
-                  "strukturierteAngebotspositionen": [],
-                  "korrekturvorschlaege": []
+                  "arbeitsdauerStunden": 0
                 }
                 """)
                 .when()
-                .post("/angebote/{id}/ki-ergebnis", offerId)
+                .post("/angebote/{id}/arbeitsstunden", offerId)
                 .then()
                 .statusCode(200);
 
@@ -676,6 +652,9 @@ class OfferResourceTest {
                     .anyMatch(p -> "Arbeitszeit".equals(p.bezeichnung)),
                     "Keine Arbeitszeit-Position erwartet");
         });
+
+        // sendAiResult muss trotzdem aufgerufen werden (Handwerker hat bestätigt)
+        verify(processEngineClient, times(1)).sendAiResult(Mockito.eq(businessKey), anyString());
     }
 
     // =========================================================================
@@ -684,6 +663,8 @@ class OfferResourceTest {
 
     /**
      * Modell PAUSCHALE: preis = Pauschalbetrag, menge = 1, einheit = "pauschal".
+     * Routing (OSRM) darf bei PAUSCHALE NICHT aufgerufen werden.
+     * sendAiResult darf bei ki-ergebnis NICHT aufgerufen werden.
      */
     @Test
     void shouldCalculateAnfahrtskostenPauschale() throws RoutingException {
@@ -695,15 +676,13 @@ class OfferResourceTest {
         final Long offerId = offer.id;
 
         Mockito.when(catalogServiceClient.getPreis(any())).thenReturn(null);
-        Mockito.doNothing().when(processEngineClient).sendAiResult(any(), any());
 
         AnfahrtskostenKonfiguration konfig = new AnfahrtskostenKonfiguration();
         konfig.modell = "PAUSCHALE";
         konfig.pauschale = new BigDecimal("50.00");
         konfig.adresse = "Maximilianstraße 1, 80538 München";
         Mockito.when(userServiceClient.getAnfahrtskostenKonfiguration()).thenReturn(konfig);
-        Mockito.when(osrmClient.getDistanzKm(anyString(), anyString()))
-                .thenReturn(new BigDecimal("15.00"));
+        // Kein osrmClient-Mock — OSRM darf bei PAUSCHALE nicht aufgerufen werden
 
         given()
                 .contentType(ContentType.JSON)
@@ -729,6 +708,11 @@ class OfferResourceTest {
             assertEquals(0, BigDecimal.ONE.compareTo(anfahrt.menge));
             assertEquals(new BigDecimal("50.00"), anfahrt.preis);
         });
+
+        // OSRM darf bei PAUSCHALE nie aufgerufen werden
+        Mockito.verify(osrmClient, org.mockito.Mockito.never()).getDistanzKm(anyString(), anyString());
+        // sendAiResult darf bei ki-ergebnis nicht aufgerufen werden
+        verify(processEngineClient, org.mockito.Mockito.never()).sendAiResult(anyString(), anyString());
     }
 
     /**
@@ -779,6 +763,9 @@ class OfferResourceTest {
             assertEquals("km", anfahrt.einheit);
             assertEquals(new BigDecimal("26.00"), anfahrt.preis);
         });
+
+        // sendAiResult darf bei ki-ergebnis nicht aufgerufen werden
+        verify(processEngineClient, org.mockito.Mockito.never()).sendAiResult(anyString(), anyString());
     }
 
     /**
@@ -828,11 +815,15 @@ class OfferResourceTest {
             assertEquals("km", anfahrt.einheit);
             assertEquals(new BigDecimal("4.50"), anfahrt.preis);
         });
+
+        // sendAiResult darf bei ki-ergebnis nicht aufgerufen werden
+        verify(processEngineClient, org.mockito.Mockito.never()).sendAiResult(anyString(), anyString());
     }
 
     /**
      * Fehlerfall: OSRM nicht erreichbar → HTTP 200, keine Anfahrtsposition.
      * Das Angebot wird trotzdem erfolgreich erstellt.
+     * sendAiResult darf nicht aufgerufen werden.
      */
     @Test
     void shouldSkipAnfahrtskostenWhenOsrmFails() throws RoutingException {
@@ -844,7 +835,6 @@ class OfferResourceTest {
         final Long offerId = offer.id;
 
         Mockito.when(catalogServiceClient.getPreis(any())).thenReturn(null);
-        Mockito.doNothing().when(processEngineClient).sendAiResult(any(), any());
 
         AnfahrtskostenKonfiguration konfig = new AnfahrtskostenKonfiguration();
         konfig.modell = "NUR_KM";
@@ -877,6 +867,201 @@ class OfferResourceTest {
                     .anyMatch(p -> "Anfahrtskosten".equals(p.bezeichnung)),
                     "Keine Anfahrtskosten-Position bei OSRM-Fehler");
         });
+
+        // sendAiResult darf nicht aufgerufen werden (erst durch /arbeitsstunden)
+        verify(processEngineClient, org.mockito.Mockito.never()).sendAiResult(anyString(), anyString());
+    }
+
+    // =========================================================================
+    // Neue Tests: POST /angebote/{id}/arbeitsstunden
+    // =========================================================================
+
+    /**
+     * Fehlerfall: Angebot nicht gefunden → HTTP 404.
+     */
+    @Test
+    void arbeitsstunden_shouldReturn404WhenOfferNotFound() {
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+                {
+                  "arbeitsdauerStunden": 2
+                }
+                """)
+                .when()
+                .post("/angebote/{id}/arbeitsstunden", 999999L)
+                .then()
+                .statusCode(404);
+    }
+
+    /**
+     * Fehlerfall: Angebot nicht im Status KI_FERTIG → HTTP 409.
+     */
+    @Test
+    void arbeitsstunden_shouldReturn409WhenOfferNotKiFertig() {
+        Offer offer = new Offer();
+        offer.customerId = 1L;
+        offer.businessKey = "angebot-" + UUID.randomUUID().toString();
+        offer.status = Offer.STATUS_ERFASST;
+        QuarkusTransaction.requiringNew().run(() -> offer.persist());
+
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+                {
+                  "arbeitsdauerStunden": 2
+                }
+                """)
+                .when()
+                .post("/angebote/{id}/arbeitsstunden", offer.id)
+                .then()
+                .statusCode(409);
+    }
+
+    /**
+     * Fehlerfall: arbeitsdauerStunden fehlt im Body (null) → HTTP 400.
+     * Der Handwerker muss explizit einen Wert eintragen.
+     */
+    @Test
+    void arbeitsstunden_shouldReturn400WhenArbeitsdauerNull() {
+        Offer offer = new Offer();
+        offer.customerId = 1L;
+        offer.businessKey = "angebot-" + UUID.randomUUID().toString();
+        offer.status = Offer.STATUS_KI_FERTIG;
+        QuarkusTransaction.requiringNew().run(() -> offer.persist());
+
+        given()
+                .contentType(ContentType.JSON)
+                .body("{}") // kein arbeitsdauerStunden-Feld
+                .when()
+                .post("/angebote/{id}/arbeitsstunden", offer.id)
+                .then()
+                .statusCode(400);
+    }
+
+    /**
+     * Fehlerfall: negative Stundenangabe → HTTP 400.
+     */
+    @Test
+    void arbeitsstunden_shouldReturn400WhenArbeitsdauerNegative() {
+        Offer offer = new Offer();
+        offer.customerId = 1L;
+        offer.businessKey = "angebot-" + UUID.randomUUID().toString();
+        offer.status = Offer.STATUS_KI_FERTIG;
+        QuarkusTransaction.requiringNew().run(() -> offer.persist());
+
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+                {
+                  "arbeitsdauerStunden": -1
+                }
+                """)
+                .when()
+                .post("/angebote/{id}/arbeitsstunden", offer.id)
+                .then()
+                .statusCode(400);
+    }
+
+    /**
+     * Idempotenz: zweimaliger Aufruf → nur eine Arbeitszeit-Position in der DB.
+     */
+    @Test
+    void arbeitsstunden_shouldBeIdempotent() {
+        Offer offer = new Offer();
+        offer.customerId = 1L;
+        offer.businessKey = "angebot-" + UUID.randomUUID().toString();
+        offer.status = Offer.STATUS_KI_FERTIG;
+        QuarkusTransaction.requiringNew().run(() -> offer.persist());
+        final Long offerId = offer.id;
+
+        StundensatzResponse stundensatzResponse = new StundensatzResponse();
+        stundensatzResponse.stundensatz = new BigDecimal("65.00");
+        Mockito.when(userServiceClient.getStundensatz()).thenReturn(stundensatzResponse);
+        Mockito.doNothing().when(processEngineClient).sendAiResult(any(), any());
+
+        // Erster Aufruf: 2 Stunden
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+                {
+                  "arbeitsdauerStunden": 2
+                }
+                """)
+                .when()
+                .post("/angebote/{id}/arbeitsstunden", offerId)
+                .then()
+                .statusCode(200);
+
+        // Zweiter Aufruf: 3 Stunden (Korrektur)
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+                {
+                  "arbeitsdauerStunden": 3
+                }
+                """)
+                .when()
+                .post("/angebote/{id}/arbeitsstunden", offerId)
+                .then()
+                .statusCode(200);
+
+        QuarkusTransaction.requiringNew().run(() -> {
+            Offer updatedOffer = Offer.findById(offerId);
+            long count = updatedOffer.positions.stream()
+                    .filter(p -> "Arbeitszeit".equals(p.bezeichnung))
+                    .count();
+            assertEquals(1, count, "Es darf nur eine Arbeitszeit-Position geben (Idempotenz)");
+
+            OfferPosition arbeit = updatedOffer.positions.stream()
+                    .filter(p -> "Arbeitszeit".equals(p.bezeichnung))
+                    .findFirst().orElseThrow();
+            // Korrekturwert (3 Stunden) muss gespeichert sein
+            assertEquals(new BigDecimal("3").setScale(0), arbeit.menge.setScale(0));
+            assertEquals(new BigDecimal("195.00"), arbeit.preis);
+        });
+    }
+
+    /**
+     * user-service-Ausfall bei Stunden > 0: Arbeitszeit-Position wird übersprungen,
+     * aber das Angebot wird trotzdem persistiert und sendAiResult() wird aufgerufen.
+     */
+    @Test
+    void arbeitsstunden_shouldSkipArbeitszeitWhenUserServiceFails() {
+        Offer offer = new Offer();
+        offer.customerId = 1L;
+        offer.businessKey = "angebot-" + UUID.randomUUID().toString();
+        offer.status = Offer.STATUS_KI_FERTIG;
+        QuarkusTransaction.requiringNew().run(() -> offer.persist());
+        final Long offerId = offer.id;
+        final String businessKey = offer.businessKey;
+
+        // user-service wirft eine Exception
+        Mockito.when(userServiceClient.getStundensatz())
+                .thenThrow(new RuntimeException("user-service nicht erreichbar"));
+        Mockito.doNothing().when(processEngineClient).sendAiResult(any(), any());
+
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+                {
+                  "arbeitsdauerStunden": 3
+                }
+                """)
+                .when()
+                .post("/angebote/{id}/arbeitsstunden", offerId)
+                .then()
+                .statusCode(200);
+
+        QuarkusTransaction.requiringNew().run(() -> {
+            Offer updatedOffer = Offer.findById(offerId);
+            assertFalse(updatedOffer.positions.stream()
+                    .anyMatch(p -> "Arbeitszeit".equals(p.bezeichnung)),
+                    "Keine Arbeitszeit-Position bei user-service-Ausfall erwartet");
+        });
+
+        // sendAiResult muss trotzdem aufgerufen werden
+        verify(processEngineClient, times(1)).sendAiResult(Mockito.eq(businessKey), anyString());
     }
 
 }
