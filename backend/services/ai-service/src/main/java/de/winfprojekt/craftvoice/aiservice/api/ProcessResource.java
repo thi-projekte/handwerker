@@ -9,8 +9,8 @@ import de.winfprojekt.craftvoice.aiservice.model.ErgebnisKi;
 import de.winfprojekt.craftvoice.aiservice.model.ProcessRequest;
 import de.winfprojekt.craftvoice.aiservice.model.ProcessResponse;
 import de.winfprojekt.craftvoice.aiservice.model.ProcessType;
+import de.winfprojekt.craftvoice.aiservice.pipeline.LlmCall1Generator;
 import de.winfprojekt.craftvoice.aiservice.pipeline.ProcessTypeDetector;
-import de.winfprojekt.craftvoice.aiservice.pipeline.StubResultGenerator;
 
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
@@ -41,8 +41,13 @@ import java.util.concurrent.CompletableFuture;
  * die Camunda-Korrelation per {@link CompletableFuture#runAsync} im Hintergrund ab. So
  * ist die Subscription beim Eintreffen unserer Message zuverlaessig aktiv.
  *
- * <p>Aktueller Stand: Tickets #529–#534 sind ueber diese Klasse abgedeckt. Die echte
- * LLM-Pipeline (#538/#541) ersetzt spaeter den {@link StubResultGenerator}.
+ * <p><b>Latenz:</b> Der eigentliche LLM-Call (#538, {@link LlmCall1Generator}) kann mehrere
+ * Sekunden dauern. Er laeuft daher ebenfalls im Hintergrund-Teil (nach der 202) — der
+ * HTTP-Connector wird nicht blockiert und das Subscription-Timing oben bleibt gewahrt.
+ *
+ * <p>Aktueller Stand: Tickets #529–#534 (Geruest/Routing/Camunda) sowie #538 (echter
+ * LLM-Call 1 mit Stub-Fallback) sind ueber diese Klasse abgedeckt; #541 (LLM-Call 2)
+ * folgt.
  */
 @Path("/ai")
 public class ProcessResource {
@@ -50,16 +55,16 @@ public class ProcessResource {
     private static final Logger LOG = Logger.getLogger(ProcessResource.class);
 
     private final ProcessTypeDetector typeDetector;
-    private final StubResultGenerator stubGenerator;
+    private final LlmCall1Generator llmGenerator;
     private final CamundaMessageClient camundaClient;
     private final ObjectMapper objectMapper;
 
     public ProcessResource(ProcessTypeDetector typeDetector,
-                           StubResultGenerator stubGenerator,
+                           LlmCall1Generator llmGenerator,
                            @RestClient CamundaMessageClient camundaClient,
                            ObjectMapper objectMapper) {
         this.typeDetector = typeDetector;
-        this.stubGenerator = stubGenerator;
+        this.llmGenerator = llmGenerator;
         this.camundaClient = camundaClient;
         this.objectMapper = objectMapper;
     }
@@ -83,9 +88,33 @@ public class ProcessResource {
         }
 
         LOG.infof("Routing auf %s (businessKey=%s)", type, businessKey);
+
+        // Schwere Arbeit (LLM-Call ~Sekunden + anschliessendes Senden) bewusst NACH der
+        // HTTP-Antwort im Hintergrund: Erst nach Rueckkehr unserer 202 aktiviert Camunda
+        // intern den ReceiveTask und legt die ergebnisKI-Subscription an. Synchrones
+        // Verarbeiten wuerde (a) die Message u.U. vor der Subscription senden -> HTTP 400
+        // und (b) den HTTP-Connector sekundenlang blockieren.
+        CompletableFuture.runAsync(() -> verarbeiteUndKorreliere(type, request, businessKey))
+                .exceptionally(throwable -> {
+                    LOG.errorf(throwable,
+                            "Asynchrone KI-Verarbeitung fehlgeschlagen (businessKey=%s)",
+                            businessKey);
+                    return null;
+                });
+
+        return Response.accepted(ProcessResponse.accepted(businessKey)).build();
+    }
+
+    /**
+     * Erzeugt das KI-Ergebnis (LLM-Call 1 mit Stub-Fallback), serialisiert es und
+     * korreliert es an Camunda. Laeuft im Hintergrund-Thread (siehe {@link #process}),
+     * darf also blockieren und antwortet dem Aufrufer nicht mehr per HTTP — Fehler werden
+     * nur geloggt.
+     */
+    private void verarbeiteUndKorreliere(ProcessType type, ProcessRequest request, String businessKey) {
         ErgebnisKi ergebnis = switch (type) {
-            case ERSTANGEBOT -> stubGenerator.forErstangebot(request);
-            case KORREKTUR   -> stubGenerator.forKorrektur(request);
+            case ERSTANGEBOT -> llmGenerator.forErstangebot(request);
+            case KORREKTUR   -> llmGenerator.forKorrektur(request);
         };
 
         String ergebnisJson;
@@ -94,23 +123,10 @@ public class ProcessResource {
         } catch (JsonProcessingException e) {
             LOG.errorf(e, "Konnte ergebnisKI nicht zu JSON serialisieren (businessKey=%s)",
                     businessKey);
-            return Response.serverError()
-                    .entity(new ErrorResponse("Interner Fehler bei der Ergebnis-Serialisierung"))
-                    .build();
+            return;
         }
 
-        // Fire-and-forget: nach Rueckkehr unserer HTTP-Antwort aktiviert Camunda
-        // intern den ReceiveTask und legt die Subscription an. Unser asynchroner
-        // Send hat dann eine passende Wartestelle.
-        CompletableFuture.runAsync(() -> sendErgebnisKiToCamunda(businessKey, ergebnisJson))
-                .exceptionally(throwable -> {
-                    LOG.errorf(throwable,
-                            "Asynchrone Camunda-Korrelation fehlgeschlagen (businessKey=%s)",
-                            businessKey);
-                    return null;
-                });
-
-        return Response.accepted(ProcessResponse.accepted(businessKey)).build();
+        sendErgebnisKiToCamunda(businessKey, ergebnisJson);
     }
 
     private void sendErgebnisKiToCamunda(String businessKey, String ergebnisJson) {
