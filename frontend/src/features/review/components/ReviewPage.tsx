@@ -241,6 +241,8 @@ interface PositionsKarteProps {
   onAlternativeWaehlen: (altIndex: number | null) => void;
   onPreisAendern: (preis: number) => void;
   onBezeichnungAendern: (bez: string) => void;
+  onMengeAendern: (menge: number) => void;
+  onLoeschen: () => void;
 }
 
 const PositionsKarte = ({
@@ -252,11 +254,15 @@ const PositionsKarte = ({
   onAlternativeWaehlen,
   onPreisAendern,
   onBezeichnungAendern,
+  onMengeAendern,
+  onLoeschen,
 }: PositionsKarteProps) => {
   const [editPreis, setEditPreis] = useState(false);
   const [editBez, setEditBez] = useState(false);
+  const [editMenge, setEditMenge] = useState(false);
   const [preisWert, setPreisWert] = useState(String(position.preis.toFixed(2)));
   const [bezWert, setBezWert] = useState(position.bezeichnung);
+  const [mengeWert, setMengeWert] = useState(String(position.menge));
 
   const aktuellePos =
     position.gewaehlteAlternativeIndex !== null
@@ -288,7 +294,15 @@ const PositionsKarte = ({
         >
           ▼
         </button>
+        <button
+          className="review-order-btn review-order-del-btn"
+          onClick={onLoeschen}
+          title="Position löschen"
+        >
+          ✕
+        </button>
       </div>
+
       <div className="review-pos-name-box">
         {editBez ? (
           <textarea
@@ -323,9 +337,38 @@ const PositionsKarte = ({
           </span>
         )}
         <span className="review-pos-menge">
-          {aktuellePos.menge} {aktuellePos.einheit}
+          {editMenge ? (
+            <input
+              className="review-pos-menge-input"
+              type="number"
+              step="1"
+              min="0"
+              autoFocus
+              value={mengeWert}
+              onChange={(e) => setMengeWert(e.target.value)}
+              onBlur={() => {
+                setEditMenge(false);
+                const m = parseFloat(mengeWert.replace(",", "."));
+                if (!isNaN(m) && m !== aktuellePos.menge) onMengeAendern(m);
+              }}
+              style={{ width: 52, marginRight: 4 }}
+            />
+          ) : (
+            <span
+              style={{ cursor: "text" }}
+              onClick={() => {
+                setMengeWert(String(aktuellePos.menge));
+                setEditMenge(true);
+              }}
+              title="Menge anpassen"
+            >
+              {aktuellePos.menge}
+            </span>
+          )}{" "}
+          {aktuellePos.einheit}
         </span>
       </div>
+
       <div className="review-pos-preis-box">
         {editPreis ? (
           <input
@@ -355,6 +398,7 @@ const PositionsKarte = ({
         )}
         <span className="review-pos-preis-label">Preis</span>
       </div>
+
       {position.alternativen.length > 0 && (
         <div className="review-pos-alt-box">
           <select
@@ -385,7 +429,6 @@ const PositionsKarte = ({
 };
 
 // ─── Mitarbeiter-Zeile ───
-// Badge erscheint UNTER dem Dropdown (wie Stundensatz) → keine extra Grid-Spalte nötig
 interface MitarbeiterZeileCardProps {
   zeile: MitarbeiterZeile;
   index: number;
@@ -411,10 +454,8 @@ const MitarbeiterZeileCard = ({
     <div
       className={`review-ma-zeile ${zeile.manuellGeaendert ? "manuell" : ""}`}
     >
-      {/* Spalte 1: Index */}
       <span className="review-ma-index">{index + 1}</span>
 
-      {/* Spalte 2: Mitarbeiter-Dropdown + Stundensatz + Badge (alle untereinander) */}
       <div className="review-ma-select-wrap">
         <select
           className="review-mitarbeiter-select"
@@ -432,7 +473,6 @@ const MitarbeiterZeileCard = ({
             {ma.stundensatz.toFixed(2).replace(".", ",")} €/Std.
           </span>
         )}
-        {/* Badge direkt unter Stundensatz – bleibt in Spalte 2, kein eigener Track */}
         {zeile.manuellGeaendert && (
           <span className="review-pos-badge manual review-ma-badge-inline">
             Manuelle Änderung
@@ -440,7 +480,6 @@ const MitarbeiterZeileCard = ({
         )}
       </div>
 
-      {/* Spalte 3: Stunden */}
       <div className="review-ma-stunden-wrap">
         {editStunden ? (
           <input
@@ -471,13 +510,11 @@ const MitarbeiterZeileCard = ({
         )}
       </div>
 
-      {/* Spalte 4: Kosten */}
       <span className="review-ma-kosten">
         {((ma?.stundensatz ?? 0) * zeile.stunden).toFixed(2).replace(".", ",")}{" "}
         €
       </span>
 
-      {/* Spalte 5: Entfernen */}
       <div className="review-ma-actions">
         {kannEntfernen && (
           <button
@@ -622,15 +659,34 @@ export const ReviewPage = () => {
       ),
     );
 
+  const setMenge = (
+    setter: React.Dispatch<React.SetStateAction<Position[]>>,
+    list: Position[],
+    id: string,
+    menge: number,
+  ) =>
+    setter(
+      list.map((p) =>
+        p.id === id ? { ...p, menge, manuellGeaendert: true } : p,
+      ),
+    );
+
+  const removePosition = (
+    setter: React.Dispatch<React.SetStateAction<Position[]>>,
+    id: string,
+  ) => setter((prev) => prev.filter((p) => p.id !== id));
+
   const hatStichpunkte = () =>
     spLeistungen.length > 0 ||
     spMaterialien.length > 0 ||
     spArbeitszeit.length > 0;
+
   const hatManuelleAenderung = () =>
     [...leistungen, ...materialien].some((p) => p.manuellGeaendert) ||
     maZeilen.some((z) => z.manuellGeaendert) ||
     hatStichpunkte() ||
     kiHinweis.trim().length > 0;
+
   const hatReihenfolgeOderAlternative = () =>
     reihenfolgeGeaendert ||
     [...leistungen, ...materialien].some(
@@ -646,7 +702,7 @@ export const ReviewPage = () => {
       return {
         bezeichnung: p.manuellGeaendert ? p.bezeichnung : ap.bezeichnung,
         beschreibung: ap.beschreibung,
-        menge: ap.menge,
+        menge: p.manuellGeaendert ? p.menge : ap.menge,
         einheit: ap.einheit,
         preis: p.manuellGeaendert ? p.preis : ap.preis,
       };
@@ -695,6 +751,7 @@ export const ReviewPage = () => {
     },
     resultEnabled: false,
   });
+
   const buildGenehmigungPayload = () => ({
     messageName: "genehmigungAngebot",
     businessKey: "angebot-001",
@@ -726,13 +783,16 @@ export const ReviewPage = () => {
       (sum, z) => sum + (findMa(z.mitarbeiterId)?.stundensatz ?? 0) * z.stunden,
       0,
     ) + anfahrt;
+
   const gesamtpreis =
     [...leistungen, ...materialien].reduce((sum, p) => {
       const ap =
         p.gewaehlteAlternativeIndex !== null
           ? p.alternativen[p.gewaehlteAlternativeIndex]
           : p;
-      return sum + (p.manuellGeaendert ? p.preis : ap.preis) * ap.menge;
+      const menge = p.manuellGeaendert ? p.menge : ap.menge;
+      const preis = p.manuellGeaendert ? p.preis : ap.preis;
+      return sum + preis * menge;
     }, 0) + arbeitskosten;
 
   return (
@@ -797,6 +857,10 @@ export const ReviewPage = () => {
               onBezeichnungAendern={(b) =>
                 setBez(setLeistungen, leistungen, pos.id, b)
               }
+              onMengeAendern={(m) =>
+                setMenge(setLeistungen, leistungen, pos.id, m)
+              }
+              onLoeschen={() => removePosition(setLeistungen, pos.id)}
             />
           ))}
         </div>
@@ -838,6 +902,10 @@ export const ReviewPage = () => {
               onBezeichnungAendern={(b) =>
                 setBez(setMaterialien, materialien, pos.id, b)
               }
+              onMengeAendern={(m) =>
+                setMenge(setMaterialien, materialien, pos.id, m)
+              }
+              onLoeschen={() => removePosition(setMaterialien, pos.id)}
             />
           ))}
         </div>
