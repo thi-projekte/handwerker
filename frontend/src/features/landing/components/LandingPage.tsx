@@ -43,7 +43,7 @@ export const LandingPage = () => {
                         <div className="landing-actions">
                             <button
                                 className="button-primary"
-                                onClick={() => navigate("/registrierung")}
+                                onClick={() => navigate("/registrieren")}
                             >
                                 Jetzt registrieren
                             </button>
