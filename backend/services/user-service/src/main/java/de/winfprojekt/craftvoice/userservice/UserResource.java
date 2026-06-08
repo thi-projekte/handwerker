@@ -52,7 +52,6 @@ public class UserResource {
 
     @PUT
     @Path("/company")
-    @Authenticated
     @RolesAllowed("OWNER")
     public Response updateCompany(UserEntity data) {
         userService.updateCompanyData(getUserId(), data);
@@ -67,7 +66,6 @@ public class UserResource {
     }
 
     @DELETE
-    @Authenticated
     @RolesAllowed("OWNER")
     public Response deleteAccount() {
         userService.deleteAccount(getUserId());
