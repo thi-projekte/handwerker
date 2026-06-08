@@ -1,6 +1,9 @@
 package de.winfprojekt.craftvoice.offerservice.processengine;
 
 import de.winfprojekt.craftvoice.offerservice.processengine.dto.PeMessagePayload;
+import de.winfprojekt.craftvoice.offerservice.processengine.ProcessEngineClient;
+import de.winfprojekt.craftvoice.offerservice.processengine.ProcessEngineRestClient;
+import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

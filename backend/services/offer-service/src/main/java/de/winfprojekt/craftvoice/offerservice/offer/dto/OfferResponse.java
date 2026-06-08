@@ -1,4 +1,4 @@
-package de.winfprojekt.craftvoice.offerservice.offer.dto;
+    package de.winfprojekt.craftvoice.offerservice.offer.dto;
 
 import de.winfprojekt.craftvoice.offerservice.offer.Offer;
 import de.winfprojekt.craftvoice.offerservice.offer.OfferPosition;
