@@ -4,6 +4,7 @@ import de.winfprojekt.craftvoice.offerservice.offer.dto.AiResultRequest;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.CreateOfferRequest;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.OfferResponse;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.OfferAcceptanceRequest;
+import de.winfprojekt.craftvoice.offerservice.offer.dto.SetArbeitsstundenRequest;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.OfferAcceptanceResponse;
 import jakarta.annotation.security.PermitAll;
 
@@ -62,6 +63,21 @@ public class OfferResource {
         offerService.processAiResult(id, request);
 
         return Response.status(200).build();
+    }
+
+    /**
+     * Verarbeitet die manuell eingetragene Arbeitsdauer des Handwerkers.
+     * Legt ggf. eine Arbeitszeit-Position an und informiert die Process Engine.
+     *
+     * @param id      ID des Angebots (muss im Status KI_FERTIG sein)
+     * @param request Arbeitsstunden-Eingabe des Handwerkers
+     * @return HTTP-Response 200 mit dem aktualisierten Angebot
+     */
+    @POST
+    @Path("/angebote/{id}/arbeitsstunden")
+    public Response setArbeitsstunden(@PathParam("id") Long id, @Valid SetArbeitsstundenRequest request) {
+        OfferResponse response = offerService.setArbeitsstunden(id, request);
+        return Response.ok(response).build();
     }
 
     /**

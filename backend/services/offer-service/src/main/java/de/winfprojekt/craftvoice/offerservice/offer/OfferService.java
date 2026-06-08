@@ -5,9 +5,14 @@ import de.winfprojekt.craftvoice.offerservice.offer.dto.CreateOfferRequest;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.AiResultRequest;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.StructuredOfferPositionDTO;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.OfferAcceptanceRequest;
+import de.winfprojekt.craftvoice.offerservice.offer.dto.SetArbeitsstundenRequest;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.OfferAcceptanceResponse;
 import de.winfprojekt.craftvoice.offerservice.catalog.CatalogServiceClient;
 import de.winfprojekt.craftvoice.offerservice.catalog.CatalogPriceResponse;
+import de.winfprojekt.craftvoice.offerservice.user.UserServiceClient;
+import de.winfprojekt.craftvoice.offerservice.user.AnfahrtskostenKonfiguration;
+import de.winfprojekt.craftvoice.offerservice.routing.OsrmClient;
+import de.winfprojekt.craftvoice.offerservice.routing.RoutingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.ws.rs.WebApplicationException;
@@ -15,8 +20,10 @@ import de.winfprojekt.craftvoice.offerservice.offer.dto.OfferResponse;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.UUID;
 import java.util.List;
+import org.jboss.logging.Logger;
 
 /**
  * Service zur Erstellung und Verwaltung von Angeboten.
@@ -27,11 +34,19 @@ import java.util.List;
 @ApplicationScoped
 public class OfferService {
 
+    private static final Logger LOG = Logger.getLogger(OfferService.class);
+
     @Inject
     ProcessEngineClient processEngineClient;
 
     @Inject
     CatalogServiceClient catalogServiceClient;
+
+    @Inject
+    UserServiceClient userServiceClient;
+
+    @Inject
+    OsrmClient osrmClient;
 
     @Inject
     ObjectMapper objectMapper;
@@ -98,7 +113,10 @@ public class OfferService {
      * - Lädt für jede Position den Preis vom catalog-service (Stub).
      * - Persistiert alle Positionen.
      * - Setzt den Status des Angebots auf KI_FERTIG und legt einen OfferStatusHistory-Eintrag an.
-     * - Sendet das Ergebnis (ohne Preise) als JSON-String an die Process Engine.
+     *
+     * <p>Die Process Engine wird hier NICHT mehr informiert. Das geschieht erst,
+     * wenn der Handwerker seine Arbeitsstunden eingetragen und bestätigt hat
+     * (via {@link #setArbeitsstunden(Long, SetArbeitsstundenRequest)}).
      *
      * @param id ID des Angebots
      * @param request AI-Result-Daten
@@ -141,6 +159,52 @@ public class OfferService {
             offer.positions.add(position);
         }
 
+        // --- Anfahrtskosten-Position ---
+        try {
+            AnfahrtskostenKonfiguration konfig = userServiceClient.getAnfahrtskostenKonfiguration();
+
+            // Kundenadresse: vorerst Stub-Adresse (Abstimmungspunkt 1 — customer-service/user-service)
+            String kundenadresse = ermittleKundenadresse(offer.customerId);
+
+            BigDecimal anfahrtspreis;
+            String einheit;
+            BigDecimal menge;
+
+            if ("PAUSCHALE".equals(konfig.modell)) {
+                // Pauschale benötigt keine Distanz — Routing wird NICHT aufgerufen
+                anfahrtspreis = berechneAnfahrtskosten(konfig, null);
+                einheit = "pauschal";
+                menge = BigDecimal.ONE;
+                LOG.debugf("Anfahrtskosten-Position angelegt: Modell=PAUSCHALE, Preis=%s €", anfahrtspreis);
+            } else {
+                // NUR_KM und PAUSCHALE_PLUS_KM benötigen die Distanz
+                BigDecimal distanzKm = osrmClient.getDistanzKm(konfig.adresse, kundenadresse);
+                anfahrtspreis = berechneAnfahrtskosten(konfig, distanzKm);
+                einheit = "km";
+                menge = distanzKm;
+                LOG.debugf("Anfahrtskosten-Position angelegt: Modell=%s, Distanz=%s km, Preis=%s €",
+                        konfig.modell, distanzKm, anfahrtspreis);
+            }
+
+            OfferPosition anfahrtsPosition = new OfferPosition();
+            anfahrtsPosition.offer = offer;
+            anfahrtsPosition.bezeichnung = "Anfahrtskosten";
+            anfahrtsPosition.einheit = einheit;
+            anfahrtsPosition.menge = menge;
+            anfahrtsPosition.preis = anfahrtspreis;
+            anfahrtsPosition.katalogProduktId = null;
+            anfahrtsPosition.reihenfolge = reihenfolge++;
+
+            offer.positions.add(anfahrtsPosition);
+
+        } catch (RoutingException e) {
+            LOG.warnf("Anfahrtskosten konnten nicht berechnet werden, Position wird übersprungen: %s",
+                    e.getMessage());
+        } catch (Exception e) {
+            LOG.warnf("Unerwarteter Fehler bei Anfahrtskostenberechnung, Position wird übersprungen: %s",
+                    e.getMessage());
+        }
+
         offer.status = Offer.STATUS_KI_FERTIG;
 
         OfferStatusHistory history = new OfferStatusHistory();
@@ -149,18 +213,123 @@ public class OfferService {
         offer.statusHistory.add(history);
 
         offer.persist();
+    }
 
-        // Include customer ID in the result sent back to the Process Engine
-        request.customerId = offer.customerId;
+    /**
+     * Verarbeitet die manuell eingetragene Arbeitsdauer des Handwerkers:
+     * - Angebot muss sich im Status KI_FERTIG befinden.
+     * - Löscht eine bereits vorhandene Arbeitszeit-Position (Idempotenz bei Korrekturen).
+     * - Legt – sofern Stunden > 0 – eine neue Arbeitszeit-Position an (Stunden × Stundensatz).
+     * - Informiert die Process Engine (sendAiResult), damit der Prozess weiterläuft.
+     *
+     * @param id      ID des Angebots
+     * @param request Arbeitsstunden-Eingabe des Handwerkers
+     * @return aktualisiertes Angebot als DTO
+     */
+    @Transactional
+    public OfferResponse setArbeitsstunden(Long id, SetArbeitsstundenRequest request) {
+        Offer offer = Offer.findById(id);
+        if (offer == null) {
+            throw new WebApplicationException("Angebot mit ID " + id + " nicht gefunden", 404);
+        }
 
+        if (!Offer.STATUS_KI_FERTIG.equals(offer.status)) {
+            throw new WebApplicationException(
+                    "Angebot mit ID " + id + " befindet sich nicht im Status KI_FERTIG", 409);
+        }
+
+        // Idempotenz: bestehende Arbeitszeit-Position entfernen (z. B. bei Korrektur)
+        offer.positions.removeIf(p -> "Arbeitszeit".equals(p.bezeichnung));
+
+        if (request.arbeitsdauerStunden.compareTo(BigDecimal.ZERO) > 0) {
+            try {
+                BigDecimal stundensatz = userServiceClient.getStundensatz().stundensatz;
+                BigDecimal arbeitspreis = stundensatz
+                        .multiply(request.arbeitsdauerStunden)
+                        .setScale(2, RoundingMode.HALF_UP);
+
+                int naechsteReihenfolge = offer.positions.stream()
+                        .mapToInt(p -> p.reihenfolge != null ? p.reihenfolge : 0)
+                        .max()
+                        .orElse(0) + 1;
+
+                OfferPosition arbeitszeitPosition = new OfferPosition();
+                arbeitszeitPosition.offer = offer;
+                arbeitszeitPosition.bezeichnung = "Arbeitszeit";
+                arbeitszeitPosition.einheit = "h";
+                arbeitszeitPosition.menge = request.arbeitsdauerStunden;
+                arbeitszeitPosition.preis = arbeitspreis;
+                arbeitszeitPosition.katalogProduktId = null;
+                arbeitszeitPosition.reihenfolge = naechsteReihenfolge;
+
+                offer.positions.add(arbeitszeitPosition);
+                LOG.debugf("Arbeitszeit-Position angelegt: %s h × %s €/h = %s €",
+                        request.arbeitsdauerStunden, stundensatz, arbeitspreis);
+            } catch (Exception e) {
+                LOG.warnf("Stundensatz konnte nicht abgerufen werden, Arbeitszeit-Position wird übersprungen: %s",
+                        e.getMessage());
+            }
+        } else {
+            LOG.debugf("Arbeitsdauer = 0, keine Arbeitszeit-Position angelegt.");
+        }
+
+        offer.persist();
+
+        // Process Engine informieren – Handwerker hat bestätigt, Prozess kann weiterlaufen
         String ergebnisKiJsonString;
         try {
-            ergebnisKiJsonString = objectMapper.writeValueAsString(request);
+            ergebnisKiJsonString = objectMapper.writeValueAsString(
+                    java.util.Map.of(
+                            "customerId", offer.customerId,
+                            "arbeitsdauerStunden", request.arbeitsdauerStunden
+                    )
+            );
         } catch (JsonProcessingException e) {
-            throw new RuntimeException("Fehler beim Serialisieren des AI-Ergebnisses zu JSON", e);
+            throw new RuntimeException("Fehler beim Serialisieren der Arbeitsstunden zu JSON", e);
         }
 
         processEngineClient.sendAiResult(offer.businessKey, ergebnisKiJsonString);
+
+        return OfferResponse.fromEntity(offer);
+    }
+
+    /**
+     * Ermittelt die Kundenadresse anhand der customerId.
+     *
+     * <p>Vorerst Stub-Implementierung (Abstimmungspunkt 1 — noch ungeklärt,
+     * ob customer-service oder user-service die Adresse liefert).
+     * Wird ersetzt, sobald der zuständige Service-Endpunkt bekannt ist.
+     *
+     * @param customerId ID des Kunden
+     * @return Adresse als String für die Geocodierung
+     */
+    private String ermittleKundenadresse(Long customerId) {
+        // TODO: Abstimmungspunkt 1 — echten Service-Call implementieren
+        return "Marienplatz 1, 80331 München";
+    }
+
+    /**
+     * Berechnet den Anfahrtskostenbetrag je nach konfiguriertem Modell.
+     *
+     * <p>Für das Modell PAUSCHALE wird {@code distanzKm} nicht benötigt und
+     * darf {@code null} sein. Bei {@code *_KM}-Modellen muss ein gültiger
+     * Wert übergeben werden.
+     *
+     * @param konfig     Anfahrtskostenkonfiguration vom user-service
+     * @param distanzKm  ermittelte Fahrdistanz in km (bei PAUSCHALE ignoriert)
+     * @return berechneter Betrag in Euro, gerundet auf 2 Dezimalstellen
+     */
+    private BigDecimal berechneAnfahrtskosten(AnfahrtskostenKonfiguration konfig, BigDecimal distanzKm) {
+        return switch (konfig.modell) {
+            case "PAUSCHALE" -> konfig.pauschale.setScale(2, RoundingMode.HALF_UP);
+            case "PAUSCHALE_PLUS_KM" -> konfig.pauschale
+                    .add(distanzKm.multiply(konfig.kmSatz))
+                    .setScale(2, RoundingMode.HALF_UP);
+            case "NUR_KM" -> distanzKm.multiply(konfig.kmSatz)
+                    .setScale(2, RoundingMode.HALF_UP);
+            default -> throw new IllegalArgumentException(
+                    "Unbekanntes Anfahrtskostenmodell: " + konfig.modell);
+        };
     }
 
     /**
