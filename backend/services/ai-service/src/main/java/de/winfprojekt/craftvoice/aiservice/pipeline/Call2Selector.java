@@ -82,7 +82,8 @@ public class Call2Selector {
         }
 
         Angebotspositionen neu = new Angebotspositionen(ap.leistungen(), enriched, ap.notizen());
-        return new ErgebnisKi(neu, ergebnis.korrekturvorschlaege());
+        return new ErgebnisKi(neu, ergebnis.korrekturvorschlaege(),
+                ergebnis.geschaetzteArbeitsdauerStunden());
     }
 
     /** Waehlt fuer eine einzelne Materialposition das Katalogprodukt. */

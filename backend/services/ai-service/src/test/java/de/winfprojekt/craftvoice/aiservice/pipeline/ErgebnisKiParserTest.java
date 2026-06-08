@@ -93,4 +93,21 @@ class ErgebnisKiParserTest {
     void jsonArrayStattObjekt_wirftMegaLlmException() {
         assertThrows(MegaLlmException.class, () -> parser.parse("[1,2,3]"));
     }
+
+    @Test
+    void parstGeschaetzteArbeitsdauerStunden() {
+        String json = """
+                {"strukturierteAngebotspositionen":{"leistungen":[],"material":[],"notizen":[]},
+                 "korrekturvorschlaege":[],"geschaetzteArbeitsdauerStunden":2.5}
+                """;
+        assertEquals(2.5, parser.parse(json).geschaetzteArbeitsdauerStunden());
+    }
+
+    @Test
+    void ohneArbeitsdauer_istNull() {
+        String json = """
+                {"strukturierteAngebotspositionen":{"leistungen":[],"material":[],"notizen":[]},"korrekturvorschlaege":[]}
+                """;
+        assertNull(parser.parse(json).geschaetzteArbeitsdauerStunden());
+    }
 }
