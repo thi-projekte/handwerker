@@ -1,5 +1,6 @@
 package de.winfprojekt.craftvoice.offerservice.offer;
 
+import de.winfprojekt.craftvoice.offerservice.processengine.ProcessEngineClient;
 import jakarta.inject.Inject;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.CreateOfferRequest;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.AiResultRequest;
@@ -50,7 +51,7 @@ public class OfferService {
 
         offer.customerId = request.customerId;
         offer.annahmeToken = UUID.randomUUID().toString();
-        offer.businessKey = "angebot-" + UUID.randomUUID().toString();
+        offer.businessKey = "angebot-" + UUID.randomUUID();
         offer.speechSnippet = request.speechSnippet;
 
         OfferStatusHistory history = new OfferStatusHistory();

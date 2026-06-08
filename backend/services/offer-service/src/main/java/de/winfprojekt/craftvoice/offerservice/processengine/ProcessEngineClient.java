@@ -1,8 +1,10 @@
-package de.winfprojekt.craftvoice.offerservice.offer;
+package de.winfprojekt.craftvoice.offerservice.processengine;
 
+import de.winfprojekt.craftvoice.offerservice.processengine.dto.PeMessagePayload;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
+import jakarta.ws.rs.core.Response;
 
 import java.util.Map;
 
@@ -15,6 +17,30 @@ public class ProcessEngineClient {
         @Inject
         @RestClient
         ProcessEngineRestClient client;
+
+        /**
+         * Methode, die
+         *
+         * @param payload
+         */
+        public void sendMessage(PeMessagePayload payload) {
+
+                try {
+                        Response response = client.sendMessage(payload);
+
+                        if (response.getStatus() >= 400) {
+                                throw new ProcessEngineException(
+                                        "PE antwortete mit Status " + response.getStatus());
+                        }
+
+                } catch (ProcessEngineException e) {
+                        throw e;
+                } catch (Exception e) {
+                        throw new ProcessEngineException(
+                                "Kommunikation mit der Process Engine fehlgeschlagen",
+                                e);
+                }
+        }
 
         /**
          * Übermittelt die Angebotsdaten sowie den Business Key an die Process Engine.
@@ -43,13 +69,14 @@ public class ProcessEngineClient {
                                 "sprachschnipsel", sprachschnipselMap,
                                 "vorlage", vorlageMap);
 
-                Map<String, Object> payload = Map.of(
-                                "messageName", "angebotPayload",
-                                "businessKey", businessKey,
-                                "processVariables", processVariables,
-                                "resultEnabled", false);
+                PeMessagePayload payload = new PeMessagePayload(
+                        "angebotPayload",
+                        businessKey,
+                        processVariables,
+                        false
+                );
 
-                client.sendMessage(payload);
+                sendMessage(payload);
         }
 
         /**
@@ -61,15 +88,19 @@ public class ProcessEngineClient {
          */
         public void sendAiResult(String businessKey, String ergebnisKiJsonString) {
 
-                Map<String, Object> payload = Map.of(
-                                "messageName", "ergebnisKI",
-                                "businessKey", businessKey,
-                                "processVariables", Map.of(
-                                                "ergebnisKI", Map.of(
-                                                                "value", ergebnisKiJsonString,
-                                                                "type", "String")),
-                                "resultEnabled", false);
+                Map<String, Object> processVariables = Map.of(
+                        "ergebnisKI", Map.of(
+                                "value", ergebnisKiJsonString,
+                                "type", "String"));
 
-                client.sendMessage(payload);
+
+                PeMessagePayload payload = new PeMessagePayload(
+                        "ergebnisKI",
+                        businessKey,
+                        processVariables,
+                        false
+                );
+
+                sendMessage(payload);
         }
 }

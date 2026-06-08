@@ -1,5 +1,6 @@
 package de.winfprojekt.craftvoice.offerservice.offer;
 
+import de.winfprojekt.craftvoice.offerservice.processengine.ProcessEngineClient;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
