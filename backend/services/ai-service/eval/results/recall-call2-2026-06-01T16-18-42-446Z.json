@@ -1,0 +1,346 @@
+{
+  "verfahren": "BM25",
+  "k": 15,
+  "katalogGroesse": 400,
+  "recall": {
+    "at5": 0.9285714285714286,
+    "at10": 0.9285714285714286,
+    "at15": 1
+  },
+  "proTyp": {
+    "B": {
+      "n": 4,
+      "at5": 4,
+      "at10": 4,
+      "at15": 4
+    },
+    "C": {
+      "n": 3,
+      "at5": 3,
+      "at10": 3,
+      "at15": 3
+    },
+    "D": {
+      "n": 4,
+      "at5": 4,
+      "at10": 4,
+      "at15": 4
+    },
+    "F": {
+      "n": 2,
+      "at5": 1,
+      "at10": 1,
+      "at15": 2
+    },
+    "A": {
+      "n": 1,
+      "at5": 1,
+      "at10": 1,
+      "at15": 1
+    }
+  },
+  "ergebnisse": [
+    {
+      "id": "C2-S1",
+      "typ": "B",
+      "gewerk": "Bodenbelaege",
+      "keinTreffer": false,
+      "query": "Laminat verlegen Eiche natur, 8 mm, Klicksystem",
+      "gold": [
+        "BOD-1008"
+      ],
+      "gefunden": true,
+      "besterRang": 2,
+      "at5": true,
+      "at10": true,
+      "at15": true,
+      "top3": [
+        "BOD-1007 (16.0)",
+        "BOD-1008 (16.0)",
+        "BOD-1010 (14.9)"
+      ]
+    },
+    {
+      "id": "C2-S2",
+      "typ": "C",
+      "gewerk": "Bodenbelaege",
+      "keinTreffer": false,
+      "query": "Klick-Vinyl verlegen Designboden zum Klicken, Holzoptik hell",
+      "gold": [
+        "BOD-1105"
+      ],
+      "gefunden": true,
+      "besterRang": 2,
+      "at5": true,
+      "at10": true,
+      "at15": true,
+      "top3": [
+        "BOD-1115 (21.6)",
+        "BOD-1105 (17.3)",
+        "BOD-1004 (10.1)"
+      ]
+    },
+    {
+      "id": "C2-S3",
+      "typ": "D",
+      "gewerk": "Bodenbelaege",
+      "keinTreffer": false,
+      "query": "Trittschalldaemmung PE-Schaum, 2 mm, unter Laminat",
+      "gold": [
+        "BOD-1210"
+      ],
+      "gefunden": true,
+      "besterRang": 1,
+      "at5": true,
+      "at10": true,
+      "at15": true,
+      "top3": [
+        "BOD-1210 (24.1)",
+        "BOD-1212 (7.1)",
+        "BOD-1004 (5.4)"
+      ]
+    },
+    {
+      "id": "C2-S4",
+      "typ": "B",
+      "gewerk": "Fliesen",
+      "keinTreffer": false,
+      "query": "Bodenfliesen verlegen Feinsteinzeug grau, Format 60x60",
+      "gold": [
+        "FLI-2060"
+      ],
+      "gefunden": true,
+      "besterRang": 1,
+      "at5": true,
+      "at10": true,
+      "at15": true,
+      "top3": [
+        "FLI-2060 (17.0)",
+        "FLI-2061 (13.4)",
+        "FLI-2062 (13.4)"
+      ]
+    },
+    {
+      "id": "C2-S5",
+      "typ": "D",
+      "gewerk": "Fliesen",
+      "keinTreffer": false,
+      "query": "Fliesenkleber fuer Bodenfliesen Feinsteinzeug",
+      "gold": [
+        "FLI-2300"
+      ],
+      "gefunden": true,
+      "besterRang": 1,
+      "at5": true,
+      "at10": true,
+      "at15": true,
+      "top3": [
+        "FLI-2300 (9.9)",
+        "FLI-2030 (7.5)",
+        "FLI-2060 (7.5)"
+      ]
+    },
+    {
+      "id": "C2-S6",
+      "typ": "F",
+      "gewerk": "Fliesen",
+      "keinTreffer": false,
+      "query": "Fugenkreuze 3 mm",
+      "gold": [
+        "FLI-2410",
+        "FLI-2411"
+      ],
+      "gefunden": true,
+      "besterRang": 13,
+      "at5": false,
+      "at10": false,
+      "at15": true,
+      "top3": [
+        "TRB-9011 (1.7)",
+        "TRB-9019 (1.7)",
+        "TRB-9044 (1.7)"
+      ]
+    },
+    {
+      "id": "C2-S7",
+      "typ": "C",
+      "gewerk": "Sanitaer",
+      "keinTreffer": false,
+      "query": "bodengleiche Dusche einbauen 90x90, befliesbar",
+      "gold": [
+        "SAN-3010"
+      ],
+      "gefunden": true,
+      "besterRang": 1,
+      "at5": true,
+      "at10": true,
+      "at15": true,
+      "top3": [
+        "SAN-3010 (13.0)",
+        "SAN-3050 (10.0)",
+        "SAN-3011 (6.1)"
+      ]
+    },
+    {
+      "id": "C2-S8",
+      "typ": "A",
+      "gewerk": "Sanitaer",
+      "keinTreffer": false,
+      "query": "Ablaufgarnitur Dusche DN 90 Komplettset",
+      "gold": [
+        "SAN-3210"
+      ],
+      "gefunden": true,
+      "besterRang": 1,
+      "at5": true,
+      "at10": true,
+      "at15": true,
+      "top3": [
+        "SAN-3210 (34.1)",
+        "SAN-3220 (7.3)",
+        "SAN-3120 (7.1)"
+      ]
+    },
+    {
+      "id": "C2-S9",
+      "typ": "E",
+      "gewerk": "Sanitaer",
+      "keinTreffer": true,
+      "query": "Unterputz-Thermostat Duscharmatur Unterputz, Thermostat",
+      "koeder": "SAN-3310",
+      "koederImTopK": true,
+      "koederRang": 1
+    },
+    {
+      "id": "C2-S10",
+      "typ": "C",
+      "gewerk": "Trockenbau-Leisten",
+      "keinTreffer": false,
+      "query": "Sockelleisten montieren weiss, MDF",
+      "gold": [
+        "TRB-4010"
+      ],
+      "gefunden": true,
+      "besterRang": 1,
+      "at5": true,
+      "at10": true,
+      "at15": true,
+      "top3": [
+        "TRB-4010 (10.8)",
+        "TRB-4020 (8.1)",
+        "TRB-9015 (6.3)"
+      ]
+    },
+    {
+      "id": "C2-S11",
+      "typ": "B",
+      "gewerk": "Trockenbau-Leisten",
+      "keinTreffer": false,
+      "query": "Daemmplatten XPS, 60 mm",
+      "gold": [
+        "TRB-4210"
+      ],
+      "gefunden": true,
+      "besterRang": 1,
+      "at5": true,
+      "at10": true,
+      "at15": true,
+      "top3": [
+        "TRB-4210 (17.9)",
+        "TRB-4208 (12.9)",
+        "TRB-4212 (12.9)"
+      ]
+    },
+    {
+      "id": "C2-S12",
+      "typ": "F",
+      "gewerk": "Maler",
+      "keinTreffer": false,
+      "query": "Wandfarbe weiss, matt, Innenbereich",
+      "gold": [
+        "MAL-5010",
+        "MAL-5011"
+      ],
+      "gefunden": true,
+      "besterRang": 1,
+      "at5": true,
+      "at10": true,
+      "at15": true,
+      "top3": [
+        "MAL-5010 (12.1)",
+        "MAL-5011 (11.4)",
+        "MAL-9006 (10.2)"
+      ]
+    },
+    {
+      "id": "C2-S13",
+      "typ": "D",
+      "gewerk": "Maler",
+      "keinTreffer": false,
+      "query": "Tiefengrund auftragen Grundierung saugender Untergrund",
+      "gold": [
+        "MAL-5110"
+      ],
+      "gefunden": true,
+      "besterRang": 1,
+      "at5": true,
+      "at10": true,
+      "at15": true,
+      "top3": [
+        "MAL-5110 (19.6)",
+        "MAL-5120 (5.4)",
+        "BOD-1004 (0.0)"
+      ]
+    },
+    {
+      "id": "C2-S14",
+      "typ": "D",
+      "gewerk": "Kleinmaterial",
+      "keinTreffer": false,
+      "query": "Sanitaersilikon transparent, schimmelresistent",
+      "gold": [
+        "KLM-6010"
+      ],
+      "gefunden": true,
+      "besterRang": 1,
+      "at5": true,
+      "at10": true,
+      "at15": true,
+      "top3": [
+        "KLM-6010 (11.8)",
+        "KLM-9003 (7.3)",
+        "MAL-9011 (6.8)"
+      ]
+    },
+    {
+      "id": "C2-S15",
+      "typ": "E",
+      "gewerk": "Fliesen",
+      "keinTreffer": true,
+      "query": "Naturstein-Bodenfliesen Echtmarmor, poliert",
+      "koeder": "FLI-2070",
+      "koederImTopK": true,
+      "koederRang": 1
+    },
+    {
+      "id": "C2-S16",
+      "typ": "B",
+      "gewerk": "Fliesen",
+      "keinTreffer": false,
+      "query": "Fugenmoertel grau 5 kg Gebinde",
+      "gold": [
+        "FLI-2350"
+      ],
+      "gefunden": true,
+      "besterRang": 1,
+      "at5": true,
+      "at10": true,
+      "at15": true,
+      "top3": [
+        "FLI-2350 (15.2)",
+        "FLI-2351 (14.1)",
+        "FLI-2352 (14.1)"
+      ]
+    }
+  ]
+}
