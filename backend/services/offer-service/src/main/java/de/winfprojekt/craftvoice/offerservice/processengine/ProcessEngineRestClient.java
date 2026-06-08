@@ -1,4 +1,4 @@
-package de.winfprojekt.craftvoice.offerservice.offer;
+package de.winfprojekt.craftvoice.offerservice.processengine;
 
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
