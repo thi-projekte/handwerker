@@ -1,0 +1,363 @@
+{
+  "quelle": "C:\\Users\\felix\\Documents\\Studium\\HandwerkerApp\\handwerker\\backend\\services\\ai-service\\eval\\results\\raw-call1-2026-05-31T20-07-54-314Z.jsonl",
+  "judge": "results/judge-2026-05-31T20-07-54-314Z.json",
+  "gewichte": {
+    "vollstaendigkeit": 0.35,
+    "mengen": 0.2,
+    "schema": 0.2,
+    "askVsGuess": 0.15,
+    "latenzKosten": 0.1
+  },
+  "hatJudge": true,
+  "scenarios": [
+    "call1-s1a-floor-extraktion",
+    "call1-s1b-mittel-ambiguitaet",
+    "call1-s2-komplex-bad",
+    "call1-s3-vage-kueche",
+    "call1-s4-korrektur",
+    "call1-s5-minimal-leer"
+  ],
+  "summary": [
+    {
+      "model": "gemini-3.5-flash",
+      "anbieter": "Google",
+      "klasse": "mittel",
+      "calls": 30,
+      "fehler": 0,
+      "koCount": 0,
+      "gesamtPct": 97.2,
+      "konsistenz": 3.4,
+      "vollstPct": 100,
+      "mengenPct": 98,
+      "schemaPct": 98,
+      "askVsGuessPct": 88,
+      "latenzAvgS": 8.9,
+      "latenzMaxS": 14.6,
+      "kostenProCallUSD": 0.00613,
+      "schemaTreue": {
+        "exakt": 28,
+        "fences": 2,
+        "kein-wrapper": 0,
+        "kaputt": 0
+      },
+      "proSzenario": {
+        "call1-s1a-floor-extraktion": 98,
+        "call1-s1b-mittel-ambiguitaet": 93,
+        "call1-s2-komplex-bad": 96,
+        "call1-s3-vage-kueche": 98,
+        "call1-s4-korrektur": 99,
+        "call1-s5-minimal-leer": 99
+      }
+    },
+    {
+      "model": "grok-4.3",
+      "anbieter": "xAI",
+      "klasse": "premium",
+      "calls": 30,
+      "fehler": 0,
+      "koCount": 0,
+      "gesamtPct": 97.1,
+      "konsistenz": 2.2,
+      "vollstPct": 100,
+      "mengenPct": 99,
+      "schemaPct": 100,
+      "askVsGuessPct": 78,
+      "latenzAvgS": 11.3,
+      "latenzMaxS": 19.8,
+      "kostenProCallUSD": 0.00274,
+      "schemaTreue": {
+        "exakt": 30,
+        "fences": 0,
+        "kein-wrapper": 0,
+        "kaputt": 0
+      },
+      "proSzenario": {
+        "call1-s1a-floor-extraktion": 98,
+        "call1-s1b-mittel-ambiguitaet": 95,
+        "call1-s2-komplex-bad": 96,
+        "call1-s3-vage-kueche": 98,
+        "call1-s4-korrektur": 97,
+        "call1-s5-minimal-leer": 99
+      }
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "anbieter": "Google",
+      "klasse": "budget",
+      "calls": 30,
+      "fehler": 1,
+      "koCount": 0,
+      "gesamtPct": 96.7,
+      "konsistenz": 2.6,
+      "vollstPct": 100,
+      "mengenPct": 98,
+      "schemaPct": 98,
+      "askVsGuessPct": 86,
+      "latenzAvgS": 12,
+      "latenzMaxS": 37.2,
+      "kostenProCallUSD": 0.0034,
+      "schemaTreue": {
+        "exakt": 27,
+        "fences": 2,
+        "kein-wrapper": 0,
+        "kaputt": 0
+      },
+      "proSzenario": {
+        "call1-s1a-floor-extraktion": 98,
+        "call1-s1b-mittel-ambiguitaet": 97,
+        "call1-s2-komplex-bad": 93,
+        "call1-s3-vage-kueche": 95,
+        "call1-s4-korrektur": 98,
+        "call1-s5-minimal-leer": 99
+      }
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "anbieter": "Google",
+      "klasse": "wildcard",
+      "calls": 30,
+      "fehler": 0,
+      "koCount": 0,
+      "gesamtPct": 96.3,
+      "konsistenz": 2.8,
+      "vollstPct": 100,
+      "mengenPct": 95,
+      "schemaPct": 100,
+      "askVsGuessPct": 86,
+      "latenzAvgS": 16.3,
+      "latenzMaxS": 37,
+      "kostenProCallUSD": 0.00135,
+      "schemaTreue": {
+        "exakt": 30,
+        "fences": 0,
+        "kein-wrapper": 0,
+        "kaputt": 0
+      },
+      "proSzenario": {
+        "call1-s1a-floor-extraktion": 97,
+        "call1-s1b-mittel-ambiguitaet": 91,
+        "call1-s2-komplex-bad": 96,
+        "call1-s3-vage-kueche": 97,
+        "call1-s4-korrektur": 98,
+        "call1-s5-minimal-leer": 99
+      }
+    },
+    {
+      "model": "gpt-5.5",
+      "anbieter": "OpenAI",
+      "klasse": "premium",
+      "calls": 30,
+      "fehler": 0,
+      "koCount": 0,
+      "gesamtPct": 95.8,
+      "konsistenz": 3,
+      "vollstPct": 100,
+      "mengenPct": 98,
+      "schemaPct": 100,
+      "askVsGuessPct": 90,
+      "latenzAvgS": 13.7,
+      "latenzMaxS": 46.4,
+      "kostenProCallUSD": 0.01831,
+      "schemaTreue": {
+        "exakt": 30,
+        "fences": 0,
+        "kein-wrapper": 0,
+        "kaputt": 0
+      },
+      "proSzenario": {
+        "call1-s1a-floor-extraktion": 97,
+        "call1-s1b-mittel-ambiguitaet": 91,
+        "call1-s2-komplex-bad": 94,
+        "call1-s3-vage-kueche": 96,
+        "call1-s4-korrektur": 98,
+        "call1-s5-minimal-leer": 99
+      }
+    },
+    {
+      "model": "gemini-3.1-pro-preview",
+      "anbieter": "Google",
+      "klasse": "premium",
+      "calls": 30,
+      "fehler": 0,
+      "koCount": 0,
+      "gesamtPct": 95.1,
+      "konsistenz": 3.1,
+      "vollstPct": 100,
+      "mengenPct": 95,
+      "schemaPct": 100,
+      "askVsGuessPct": 84,
+      "latenzAvgS": 19.9,
+      "latenzMaxS": 34,
+      "kostenProCallUSD": 0.00713,
+      "schemaTreue": {
+        "exakt": 30,
+        "fences": 0,
+        "kein-wrapper": 0,
+        "kaputt": 0
+      },
+      "proSzenario": {
+        "call1-s1a-floor-extraktion": 97,
+        "call1-s1b-mittel-ambiguitaet": 93,
+        "call1-s2-komplex-bad": 95,
+        "call1-s3-vage-kueche": 90,
+        "call1-s4-korrektur": 97,
+        "call1-s5-minimal-leer": 99
+      }
+    },
+    {
+      "model": "claude-opus-4-8",
+      "anbieter": "Anthropic",
+      "klasse": "premium",
+      "calls": 30,
+      "fehler": 0,
+      "koCount": 0,
+      "gesamtPct": 95.1,
+      "konsistenz": 1.9,
+      "vollstPct": 100,
+      "mengenPct": 100,
+      "schemaPct": 100,
+      "askVsGuessPct": 91,
+      "latenzAvgS": 11.3,
+      "latenzMaxS": 19.6,
+      "kostenProCallUSD": 0.0346,
+      "schemaTreue": {
+        "exakt": 30,
+        "fences": 0,
+        "kein-wrapper": 0,
+        "kaputt": 0
+      },
+      "proSzenario": {
+        "call1-s1a-floor-extraktion": 96,
+        "call1-s1b-mittel-ambiguitaet": 94,
+        "call1-s2-komplex-bad": 92,
+        "call1-s3-vage-kueche": 95,
+        "call1-s4-korrektur": 96,
+        "call1-s5-minimal-leer": 98
+      }
+    },
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "anbieter": "Anthropic",
+      "klasse": "budget",
+      "calls": 30,
+      "fehler": 0,
+      "koCount": 0,
+      "gesamtPct": 87.4,
+      "konsistenz": 8.9,
+      "vollstPct": 100,
+      "mengenPct": 82,
+      "schemaPct": 70,
+      "askVsGuessPct": 79,
+      "latenzAvgS": 4.8,
+      "latenzMaxS": 9.5,
+      "kostenProCallUSD": 0.00451,
+      "schemaTreue": {
+        "exakt": 0,
+        "fences": 30,
+        "kein-wrapper": 0,
+        "kaputt": 0
+      },
+      "proSzenario": {
+        "call1-s1a-floor-extraktion": 92,
+        "call1-s1b-mittel-ambiguitaet": 91,
+        "call1-s2-komplex-bad": 68,
+        "call1-s3-vage-kueche": 90,
+        "call1-s4-korrektur": 91,
+        "call1-s5-minimal-leer": 93
+      }
+    },
+    {
+      "model": "claude-sonnet-4-6",
+      "anbieter": "Anthropic",
+      "klasse": "mittel",
+      "calls": 30,
+      "fehler": 0,
+      "koCount": 1,
+      "gesamtPct": 85.9,
+      "konsistenz": 16.1,
+      "vollstPct": 100,
+      "mengenPct": 97,
+      "schemaPct": 70,
+      "askVsGuessPct": 90,
+      "latenzAvgS": 14.5,
+      "latenzMaxS": 27.5,
+      "kostenProCallUSD": 0.01886,
+      "schemaTreue": {
+        "exakt": 0,
+        "fences": 30,
+        "kein-wrapper": 0,
+        "kaputt": 0
+      },
+      "proSzenario": {
+        "call1-s1a-floor-extraktion": 72,
+        "call1-s1b-mittel-ambiguitaet": 89,
+        "call1-s2-komplex-bad": 87,
+        "call1-s3-vage-kueche": 86,
+        "call1-s4-korrektur": 90,
+        "call1-s5-minimal-leer": 92
+      }
+    },
+    {
+      "model": "gpt-5.4-mini",
+      "anbieter": "OpenAI",
+      "klasse": "budget",
+      "calls": 30,
+      "fehler": 0,
+      "koCount": 1,
+      "gesamtPct": 78.1,
+      "konsistenz": 21,
+      "vollstPct": 90,
+      "mengenPct": 87,
+      "schemaPct": 56,
+      "askVsGuessPct": 56,
+      "latenzAvgS": 5.7,
+      "latenzMaxS": 9.7,
+      "kostenProCallUSD": 0.00467,
+      "schemaTreue": {
+        "exakt": 4,
+        "fences": 8,
+        "kein-wrapper": 18,
+        "kaputt": 0
+      },
+      "proSzenario": {
+        "call1-s1a-floor-extraktion": 69,
+        "call1-s1b-mittel-ambiguitaet": 72,
+        "call1-s2-komplex-bad": 61,
+        "call1-s3-vage-kueche": 84,
+        "call1-s4-korrektur": 95,
+        "call1-s5-minimal-leer": 88
+      }
+    },
+    {
+      "model": "gpt-5.4",
+      "anbieter": "OpenAI",
+      "klasse": "mittel",
+      "calls": 30,
+      "fehler": 0,
+      "koCount": 2,
+      "gesamtPct": 73.8,
+      "konsistenz": 24.2,
+      "vollstPct": 90,
+      "mengenPct": 94,
+      "schemaPct": 37,
+      "askVsGuessPct": 62,
+      "latenzAvgS": 10.2,
+      "latenzMaxS": 19.9,
+      "kostenProCallUSD": 0.01465,
+      "schemaTreue": {
+        "exakt": 0,
+        "fences": 6,
+        "kein-wrapper": 17,
+        "kaputt": 7
+      },
+      "proSzenario": {
+        "call1-s1a-floor-extraktion": 82,
+        "call1-s1b-mittel-ambiguitaet": 66,
+        "call1-s2-komplex-bad": 47,
+        "call1-s3-vage-kueche": 81,
+        "call1-s4-korrektur": 90,
+        "call1-s5-minimal-leer": 77
+      }
+    }
+  ]
+}

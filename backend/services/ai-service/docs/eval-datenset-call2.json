@@ -1,0 +1,161 @@
+{
+  "version": "2026-06-01",
+  "beschreibung": "Call-2-Eval (Produktauswahl): je Szenario eine Material-Position (Call-1-Output-Stil) -> erwarteter Gold-Artikel aus dem synthetischen Katalog. Gold referenziert articleNumber(s). Der Katalog (eval/data/catalog-call2.json) MUSS diese Gold-Artikel + die genannten Fallen enthalten.",
+  "kandidatenZahl_k": 15,
+  "ownerId": "eval-handwerk",
+  "artikelnummer_schema": "GEWERK-NNNN  (BOD=Boden, FLI=Fliesen, SAN=Sanitaer, TRB=Trockenbau/Leisten, MAL=Maler, KLM=Kleinmaterial)",
+  "typen": {
+    "A": "Eindeutig - genau ein klar passender Artikel",
+    "B": "Dimensions-/Format-Feinunterschied - exakte Attribut-Treue noetig",
+    "C": "Synonym/Umgangssprache - Position umgangssprachlich, Katalog technisch",
+    "D": "Distraktor-Falle - mehrere teilen das Stichwort, nur einer passt",
+    "E": "Kein guter Treffer - Katalog enthaelt das Gesuchte nicht; ehrliches 'kein Treffer' erwartet",
+    "F": "Mehrere akzeptabel - gleichwertige Varianten, Gold ist ein Set"
+  },
+  "scenarios": [
+    {
+      "id": "C2-S1",
+      "typ": "B",
+      "gewerk": "Bodenbelaege",
+      "prueft": "Zwei Achsen gleichzeitig treffen: Staerke (8 mm) UND Dekor (Eiche natur). 7/10/12 mm pruefen die Staerke, Eiche grau 8 mm prueft das Dekor.",
+      "position": { "bezeichnung": "Laminat verlegen", "beschreibung": "Eiche natur, 8 mm, Klicksystem", "menge": 25, "einheit": "m2" },
+      "gold": { "articleNumbers": ["BOD-1008"], "produkt": "Laminatboden Eiche natur, 8 mm, Klicksystem", "begruendung": "Korrekt nur bei Dekor=Eiche natur UND Staerke=8 mm. BOD-1028 (Eiche grau 8 mm) ist trotz gleicher Staerke falsch (Dekor), 7/10/12 mm trotz gleichem Dekor falsch (Staerke)." },
+      "fallen": ["BOD-1007 Eiche natur 7 mm", "BOD-1010 Eiche natur 10 mm", "BOD-1012 Eiche natur 12 mm", "BOD-1028 Eiche grau 8 mm"]
+    },
+    {
+      "id": "C2-S2",
+      "typ": "C",
+      "gewerk": "Bodenbelaege",
+      "prueft": "Umgangssprache 'Klick-Vinyl' vs. Katalogbegriff 'Designboden Klicksystem' - Verstaendnis jenseits der Wortgleichheit.",
+      "position": { "bezeichnung": "Klick-Vinyl verlegen", "beschreibung": "Designboden zum Klicken, Holzoptik hell", "menge": 18, "einheit": "m2" },
+      "gold": { "articleNumbers": ["BOD-1105"], "produkt": "Vinyl-Designboden Klicksystem, Eiche hell", "begruendung": "Klick-Vinyl = Designboden mit Klicksystem; Klebevariante und Laminat sind falsch." },
+      "fallen": ["BOD-1115 Vinyl-Designboden zum Verkleben (Klebevariante)", "BOD-1004 Laminat Holzoptik hell", "BOD-1305 Vinyl-Bodenreiniger"]
+    },
+    {
+      "id": "C2-S3",
+      "typ": "D",
+      "gewerk": "Bodenbelaege",
+      "prueft": "Distraktor: Position spezifiziert PE-Trittschall 2 mm. Andere Trittschall-Typen (XPS, Holzfaser) sind nahe Distraktoren (richtige Kategorie, falscher Typ); Laminat und Waermedaemmung sind weitere Koeder.",
+      "position": { "bezeichnung": "Trittschalldaemmung", "beschreibung": "PE-Schaum, 2 mm, unter Laminat", "menge": 30, "einheit": "m2" },
+      "gold": { "articleNumbers": ["BOD-1210"], "produkt": "Trittschalldaemmung PE-Schaum 2 mm", "begruendung": "Position nennt PE-Schaum 2 mm exakt. XPS-Trittschall und Holzfaser sind anderer Typ (falsch), Laminat und Waermedaemmplatte voellig falsch." },
+      "fallen": ["BOD-1212 Trittschalldaemmung XPS 5 mm (anderer Typ)", "BOD-1214 Trittschall-Holzfaserplatte 5 mm (anderer Typ)", "BOD-1008 Laminat Eiche 8 mm", "TRB-4210 XPS-Daemmplatte 60 mm (Waermedaemmung, kein Trittschall)", "BOD-1220 Verlegeunterlage Kombi mit Dampfsperre"]
+    },
+    {
+      "id": "C2-S4",
+      "typ": "B",
+      "gewerk": "Fliesen",
+      "prueft": "Format-Treue 60x60 grau bei vielen Formaten/Farben.",
+      "position": { "bezeichnung": "Bodenfliesen verlegen", "beschreibung": "Feinsteinzeug grau, Format 60x60", "menge": 12, "einheit": "m2" },
+      "gold": { "articleNumbers": ["FLI-2060"], "produkt": "Bodenfliese Feinsteinzeug grau 60x60", "begruendung": "Exakt Format 60x60 und Farbe grau; 30x30/80x80 und andere Farben falsch, Wandfliese falsch." },
+      "fallen": ["FLI-2030 Bodenfliese grau 30x30", "FLI-2080 Bodenfliese grau 80x80", "FLI-2061 Bodenfliese weiss 60x60", "FLI-2062 Bodenfliese anthrazit 60x60", "FLI-2160 Wandfliese grau 60x60"]
+    },
+    {
+      "id": "C2-S5",
+      "typ": "D",
+      "gewerk": "Fliesen",
+      "prueft": "Distraktor: 'Fliesen'-Stichwort teilen Kleber, Fuge, Fliese, Reiniger - gesucht ist der Kleber.",
+      "position": { "bezeichnung": "Fliesenkleber", "beschreibung": "fuer Bodenfliesen Feinsteinzeug", "menge": 4, "einheit": "Sack" },
+      "gold": { "articleNumbers": ["FLI-2300"], "produkt": "Flexkleber Fliesen C2TE, 25 kg", "begruendung": "Kleber gesucht, nicht Fuge/Fliese/Reiniger." },
+      "fallen": ["FLI-2060 Bodenfliese grau 60x60", "FLI-2350 Fugenmoertel grau", "FLI-2500 Fliesen-Grundreiniger", "KLM-6010 Silikon Sanitaer"]
+    },
+    {
+      "id": "C2-S6",
+      "typ": "F",
+      "gewerk": "Fliesen",
+      "prueft": "F + Terminologie-Luecke: Position sagt 'Fugenkreuze', Katalog fuehrt sie als 'Fliesenkreuze' (gebraeuchliches Synonym). Zwei gleichwertige 3-mm-Marken sind Gold; 2/5 mm falsch. Bewusste Stichwort-Falle.",
+      "position": { "bezeichnung": "Fugenkreuze", "beschreibung": "3 mm", "menge": 1, "einheit": "Pack" },
+      "gold": { "articleNumbers": ["FLI-2410", "FLI-2411"], "produkt": "Fliesenkreuze 3 mm (zwei gleichwertige Marken)", "begruendung": "Beide 3-mm-Varianten gleichwertig korrekt; 2/5 mm falsch. Katalogbegriff 'Fliesenkreuze' weicht bewusst von der Position 'Fugenkreuze' ab (Synonym-Falle fuer die Stichwort-Suche)." },
+      "fallen": ["FLI-2408 Fliesenkreuze 2 mm", "FLI-2415 Fliesenkreuze 5 mm", "FLI-2420 Nivelliersystem Fliesenkeile"]
+    },
+    {
+      "id": "C2-S7",
+      "typ": "C",
+      "gewerk": "Sanitaer",
+      "prueft": "Umgangssprache 'bodengleiche Dusche' vs. Katalog 'Duschelement bodeneben, befliesbar' + Groessen-Treue 90x90.",
+      "position": { "bezeichnung": "bodengleiche Dusche einbauen", "beschreibung": "90x90, befliesbar", "menge": 1, "einheit": "Stk" },
+      "gold": { "articleNumbers": ["SAN-3010"], "produkt": "Duschelement bodeneben, befliesbar, 90x90 cm", "begruendung": "Bodengleich + befliesbar = Duschelement; flache Acrylwanne ist nicht befliesbar; Groesse exakt 90x90." },
+      "fallen": ["SAN-3050 Duschwanne flach Acryl 90x90 (nicht befliesbar)", "SAN-3011 Duschelement befliesbar 100x100", "SAN-3012 Duschelement befliesbar 80x80"]
+    },
+    {
+      "id": "C2-S8",
+      "typ": "A",
+      "gewerk": "Sanitaer",
+      "prueft": "Eindeutige Wahl: ein klar passendes Komplettset, keine echten Near-Duplicates.",
+      "position": { "bezeichnung": "Ablaufgarnitur Dusche", "beschreibung": "DN 90 Komplettset", "menge": 1, "einheit": "Stk" },
+      "gold": { "articleNumbers": ["SAN-3210"], "produkt": "Ablaufgarnitur Dusche DN 90, Komplettset", "begruendung": "Klar passendes Einzelprodukt; andere Ablaeufe (DN50 Siphon) sind offensichtlich anders." },
+      "fallen": ["SAN-3220 Roehrensiphon DN 50 Waschbecken", "SAN-3120 Duschrinne Edelstahl 90 cm"]
+    },
+    {
+      "id": "C2-S9",
+      "typ": "E",
+      "gewerk": "Sanitaer",
+      "prueft": "Kein Treffer: Katalog hat nur Aufputz-Armaturen, kein Unterputz-Thermostat. Ehrliches 'kein passendes Produkt' erwartet.",
+      "position": { "bezeichnung": "Unterputz-Thermostat Duscharmatur", "beschreibung": "Unterputz, Thermostat", "menge": 1, "einheit": "Stk" },
+      "gold": { "articleNumbers": [], "erwartet": "kein-treffer", "begruendung": "Im Katalog existiert kein Unterputz-Thermostat; ein gutes Modell waehlt NICHT eine Aufputz-Armatur, sondern meldet 'kein passendes Produkt' / Rueckfrage." },
+      "fallen": ["SAN-3310 Aufputz-Duscharmatur (kein Thermostat, kein UP)", "SAN-3320 Waschtischarmatur", "SAN-3330 Eckventil"]
+    },
+    {
+      "id": "C2-S10",
+      "typ": "C",
+      "gewerk": "Trockenbau-Leisten",
+      "prueft": "Synonym 'Sockelleiste' vs. Katalog 'Fussleiste'; Distraktor Kabelkanal.",
+      "position": { "bezeichnung": "Sockelleisten montieren", "beschreibung": "weiss, MDF", "menge": 40, "einheit": "lfm" },
+      "gold": { "articleNumbers": ["TRB-4010"], "produkt": "Fussleiste MDF weiss foliert, 58 mm", "begruendung": "Sockelleiste = Fussleiste; weisser Kabelkanal teilt die Optik, ist aber falsch; anderes Dekor falsch." },
+      "fallen": ["TRB-4020 Fussleiste Eiche foliert", "TRB-4030 Kabelkanal weiss 60 mm", "TRB-4040 Uebergangsprofil Alu", "TRB-4050 Winkelleiste weiss"]
+    },
+    {
+      "id": "C2-S11",
+      "typ": "B",
+      "gewerk": "Trockenbau-Leisten",
+      "prueft": "Dicke 60 mm UND Material XPS (nicht EPS) treffen.",
+      "position": { "bezeichnung": "Daemmplatten", "beschreibung": "XPS, 60 mm", "menge": 20, "einheit": "m2" },
+      "gold": { "articleNumbers": ["TRB-4210"], "produkt": "XPS-Daemmplatte 60 mm", "begruendung": "Material XPS und 60 mm exakt; 40/80/100 mm und EPS sind falsch." },
+      "fallen": ["TRB-4208 XPS-Daemmplatte 40 mm", "TRB-4212 XPS-Daemmplatte 80 mm", "TRB-4214 XPS-Daemmplatte 100 mm", "TRB-4260 EPS-Daemmplatte 60 mm"]
+    },
+    {
+      "id": "C2-S12",
+      "typ": "F",
+      "gewerk": "Maler",
+      "prueft": "Mehrere gleichwertige weisse matte Innen-Wandfarben - jede korrekt; Aussen/Buntfarbe/Grundierung falsch.",
+      "position": { "bezeichnung": "Wandfarbe", "beschreibung": "weiss, matt, Innenbereich", "menge": 10, "einheit": "L" },
+      "gold": { "articleNumbers": ["MAL-5010", "MAL-5011"], "produkt": "Wandfarbe weiss matt Innen (zwei gleichwertige Marken)", "begruendung": "Beide Innen-Weiss-matt-Varianten korrekt; Fassadenfarbe/Buntfarbe/Grundierung falsch." },
+      "fallen": ["MAL-5040 Fassadenfarbe weiss (aussen)", "MAL-5060 Wandfarbe seidenglaenzend (Latex)", "MAL-5110 Tiefengrund/Grundierung", "MAL-5200 Abtoenfarbe blau"]
+    },
+    {
+      "id": "C2-S13",
+      "typ": "D",
+      "gewerk": "Maler",
+      "prueft": "Distraktor: 'Grund' teilen Tiefengrund, Haftgrund, Fassadenfarbe - gesucht ist Tiefengrund.",
+      "position": { "bezeichnung": "Tiefengrund auftragen", "beschreibung": "Grundierung saugender Untergrund", "menge": 5, "einheit": "L" },
+      "gold": { "articleNumbers": ["MAL-5110"], "produkt": "Tiefengrund / Grundierung loesemittelfrei", "begruendung": "Tiefengrund fuer saugende Untergruende; Haftgrund hat andere Funktion, Wandfarbe/Putz falsch." },
+      "fallen": ["MAL-5120 Haftgrund (Quarzgrund) fuer nicht-saugende Untergruende", "MAL-5010 Wandfarbe weiss matt", "MAL-5300 Innenputz/Spachtelmasse"]
+    },
+    {
+      "id": "C2-S14",
+      "typ": "D",
+      "gewerk": "Kleinmaterial",
+      "prueft": "Distraktor: Silikon vs. Acryl vs. Silikonentferner - gesucht ist Sanitaersilikon.",
+      "position": { "bezeichnung": "Sanitaersilikon", "beschreibung": "transparent, schimmelresistent", "menge": 1, "einheit": "Kartusche" },
+      "gold": { "articleNumbers": ["KLM-6010"], "produkt": "Silikon Sanitaer transparent, schimmelresistent", "begruendung": "Sanitaersilikon gesucht; Acryl (uebermalbar, nicht nassraumgeeignet) und Silikonentferner falsch." },
+      "fallen": ["KLM-6020 Acryl weiss uebermalbar", "KLM-6030 Silikonentferner", "KLM-6040 Bausilikon neutral", "FLI-2350 Fugenmoertel grau"]
+    },
+    {
+      "id": "C2-S15",
+      "typ": "E",
+      "gewerk": "Fliesen",
+      "prueft": "Kein Treffer: Position will Echt-Naturstein/Marmor; Katalog hat nur Keramik/Feinsteinzeug (auch in Marmoroptik!). Modell darf die Keramik-Marmoroptik NICHT als Naturstein ausgeben.",
+      "position": { "bezeichnung": "Naturstein-Bodenfliesen", "beschreibung": "Echtmarmor, poliert", "menge": 8, "einheit": "m2" },
+      "gold": { "articleNumbers": [], "erwartet": "kein-treffer", "begruendung": "Kein Echt-Naturstein im Katalog. Feinsteinzeug in Marmoroptik ist KEIN Marmor - korrekt waere 'kein Naturstein vorhanden' (optional Hinweis auf Marmoroptik als Alternative im Korrekturvorschlag)." },
+      "fallen": ["FLI-2070 Bodenfliese Feinsteinzeug Marmoroptik poliert (Keramik, KEIN Naturstein)", "FLI-2060 Bodenfliese grau 60x60"]
+    },
+    {
+      "id": "C2-S16",
+      "typ": "B",
+      "gewerk": "Fliesen",
+      "prueft": "Gebinde-Achse: identisches Produkt in 5/12,5/25 kg - nur das geforderte 5-kg-Gebinde ist exakt korrekt. Pruefte Sorte, die sonst in keinem Fall die trennende Achse ist.",
+      "position": { "bezeichnung": "Fugenmoertel grau", "beschreibung": "5 kg Gebinde", "menge": 2, "einheit": "Beutel" },
+      "gold": { "articleNumbers": ["FLI-2350"], "produkt": "Fugenmoertel grau, 5 kg", "begruendung": "Exakt 5-kg-Gebinde gefordert; 12,5/25 kg sind dasselbe Produkt im falschen Gebinde, andere Farbe und Flexkleber falsch." },
+      "fallen": ["FLI-2351 Fugenmoertel grau 12,5 kg", "FLI-2352 Fugenmoertel grau 25 kg", "FLI-2353 Fugenmoertel anthrazit 5 kg", "FLI-2300 Flexkleber C2TE 25 kg"]
+    }
+  ]
+}

@@ -1,0 +1,5042 @@
+{
+  "k": 15,
+  "runs": 5,
+  "modelle": [
+    "google-gemma-4-26b",
+    "gemini-3-flash-preview",
+    "gemini-3.5-flash",
+    "claude-opus-4-8"
+  ],
+  "proModell": {
+    "google-gemma-4-26b": {
+      "gesamt": 1,
+      "gold": 1,
+      "keinTreffer": 1,
+      "ungueltig": 0,
+      "fehler": 0,
+      "avgLatency": 7897,
+      "kosten": 0.03818610000000001
+    },
+    "gemini-3-flash-preview": {
+      "gesamt": 1,
+      "gold": 1,
+      "keinTreffer": 1,
+      "ungueltig": 0,
+      "fehler": 0,
+      "avgLatency": 3609,
+      "kosten": 0.03255700000000001
+    },
+    "gemini-3.5-flash": {
+      "gesamt": 1,
+      "gold": 1,
+      "keinTreffer": 1,
+      "ungueltig": 0,
+      "fehler": 0,
+      "avgLatency": 3106,
+      "kosten": 0.15428550000000002
+    },
+    "claude-opus-4-8": {
+      "gesamt": 1,
+      "gold": 1,
+      "keinTreffer": 1,
+      "ungueltig": 0,
+      "fehler": 9,
+      "avgLatency": 2306,
+      "kosten": 0.625575
+    }
+  },
+  "rohdaten": [
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S1",
+      "typ": "B",
+      "run": 0,
+      "pick": "BOD-1008",
+      "begr": "Dieser Kandidat entspricht exakt der geforderten Spezifikation: Laminat, Eiche natur, 8 mm Stärke mit Klicksystem.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1008"
+      ],
+      "latencyMs": 6507,
+      "kosten": 0.00049425
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S1",
+      "typ": "B",
+      "run": 1,
+      "pick": "BOD-1008",
+      "begr": "Dieser Kandidat entspricht exakt der geforderten Spezifikation: Laminat, Eiche natur, 8 mm Dicke und Klicksystem.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1008"
+      ],
+      "latencyMs": 8917,
+      "kosten": 0.00049485
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S1",
+      "typ": "B",
+      "run": 2,
+      "pick": "BOD-1008",
+      "begr": "Dieser Kandidat entspricht exakt der geforderten Spezifikation: Laminat, Eiche natur, 8 mm Stärke und Klicksystem.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1008"
+      ],
+      "latencyMs": 9756,
+      "kosten": 0.00049485
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S1",
+      "typ": "B",
+      "run": 3,
+      "pick": "BOD-1008",
+      "begr": "Dieser Kandidat entspricht exakt der geforderten Spezifikation: Laminat, Eiche natur, 8 mm Stärke mit Klicksystem.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1008"
+      ],
+      "latencyMs": 5124,
+      "kosten": 0.00049365
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S1",
+      "typ": "B",
+      "run": 4,
+      "pick": "BOD-1008",
+      "begr": "Dieser Kandidat entspricht exakt der geforderten Spezifikation: Laminat, Eiche natur, 8 mm Dicke und Klicksystem.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1008"
+      ],
+      "latencyMs": 4102,
+      "kosten": 0.00049365
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S2",
+      "typ": "C",
+      "run": 0,
+      "pick": "BOD-1105",
+      "begr": "Dieser Kandidat entspricht exakt der Anforderung eines Vinyl-Designbodens mit Klicksystem in heller Holzoptik (Eiche hell).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1105"
+      ],
+      "latencyMs": 6745,
+      "kosten": 0.00061515
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S2",
+      "typ": "C",
+      "run": 1,
+      "pick": "BOD-1105",
+      "begr": "Dieser Kandidat entspricht exakt der Anforderung an Klick-Vinyl in heller Holzoptik (Eiche hell).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1105"
+      ],
+      "latencyMs": 6232,
+      "kosten": 0.0005965499999999999
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S2",
+      "typ": "C",
+      "run": 2,
+      "pick": "BOD-1105",
+      "begr": "Dieser Kandidat entspricht exakt der Anforderung eines Vinyl-Designbodens mit Klicksystem in heller Holzoptik (Eiche hell).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1105"
+      ],
+      "latencyMs": 9150,
+      "kosten": 0.00063795
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S2",
+      "typ": "C",
+      "run": 4,
+      "pick": "BOD-1105",
+      "begr": "Dieser Kandidat entspricht exakt der Anforderung eines Vinyl-Designbodens mit Klicksystem in heller Holzoptik (Eiche hell).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1105"
+      ],
+      "latencyMs": 6182,
+      "kosten": 0.00052395
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S3",
+      "typ": "D",
+      "run": 1,
+      "pick": "BOD-1210",
+      "begr": "Dieser Kandidat entspricht exakt der geforderten Trittschalldämmung aus PE-Schaum mit 2 mm Stärke.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1210"
+      ],
+      "latencyMs": 3408,
+      "kosten": 0.00036045
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S3",
+      "typ": "D",
+      "run": 0,
+      "pick": "BOD-1210",
+      "begr": "Dieser Artikel entspricht exakt der geforderten Trittschalldämmung aus PE-Schaum mit 2 mm Stärke.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1210"
+      ],
+      "latencyMs": 5644,
+      "kosten": 0.00047264999999999997
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S2",
+      "typ": "C",
+      "run": 3,
+      "pick": "BOD-1105",
+      "begr": "Dieser Kandidat entspricht exakt der Anforderung an Vinyl-Designboden mit Klicksystem in heller Holzoptik (Eiche hell).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1105"
+      ],
+      "latencyMs": 11356,
+      "kosten": 0.00061335
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S3",
+      "typ": "D",
+      "run": 4,
+      "pick": "BOD-1210",
+      "begr": "Dieser Kandidat entspricht exakt der geforderten Trittschalldämmung aus PE-Schaum mit 2 mm Stärke für Laminat.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1210"
+      ],
+      "latencyMs": 2740,
+      "kosten": 0.00033825
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S3",
+      "typ": "D",
+      "run": 3,
+      "pick": "BOD-1210",
+      "begr": "Dieser Kandidat entspricht exakt der geforderten Trittschalldämmung aus PE-Schaum mit 2 mm Dicke.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1210"
+      ],
+      "latencyMs": 4468,
+      "kosten": 0.00040005
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S3",
+      "typ": "D",
+      "run": 2,
+      "pick": "BOD-1210",
+      "begr": "Dieser Kandidat entspricht exakt der geforderten Trittschalldämmung aus PE-Schaum mit 2 mm Stärke.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1210"
+      ],
+      "latencyMs": 5034,
+      "kosten": 0.00033644999999999997
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S4",
+      "typ": "B",
+      "run": 0,
+      "pick": "FLI-2060",
+      "begr": "Dieser Kandidat entspricht exakt der Materialvorgabe (Feinsteinzeug), der Farbe (grau) und dem geforderten Format (60x60).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2060"
+      ],
+      "latencyMs": 5599,
+      "kosten": 0.0005409
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S4",
+      "typ": "B",
+      "run": 2,
+      "pick": "FLI-2060",
+      "begr": "Diese Bodenfliese aus Feinsteinzeug in grau und Format 60x60 entspricht exakt der geforderten Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2060"
+      ],
+      "latencyMs": 5247,
+      "kosten": 0.0005348999999999999
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S4",
+      "typ": "B",
+      "run": 1,
+      "pick": "FLI-2060",
+      "begr": "Dieser Kandidat entspricht exakt der geforderten Materialart (Feinsteinzeug), der Farbe (grau) und dem Format (60x60).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2060"
+      ],
+      "latencyMs": 5905,
+      "kosten": 0.0005385
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S4",
+      "typ": "B",
+      "run": 3,
+      "pick": "FLI-2060",
+      "begr": "Dieser Kandidat entspricht exakt der geforderten Materialart (Feinsteinzeug), der Farbe (grau) und dem Format (60x60 cm).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2060"
+      ],
+      "latencyMs": 6878,
+      "kosten": 0.0005493
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S5",
+      "typ": "D",
+      "run": 0,
+      "pick": "FLI-2300",
+      "begr": "Der Flexkleber C2TE ist der passende Kleber für Feinsteinzeug und wird passend zur Menge in Säcken geliefert.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2300"
+      ],
+      "latencyMs": 5066,
+      "kosten": 0.000501
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S5",
+      "typ": "D",
+      "run": 1,
+      "pick": "FLI-2300",
+      "begr": "FLI-2300 ist der einzige passende Flexkleber für Feinsteinzeug, der passenderweise in Säcken verkauft wird.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2300"
+      ],
+      "latencyMs": 3801,
+      "kosten": 0.0005214
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S5",
+      "typ": "D",
+      "run": 2,
+      "pick": "FLI-2300",
+      "begr": "FLI-2300 ist der einzige passende Flexkleber für Feinsteinzeug, der in Säcken geliefert wird.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2300"
+      ],
+      "latencyMs": 4377,
+      "kosten": 0.000516
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S5",
+      "typ": "D",
+      "run": 4,
+      "pick": "FLI-2300",
+      "begr": "FLI-2300 ist der einzige passende Flexkleber für Feinsteinzeug, der passend zur Mengeneinheit in Säcken angeboten wird.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2300"
+      ],
+      "latencyMs": 5726,
+      "kosten": 0.0005237999999999999
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S5",
+      "typ": "D",
+      "run": 3,
+      "pick": "FLI-2300",
+      "begr": "Der Flexkleber C2TE ist speziell für Feinsteinzeug geeignet und wird passend zur Mengeneinheit in Säcken angeboten.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2300"
+      ],
+      "latencyMs": 6545,
+      "kosten": 0.000498
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S6",
+      "typ": "F",
+      "run": 0,
+      "pick": "FLI-2410",
+      "begr": "Der Kandidat FLI-2410 entspricht exakt der geforderten Größe von 3 mm für Fugenkreuze.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2410",
+        "FLI-2411"
+      ],
+      "latencyMs": 5889,
+      "kosten": 0.00048119999999999993
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S6",
+      "typ": "F",
+      "run": 1,
+      "pick": "FLI-2410",
+      "begr": "Der Artikel FLI-2410 entspricht exakt der geforderten Größe von 3 mm für Fugenkreuze.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2410",
+        "FLI-2411"
+      ],
+      "latencyMs": 5971,
+      "kosten": 0.00047219999999999993
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S6",
+      "typ": "F",
+      "run": 3,
+      "pick": "FLI-2410",
+      "begr": "Der Kandidat FLI-2410 entspricht exakt der geforderten Bezeichnung (Fliesenkreuze), der Größe (3 mm) und der Einheit (Pack).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2410",
+        "FLI-2411"
+      ],
+      "latencyMs": 4754,
+      "kosten": 0.0004914
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S6",
+      "typ": "F",
+      "run": 2,
+      "pick": "FLI-2410",
+      "begr": "Der Kandidat entspricht exakt der geforderten Bezeichnung und der Größe von 3 mm.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2410",
+        "FLI-2411"
+      ],
+      "latencyMs": 6985,
+      "kosten": 0.00046619999999999995
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S4",
+      "typ": "B",
+      "run": 4,
+      "pick": "FLI-2060",
+      "begr": "Dieser Kandidat entspricht exakt der geforderten Materialart (Feinsteinzeug), der Farbe (grau) und dem Format (60x60).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2060"
+      ],
+      "latencyMs": 30678,
+      "kosten": 0.0005475
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S7",
+      "typ": "C",
+      "run": 0,
+      "pick": "SAN-3010",
+      "begr": "Das Duschelement entspricht exakt der geforderten Größe von 90x90 cm und ist, wie in der Position gewünscht, befliesbar.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "SAN-3010"
+      ],
+      "latencyMs": 3095,
+      "kosten": 0.0004401
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S6",
+      "typ": "F",
+      "run": 4,
+      "pick": "FLI-2410",
+      "begr": "Der Kandidat FLI-2410 entspricht exakt der geforderten Bezeichnung und der Größe von 3 mm für Fugenkreuze.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2410",
+        "FLI-2411"
+      ],
+      "latencyMs": 10133,
+      "kosten": 0.0004776
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S7",
+      "typ": "C",
+      "run": 1,
+      "pick": "SAN-3010",
+      "begr": "Das Duschelement entspricht exakt der geforderten Größe von 90x90 cm und ist, wie in der Position gewünscht, befliesbar.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "SAN-3010"
+      ],
+      "latencyMs": 6130,
+      "kosten": 0.00044429999999999996
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S7",
+      "typ": "C",
+      "run": 2,
+      "pick": "SAN-3010",
+      "begr": "Das Duschelement entspricht exakt der geforderten Größe von 90x90 cm und der Eigenschaft 'befliesbar'.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "SAN-3010"
+      ],
+      "latencyMs": 5190,
+      "kosten": 0.0004395
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S8",
+      "typ": "A",
+      "run": 0,
+      "pick": "SAN-3210",
+      "begr": "Dieser Artikel entspricht exakt der Bezeichnung und den Spezifikationen der Position (Ablaufgarnitur Dusche DN 90, Komplettset).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "SAN-3210"
+      ],
+      "latencyMs": 4464,
+      "kosten": 0.00033629999999999993
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S7",
+      "typ": "C",
+      "run": 4,
+      "pick": "SAN-3010",
+      "begr": "Das Duschelement entspricht exakt der geforderten Größe von 90x90 cm und ist wie gewünscht befliesbar.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "SAN-3010"
+      ],
+      "latencyMs": 4699,
+      "kosten": 0.00044129999999999994
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S8",
+      "typ": "A",
+      "run": 2,
+      "pick": "SAN-3210",
+      "begr": "Der Kandidat entspricht exakt der Bezeichnung und Spezifikation der Position (Ablaufgarnitur Dusche DN 90, Komplettset).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "SAN-3210"
+      ],
+      "latencyMs": 4004,
+      "kosten": 0.0003117
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S8",
+      "typ": "A",
+      "run": 3,
+      "pick": "SAN-3210",
+      "begr": "Der Kandidat entspricht exakt der Bezeichnung und Spezifikation der Position (Ablaufgarnitur Dusche DN 90, Komplettset).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "SAN-3210"
+      ],
+      "latencyMs": 3377,
+      "kosten": 0.00032729999999999993
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S8",
+      "typ": "A",
+      "run": 4,
+      "pick": "SAN-3210",
+      "begr": "Der Kandidat SAN-3210 entspricht exakt der geforderten Ablaufgarnitur für die Dusche mit DN 90 als Komplettset.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "SAN-3210"
+      ],
+      "latencyMs": 2217,
+      "kosten": 0.0003345
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S8",
+      "typ": "A",
+      "run": 1,
+      "pick": "SAN-3210",
+      "begr": "Dieser Artikel entspricht exakt der Bezeichnung und den technischen Spezifikationen der Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "SAN-3210"
+      ],
+      "latencyMs": 11049,
+      "kosten": 0.0003345
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S9",
+      "typ": "E",
+      "run": 1,
+      "pick": "KEIN_TREFFER",
+      "begr": "Der einzige verfügbare Duscharmatur-Kandidat ist eine Aufputz-Armatur ohne Thermostat, was nicht der geforderten Unterputz-Thermostat-Armatur entspricht.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": true,
+      "gold": [],
+      "latencyMs": 3637,
+      "kosten": 0.00038265
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S9",
+      "typ": "E",
+      "run": 0,
+      "pick": "KEIN_TREFFER",
+      "begr": "Der einzige verfügbare Artikel ist eine Aufputz-Armatur ohne Thermostat, was nicht der geforderten Unterputz-Thermostat-Armatur entspricht.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": true,
+      "gold": [],
+      "latencyMs": 5175,
+      "kosten": 0.00038265
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S9",
+      "typ": "E",
+      "run": 2,
+      "pick": "KEIN_TREFFER",
+      "begr": "Kein passender Unterputz-Thermostat vorhanden; der einzige verfügbare Artikel ist eine Aufputz-Armatur ohne Thermostat.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": true,
+      "gold": [],
+      "latencyMs": 4838,
+      "kosten": 0.00038984999999999996
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S9",
+      "typ": "E",
+      "run": 3,
+      "pick": "KEIN_TREFFER",
+      "begr": "Es ist kein Unterputz-Thermostat verfügbar; der einzige Duscharmatur-Kandidat ist eine Aufputz-Armatur ohne Thermostat.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": true,
+      "gold": [],
+      "latencyMs": 4628,
+      "kosten": 0.00039225
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S10",
+      "typ": "C",
+      "run": 0,
+      "pick": "TRB-4010",
+      "begr": "Dieser Kandidat entspricht exakt der Materialvorgabe (MDF), der Farbe (weiss) und der Mengeneinheit (lfm).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "TRB-4010"
+      ],
+      "latencyMs": 11377,
+      "kosten": 0.0006028499999999999
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S9",
+      "typ": "E",
+      "run": 4,
+      "pick": "KEIN_TREFFER",
+      "begr": "Es ist kein Unterputz-Thermostat verfügbar, lediglich eine Aufputz-Armatur ohne Thermostatfunktion.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": true,
+      "gold": [],
+      "latencyMs": 18893,
+      "kosten": 0.00037125
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S10",
+      "typ": "C",
+      "run": 1,
+      "pick": "TRB-4010",
+      "begr": "Dieser Artikel entspricht exakt der Anforderung (MDF, weiss) und wird in der passenden Einheit (lfm) angeboten.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "TRB-4010"
+      ],
+      "latencyMs": 7705,
+      "kosten": 0.0005938499999999999
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S7",
+      "typ": "C",
+      "run": 3,
+      "pick": "SAN-3010",
+      "begr": "Das Duschelement entspricht exakt der geforderten Größe von 90x90 cm und ist, wie in der Position gewünscht, befliesbar.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "SAN-3010"
+      ],
+      "latencyMs": 44525,
+      "kosten": 0.00044370000000000005
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S10",
+      "typ": "C",
+      "run": 4,
+      "pick": "TRB-4010",
+      "begr": "Dieser Kandidat entspricht exakt der Materialvorgabe (MDF), der Farbe (weiss) und der Mengeneinheit (lfm).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "TRB-4010"
+      ],
+      "latencyMs": 7848,
+      "kosten": 0.0006076499999999999
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S10",
+      "typ": "C",
+      "run": 2,
+      "pick": "TRB-4010",
+      "begr": "Dieser Artikel entspricht exakt der Anforderung (MDF, weiss) und ist in der passenden Einheit (lfm) verfügbar.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "TRB-4010"
+      ],
+      "latencyMs": 12952,
+      "kosten": 0.00060165
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S11",
+      "typ": "B",
+      "run": 0,
+      "pick": "TRB-4210",
+      "begr": "Dieser Kandidat entspricht exakt der geforderten Materialart (XPS) und der Dicke (60 mm).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "TRB-4210"
+      ],
+      "latencyMs": 8848,
+      "kosten": 0.00047384999999999994
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S10",
+      "typ": "C",
+      "run": 3,
+      "pick": "TRB-4010",
+      "begr": "Dieser Artikel entspricht exakt der Anforderung (MDF, weiß foliert) und wird in der passenden Einheit (lfm) angeboten.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "TRB-4010"
+      ],
+      "latencyMs": 18128,
+      "kosten": 0.00060225
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S11",
+      "typ": "B",
+      "run": 1,
+      "pick": "TRB-4210",
+      "begr": "Dieser Kandidat entspricht exakt der geforderten XPS-Dämmplatte mit einer Dicke von 60 mm.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "TRB-4210"
+      ],
+      "latencyMs": 6005,
+      "kosten": 0.00046425
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S11",
+      "typ": "B",
+      "run": 2,
+      "pick": "TRB-4210",
+      "begr": "Dieser Kandidat entspricht exakt der geforderten Materialart (XPS) und der Dicke (60 mm).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "TRB-4210"
+      ],
+      "latencyMs": 5721,
+      "kosten": 0.00046784999999999996
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S11",
+      "typ": "B",
+      "run": 4,
+      "pick": "TRB-4210",
+      "begr": "Dieser Kandidat entspricht exakt der geforderten XPS-Dämmplatte mit einer Dicke von 60 mm.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "TRB-4210"
+      ],
+      "latencyMs": 4900,
+      "kosten": 0.00046845
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S11",
+      "typ": "B",
+      "run": 3,
+      "pick": "TRB-4210",
+      "begr": "Dieser Artikel entspricht exakt der geforderten XPS-Dämmplatte mit einer Dicke von 60 mm.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "TRB-4210"
+      ],
+      "latencyMs": 9227,
+      "kosten": 0.00046185
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S12",
+      "typ": "F",
+      "run": 0,
+      "pick": "MAL-5010",
+      "begr": "Dieser Artikel entspricht exakt der geforderten Spezifikation: Wandfarbe, weiß, matt und für den Innenbereich.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "MAL-5010",
+        "MAL-5011"
+      ],
+      "latencyMs": 9786,
+      "kosten": 0.00054195
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S12",
+      "typ": "F",
+      "run": 1,
+      "pick": "MAL-5010",
+      "begr": "Dieser Artikel entspricht exakt der Anforderung an eine weiße, matte Wandfarbe für den Innenbereich.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "MAL-5010",
+        "MAL-5011"
+      ],
+      "latencyMs": 11725,
+      "kosten": 0.00069975
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S12",
+      "typ": "F",
+      "run": 3,
+      "pick": "MAL-5010",
+      "begr": "Dieser Artikel entspricht exakt der Anforderung: Wandfarbe, weiß, matt und für den Innenbereich.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "MAL-5010",
+        "MAL-5011"
+      ],
+      "latencyMs": 8074,
+      "kosten": 0.00056295
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S12",
+      "typ": "F",
+      "run": 4,
+      "pick": "MAL-5010",
+      "begr": "Dieser Artikel entspricht exakt der Anforderung: Wandfarbe, weiß, matt und für den Innenbereich.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "MAL-5010",
+        "MAL-5011"
+      ],
+      "latencyMs": 8200,
+      "kosten": 0.00054615
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S13",
+      "typ": "D",
+      "run": 0,
+      "pick": "MAL-5110",
+      "begr": "Der Artikel ist ein Tiefengrund für saugende Untergründe, was exakt der Positionsbeschreibung entspricht.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "MAL-5110"
+      ],
+      "latencyMs": 7968,
+      "kosten": 0.0004005
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S13",
+      "typ": "D",
+      "run": 1,
+      "pick": "MAL-5110",
+      "begr": "MAL-5110 ist ein Tiefengrund speziell für saugende Untergründe, was exakt der Positionsbeschreibung entspricht.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "MAL-5110"
+      ],
+      "latencyMs": 6153,
+      "kosten": 0.0004059
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S13",
+      "typ": "D",
+      "run": 2,
+      "pick": "MAL-5110",
+      "begr": "Der Artikel ist ein Tiefengrund für saugende Untergründe, was exakt der Positionsbeschreibung entspricht.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "MAL-5110"
+      ],
+      "latencyMs": 2913,
+      "kosten": 0.0004005
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S12",
+      "typ": "F",
+      "run": 2,
+      "pick": "MAL-5010",
+      "begr": "Dieser Artikel entspricht exakt der Anforderung an eine weiße, matte Wandfarbe für den Innenbereich.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "MAL-5010",
+        "MAL-5011"
+      ],
+      "latencyMs": 28719,
+      "kosten": 0.00079395
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S13",
+      "typ": "D",
+      "run": 4,
+      "pick": "MAL-5110",
+      "begr": "MAL-5110 ist ein Tiefengrund für saugende Untergründe und entspricht damit exakt der geforderten Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "MAL-5110"
+      ],
+      "latencyMs": 6958,
+      "kosten": 0.0004083
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S14",
+      "typ": "D",
+      "run": 0,
+      "pick": "KLM-6010",
+      "begr": "Dieser Artikel entspricht exakt der geforderten Bezeichnung und den Eigenschaften (transparent, schimmelresistent) sowie der Einheit.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "KLM-6010"
+      ],
+      "latencyMs": 3629,
+      "kosten": 0.00038654999999999994
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S13",
+      "typ": "D",
+      "run": 3,
+      "pick": "MAL-5110",
+      "begr": "MAL-5110 ist ein Tiefengrund für saugende Untergründe und entspricht damit exakt der Positionsbeschreibung.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "MAL-5110"
+      ],
+      "latencyMs": 11224,
+      "kosten": 0.0004029
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S14",
+      "typ": "D",
+      "run": 1,
+      "pick": "KLM-6010",
+      "begr": "Dieser Artikel entspricht exakt der geforderten Bezeichnung und den Eigenschaften (Sanitärsilikon, transparent, schimmelresistent) in Kartuschenform.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "KLM-6010"
+      ],
+      "latencyMs": 4807,
+      "kosten": 0.00038475
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S14",
+      "typ": "D",
+      "run": 2,
+      "pick": "KLM-6010",
+      "begr": "Dieser Artikel entspricht exakt der geforderten Bezeichnung, Farbe und Eigenschaft (schimmelresistent) der Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "KLM-6010"
+      ],
+      "latencyMs": 5100,
+      "kosten": 0.00036015
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S14",
+      "typ": "D",
+      "run": 3,
+      "pick": "KLM-6010",
+      "begr": "Dieser Artikel entspricht exakt der geforderten Bezeichnung und den Eigenschaften (transparent, schimmelresistent) für Sanitärsilikon.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "KLM-6010"
+      ],
+      "latencyMs": 5452,
+      "kosten": 0.00038714999999999995
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S14",
+      "typ": "D",
+      "run": 4,
+      "pick": "KLM-6010",
+      "begr": "Dieser Artikel entspricht exakt der geforderten Bezeichnung, Farbe und Eigenschaft (schimmelresistent) der Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "KLM-6010"
+      ],
+      "latencyMs": 4640,
+      "kosten": 0.00035775
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S15",
+      "typ": "E",
+      "run": 0,
+      "pick": "KEIN_TREFFER",
+      "begr": "Alle verfügbaren Kandidaten sind Keramik- oder Feinsteinzeugprodukte, aber kein echter Naturstein wie gefordert.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": true,
+      "gold": [],
+      "latencyMs": 6187,
+      "kosten": 0.0005584499999999999
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S15",
+      "typ": "E",
+      "run": 1,
+      "pick": "KEIN_TREFFER",
+      "begr": "Die Position fordert Echtmarmor (Naturstein), alle verfügbaren Kandidaten sind jedoch Keramik oder Feinsteinzeug.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": true,
+      "gold": [],
+      "latencyMs": 8731,
+      "kosten": 0.00056685
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S15",
+      "typ": "E",
+      "run": 2,
+      "pick": "KEIN_TREFFER",
+      "begr": "Die Position fordert Echtmarmor (Naturstein), alle verfügbaren Kandidaten sind jedoch Feinsteinzeug oder Keramik.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": true,
+      "gold": [],
+      "latencyMs": 7945,
+      "kosten": 0.00059085
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S15",
+      "typ": "E",
+      "run": 3,
+      "pick": "KEIN_TREFFER",
+      "begr": "Die Position fordert Echtmarmor (Naturstein), alle verfügbaren Kandidaten sind jedoch Keramik- oder Feinsteinzeugprodukte.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": true,
+      "gold": [],
+      "latencyMs": 6857,
+      "kosten": 0.00058785
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S16",
+      "typ": "B",
+      "run": 0,
+      "pick": "FLI-2350",
+      "begr": "Dieser Artikel entspricht exakt der Bezeichnung, der Farbe und der geforderten Packungsgröße von 5 kg.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2350"
+      ],
+      "latencyMs": 6070,
+      "kosten": 0.00047295
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S16",
+      "typ": "B",
+      "run": 1,
+      "pick": "FLI-2350",
+      "begr": "Dieser Artikel entspricht exakt der Bezeichnung, der Farbe und der geforderten Packungsgröße von 5 kg.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2350"
+      ],
+      "latencyMs": 4970,
+      "kosten": 0.00040754999999999996
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S16",
+      "typ": "B",
+      "run": 2,
+      "pick": "FLI-2350",
+      "begr": "Der Artikel entspricht exakt der geforderten Bezeichnung, Farbe und der Gebindegröße von 5 kg.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2350"
+      ],
+      "latencyMs": 5796,
+      "kosten": 0.00040934999999999995
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S16",
+      "typ": "B",
+      "run": 3,
+      "pick": "FLI-2350",
+      "begr": "Dieser Artikel entspricht exakt der geforderten Bezeichnung und der Packungsgröße von 5 kg.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2350"
+      ],
+      "latencyMs": 8874,
+      "kosten": 0.00043154999999999995
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S15",
+      "typ": "E",
+      "run": 4,
+      "pick": "KEIN_TREFFER",
+      "begr": "Die Position fordert echten Marmor, während alle verfügbaren Kandidaten aus Keramik oder Feinsteinzeug bestehen.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": true,
+      "gold": [],
+      "latencyMs": 17314,
+      "kosten": 0.0005794499999999999
+    },
+    {
+      "model": "google-gemma-4-26b",
+      "id": "C2-S16",
+      "typ": "B",
+      "run": 4,
+      "pick": "FLI-2350",
+      "begr": "Dieser Artikel entspricht exakt der geforderten Bezeichnung, Farbe und der Gebindegröße von 5 kg.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2350"
+      ],
+      "latencyMs": 6111,
+      "kosten": 0.00039975
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S1",
+      "typ": "B",
+      "run": 0,
+      "pick": "BOD-1008",
+      "begr": "Der Artikel entspricht exakt der geforderten Spezifikation hinsichtlich Material (Laminat), Dekor (Eiche natur), Stärke (8 mm) und Verlegesystem (Klicksystem).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1008"
+      ],
+      "latencyMs": 3713,
+      "kosten": 0.0004508
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S1",
+      "typ": "B",
+      "run": 1,
+      "pick": "BOD-1008",
+      "begr": "Der Artikel BOD-1008 entspricht exakt der geforderten Spezifikation hinsichtlich Material (Laminat), Dekor (Eiche natur) und Stärke (8 mm).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1008"
+      ],
+      "latencyMs": 3399,
+      "kosten": 0.00044080000000000004
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S1",
+      "typ": "B",
+      "run": 2,
+      "pick": "BOD-1008",
+      "begr": "Der Artikel BOD-1008 entspricht exakt der geforderten Spezifikation hinsichtlich Material (Laminat), Dekor (Eiche natur) und Stärke (8 mm).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1008"
+      ],
+      "latencyMs": 4308,
+      "kosten": 0.00044080000000000004
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S1",
+      "typ": "B",
+      "run": 4,
+      "pick": "BOD-1008",
+      "begr": "Der Artikel entspricht exakt der geforderten Materialart, dem Dekor Eiche natur sowie der Materialstärke von 8 mm mit Klicksystem.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1008"
+      ],
+      "latencyMs": 3578,
+      "kosten": 0.0004158
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S1",
+      "typ": "B",
+      "run": 3,
+      "pick": "BOD-1008",
+      "begr": "Der Artikel entspricht exakt der geforderten Materialart, dem Dekor Eiche natur sowie der Materialstärke von 8 mm mit Klicksystem.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1008"
+      ],
+      "latencyMs": 3947,
+      "kosten": 0.0004158
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S2",
+      "typ": "C",
+      "run": 1,
+      "pick": "BOD-1105",
+      "begr": "Der Artikel entspricht exakt den Anforderungen: Vinyl-Designboden mit Klicksystem in heller Holzoptik (Eiche hell).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1105"
+      ],
+      "latencyMs": 4066,
+      "kosten": 0.0004225
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S2",
+      "typ": "C",
+      "run": 0,
+      "pick": "BOD-1105",
+      "begr": "Der Artikel entspricht exakt dem geforderten Material (Vinyl), dem Verlegesystem (Klick) und der gewünschten hellen Holzoptik (Eiche hell).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1105"
+      ],
+      "latencyMs": 5628,
+      "kosten": 0.0004425
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S2",
+      "typ": "C",
+      "run": 2,
+      "pick": "BOD-1105",
+      "begr": "Dieser Artikel entspricht exakt den Anforderungen an Material (Vinyl), Verlegesystem (Klick) und Optik (Eiche hell).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1105"
+      ],
+      "latencyMs": 5867,
+      "kosten": 0.000425
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S3",
+      "typ": "D",
+      "run": 0,
+      "pick": "BOD-1210",
+      "begr": "Der Artikel BOD-1210 entspricht exakt der geforderten Trittschalldämmung aus PE-Schaum mit einer Stärke von 2 mm.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1210"
+      ],
+      "latencyMs": 2486,
+      "kosten": 0.0004023
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S2",
+      "typ": "C",
+      "run": 3,
+      "pick": "BOD-1105",
+      "begr": "Dieser Artikel entspricht exakt den Anforderungen an das Material (Vinyl), das Verlegesystem (Klick) und die gewuenschte helle Holzoptik (Eiche hell).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1105"
+      ],
+      "latencyMs": 4433,
+      "kosten": 0.0004525
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S2",
+      "typ": "C",
+      "run": 4,
+      "pick": "BOD-1105",
+      "begr": "Dieser Artikel entspricht exakt den Anforderungen an Material (Vinyl), Verlegesystem (Klick) und der gewünschten hellen Holzoptik (Eiche hell).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1105"
+      ],
+      "latencyMs": 4262,
+      "kosten": 0.000445
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S3",
+      "typ": "D",
+      "run": 1,
+      "pick": "BOD-1210",
+      "begr": "Der Kandidat BOD-1210 entspricht exakt der geforderten Trittschalldämmung aus PE-Schaum mit einer Stärke von 2 mm für Laminatböden.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1210"
+      ],
+      "latencyMs": 2830,
+      "kosten": 0.0004248
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S3",
+      "typ": "D",
+      "run": 2,
+      "pick": "BOD-1210",
+      "begr": "Der Artikel entspricht exakt der geforderten Trittschalldämmung aus PE-Schaum mit 2 mm Stärke für Laminatböden.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1210"
+      ],
+      "latencyMs": 2769,
+      "kosten": 0.0004023
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S3",
+      "typ": "D",
+      "run": 3,
+      "pick": "BOD-1210",
+      "begr": "Der Artikel BOD-1210 entspricht exakt der geforderten Trittschalldämmung aus PE-Schaum mit 2 mm Stärke für Laminatböden.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1210"
+      ],
+      "latencyMs": 2992,
+      "kosten": 0.0004148
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S3",
+      "typ": "D",
+      "run": 4,
+      "pick": "BOD-1210",
+      "begr": "Der Artikel BOD-1210 entspricht exakt der geforderten Trittschalldämmung aus PE-Schaum mit einer Stärke von 2 mm.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1210"
+      ],
+      "latencyMs": 2423,
+      "kosten": 0.0004023
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S4",
+      "typ": "B",
+      "run": 0,
+      "pick": "FLI-2060",
+      "begr": "Der Artikel FLI-2060 entspricht exakt dem geforderten Material (Feinsteinzeug), der Farbe (grau) und dem Format (60x60 cm).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2060"
+      ],
+      "latencyMs": 3960,
+      "kosten": 0.0004296
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S4",
+      "typ": "B",
+      "run": 1,
+      "pick": "FLI-2060",
+      "begr": "Der Artikel entspricht exakt dem geforderten Material (Feinsteinzeug), der Farbe (grau) und dem Format (60x60).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2060"
+      ],
+      "latencyMs": 3948,
+      "kosten": 0.00041459999999999994
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S4",
+      "typ": "B",
+      "run": 2,
+      "pick": "FLI-2060",
+      "begr": "Der Artikel entspricht exakt dem geforderten Material (Feinsteinzeug), der Farbe (grau) und dem Format (60x60).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2060"
+      ],
+      "latencyMs": 3779,
+      "kosten": 0.00041459999999999994
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S4",
+      "typ": "B",
+      "run": 3,
+      "pick": "FLI-2060",
+      "begr": "Der Artikel FLI-2060 entspricht exakt dem geforderten Material (Feinsteinzeug), der Farbe (grau) und dem Format (60x60 cm).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2060"
+      ],
+      "latencyMs": 4615,
+      "kosten": 0.00043959999999999995
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S5",
+      "typ": "D",
+      "run": 0,
+      "pick": "FLI-2300",
+      "begr": "Der Flexkleber FLI-2300 ist explizit für Feinsteinzeug geeignet und entspricht der geforderten Mengeneinheit Sack.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2300"
+      ],
+      "latencyMs": 2904,
+      "kosten": 0.0004096
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S4",
+      "typ": "B",
+      "run": 4,
+      "pick": "FLI-2060",
+      "begr": "Der Artikel FLI-2060 entspricht exakt dem geforderten Material (Feinsteinzeug), der Farbe (grau) und dem Format (60x60 cm).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2060"
+      ],
+      "latencyMs": 5049,
+      "kosten": 0.00043959999999999995
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S5",
+      "typ": "D",
+      "run": 1,
+      "pick": "FLI-2300",
+      "begr": "Der Flexkleber FLI-2300 ist speziell fuer Feinsteinzeug geeignet und entspricht der geforderten Mengeneinheit Sack.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2300"
+      ],
+      "latencyMs": 2959,
+      "kosten": 0.0004096
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S5",
+      "typ": "D",
+      "run": 2,
+      "pick": "FLI-2300",
+      "begr": "Der Flexkleber C2TE ist speziell fuer Feinsteinzeug geeignet und entspricht der geforderten Mengeneinheit in Saecken.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2300"
+      ],
+      "latencyMs": 2932,
+      "kosten": 0.0004096
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S5",
+      "typ": "D",
+      "run": 3,
+      "pick": "FLI-2300",
+      "begr": "Der Flexkleber C2TE ist speziell fuer Feinsteinzeug geeignet und entspricht der geforderten Mengeneinheit in Saecken.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2300"
+      ],
+      "latencyMs": 2902,
+      "kosten": 0.0004096
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S5",
+      "typ": "D",
+      "run": 4,
+      "pick": "FLI-2300",
+      "begr": "Der Flexkleber FLI-2300 ist speziell fuer Feinsteinzeug geeignet und entspricht der geforderten Mengeneinheit Sack.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2300"
+      ],
+      "latencyMs": 2976,
+      "kosten": 0.0004096
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S6",
+      "typ": "F",
+      "run": 0,
+      "pick": "FLI-2410",
+      "begr": "Der Artikel FLI-2410 entspricht sowohl in der Bezeichnung (Fliesenkreuze/Fugenkreuze) als auch in der geforderten Stärke von 3 mm exakt der Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2410",
+        "FLI-2411"
+      ],
+      "latencyMs": 3693,
+      "kosten": 0.00040760000000000004
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S6",
+      "typ": "F",
+      "run": 2,
+      "pick": "FLI-2410",
+      "begr": "Der Artikel FLI-2410 entspricht sowohl in der Bezeichnung (Fliesenkreuze/Fugenkreuze) als auch in der geforderten Stärke von 3 mm exakt der Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2410",
+        "FLI-2411"
+      ],
+      "latencyMs": 4261,
+      "kosten": 0.00040760000000000004
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S6",
+      "typ": "F",
+      "run": 3,
+      "pick": "FLI-2410",
+      "begr": "Der Artikel FLI-2410 entspricht sowohl in der Bezeichnung als auch in der geforderten Stärke von 3 mm exakt der Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2410",
+        "FLI-2411"
+      ],
+      "latencyMs": 4119,
+      "kosten": 0.00038260000000000003
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S6",
+      "typ": "F",
+      "run": 1,
+      "pick": "FLI-2410",
+      "begr": "Der Artikel FLI-2410 entspricht sowohl in der Bezeichnung (Fliesenkreuze sind synonym zu Fugenkreuze) als auch in der geforderten Stärke von 3 mm exakt der Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2410",
+        "FLI-2411"
+      ],
+      "latencyMs": 6827,
+      "kosten": 0.0004151
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S7",
+      "typ": "C",
+      "run": 0,
+      "pick": "SAN-3010",
+      "begr": "Das Produkt SAN-3010 entspricht exakt den Anforderungen an ein befliesbares, bodenebenes Duschelement in der Größe 90x90 cm.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "SAN-3010"
+      ],
+      "latencyMs": 3061,
+      "kosten": 0.0004315
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S7",
+      "typ": "C",
+      "run": 1,
+      "pick": "SAN-3010",
+      "begr": "Das Produkt entspricht exakt der geforderten Größe von 90x90 cm sowie der Eigenschaft 'befliesbar' für eine bodengleiche Dusche.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "SAN-3010"
+      ],
+      "latencyMs": 3131,
+      "kosten": 0.0004265
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S6",
+      "typ": "F",
+      "run": 4,
+      "pick": "FLI-2410",
+      "begr": "Der Artikel FLI-2410 entspricht sowohl in der Bezeichnung (Fliesenkreuze/Fugenkreuze) als auch in der geforderten Stärke von 3 mm exakt der Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2410",
+        "FLI-2411"
+      ],
+      "latencyMs": 4586,
+      "kosten": 0.00040760000000000004
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S7",
+      "typ": "C",
+      "run": 2,
+      "pick": "SAN-3010",
+      "begr": "Das Produkt entspricht exakt den Anforderungen an Maße (90x90 cm), Bauart (bodeneben) und Eigenschaft (befliesbar).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "SAN-3010"
+      ],
+      "latencyMs": 3259,
+      "kosten": 0.0004215
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S7",
+      "typ": "C",
+      "run": 3,
+      "pick": "SAN-3010",
+      "begr": "Das Produkt SAN-3010 entspricht exakt der geforderten Größe von 90x90 cm sowie der Eigenschaft 'befliesbar' für eine bodengleiche Dusche.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "SAN-3010"
+      ],
+      "latencyMs": 3176,
+      "kosten": 0.0004365
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S7",
+      "typ": "C",
+      "run": 4,
+      "pick": "SAN-3010",
+      "begr": "Das Produkt SAN-3010 entspricht exakt den Anforderungen an ein befliesbares, bodenebenes Duschelement in der Größe 90x90 cm.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "SAN-3010"
+      ],
+      "latencyMs": 3192,
+      "kosten": 0.0004315
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S8",
+      "typ": "A",
+      "run": 1,
+      "pick": "SAN-3210",
+      "begr": "Der Artikel SAN-3210 entspricht exakt der geforderten Ablaufgarnitur für Duschen in der Nennweite DN 90 als Komplettset.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "SAN-3210"
+      ],
+      "latencyMs": 2750,
+      "kosten": 0.0004198
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S8",
+      "typ": "A",
+      "run": 0,
+      "pick": "SAN-3210",
+      "begr": "Der Artikel SAN-3210 entspricht exakt der Bezeichnung und den technischen Spezifikationen (DN 90, Komplettset) der Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "SAN-3210"
+      ],
+      "latencyMs": 3236,
+      "kosten": 0.0004123
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S8",
+      "typ": "A",
+      "run": 2,
+      "pick": "SAN-3210",
+      "begr": "Der Artikel SAN-3210 entspricht exakt der Bezeichnung, der Nennweite DN 90 und dem geforderten Komplettset für Duschen.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "SAN-3210"
+      ],
+      "latencyMs": 2853,
+      "kosten": 0.0004148
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S8",
+      "typ": "A",
+      "run": 3,
+      "pick": "SAN-3210",
+      "begr": "Der Artikel SAN-3210 entspricht exakt der Bezeichnung, dem Durchmesser DN 90 und dem geforderten Komplettset für Duschen.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "SAN-3210"
+      ],
+      "latencyMs": 2795,
+      "kosten": 0.0004123
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S9",
+      "typ": "E",
+      "run": 0,
+      "pick": "KEIN_TREFFER",
+      "begr": "Die Liste enthält nur Bodenbeläge und eine Aufputz-Armatur ohne Thermostat, was nicht der geforderten Unterputz-Thermostat-Armatur entspricht.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": true,
+      "gold": [],
+      "latencyMs": 2759,
+      "kosten": 0.0004212
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S8",
+      "typ": "A",
+      "run": 4,
+      "pick": "SAN-3210",
+      "begr": "Der Artikel SAN-3210 entspricht exakt der Bezeichnung und den technischen Anforderungen (DN 90, Komplettset) der Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "SAN-3210"
+      ],
+      "latencyMs": 3088,
+      "kosten": 0.00040730000000000003
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S9",
+      "typ": "E",
+      "run": 1,
+      "pick": "KEIN_TREFFER",
+      "begr": "Die Liste enthält nur Bodenbeläge und eine Aufputz-Armatur ohne Thermostat, was nicht der geforderten Unterputz-Thermostat-Armatur entspricht.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": true,
+      "gold": [],
+      "latencyMs": 2653,
+      "kosten": 0.0004212
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S9",
+      "typ": "E",
+      "run": 2,
+      "pick": "KEIN_TREFFER",
+      "begr": "Die Liste enthält nur Bodenbeläge und eine Aufputz-Armatur ohne Thermostat, was nicht der geforderten Unterputz-Thermostat-Armatur entspricht.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": true,
+      "gold": [],
+      "latencyMs": 2540,
+      "kosten": 0.0004212
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S9",
+      "typ": "E",
+      "run": 3,
+      "pick": "KEIN_TREFFER",
+      "begr": "Keiner der Kandidaten entspricht einer Unterputz-Thermostat-Armatur; der einzige Sanitärartikel ist eine Aufputz-Variante ohne Thermostat.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": true,
+      "gold": [],
+      "latencyMs": 3501,
+      "kosten": 0.0004212
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S9",
+      "typ": "E",
+      "run": 4,
+      "pick": "KEIN_TREFFER",
+      "begr": "Die Liste enthält nur Bodenbeläge und eine Aufputz-Armatur ohne Thermostat, jedoch keine Unterputz-Thermostat-Duscharmatur.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": true,
+      "gold": [],
+      "latencyMs": 2593,
+      "kosten": 0.0004062
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S10",
+      "typ": "C",
+      "run": 0,
+      "pick": "TRB-4010",
+      "begr": "Der Artikel TRB-4010 entspricht exakt dem geforderten Material (MDF), der Farbe (weiss) und der Abrechnungseinheit (lfm).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "TRB-4010"
+      ],
+      "latencyMs": 4047,
+      "kosten": 0.00038629999999999996
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S10",
+      "typ": "C",
+      "run": 1,
+      "pick": "TRB-4010",
+      "begr": "Der Artikel TRB-4010 entspricht sowohl dem Material (MDF) als auch der Farbe (weiss) und wird in der passenden Einheit (lfm) gefuehrt.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "TRB-4010"
+      ],
+      "latencyMs": 4445,
+      "kosten": 0.00039629999999999993
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S10",
+      "typ": "C",
+      "run": 2,
+      "pick": "TRB-4010",
+      "begr": "Der Artikel entspricht sowohl dem Material (MDF) als auch der Farbe (weiss) und wird in der passenden Einheit (lfm) gefuehrt.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "TRB-4010"
+      ],
+      "latencyMs": 4202,
+      "kosten": 0.00038379999999999995
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S10",
+      "typ": "C",
+      "run": 3,
+      "pick": "TRB-4010",
+      "begr": "Dieser Artikel entspricht exakt der geforderten Ausführung in MDF, weiß foliert und wird in der passenden Einheit (lfm) abgerechnet.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "TRB-4010"
+      ],
+      "latencyMs": 3980,
+      "kosten": 0.00038379999999999995
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S10",
+      "typ": "C",
+      "run": 4,
+      "pick": "TRB-4010",
+      "begr": "Der Artikel entspricht sowohl dem Material (MDF) als auch der Farbe (weiss) und wird in der passenden Einheit (lfm) gefuehrt.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "TRB-4010"
+      ],
+      "latencyMs": 4341,
+      "kosten": 0.00038379999999999995
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S11",
+      "typ": "B",
+      "run": 0,
+      "pick": "TRB-4210",
+      "begr": "Der Artikel TRB-4210 entspricht sowohl dem geforderten Material (XPS) als auch der spezifischen Dicke von 60 mm.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "TRB-4210"
+      ],
+      "latencyMs": 3723,
+      "kosten": 0.00038979999999999993
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S11",
+      "typ": "B",
+      "run": 1,
+      "pick": "TRB-4210",
+      "begr": "Der Kandidat TRB-4210 entspricht sowohl dem Material (XPS) als auch der geforderten Dicke von 60 mm exakt.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "TRB-4210"
+      ],
+      "latencyMs": 4146,
+      "kosten": 0.00038979999999999993
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S11",
+      "typ": "B",
+      "run": 2,
+      "pick": "TRB-4210",
+      "begr": "Der Artikel entspricht exakt dem geforderten Material (XPS) sowie der spezifizierten Dicke von 60 mm.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "TRB-4210"
+      ],
+      "latencyMs": 3818,
+      "kosten": 0.00037729999999999996
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S11",
+      "typ": "B",
+      "run": 3,
+      "pick": "TRB-4210",
+      "begr": "Der Artikel TRB-4210 entspricht sowohl dem Material (XPS) als auch der geforderten Stärke von 60 mm exakt.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "TRB-4210"
+      ],
+      "latencyMs": 3892,
+      "kosten": 0.0003848
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S11",
+      "typ": "B",
+      "run": 4,
+      "pick": "TRB-4210",
+      "begr": "Der Artikel TRB-4210 entspricht exakt der geforderten Materialart (XPS) und der Dicke von 60 mm.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "TRB-4210"
+      ],
+      "latencyMs": 3808,
+      "kosten": 0.00037979999999999996
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S12",
+      "typ": "F",
+      "run": 0,
+      "pick": "MAL-5010",
+      "begr": "Der Artikel MAL-5010 entspricht exakt der geforderten Wandfarbe in weiss, matt fuer den Innenbereich.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "MAL-5010",
+        "MAL-5011"
+      ],
+      "latencyMs": 3535,
+      "kosten": 0.000354
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S12",
+      "typ": "F",
+      "run": 1,
+      "pick": "MAL-5010",
+      "begr": "Der Artikel entspricht exakt der geforderten Wandfarbe in Weiss, matt fuer den Innenbereich.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "MAL-5010",
+        "MAL-5011"
+      ],
+      "latencyMs": 3557,
+      "kosten": 0.0003415
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S12",
+      "typ": "F",
+      "run": 2,
+      "pick": "MAL-5010",
+      "begr": "Dieser Artikel entspricht exakt der geforderten weissen, matten Wandfarbe fuer den Innenbereich.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "MAL-5010",
+        "MAL-5011"
+      ],
+      "latencyMs": 3472,
+      "kosten": 0.0003465
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S12",
+      "typ": "F",
+      "run": 4,
+      "pick": "MAL-5010",
+      "begr": "Der Artikel entspricht exakt der geforderten Wandfarbe in Weiß, matt für den Innenbereich.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "MAL-5010",
+        "MAL-5011"
+      ],
+      "latencyMs": 3803,
+      "kosten": 0.000344
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S13",
+      "typ": "D",
+      "run": 0,
+      "pick": "MAL-5110",
+      "begr": "Der Artikel MAL-5110 entspricht exakt der geforderten Grundierung für saugende Untergründe.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "MAL-5110"
+      ],
+      "latencyMs": 2754,
+      "kosten": 0.0003778
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S12",
+      "typ": "F",
+      "run": 3,
+      "pick": "MAL-5010",
+      "begr": "Der Artikel entspricht exakt der geforderten Bezeichnung, Farbe, dem matten Glanzgrad sowie dem Einsatzbereich im Innenraum.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "MAL-5010",
+        "MAL-5011"
+      ],
+      "latencyMs": 5100,
+      "kosten": 0.0003665
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S13",
+      "typ": "D",
+      "run": 1,
+      "pick": "MAL-5110",
+      "begr": "Der Artikel MAL-5110 entspricht exakt der geforderten Grundierung für saugende Untergründe.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "MAL-5110"
+      ],
+      "latencyMs": 3264,
+      "kosten": 0.0003778
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S13",
+      "typ": "D",
+      "run": 2,
+      "pick": "MAL-5110",
+      "begr": "Der Artikel MAL-5110 entspricht exakt der geforderten Grundierung für saugende Untergründe.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "MAL-5110"
+      ],
+      "latencyMs": 2969,
+      "kosten": 0.0003778
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S13",
+      "typ": "D",
+      "run": 3,
+      "pick": "MAL-5110",
+      "begr": "Der Artikel MAL-5110 entspricht exakt der geforderten Grundierung für saugende Untergründe.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "MAL-5110"
+      ],
+      "latencyMs": 2937,
+      "kosten": 0.0003778
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S13",
+      "typ": "D",
+      "run": 4,
+      "pick": "MAL-5110",
+      "begr": "Der Artikel MAL-5110 entspricht exakt der geforderten Grundierung für saugende Untergründe.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "MAL-5110"
+      ],
+      "latencyMs": 2518,
+      "kosten": 0.0003778
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S14",
+      "typ": "D",
+      "run": 0,
+      "pick": "KLM-6010",
+      "begr": "Der Artikel KLM-6010 entspricht exakt der geforderten Bezeichnung, Farbe und Eigenschaft (schimmelresistent) in der passenden Mengeneinheit.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "KLM-6010"
+      ],
+      "latencyMs": 3107,
+      "kosten": 0.0004043
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S14",
+      "typ": "D",
+      "run": 1,
+      "pick": "KLM-6010",
+      "begr": "Der Artikel KLM-6010 entspricht exakt der Bezeichnung, den geforderten Eigenschaften (transparent, schimmelresistent) und der Einheit (Kartusche).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "KLM-6010"
+      ],
+      "latencyMs": 3722,
+      "kosten": 0.0004193
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S14",
+      "typ": "D",
+      "run": 2,
+      "pick": "KLM-6010",
+      "begr": "Der Artikel KLM-6010 entspricht exakt der Bezeichnung, den geforderten Eigenschaften (transparent, schimmelresistent) sowie der Mengeneinheit Kartusche.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "KLM-6010"
+      ],
+      "latencyMs": 2959,
+      "kosten": 0.00040930000000000003
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S14",
+      "typ": "D",
+      "run": 3,
+      "pick": "KLM-6010",
+      "begr": "Der Artikel KLM-6010 entspricht exakt der Bezeichnung, den geforderten Eigenschaften (transparent, schimmelresistent) sowie der Mengeneinheit.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "KLM-6010"
+      ],
+      "latencyMs": 2833,
+      "kosten": 0.0004018
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S14",
+      "typ": "D",
+      "run": 4,
+      "pick": "KLM-6010",
+      "begr": "Der Artikel KLM-6010 entspricht exakt der geforderten Bezeichnung, Farbe, Schimmelresistenz und Mengeneinheit.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "KLM-6010"
+      ],
+      "latencyMs": 3023,
+      "kosten": 0.00038930000000000003
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S15",
+      "typ": "E",
+      "run": 0,
+      "pick": "KEIN_TREFFER",
+      "begr": "Alle verfügbaren Kandidaten bestehen aus Feinsteinzeug oder Keramik, die Position fordert jedoch ausdrücklich Echtmarmor (Naturstein).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": true,
+      "gold": [],
+      "latencyMs": 4084,
+      "kosten": 0.0004256
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S15",
+      "typ": "E",
+      "run": 2,
+      "pick": "KEIN_TREFFER",
+      "begr": "Alle angebotenen Kandidaten bestehen aus Feinsteinzeug oder Keramik, waehrend die Position explizit Echtmarmor (Naturstein) fordert.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": true,
+      "gold": [],
+      "latencyMs": 4187,
+      "kosten": 0.00042809999999999994
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S15",
+      "typ": "E",
+      "run": 1,
+      "pick": "KEIN_TREFFER",
+      "begr": "Alle angebotenen Artikel bestehen aus Feinsteinzeug, Keramik oder Steingut, waehrend die Position explizit Echtmarmor (Naturstein) erfordert.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": true,
+      "gold": [],
+      "latencyMs": 5899,
+      "kosten": 0.00043559999999999996
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S15",
+      "typ": "E",
+      "run": 3,
+      "pick": "KEIN_TREFFER",
+      "begr": "Alle gelisteten Kandidaten bestehen aus Feinsteinzeug oder Keramik, es ist jedoch kein echter Naturstein (Echtmarmor) im Katalog enthalten.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": true,
+      "gold": [],
+      "latencyMs": 3930,
+      "kosten": 0.00042809999999999994
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S15",
+      "typ": "E",
+      "run": 4,
+      "pick": "KEIN_TREFFER",
+      "begr": "Alle angebotenen Artikel bestehen aus Feinsteinzeug oder Keramik, die Position fordert jedoch ausdrücklich Echtmarmor (Naturstein).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": true,
+      "gold": [],
+      "latencyMs": 3841,
+      "kosten": 0.00041809999999999997
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S16",
+      "typ": "B",
+      "run": 1,
+      "pick": "FLI-2350",
+      "begr": "Der Artikel FLI-2350 entspricht exakt der Bezeichnung, der Farbe und der geforderten Gebindegröße von 5 kg.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2350"
+      ],
+      "latencyMs": 2723,
+      "kosten": 0.0003962
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S16",
+      "typ": "B",
+      "run": 0,
+      "pick": "FLI-2350",
+      "begr": "Der Artikel FLI-2350 entspricht exakt der Bezeichnung, der Farbe und der geforderten Gebindegröße von 5 kg.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2350"
+      ],
+      "latencyMs": 4067,
+      "kosten": 0.0003962
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S16",
+      "typ": "B",
+      "run": 2,
+      "pick": "FLI-2350",
+      "begr": "Der Artikel FLI-2350 entspricht exakt der Bezeichnung, der Farbe und der geforderten Gebindegröße von 5 kg.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2350"
+      ],
+      "latencyMs": 2901,
+      "kosten": 0.0003962
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S16",
+      "typ": "B",
+      "run": 3,
+      "pick": "FLI-2350",
+      "begr": "Der Artikel FLI-2350 entspricht exakt der Bezeichnung, der Farbe und der geforderten Gebindegröße von 5 kg.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2350"
+      ],
+      "latencyMs": 3197,
+      "kosten": 0.0003962
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "C2-S16",
+      "typ": "B",
+      "run": 4,
+      "pick": "FLI-2350",
+      "begr": "Der Kandidat FLI-2350 entspricht exakt der Bezeichnung, der Farbe Grau sowie der geforderten Gebindegröße von 5 kg.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2350"
+      ],
+      "latencyMs": 3102,
+      "kosten": 0.0004062
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S1",
+      "typ": "B",
+      "run": 2,
+      "pick": "BOD-1008",
+      "begr": "Der Kandidat BOD-1008 stimmt in Material (Laminat), Dekor (Eiche natur), Staerke (8 mm) und Verbindungssystem (Klicksystem) exakt mit der Ausschreibung ueberein.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1008"
+      ],
+      "latencyMs": 2246,
+      "kosten": 0.002052
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S1",
+      "typ": "B",
+      "run": 0,
+      "pick": "BOD-1008",
+      "begr": "Der Kandidat BOD-1008 entspricht exakt den Vorgaben der Position bezüglich Material (Laminat), Dekor (Eiche natur), Stärke (8 mm) und Verlegesystem (Klicksystem).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1008"
+      ],
+      "latencyMs": 3493,
+      "kosten": 0.002124
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S1",
+      "typ": "B",
+      "run": 1,
+      "pick": "BOD-1008",
+      "begr": "Der Kandidat BOD-1008 entspricht exakt den geforderten Spezifikationen für Laminatboden in Eiche natur mit 8 mm Stärke und Klicksystem.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1008"
+      ],
+      "latencyMs": 2918,
+      "kosten": 0.002043
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S1",
+      "typ": "B",
+      "run": 3,
+      "pick": "BOD-1008",
+      "begr": "Der Kandidat BOD-1008 stimmt in Material (Laminat), Dekor (Eiche natur), Stärke (8 mm) und Verlegesystem (Klicksystem) exakt mit der Ausschreibung überein.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1008"
+      ],
+      "latencyMs": 2493,
+      "kosten": 0.002052
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S1",
+      "typ": "B",
+      "run": 4,
+      "pick": "BOD-1008",
+      "begr": "Der Kandidat BOD-1008 entspricht exakt den geforderten Spezifikationen: Laminatboden, Eiche natur, 8 mm Stärke und Klicksystem.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1008"
+      ],
+      "latencyMs": 2770,
+      "kosten": 0.002043
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S2",
+      "typ": "C",
+      "run": 0,
+      "pick": "BOD-1105",
+      "begr": "Der Artikel BOD-1105 entspricht exakt dem geforderten Klick-Vinyl (Vinyl-Designboden Klicksystem) in einer hellen Holzoptik (Eiche hell).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1105"
+      ],
+      "latencyMs": 4280,
+      "kosten": 0.0020745
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S2",
+      "typ": "C",
+      "run": 1,
+      "pick": "BOD-1105",
+      "begr": "Der Artikel BOD-1105 entspricht exakt dem geforderten Klick-Vinyl (Vinyl-Designboden mit Klicksystem) in einer hellen Holzoptik (Eiche hell).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1105"
+      ],
+      "latencyMs": 3155,
+      "kosten": 0.0020835
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S2",
+      "typ": "C",
+      "run": 2,
+      "pick": "BOD-1105",
+      "begr": "Der Artikel BOD-1105 entspricht exakt dem geforderten Klick-Vinyl (Vinyl-Designboden mit Klicksystem) in einer hellen Holzoptik (Eiche hell).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1105"
+      ],
+      "latencyMs": 2773,
+      "kosten": 0.0020835
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S2",
+      "typ": "C",
+      "run": 3,
+      "pick": "BOD-1105",
+      "begr": "Der Artikel BOD-1105 entspricht exakt dem geforderten Vinyl-Designboden mit Klicksystem in einer hellen Holzoptik (Eiche hell).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1105"
+      ],
+      "latencyMs": 3168,
+      "kosten": 0.0020475
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S2",
+      "typ": "C",
+      "run": 4,
+      "pick": "BOD-1105",
+      "begr": "Der Artikel BOD-1105 entspricht exakt dem geforderten Klick-Vinyl (Vinyl-Designboden Klicksystem) in einer hellen Holzoptik (Eiche hell).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1105"
+      ],
+      "latencyMs": 3239,
+      "kosten": 0.0020745
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S3",
+      "typ": "D",
+      "run": 0,
+      "pick": "BOD-1210",
+      "begr": "Der Kandidat BOD-1210 entspricht exakt der geforderten Trittschalldämmung aus PE-Schaum mit einer Stärke von 2 mm für Laminatböden.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1210"
+      ],
+      "latencyMs": 3646,
+      "kosten": 0.001893
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S3",
+      "typ": "D",
+      "run": 1,
+      "pick": "BOD-1210",
+      "begr": "Der Kandidat BOD-1210 entspricht exakt der geforderten Trittschalldämmung aus PE-Schaum mit 2 mm Stärke für Laminatböden.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1210"
+      ],
+      "latencyMs": 2280,
+      "kosten": 0.001875
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S3",
+      "typ": "D",
+      "run": 2,
+      "pick": "BOD-1210",
+      "begr": "Der Kandidat BOD-1210 entspricht exakt der geforderten Trittschalldämmung aus PE-Schaum mit einer Stärke von 2 mm für Laminatböden.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1210"
+      ],
+      "latencyMs": 3818,
+      "kosten": 0.00192
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S3",
+      "typ": "D",
+      "run": 3,
+      "pick": "BOD-1210",
+      "begr": "Der Kandidat BOD-1210 entspricht exakt der geforderten Trittschalldämmung aus PE-Schaum mit einer Stärke von 2 mm für Laminatböden.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1210"
+      ],
+      "latencyMs": 3923,
+      "kosten": 0.001893
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S3",
+      "typ": "D",
+      "run": 4,
+      "pick": "BOD-1210",
+      "begr": "Der Artikel BOD-1210 entspricht exakt der geforderten Trittschalldämmung aus PE-Schaum mit einer Stärke von 2 mm für Laminatböden.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1210"
+      ],
+      "latencyMs": 2939,
+      "kosten": 0.001902
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S4",
+      "typ": "B",
+      "run": 0,
+      "pick": "FLI-2060",
+      "begr": "Der Kandidat FLI-2060 entspricht exakt den Anforderungen an Material (Feinsteinzeug), Farbe (grau) und Format (60x60 cm) für die Bodenfliesen.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2060"
+      ],
+      "latencyMs": 3980,
+      "kosten": 0.0020835
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S4",
+      "typ": "B",
+      "run": 2,
+      "pick": "FLI-2060",
+      "begr": "Der Kandidat FLI-2060 entspricht exakt den Vorgaben der Position bezüglich Material (Feinsteinzeug), Farbe (grau) und Format (60x60 cm).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2060"
+      ],
+      "latencyMs": 3851,
+      "kosten": 0.0020655
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S4",
+      "typ": "B",
+      "run": 1,
+      "pick": "FLI-2060",
+      "begr": "Der Kandidat FLI-2060 entspricht exakt dem geforderten Material (Feinsteinzeug), der Farbe (grau) und dem Format (60x60 cm) der Ausschreibung.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2060"
+      ],
+      "latencyMs": 4227,
+      "kosten": 0.0020745
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S4",
+      "typ": "B",
+      "run": 3,
+      "pick": "FLI-2060",
+      "begr": "Der Kandidat FLI-2060 entspricht exakt den Vorgaben der Position bezüglich Material (Feinsteinzeug), Farbe (grau) und Format (60x60 cm).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2060"
+      ],
+      "latencyMs": 2588,
+      "kosten": 0.0020295
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S5",
+      "typ": "D",
+      "run": 0,
+      "pick": "FLI-2300",
+      "begr": "Der Flexkleber FLI-2300 ist speziell für Feinsteinzeug geeignet und wird passend zur Ausschreibung in Säcken geliefert.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2300"
+      ],
+      "latencyMs": 2014,
+      "kosten": 0.001875
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S4",
+      "typ": "B",
+      "run": 4,
+      "pick": "FLI-2060",
+      "begr": "Der Kandidat FLI-2060 entspricht exakt den Vorgaben der Position bezüglich Material (Feinsteinzeug), Farbe (grau) und Format (60x60 cm).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2060"
+      ],
+      "latencyMs": 2490,
+      "kosten": 0.0019935
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S5",
+      "typ": "D",
+      "run": 1,
+      "pick": "FLI-2300",
+      "begr": "Der Flexkleber FLI-2300 ist ein flexibler Fliesenkleber der Klasse C2TE im 25-kg-Sack, der speziell für Feinsteinzeug geeignet ist und exakt zur Ausschreibung passt.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2300"
+      ],
+      "latencyMs": 2130,
+      "kosten": 0.0021
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S5",
+      "typ": "D",
+      "run": 2,
+      "pick": "FLI-2300",
+      "begr": "Der Flexkleber FLI-2300 ist speziell für Feinsteinzeug geeignet und wird in der passenden Einheit Sack angeboten.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2300"
+      ],
+      "latencyMs": 2097,
+      "kosten": 0.00192
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S5",
+      "typ": "D",
+      "run": 3,
+      "pick": "FLI-2300",
+      "begr": "Der Flexkleber FLI-2300 ist speziell für Feinsteinzeug geeignet und wird im Sack geliefert, was exakt der Ausschreibung entspricht.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2300"
+      ],
+      "latencyMs": 2110,
+      "kosten": 0.001938
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S5",
+      "typ": "D",
+      "run": 4,
+      "pick": "FLI-2300",
+      "begr": "Der Flexkleber FLI-2300 ist ein flexibler Fliesenkleber der Klasse C2TE, der speziell für Feinsteinzeug geeignet ist und im Sack geliefert wird.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2300"
+      ],
+      "latencyMs": 1952,
+      "kosten": 0.001992
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S6",
+      "typ": "F",
+      "run": 0,
+      "pick": "FLI-2410",
+      "begr": "Der Kandidat FLI-2410 entspricht exakt den gesuchten Fugenkreuzen (Fliesenkreuzen) mit einer Stärke von 3 mm in der Verpackungseinheit Pack.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2410",
+        "FLI-2411"
+      ],
+      "latencyMs": 2506,
+      "kosten": 0.0018915
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S6",
+      "typ": "F",
+      "run": 1,
+      "pick": "FLI-2410",
+      "begr": "Der Kandidat FLI-2410 entspricht exakt den geforderten Fugenkreuzen (Fliesenkreuzen) mit einer Stärke von 3 mm in der Einheit Pack.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2410",
+        "FLI-2411"
+      ],
+      "latencyMs": 2511,
+      "kosten": 0.0018645
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S6",
+      "typ": "F",
+      "run": 2,
+      "pick": "FLI-2410",
+      "begr": "Der Kandidat FLI-2410 entspricht exakt den gesuchten Fugenkreuzen (Fliesenkreuzen) mit einer Stärke von 3 mm in der Einheit Pack.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2410",
+        "FLI-2411"
+      ],
+      "latencyMs": 2599,
+      "kosten": 0.0018645
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S6",
+      "typ": "F",
+      "run": 3,
+      "pick": "FLI-2410",
+      "begr": "Der Kandidat FLI-2410 entspricht genau den geforderten Fugenkreuzen (Fliesenkreuzen) mit einer Stärke von 3 mm in der Einheit Pack.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2410",
+        "FLI-2411"
+      ],
+      "latencyMs": 2205,
+      "kosten": 0.0018195
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S6",
+      "typ": "F",
+      "run": 4,
+      "pick": "FLI-2410",
+      "begr": "Der Kandidat FLI-2410 entspricht exakt den geforderten Fugenkreuzen (Fliesenkreuzen) mit einer Stärke von 3 mm in der Einheit Pack.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2410",
+        "FLI-2411"
+      ],
+      "latencyMs": 2701,
+      "kosten": 0.0018645
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S7",
+      "typ": "C",
+      "run": 0,
+      "pick": "SAN-3010",
+      "begr": "Das Duschelement SAN-3010 entspricht exakt den geforderten Maßen von 90x90 cm und ist bodeneben sowie befliesbar.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "SAN-3010"
+      ],
+      "latencyMs": 2576,
+      "kosten": 0.0019815
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S7",
+      "typ": "C",
+      "run": 1,
+      "pick": "SAN-3010",
+      "begr": "Das Duschelement SAN-3010 entspricht exakt den geforderten Maßen von 90x90 cm und ist wie gewünscht bodeneben und befliesbar.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "SAN-3010"
+      ],
+      "latencyMs": 2707,
+      "kosten": 0.0020175
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S7",
+      "typ": "C",
+      "run": 2,
+      "pick": "SAN-3010",
+      "begr": "Das Duschelement SAN-3010 entspricht exakt den geforderten Maßen von 90x90 cm und ist wie gewünscht bodeneben und befliesbar.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "SAN-3010"
+      ],
+      "latencyMs": 3249,
+      "kosten": 0.0019815
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S7",
+      "typ": "C",
+      "run": 3,
+      "pick": "SAN-3010",
+      "begr": "Das Duschelement SAN-3010 entspricht exakt den geforderten Maßen von 90x90 cm und ist wie gewünscht bodeneben und befliesbar.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "SAN-3010"
+      ],
+      "latencyMs": 2810,
+      "kosten": 0.0019815
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S7",
+      "typ": "C",
+      "run": 4,
+      "pick": "SAN-3010",
+      "begr": "Das Duschelement SAN-3010 entspricht exakt den geforderten Maßen von 90x90 cm und ist wie gewünscht bodeneben und befliesbar.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "SAN-3010"
+      ],
+      "latencyMs": 2344,
+      "kosten": 0.0019545
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S8",
+      "typ": "A",
+      "run": 0,
+      "pick": "SAN-3210",
+      "begr": "Der Kandidat SAN-3210 entspricht exakt der gesuchten Ablaufgarnitur für die Dusche in DN 90 als Komplettset.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "SAN-3210"
+      ],
+      "latencyMs": 1957,
+      "kosten": 0.001905
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S8",
+      "typ": "A",
+      "run": 2,
+      "pick": "SAN-3210",
+      "begr": "Der Kandidat SAN-3210 entspricht exakt der gesuchten Ablaufgarnitur für die Dusche in DN 90 als Komplettset.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "SAN-3210"
+      ],
+      "latencyMs": 2470,
+      "kosten": 0.001905
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S8",
+      "typ": "A",
+      "run": 3,
+      "pick": "SAN-3210",
+      "begr": "Der Kandidat SAN-3210 entspricht exakt der gesuchten Ablaufgarnitur für die Dusche in DN 90 als Komplettset.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "SAN-3210"
+      ],
+      "latencyMs": 2199,
+      "kosten": 0.001905
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S8",
+      "typ": "A",
+      "run": 1,
+      "pick": "SAN-3210",
+      "begr": "Der Kandidat SAN-3210 entspricht exakt der gesuchten Ablaufgarnitur für die Dusche in der Nennweite DN 90 als Komplettset.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "SAN-3210"
+      ],
+      "latencyMs": 3431,
+      "kosten": 0.001986
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S8",
+      "typ": "A",
+      "run": 4,
+      "pick": "SAN-3210",
+      "begr": "Der Kandidat SAN-3210 stimmt sowohl in der Bezeichnung als auch in der Dimension DN 90 und der Ausführung als Komplettset exakt mit der Ausschreibung überein.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "SAN-3210"
+      ],
+      "latencyMs": 2178,
+      "kosten": 0.00195
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S9",
+      "typ": "E",
+      "run": 1,
+      "pick": "KEIN_TREFFER",
+      "begr": "Keiner der angebotenen Artikel entspricht einer Unterputz-Thermostat-Duscharmatur, da der einzige Sanitärartikel eine Aufputz-Einhebel-Duscharmatur ohne Thermostat ist.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": true,
+      "gold": [],
+      "latencyMs": 3367,
+      "kosten": 0.002031
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S9",
+      "typ": "E",
+      "run": 0,
+      "pick": "KEIN_TREFFER",
+      "begr": "Keiner der angebotenen Kandidaten entspricht einer Unterputz-Thermostat-Duscharmatur, da der einzige Sanitärartikel eine Aufputz-Armatur ohne Thermostatfunktion ist.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": true,
+      "gold": [],
+      "latencyMs": 3770,
+      "kosten": 0.002031
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S9",
+      "typ": "E",
+      "run": 2,
+      "pick": "KEIN_TREFFER",
+      "begr": "Keiner der angebotenen Kandidaten entspricht einer Unterputz-Thermostat-Duscharmatur, da der einzige Sanitärartikel eine Aufputz-Armatur ohne Thermostatfunktion ist.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": true,
+      "gold": [],
+      "latencyMs": 4200,
+      "kosten": 0.001995
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S9",
+      "typ": "E",
+      "run": 4,
+      "pick": "KEIN_TREFFER",
+      "begr": "Keiner der angebotenen Kandidaten entspricht einer Unterputz-Thermostat-Duscharmatur, da der einzige Sanitärartikel eine Aufputz-Armatur ohne Thermostat ist.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": true,
+      "gold": [],
+      "latencyMs": 3691,
+      "kosten": 0.002004
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S9",
+      "typ": "E",
+      "run": 3,
+      "pick": "KEIN_TREFFER",
+      "begr": "Keiner der angebotenen Artikel entspricht einer Unterputz-Thermostat-Duscharmatur, da der einzige Sanitärartikel eine Aufputz-Einhebel-Duscharmatur ohne Thermostat ist.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": true,
+      "gold": [],
+      "latencyMs": 4935,
+      "kosten": 0.001995
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S10",
+      "typ": "C",
+      "run": 1,
+      "pick": "TRB-4010",
+      "begr": "Der Kandidat TRB-4010 passt perfekt, da es sich um eine weiße MDF-Sockelleiste handelt, die in der passenden Abrechnungseinheit (lfm) angeboten wird.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "TRB-4010"
+      ],
+      "latencyMs": 3115,
+      "kosten": 0.001878
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S10",
+      "typ": "C",
+      "run": 0,
+      "pick": "TRB-4010",
+      "begr": "Der Artikel TRB-4010 passt perfekt, da es sich um eine weiss folierte MDF-Fussleiste handelt, die in der geforderten Einheit lfm abgerechnet wird.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "TRB-4010"
+      ],
+      "latencyMs": 5367,
+      "kosten": 0.001842
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S10",
+      "typ": "C",
+      "run": 2,
+      "pick": "TRB-4010",
+      "begr": "Der Artikel TRB-4010 beschreibt eine weiße, folierte MDF-Sockelleiste in der passenden Abrechnungseinheit (lfm) für die angegebene Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "TRB-4010"
+      ],
+      "latencyMs": 4874,
+      "kosten": 0.001815
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S10",
+      "typ": "C",
+      "run": 4,
+      "pick": "TRB-4010",
+      "begr": "Der Artikel TRB-4010 beschreibt eine weiße, folierte MDF-Sockelleiste in der passenden Abrechnungseinheit lfm.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "TRB-4010"
+      ],
+      "latencyMs": 4967,
+      "kosten": 0.001743
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S10",
+      "typ": "C",
+      "run": 3,
+      "pick": "TRB-4010",
+      "begr": "Der Artikel TRB-4010 beschreibt eine weiße, folierte MDF-Sockelleiste in der passenden Abrechnungseinheit (lfm) für die angegebene Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "TRB-4010"
+      ],
+      "latencyMs": 5903,
+      "kosten": 0.001815
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S11",
+      "typ": "B",
+      "run": 0,
+      "pick": "TRB-4210",
+      "begr": "Der Kandidat TRB-4210 entspricht exakt der gesuchten XPS-Dämmplatte mit einer Dicke von 60 mm und der passenden Mengeneinheit in Quadratmetern.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "TRB-4210"
+      ],
+      "latencyMs": 4660,
+      "kosten": 0.0018645
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S11",
+      "typ": "B",
+      "run": 2,
+      "pick": "TRB-4210",
+      "begr": "Der Kandidat TRB-4210 entspricht exakt der gesuchten XPS-Dämmplatte mit einer Dicke von 60 mm und der passenden Mengeneinheit in Quadratmetern.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "TRB-4210"
+      ],
+      "latencyMs": 2244,
+      "kosten": 0.0018915
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S11",
+      "typ": "B",
+      "run": 1,
+      "pick": "TRB-4210",
+      "begr": "Der Kandidat TRB-4210 entspricht exakt der geforderten XPS-Dämmplatte mit einer Dicke von 60 mm.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "TRB-4210"
+      ],
+      "latencyMs": 2675,
+      "kosten": 0.0018105
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S11",
+      "typ": "B",
+      "run": 3,
+      "pick": "TRB-4210",
+      "begr": "Der Kandidat TRB-4210 entspricht exakt der gesuchten XPS-Dämmplatte mit einer Dicke von 60 mm.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "TRB-4210"
+      ],
+      "latencyMs": 2542,
+      "kosten": 0.0017475
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S11",
+      "typ": "B",
+      "run": 4,
+      "pick": "TRB-4210",
+      "begr": "Der Kandidat TRB-4210 entspricht exakt der gesuchten XPS-Dämmplatte mit einer Dicke von 60 mm und der passenden Mengeneinheit in Quadratmetern.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "TRB-4210"
+      ],
+      "latencyMs": 2304,
+      "kosten": 0.0018645
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S12",
+      "typ": "F",
+      "run": 0,
+      "pick": "MAL-5010",
+      "begr": "Der Artikel MAL-5010 entspricht exakt der gesuchten weißen, matten Wandfarbe für den Innenbereich in der passenden Mengeneinheit Liter.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "MAL-5010",
+        "MAL-5011"
+      ],
+      "latencyMs": 3716,
+      "kosten": 0.001746
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S12",
+      "typ": "F",
+      "run": 1,
+      "pick": "MAL-5010",
+      "begr": "Der Kandidat MAL-5010 entspricht exakt der gesuchten matten, weißen Wandfarbe für den Innenbereich in der Einheit Liter.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "MAL-5010",
+        "MAL-5011"
+      ],
+      "latencyMs": 2977,
+      "kosten": 0.001728
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S12",
+      "typ": "F",
+      "run": 2,
+      "pick": "MAL-5010",
+      "begr": "Der Artikel MAL-5010 entspricht exakt der geforderten weißen, matten Wandfarbe für den Innenbereich in der Mengeneinheit Liter.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "MAL-5010",
+        "MAL-5011"
+      ],
+      "latencyMs": 5121,
+      "kosten": 0.001728
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S12",
+      "typ": "F",
+      "run": 4,
+      "pick": "MAL-5010",
+      "begr": "Der Artikel MAL-5010 entspricht exakt der gesuchten matten, weißen Wandfarbe für den Innenbereich in der passenden Mengeneinheit Liter.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "MAL-5010",
+        "MAL-5011"
+      ],
+      "latencyMs": 2594,
+      "kosten": 0.001746
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S12",
+      "typ": "F",
+      "run": 3,
+      "pick": "MAL-5010",
+      "begr": "Der Artikel MAL-5010 entspricht exakt der geforderten weißen, matten Wandfarbe für den Innenbereich in der Mengeneinheit Liter.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "MAL-5010",
+        "MAL-5011"
+      ],
+      "latencyMs": 4902,
+      "kosten": 0.001728
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S13",
+      "typ": "D",
+      "run": 2,
+      "pick": "MAL-5110",
+      "begr": "Der lösemittelfreie Tiefengrund MAL-5110 ist speziell für saugende Untergründe geeignet und passt somit exakt zur Beschreibung der Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "MAL-5110"
+      ],
+      "latencyMs": 2697,
+      "kosten": 0.0019545
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S13",
+      "typ": "D",
+      "run": 1,
+      "pick": "MAL-5110",
+      "begr": "Der lösemittelfreie Tiefengrund MAL-5110 ist speziell für saugende Untergründe geeignet und passt perfekt zur geforderten Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "MAL-5110"
+      ],
+      "latencyMs": 3860,
+      "kosten": 0.0019365
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S13",
+      "typ": "D",
+      "run": 0,
+      "pick": "MAL-5110",
+      "begr": "Der Artikel MAL-5110 ist ein lösungsmittelfreier Tiefengrund, der speziell für saugende Untergründe geeignet ist und exakt zur Positionsbeschreibung passt.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "MAL-5110"
+      ],
+      "latencyMs": 4700,
+      "kosten": 0.0019995
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S14",
+      "typ": "D",
+      "run": 0,
+      "pick": "KLM-6010",
+      "begr": "Der Kandidat KLM-6010 entspricht exakt dem gesuchten transparenten und schimmelresistenten Sanitärsilikon in der Einheit Kartusche.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "KLM-6010"
+      ],
+      "latencyMs": 1670,
+      "kosten": 0.001869
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S13",
+      "typ": "D",
+      "run": 4,
+      "pick": "MAL-5110",
+      "begr": "Der Artikel MAL-5110 ist ein loesemittelfreier Tiefengrund, der speziell fuer saugende Untergruende geeignet ist und somit exakt der Position entspricht.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "MAL-5110"
+      ],
+      "latencyMs": 3226,
+      "kosten": 0.0019365
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S13",
+      "typ": "D",
+      "run": 3,
+      "pick": "MAL-5110",
+      "begr": "Der Artikel MAL-5110 ist ein lösemittelfreier Tiefengrund speziell für saugende Untergründe und passt somit exakt zur Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "MAL-5110"
+      ],
+      "latencyMs": 3452,
+      "kosten": 0.0019275
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S14",
+      "typ": "D",
+      "run": 1,
+      "pick": "KLM-6010",
+      "begr": "Der Kandidat KLM-6010 entspricht exakt dem gesuchten transparenten und schimmelresistenten Sanitärsilikon in einer Kartusche.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "KLM-6010"
+      ],
+      "latencyMs": 2103,
+      "kosten": 0.001851
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S14",
+      "typ": "D",
+      "run": 2,
+      "pick": "KLM-6010",
+      "begr": "Der Kandidat KLM-6010 entspricht exakt dem gesuchten transparenten und schimmelresistenten Sanitärsilikon in der Einheit Kartusche.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "KLM-6010"
+      ],
+      "latencyMs": 2011,
+      "kosten": 0.001869
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S14",
+      "typ": "D",
+      "run": 3,
+      "pick": "KLM-6010",
+      "begr": "Der Kandidat KLM-6010 entspricht exakt dem gesuchten transparenten und schimmelresistenten Sanitärsilikon in der Kartusche.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "KLM-6010"
+      ],
+      "latencyMs": 2108,
+      "kosten": 0.001788
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S14",
+      "typ": "D",
+      "run": 4,
+      "pick": "KLM-6010",
+      "begr": "Der Kandidat KLM-6010 entspricht exakt dem gesuchten transparenten und schimmelresistenten Sanitärsilikon in der Einheit Kartusche.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "KLM-6010"
+      ],
+      "latencyMs": 2346,
+      "kosten": 0.001869
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S15",
+      "typ": "E",
+      "run": 0,
+      "pick": "KEIN_TREFFER",
+      "begr": "Es ist kein echter Naturstein bzw. Echtmarmor im Katalog vorhanden, da alle angebotenen Fliesen aus Feinsteinzeug, Keramik oder Steingut bestehen.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": true,
+      "gold": [],
+      "latencyMs": 3863,
+      "kosten": 0.002031
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S15",
+      "typ": "E",
+      "run": 2,
+      "pick": "KEIN_TREFFER",
+      "begr": "Alle angebotenen Kandidaten bestehen aus Feinsteinzeug, Keramik oder Steingut, es ist jedoch Echtmarmor (Naturstein) gefordert.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": true,
+      "gold": [],
+      "latencyMs": 2550,
+      "kosten": 0.001941
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S15",
+      "typ": "E",
+      "run": 1,
+      "pick": "KEIN_TREFFER",
+      "begr": "Es ist kein echter Naturstein bzw. Echtmarmor im Sortiment vorhanden, sondern ausschließlich Feinsteinzeug und Keramik (teils nur in Marmoroptik).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": true,
+      "gold": [],
+      "latencyMs": 4701,
+      "kosten": 0.002031
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S15",
+      "typ": "E",
+      "run": 4,
+      "pick": "KEIN_TREFFER",
+      "begr": "Es ist kein echter Naturstein (Echtmarmor) im Katalog vorhanden, sondern nur Feinsteinzeug in Marmoroptik.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": true,
+      "gold": [],
+      "latencyMs": 2103,
+      "kosten": 0.001869
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S15",
+      "typ": "E",
+      "run": 3,
+      "pick": "KEIN_TREFFER",
+      "begr": "Alle angebotenen Fliesen sind aus Feinsteinzeug, Keramik oder Steingut, es gibt jedoch kein Produkt aus Echtmarmor (Naturstein) im Katalog.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": true,
+      "gold": [],
+      "latencyMs": 2428,
+      "kosten": 0.001977
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S16",
+      "typ": "B",
+      "run": 0,
+      "pick": "FLI-2350",
+      "begr": "Der Kandidat FLI-2350 entspricht exakt dem gesuchten grauen Fugenmörtel im 5-kg-Beutel.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2350"
+      ],
+      "latencyMs": 2878,
+      "kosten": 0.0018675
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S16",
+      "typ": "B",
+      "run": 2,
+      "pick": "FLI-2350",
+      "begr": "Der Kandidat FLI-2350 entspricht exakt dem geforderten grauen Fugenmörtel im 5-kg-Beutel.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2350"
+      ],
+      "latencyMs": 2626,
+      "kosten": 0.0018675
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S16",
+      "typ": "B",
+      "run": 1,
+      "pick": "FLI-2350",
+      "begr": "Der Kandidat FLI-2350 entspricht exakt dem geforderten grauen Fugenmörtel im 5-kg-Beutel.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2350"
+      ],
+      "latencyMs": 2779,
+      "kosten": 0.0018675
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S16",
+      "typ": "B",
+      "run": 3,
+      "pick": "FLI-2350",
+      "begr": "Der Kandidat FLI-2350 entspricht exakt dem gesuchten grauen Fugenmörtel im 5-kg-Beutel.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2350"
+      ],
+      "latencyMs": 2612,
+      "kosten": 0.0018675
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S1",
+      "typ": "B",
+      "run": 0,
+      "pick": "BOD-1008",
+      "begr": "Exakte Übereinstimmung: Laminat Eiche natur, 8 mm, Klicksystem.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1008"
+      ],
+      "latencyMs": 1945,
+      "kosten": 0.008885
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "id": "C2-S16",
+      "typ": "B",
+      "run": 4,
+      "pick": "FLI-2350",
+      "begr": "Der Kandidat FLI-2350 entspricht exakt dem geforderten grauen Fugenmörtel im 5-kg-Gebinde.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2350"
+      ],
+      "latencyMs": 2822,
+      "kosten": 0.0018585
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S1",
+      "typ": "B",
+      "run": 1,
+      "pick": "BOD-1008",
+      "begr": "Exakte Uebereinstimmung: Laminat Eiche natur, 8 mm, Klicksystem.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1008"
+      ],
+      "latencyMs": 2103,
+      "kosten": 0.00891
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S1",
+      "typ": "B",
+      "run": 3,
+      "pick": "BOD-1008",
+      "begr": "Exakte Uebereinstimmung: Laminat Eiche natur, 8 mm, Klicksystem.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1008"
+      ],
+      "latencyMs": 2347,
+      "kosten": 0.00891
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S1",
+      "typ": "B",
+      "run": 2,
+      "pick": "BOD-1008",
+      "begr": "Exakte Uebereinstimmung: Laminat Eiche natur, 8 mm, Klicksystem.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1008"
+      ],
+      "latencyMs": 2243,
+      "kosten": 0.00891
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S1",
+      "typ": "B",
+      "run": 4,
+      "pick": "BOD-1008",
+      "begr": "Exakte Übereinstimmung: Laminat Eiche natur, Klicksystem, 8 mm.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1008"
+      ],
+      "latencyMs": 1836,
+      "kosten": 0.008885
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S2",
+      "typ": "C",
+      "run": 1,
+      "pick": "BOD-1105",
+      "begr": "Vinyl-Designboden mit Klicksystem in heller Holzoptik (Eiche hell) passt exakt zur geforderten Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1105"
+      ],
+      "latencyMs": 2012,
+      "kosten": 0.00978
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S2",
+      "typ": "C",
+      "run": 0,
+      "pick": "BOD-1105",
+      "begr": "Vinyl-Designboden mit Klicksystem in heller Holzoptik (Eiche hell) passt exakt zur geforderten Klick-Vinyl-Position in Holzoptik hell.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1105"
+      ],
+      "latencyMs": 2492,
+      "kosten": 0.010255
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S2",
+      "typ": "C",
+      "run": 2,
+      "pick": "BOD-1105",
+      "begr": "Vinyl-Designboden mit Klicksystem in heller Holzoptik (Eiche hell) passt exakt zur Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1105"
+      ],
+      "latencyMs": 2410,
+      "kosten": 0.00968
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S2",
+      "typ": "C",
+      "run": 3,
+      "pick": "BOD-1105",
+      "begr": "Vinyl-Designboden mit Klicksystem in heller Holzoptik (Eiche hell) passt exakt zur Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1105"
+      ],
+      "latencyMs": 1829,
+      "kosten": 0.00968
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S2",
+      "typ": "C",
+      "run": 4,
+      "pick": "BOD-1105",
+      "begr": "Vinyl-Designboden mit Klicksystem in heller Holzoptik (Eiche hell) passt exakt zur Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1105"
+      ],
+      "latencyMs": 2138,
+      "kosten": 0.00968
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S3",
+      "typ": "D",
+      "run": 0,
+      "pick": "BOD-1210",
+      "begr": "Exakte Uebereinstimmung: Trittschalldaemmung PE-Schaum 2 mm fuer Laminat.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1210"
+      ],
+      "latencyMs": 2240,
+      "kosten": 0.008315
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S3",
+      "typ": "D",
+      "run": 1,
+      "pick": "BOD-1210",
+      "begr": "Exakte Uebereinstimmung: Trittschalldaemmung PE-Schaum 2 mm fuer Laminat.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1210"
+      ],
+      "latencyMs": 1767,
+      "kosten": 0.008315
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S3",
+      "typ": "D",
+      "run": 3,
+      "pick": "BOD-1210",
+      "begr": "Exakte Uebereinstimmung: Trittschalldaemmung PE-Schaum 2 mm fuer Laminat.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1210"
+      ],
+      "latencyMs": 2671,
+      "kosten": 0.008315
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S3",
+      "typ": "D",
+      "run": 4,
+      "pick": "BOD-1210",
+      "begr": "Exakte Uebereinstimmung: Trittschalldaemmung aus PE-Schaum 2 mm fuer Laminat.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1210"
+      ],
+      "latencyMs": 2038,
+      "kosten": 0.008365
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S3",
+      "typ": "D",
+      "run": 2,
+      "pick": "BOD-1210",
+      "begr": "Exakte Uebereinstimmung: Trittschalldaemmung PE-Schaum 2 mm fuer Laminat.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "BOD-1210"
+      ],
+      "latencyMs": 3908,
+      "kosten": 0.008315
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S4",
+      "typ": "B",
+      "run": 0,
+      "pick": "FLI-2060",
+      "begr": "Exakte Uebereinstimmung: Bodenfliese Feinsteinzeug grau im Format 60x60 cm.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2060"
+      ],
+      "latencyMs": 2537,
+      "kosten": 0.00957
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S4",
+      "typ": "B",
+      "run": 1,
+      "pick": "FLI-2060",
+      "begr": "Exakte Uebereinstimmung: Bodenfliese Feinsteinzeug grau im Format 60x60 cm.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2060"
+      ],
+      "latencyMs": 2141,
+      "kosten": 0.00957
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S4",
+      "typ": "B",
+      "run": 2,
+      "pick": "FLI-2060",
+      "begr": "Exakte Uebereinstimmung: Bodenfliese Feinsteinzeug grau im Format 60x60 cm.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2060"
+      ],
+      "latencyMs": 2581,
+      "kosten": 0.00957
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S4",
+      "run": 3,
+      "error": "HTTP 503: {\"error\":{\"message\":\"Resource overloaded, please try again after some time\",\"type\":\"overloaded_error\"}}"
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S5",
+      "typ": "D",
+      "run": 0,
+      "pick": "FLI-2300",
+      "begr": "Flexkleber C2TE fuer Feinsteinzeug im Sack passt exakt zur Position Fliesenkleber fuer Bodenfliesen.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2300"
+      ],
+      "latencyMs": 4235,
+      "kosten": 0.00991
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S4",
+      "typ": "B",
+      "run": 4,
+      "pick": "FLI-2060",
+      "begr": "Exakte Uebereinstimmung: Bodenfliese Feinsteinzeug grau im Format 60x60 cm.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2060"
+      ],
+      "latencyMs": 2363,
+      "kosten": 0.00957
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S5",
+      "typ": "D",
+      "run": 1,
+      "pick": "FLI-2300",
+      "begr": "Flexibler Fliesenkleber C2TE fuer Feinsteinzeug, im Sack erhaeltlich, passt exakt zur Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2300"
+      ],
+      "latencyMs": 2628,
+      "kosten": 0.009835
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S5",
+      "typ": "D",
+      "run": 3,
+      "pick": "FLI-2300",
+      "begr": "Flexibler Fliesenkleber C2TE fuer Feinsteinzeug, im Sack erhaeltlich, passt exakt zur Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2300"
+      ],
+      "latencyMs": 2193,
+      "kosten": 0.009835
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S5",
+      "typ": "D",
+      "run": 2,
+      "pick": "FLI-2300",
+      "begr": "Flexkleber C2TE fuer Feinsteinzeug im Sack ist der gesuchte Fliesenkleber, alle anderen Kandidaten sind Fliesen.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2300"
+      ],
+      "latencyMs": 2347,
+      "kosten": 0.010085
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S5",
+      "typ": "D",
+      "run": 4,
+      "pick": "FLI-2300",
+      "begr": "Flexibler Fliesenkleber C2TE fuer Feinsteinzeug, im Sack abgegeben, passt exakt zur Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2300"
+      ],
+      "latencyMs": 5114,
+      "kosten": 0.009785
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S6",
+      "typ": "F",
+      "run": 1,
+      "pick": "FLI-2410",
+      "begr": "Fliesenkreuze/Fugenkreuze mit exakt 3 mm passen zur Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2410",
+        "FLI-2411"
+      ],
+      "latencyMs": 2419,
+      "kosten": 0.00782
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S6",
+      "typ": "F",
+      "run": 2,
+      "pick": "FLI-2410",
+      "begr": "Fugenkreuze 3 mm entsprechen den Fliesenkreuzen 3 mm (FLI-2410).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2410",
+        "FLI-2411"
+      ],
+      "latencyMs": 2392,
+      "kosten": 0.00802
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S6",
+      "typ": "F",
+      "run": 4,
+      "pick": "FLI-2410",
+      "begr": "Fliesenkreuze 3 mm entsprechen exakt den gesuchten Fugenkreuzen mit 3 mm und werden pro Pack verkauft.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2410",
+        "FLI-2411"
+      ],
+      "latencyMs": 2135,
+      "kosten": 0.00837
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S6",
+      "run": 0,
+      "error": "HTTP 503: {\"error\":{\"message\":\"Resource overloaded, please try again after some time\",\"type\":\"overloaded_error\"}}"
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S7",
+      "typ": "C",
+      "run": 0,
+      "pick": "SAN-3010",
+      "begr": "Bodenebenes, befliesbares Duschelement in exakt passender Groesse 90x90 cm.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "SAN-3010"
+      ],
+      "latencyMs": 1744,
+      "kosten": 0.008825
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S6",
+      "typ": "F",
+      "run": 3,
+      "pick": "FLI-2410",
+      "begr": "Fliesenkreuze/Fugenkreuze in 3 mm passen exakt zur Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2410",
+        "FLI-2411"
+      ],
+      "latencyMs": 1895,
+      "kosten": 0.007795
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S7",
+      "typ": "C",
+      "run": 1,
+      "pick": "SAN-3010",
+      "begr": "Bodenebenes, befliesbares Duschelement in exakt 90x90 cm passt genau zur Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "SAN-3010"
+      ],
+      "latencyMs": 2794,
+      "kosten": 0.008875
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S7",
+      "typ": "C",
+      "run": 2,
+      "pick": "SAN-3010",
+      "begr": "Bodenebenes, befliesbares Duschelement in 90x90 cm passt exakt zur Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "SAN-3010"
+      ],
+      "latencyMs": 1595,
+      "kosten": 0.008825
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S7",
+      "run": 3,
+      "error": "HTTP 503: {\"error\":{\"message\":\"Resource overloaded, please try again after some time\",\"type\":\"overloaded_error\"}}"
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S8",
+      "typ": "A",
+      "run": 0,
+      "pick": "SAN-3210",
+      "begr": "Exakte Uebereinstimmung: Ablaufgarnitur Dusche DN 90 Komplettset.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "SAN-3210"
+      ],
+      "latencyMs": 3614,
+      "kosten": 0.00867
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S8",
+      "typ": "A",
+      "run": 1,
+      "pick": "SAN-3210",
+      "begr": "Exakte Uebereinstimmung: Ablaufgarnitur Dusche DN 90 als Komplettset.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "SAN-3210"
+      ],
+      "latencyMs": 2513,
+      "kosten": 0.008695
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S8",
+      "typ": "A",
+      "run": 2,
+      "pick": "SAN-3210",
+      "begr": "Exakte Uebereinstimmung mit Ablaufgarnitur Dusche DN 90 Komplettset.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "SAN-3210"
+      ],
+      "latencyMs": 1943,
+      "kosten": 0.008695
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S7",
+      "run": 4,
+      "error": "HTTP 503: {\"error\":{\"message\":\"Resource overloaded, please try again after some time\",\"type\":\"overloaded_error\"}}"
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S9",
+      "typ": "E",
+      "run": 0,
+      "pick": "KEIN_TREFFER",
+      "begr": "Kein Unterputz-Thermostat vorhanden; SAN-3310 ist Aufputz und ausdruecklich ohne Thermostat.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": true,
+      "gold": [],
+      "latencyMs": 2237,
+      "kosten": 0.009105
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S8",
+      "typ": "A",
+      "run": 3,
+      "pick": "SAN-3210",
+      "begr": "Exakte Uebereinstimmung: Ablaufgarnitur Dusche DN 90 Komplettset.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "SAN-3210"
+      ],
+      "latencyMs": 1834,
+      "kosten": 0.00867
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S9",
+      "typ": "E",
+      "run": 1,
+      "pick": "KEIN_TREFFER",
+      "begr": "Es gibt nur eine Aufputz-Duscharmatur ohne Thermostat, aber keine Unterputz-Thermostat-Duscharmatur.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": true,
+      "gold": [],
+      "latencyMs": 1991,
+      "kosten": 0.009205
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S8",
+      "typ": "A",
+      "run": 4,
+      "pick": "SAN-3210",
+      "begr": "Exakte Uebereinstimmung: Ablaufgarnitur Dusche DN 90 Komplettset.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "SAN-3210"
+      ],
+      "latencyMs": 2117,
+      "kosten": 0.00867
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S9",
+      "typ": "E",
+      "run": 3,
+      "pick": "KEIN_TREFFER",
+      "begr": "Es gibt nur eine Aufputz-Duscharmatur ohne Thermostat, keine passende Unterputz-Thermostatarmatur.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": true,
+      "gold": [],
+      "latencyMs": 1897,
+      "kosten": 0.009105
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S9",
+      "typ": "E",
+      "run": 4,
+      "pick": "KEIN_TREFFER",
+      "begr": "Es gibt nur eine Aufputz-Duscharmatur ohne Thermostat, aber keine Unterputz-Thermostat-Armatur.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": true,
+      "gold": [],
+      "latencyMs": 2239,
+      "kosten": 0.00913
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S9",
+      "run": 2,
+      "error": "HTTP 503: {\"error\":{\"message\":\"Resource overloaded, please try again after some time\",\"type\":\"overloaded_error\"}}"
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S10",
+      "typ": "C",
+      "run": 0,
+      "pick": "TRB-4010",
+      "begr": "Sockelleiste aus MDF in weiss, abgerechnet in lfm passend zur Mengeneinheit.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "TRB-4010"
+      ],
+      "latencyMs": 1944,
+      "kosten": 0.0079
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S10",
+      "typ": "C",
+      "run": 1,
+      "pick": "TRB-4010",
+      "begr": "MDF-Sockelleiste in weiss, Einheit lfm passt exakt zur geforderten weissen MDF-Sockelleiste.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "TRB-4010"
+      ],
+      "latencyMs": 2111,
+      "kosten": 0.008125
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S10",
+      "typ": "C",
+      "run": 2,
+      "pick": "TRB-4010",
+      "begr": "Sockelleiste aus MDF in weiss mit Einheit lfm passt exakt zur Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "TRB-4010"
+      ],
+      "latencyMs": 2388,
+      "kosten": 0.007775
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S10",
+      "typ": "C",
+      "run": 3,
+      "pick": "TRB-4010",
+      "begr": "Sockelleiste aus MDF in weiss, Einheit lfm passt exakt zur Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "TRB-4010"
+      ],
+      "latencyMs": 2077,
+      "kosten": 0.00775
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S10",
+      "typ": "C",
+      "run": 4,
+      "pick": "TRB-4010",
+      "begr": "MDF-Sockelleiste in weiss, Abrechnung in lfm passend zur Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "TRB-4010"
+      ],
+      "latencyMs": 2070,
+      "kosten": 0.007725
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S11",
+      "typ": "B",
+      "run": 1,
+      "pick": "TRB-4210",
+      "begr": "XPS-Hartschaum-Daemmplatte mit exakt 60 mm Dicke in m2 passt genau zur Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "TRB-4210"
+      ],
+      "latencyMs": 2440,
+      "kosten": 0.00824
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S11",
+      "typ": "B",
+      "run": 2,
+      "pick": "TRB-4210",
+      "begr": "XPS-Hartschaum-Daemmplatte mit exakt 60 mm Dicke, abgerechnet in m2, passt genau zur Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "TRB-4210"
+      ],
+      "latencyMs": 2232,
+      "kosten": 0.008415
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S11",
+      "typ": "B",
+      "run": 3,
+      "pick": "TRB-4210",
+      "begr": "XPS-Hartschaum-Daemmplatte mit 60 mm Dicke passt exakt zur geforderten XPS-Daemmplatte 60 mm.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "TRB-4210"
+      ],
+      "latencyMs": 2103,
+      "kosten": 0.00854
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S11",
+      "typ": "B",
+      "run": 4,
+      "pick": "TRB-4210",
+      "begr": "Exakte Uebereinstimmung: XPS-Hartschaum-Daemmplatte mit 60 mm Dicke, abgerechnet in m2.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "TRB-4210"
+      ],
+      "latencyMs": 2467,
+      "kosten": 0.008465
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S11",
+      "run": 0,
+      "error": "HTTP 503: {\"error\":{\"message\":\"Resource overloaded, please try again after some time\",\"type\":\"overloaded_error\"}}"
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S12",
+      "typ": "F",
+      "run": 2,
+      "pick": "MAL-5010",
+      "begr": "Innen-Wandfarbe weiss matt in Einheit L passt exakt zur Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "MAL-5010",
+        "MAL-5011"
+      ],
+      "latencyMs": 1687,
+      "kosten": 0.007725
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S12",
+      "typ": "F",
+      "run": 1,
+      "pick": "MAL-5010",
+      "begr": "Innen-Wandfarbe weiss, matt in Einheit L passt exakt zur Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "MAL-5010",
+        "MAL-5011"
+      ],
+      "latencyMs": 1780,
+      "kosten": 0.00775
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S12",
+      "typ": "F",
+      "run": 3,
+      "pick": "MAL-5010",
+      "begr": "Innen-Wandfarbe weiss, matt, in Einheit L passt exakt zur Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "MAL-5010",
+        "MAL-5011"
+      ],
+      "latencyMs": 1754,
+      "kosten": 0.007775
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S12",
+      "typ": "F",
+      "run": 4,
+      "pick": "MAL-5010",
+      "begr": "Innen-Wandfarbe weiss, matt in Einheit Liter passt exakt zur Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "MAL-5010",
+        "MAL-5011"
+      ],
+      "latencyMs": 1983,
+      "kosten": 0.0078
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S12",
+      "run": 0,
+      "error": "HTTP 503: {\"error\":{\"message\":\"No providers available for this model.\",\"type\":\"provider_unavailable\"}}"
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S13",
+      "typ": "D",
+      "run": 1,
+      "pick": "MAL-5110",
+      "begr": "Tiefengrund loesemittelfrei fuer saugende Untergruende passt exakt zur Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "MAL-5110"
+      ],
+      "latencyMs": 2439,
+      "kosten": 0.008535
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S13",
+      "typ": "D",
+      "run": 0,
+      "pick": "MAL-5110",
+      "begr": "Tiefengrund loesemittelfrei fuer saugende Untergruende passt exakt zur Position und Mengeneinheit L.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "MAL-5110"
+      ],
+      "latencyMs": 5185,
+      "kosten": 0.008785
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S13",
+      "typ": "D",
+      "run": 2,
+      "pick": "MAL-5110",
+      "begr": "Tiefengrund loesemittelfrei fuer saugende Untergruende passt exakt zur Position und wird in Liter abgerechnet.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "MAL-5110"
+      ],
+      "latencyMs": 2049,
+      "kosten": 0.00886
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S13",
+      "typ": "D",
+      "run": 3,
+      "pick": "MAL-5110",
+      "begr": "Tiefengrund loesemittelfrei fuer saugende Untergruende passt exakt zur Position und Einheit Liter.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "MAL-5110"
+      ],
+      "latencyMs": 1834,
+      "kosten": 0.008735
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S14",
+      "typ": "D",
+      "run": 1,
+      "pick": "KLM-6010",
+      "begr": "Exakte Uebereinstimmung: Sanitaer-Silikon transparent, schimmelresistent, je Kartusche.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "KLM-6010"
+      ],
+      "latencyMs": 2077,
+      "kosten": 0.00845
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S14",
+      "typ": "D",
+      "run": 0,
+      "pick": "KLM-6010",
+      "begr": "Exakt passendes Sanitaer-Silikon transparent, schimmelresistent in Kartusche.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "KLM-6010"
+      ],
+      "latencyMs": 2095,
+      "kosten": 0.00825
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S13",
+      "run": 4,
+      "error": "HTTP 429: {\"success\":false,\"error\":\"Rate limit exceeded\",\"details\":{\"limit_type\":\"rpm\",\"limit_scope\":\"overall\",\"limit_level\":\"org\",\"current\":20,\"limit\":20}}"
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S14",
+      "typ": "D",
+      "run": 2,
+      "pick": "KLM-6010",
+      "begr": "Sanitaer-Silikon transparent und schimmelresistent in Kartusche passt exakt zur Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "KLM-6010"
+      ],
+      "latencyMs": 1865,
+      "kosten": 0.0083
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S14",
+      "typ": "D",
+      "run": 3,
+      "pick": "KLM-6010",
+      "begr": "Sanitaer-Silikon transparent und schimmelresistent passt exakt zur Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "KLM-6010"
+      ],
+      "latencyMs": 1886,
+      "kosten": 0.00815
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S14",
+      "typ": "D",
+      "run": 4,
+      "pick": "KLM-6010",
+      "begr": "Exakt passendes Sanitaersilikon transparent, schimmelresistent in Kartuschenform.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "KLM-6010"
+      ],
+      "latencyMs": 2032,
+      "kosten": 0.00825
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S15",
+      "typ": "E",
+      "run": 1,
+      "pick": "KEIN_TREFFER",
+      "begr": "Gesucht ist echter polierter Marmor (Naturstein); alle Kandidaten sind Keramik/Feinsteinzeug, auch die Marmoroptik-Fliese ist explizit kein Naturstein.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": true,
+      "gold": [],
+      "latencyMs": 2080,
+      "kosten": 0.01048
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S15",
+      "typ": "E",
+      "run": 3,
+      "pick": "KEIN_TREFFER",
+      "begr": "Gesucht ist echter polierter Naturstein-Marmor, alle Kandidaten sind Keramik bzw. Feinsteinzeug (auch FLI-2070 nur Marmoroptik, kein Naturstein).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": true,
+      "gold": [],
+      "latencyMs": 2084,
+      "kosten": 0.010555
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S15",
+      "typ": "E",
+      "run": 0,
+      "pick": "KEIN_TREFFER",
+      "begr": "Gesucht ist Echtmarmor (Naturstein), alle Kandidaten sind jedoch Keramik/Feinsteinzeug, auch die Marmoroptik-Fliese ist ausdruecklich kein Naturstein.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": true,
+      "gold": [],
+      "latencyMs": 2315,
+      "kosten": 0.01063
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S15",
+      "typ": "E",
+      "run": 2,
+      "pick": "KEIN_TREFFER",
+      "begr": "Gesucht ist echter polierter Naturstein-Marmor, alle Kandidaten sind jedoch Keramik bzw. Feinsteinzeug (auch FLI-2070 ist nur Marmoroptik, kein Naturstein).",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": true,
+      "gold": [],
+      "latencyMs": 2511,
+      "kosten": 0.010705
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S16",
+      "typ": "B",
+      "run": 1,
+      "pick": "FLI-2350",
+      "begr": "Fugenmoertel grau im 5-kg-Beutel passt exakt zur Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2350"
+      ],
+      "latencyMs": 1909,
+      "kosten": 0.00821
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S16",
+      "typ": "B",
+      "run": 0,
+      "pick": "FLI-2350",
+      "begr": "Fugenmoertel grau im 5-kg-Beutel passt exakt zur Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2350"
+      ],
+      "latencyMs": 2070,
+      "kosten": 0.00821
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S16",
+      "typ": "B",
+      "run": 3,
+      "pick": "FLI-2350",
+      "begr": "Fugenmoertel grau im 5-kg-Beutel entspricht exakt der Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2350"
+      ],
+      "latencyMs": 2155,
+      "kosten": 0.008235
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S15",
+      "run": 4,
+      "error": "HTTP 503: {\"error\":{\"message\":\"Resource overloaded, please try again after some time\",\"type\":\"overloaded_error\"}}"
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S16",
+      "typ": "B",
+      "run": 2,
+      "pick": "FLI-2350",
+      "begr": "Fugenmoertel grau im 5-kg-Beutel passt exakt zur Position.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2350"
+      ],
+      "latencyMs": 2557,
+      "kosten": 0.00821
+    },
+    {
+      "model": "claude-opus-4-8",
+      "id": "C2-S16",
+      "typ": "B",
+      "run": 4,
+      "pick": "FLI-2350",
+      "begr": "Fugenmoertel grau im 5-kg-Beutel passt exakt zu Bezeichnung, Beschreibung und Einheit.",
+      "ungueltig": false,
+      "korrekt": true,
+      "keinTreffer": false,
+      "gold": [
+        "FLI-2350"
+      ],
+      "latencyMs": 2078,
+      "kosten": 0.008635
+    }
+  ]
+}
