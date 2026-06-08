@@ -4,6 +4,7 @@ import { AppLayout } from "@/shared/components/AppLayout";
 import { DashboardView } from "@/features/dashboard/components/DashboardView";
 import { DocumentPage } from "@/features/document/components/DocumentPage";
 import { HomeView } from "@/features/voice-input/components/HomeView";
+import { LandingPage } from "@/features/landing/components/LandingPage";
 import { UnternehmenPage } from "@/features/unternehmen/components/UnternehmenPage";
 import { ProfilPage } from "@/features/profil/components/ProfilPage";
 import { ReviewPage } from "@/features/review/components/ReviewPage";
@@ -27,6 +28,15 @@ export function AppRoutes() {
       <Route
         path="/"
         element={
+          <AppLayout hideNav hideHeader>
+            <LandingPage />
+          </AppLayout>
+        }
+      />
+
+      <Route
+        path="/home"
+        element={
           <AppLayout>
             <HomeView />
           </AppLayout>
@@ -34,7 +44,7 @@ export function AppRoutes() {
       />
 
       <Route
-        path="/angebote"
+        path="/dokumente"
         element={
           <AppLayout>
             <DocumentPage />
@@ -70,7 +80,7 @@ export function AppRoutes() {
       />
 
       <Route
-        path="/passwort-aendern"
+        path="/passwortAendern"
         element={
           <AppLayout>
             <PasswordChangePage />
@@ -87,24 +97,23 @@ export function AppRoutes() {
         }
       />
 
-<Route
-  path="/angebot-teilen"
-  element={
-    <AppLayout>
-      <OfferSharePage />
-    </AppLayout>
-  }
-/>
-
+      <Route
+        path="/angebotTeilen"
+        element={
+          <AppLayout>
+            <OfferSharePage />
+          </AppLayout>
+        }
+      />
 
       <Route
-  path="/angebot-ergebnis"
-  element={
-    <AppLayout>
-      <OfferResultPage />
-    </AppLayout>
-  }
-/>
+        path="/angebotErgebnis"
+        element={
+          <AppLayout>
+            <OfferResultPage />
+          </AppLayout>
+        }
+      />
 
       {/* ── Auth-Seiten OHNE Header + Navbar ── */}
       <Route
@@ -126,7 +135,7 @@ export function AppRoutes() {
       />
 
       <Route
-        path="/registrierung"
+        path="/registrieren"
         element={
           <AppLayout hideNav hideHeader>
             <RegistrierungPage />
@@ -151,7 +160,6 @@ export function AppRoutes() {
           </AppLayout>
         }
       />
-
     </Routes>
   );
 }

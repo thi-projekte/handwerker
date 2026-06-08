@@ -136,7 +136,7 @@ export const ReviewPage = () => {
 
   const handleBestaetigen = () => {
     setBestaetigt(true);
-    setTimeout(() => navigate("/angebot-vorschau"), 1200);
+    setTimeout(() => navigate("/angebotVorschau"), 1200);
   };
 
   return (

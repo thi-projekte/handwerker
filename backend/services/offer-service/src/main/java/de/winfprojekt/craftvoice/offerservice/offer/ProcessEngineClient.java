@@ -12,40 +12,64 @@ import java.util.Map;
 @ApplicationScoped
 public class ProcessEngineClient {
 
-    @Inject
-    @RestClient
-    ProcessEngineRestClient client;
+        @Inject
+        @RestClient
+        ProcessEngineRestClient client;
 
-    /**
-     * Übermittelt die Angebotsdaten sowie den Business Key an die Process Engine.
-     *
-     * @param businessKey eindeutiger Business-Key des Angebots
-     * @param customerId ID des zugehörigen Kunden
-     * @param sprachschnipsel erfasster Sprachschnipsel zur Anfrage
-     * @param vorlage optionale Angebotsvorlage
-     */
-    public void sendAngebotPayload(String businessKey, Long customerId, String sprachschnipsel, Object vorlage) {
+        /**
+         * Übermittelt die Angebotsdaten sowie den Business Key an die Process Engine.
+         *
+         * @param businessKey     eindeutiger Business-Key des Angebots
+         * @param customerId      ID des zugehörigen Kunden
+         * @param sprachschnipsel erfasster Sprachschnipsel zur Anfrage
+         * @param vorlage         optionale Angebotsvorlage
+         */
+        public void sendAngebotPayload(String businessKey, Long customerId, String sprachschnipsel, Object vorlage) {
 
-        Map<String, Object> payload = Map.of(
-                "messageName", "angebotPayload",
-                "businessKey", businessKey,
-                "processVariables", Map.of(
-                        "kundendaten", Map.of(
+                Map<String, Object> kundendaten = Map.of(
                                 "value", customerId,
-                                "type", "Long"
-                        ),
-                        "sprachschnipsel", Map.of(
-                                "value", sprachschnipsel,
-                                "type", "String"
-                        ),
-                        "vorlage", Map.of(
-                                "value", vorlage,
-                                "type", "Json"
-                        )
-                ),
-                "resultEnabled", false
-        );
+                                "type", "Long");
 
-        client.sendMessage(payload);
-    }
+                Map<String, Object> sprachschnipselMap = Map.of(
+                                "value", sprachschnipsel,
+                                "type", "String");
+
+                Map<String, Object> vorlageMap = new java.util.HashMap<>();
+                vorlageMap.put("value", vorlage);
+                vorlageMap.put("type", "Json");
+
+                Map<String, Object> processVariables = Map.of(
+                                "kundendaten", kundendaten,
+                                "sprachschnipsel", sprachschnipselMap,
+                                "vorlage", vorlageMap);
+
+                Map<String, Object> payload = Map.of(
+                                "messageName", "angebotPayload",
+                                "businessKey", businessKey,
+                                "processVariables", processVariables,
+                                "resultEnabled", false);
+
+                client.sendMessage(payload);
+        }
+
+        /**
+         * Sendet das KI-Ergebnis an die Process Engine.
+         *
+         * @param businessKey          businessKey des Angebots
+         * @param ergebnisKiJsonString strukturierteAngebotspositionen und
+         *                             korrekturvorschlaege als JSON-String
+         */
+        public void sendAiResult(String businessKey, String ergebnisKiJsonString) {
+
+                Map<String, Object> payload = Map.of(
+                                "messageName", "ergebnisKI",
+                                "businessKey", businessKey,
+                                "processVariables", Map.of(
+                                                "ergebnisKI", Map.of(
+                                                                "value", ergebnisKiJsonString,
+                                                                "type", "String")),
+                                "resultEnabled", false);
+
+                client.sendMessage(payload);
+        }
 }

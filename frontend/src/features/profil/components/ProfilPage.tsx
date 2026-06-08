@@ -13,19 +13,37 @@ type ProfileFormData = {
   rolle: string;
 };
 
+const THEME_COOKIE_NAME = "craftvoice-theme";
+
+const getCookieValue = (name: string) => {
+  return document.cookie
+    .split("; ")
+    .find((row) => row.startsWith(`${name}=`))
+    ?.split("=")[1];
+};
+
+const setCookieValue = (name: string, value: string) => {
+  document.cookie = `${name}=${value}; path=/; max-age=2592000; SameSite=Lax`;
+};
+
 export const ProfilPage = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [activeTab, setActiveTab] = useState<Tab>("profil");
 
-  const [isLightMode, setIsLightMode] = useState(
-    () => localStorage.getItem("theme") === "light",
-  );
+  const [isLightMode, setIsLightMode] = useState(() => {
+    const savedTheme =
+      getCookieValue(THEME_COOKIE_NAME) ?? localStorage.getItem("theme");
+
+    return savedTheme === "light";
+  });
 
   const [profileImage, setProfileImage] = useState<string | null>(() => {
     return localStorage.getItem("profileImage");
   });
+
+  const [showSaveSuccess, setShowSaveSuccess] = useState(false);
 
   const [formData, setFormData] = useState<ProfileFormData>({
     vorname: "Christian",
@@ -42,13 +60,22 @@ export const ProfilPage = () => {
 
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("theme", theme);
+    setCookieValue(THEME_COOKIE_NAME, theme);
   }, [isLightMode]);
 
   const handleInputChange = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSaveChanges = () => {
+    setShowSaveSuccess(true);
+
+    window.setTimeout(() => {
+      setShowSaveSuccess(false);
+    }, 2500);
   };
 
   const handleProfileImageChange = (
@@ -220,28 +247,33 @@ export const ProfilPage = () => {
 
               <label className="profile-field">
                 <span>Rolle</span>
-                <select
-                  className="input-field profile-select"
-                  name="rolle"
-                  value={formData.rolle}
-                  onChange={handleInputChange}
-                >
-                  <option value="Inhaber">Inhaber</option>
-                  <option value="Mitarbeiter">Mitarbeiter</option>
-                  <option value="Büro / Verwaltung">Büro / Verwaltung</option>
-                </select>
+                <div className="profile-readonly-field">{formData.rolle}</div>
+                <p className="profile-field-hint">
+                  Die Rolle wird im Unternehmensbereich vergeben und kann hier
+                  nicht geändert werden.
+                </p>
               </label>
             </div>
 
             <div className="profile-actions">
-              <button className="button-primary profile-save-button">
+              <button
+                className="button-primary profile-save-button"
+                type="button"
+                onClick={handleSaveChanges}
+              >
                 Änderungen speichern
               </button>
+
+              {showSaveSuccess && (
+                <p className="profile-save-success">
+                  Wurde erfolgreich gespeichert
+                </p>
+              )}
 
               <button
                 className="profile-password-button"
                 type="button"
-                onClick={() => navigate("/passwort-aendern")}
+                onClick={() => navigate("/passwortAendern")}
               >
                 Passwort ändern
               </button>
