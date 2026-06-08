@@ -2,6 +2,7 @@ package de.winfprojekt.craftvoice.userservice;
 
 import io.quarkus.security.Authenticated;
 import io.quarkus.security.identity.SecurityIdentity;
+import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
@@ -26,6 +27,7 @@ public class UserResource {
 
     @POST
     @Path("/register")
+    @jakarta.annotation.security.PermitAll
     public Response register(RegistrationRequest request) {
         UserEntity user = new UserEntity();
         user.email = request.email;
