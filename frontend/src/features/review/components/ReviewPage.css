@@ -1,45 +1,29 @@
 /* =========================
-   ReviewPage
+   ReviewPage – neu
    ========================= */
 
-.review-sections-grid {
-  display: grid;
-  grid-template-columns: 1fr; /* Nur eine Spalte auf dem Handy */
-  gap: 20px;
-}
-
-/* ── Desktop: zwei Spalten ── */
-@media (min-width: 1024px) {
-  /* Alle Abschnitte in einem 2-spaltigen Grid */
-  .review-sections-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    align-items: stretch; /* Bewirkt, dass Boxen in derselben Zeile gleich hoch gezerrt werden */
-  }
-}
-
-/* Header */
 .review-header {
-  margin-bottom: 5;
+  margin-bottom: 5px;
 }
 
 .review-header-top {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .review-header-top h1 {
   margin: 0;
+  font-size: clamp(17px, 2.5vw, 22px);
+  line-height: 1.35;
 }
 
 .review-eyebrow {
   display: inline-block;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
   color: var(--color-accent);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -54,26 +38,25 @@
   font-weight: 600;
   white-space: nowrap;
   margin-top: 4px;
+  flex-shrink: 0;
+  margin-left: 12px;
 }
 
-/* Abschnitt */
 .review-section {
-  margin-top: 0;
   margin-bottom: 12px;
-
-  display: flex;
-  flex-direction: column;
 }
 
 .review-section-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .review-section-header h2 {
   margin: 0;
+  font-size: 16px;
+  font-weight: 700;
 }
 
 .review-count {
@@ -88,7 +71,382 @@
   place-items: center;
 }
 
-/* Liste */
+.review-count-warn {
+  background: rgba(255, 190, 0, 0.15);
+  color: #e6a800;
+}
+.review-lock-icon {
+  font-size: 16px;
+  opacity: 0.5;
+}
+
+/* ── Kundendaten ── */
+.review-kunde-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.review-kunde-row {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+}
+.review-kunde-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  min-width: 64px;
+  flex-shrink: 0;
+}
+.review-kunde-value {
+  font-size: 14px;
+  color: var(--color-text-primary);
+}
+
+/* ── Positionsliste ── */
+.review-positions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.review-position-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px solid var(--color-divider);
+  background: rgba(255, 255, 255, 0.02);
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+.review-position-row:hover {
+  border-color: rgba(255, 106, 0, 0.2);
+}
+.review-position-row.alternativ {
+  border-color: rgba(255, 106, 0, 0.35);
+  background: rgba(255, 106, 0, 0.04);
+}
+.review-position-row.manuell {
+  border-color: rgba(100, 180, 255, 0.35);
+  background: rgba(100, 180, 255, 0.04);
+}
+
+.review-pos-order {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  padding-right: 8px;
+  border-right: 1px solid var(--color-divider);
+}
+.review-order-btn {
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: 10px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  line-height: 1;
+  transition:
+    color 0.12s ease,
+    background 0.12s ease;
+}
+.review-order-btn:hover:not(:disabled) {
+  color: var(--color-accent);
+  background: rgba(255, 106, 0, 0.1);
+}
+.review-order-btn:disabled {
+  opacity: 0.2;
+  cursor: default;
+}
+.review-pos-num {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  line-height: 1;
+}
+
+.review-pos-name-box {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  min-width: 0;
+}
+.review-pos-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  cursor: text;
+  line-height: 1.4;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  word-break: break-word;
+}
+.review-pos-name-input {
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--color-accent);
+  border-radius: 8px;
+  outline: none;
+  color: var(--color-text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 6px 8px;
+  resize: none;
+  line-height: 1.4;
+}
+.review-pos-menge {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.review-pos-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.review-pos-badge.alt {
+  background: rgba(255, 106, 0, 0.12);
+  color: var(--color-accent);
+}
+.review-pos-badge.manual {
+  background: rgba(100, 180, 255, 0.15);
+  color: #64b4ff;
+}
+
+.review-pos-preis-box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+  flex-shrink: 0;
+  min-width: 72px;
+}
+.review-pos-preis {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  cursor: text;
+  white-space: nowrap;
+}
+.review-pos-preis:hover {
+  color: var(--color-accent);
+}
+.review-pos-preis-input {
+  width: 80px;
+  background: transparent;
+  border: 1px solid var(--color-accent);
+  border-radius: 8px;
+  outline: none;
+  color: var(--color-text-primary);
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  padding: 4px 6px;
+  text-align: right;
+}
+.review-pos-preis-label {
+  font-size: 10px;
+  color: var(--color-text-secondary);
+}
+
+.review-pos-alt-box {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.review-pos-alt-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--color-divider);
+  border-radius: 10px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-family: inherit;
+  padding: 6px 28px 6px 10px;
+  cursor: pointer;
+  outline: none;
+  max-width: 140px;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--color-text-secondary) 50%),
+    linear-gradient(135deg, var(--color-text-secondary) 50%, transparent 50%);
+  background-position:
+    calc(100% - 10px) 50%,
+    calc(100% - 5px) 50%;
+  background-size:
+    5px 5px,
+    5px 5px;
+  background-repeat: no-repeat;
+}
+.review-pos-alt-select:hover,
+.review-pos-alt-select:focus {
+  border-color: var(--color-accent);
+  color: var(--color-text-primary);
+}
+.review-pos-alt-select option {
+  background-color: #1a1a1c;
+  color: #ffffff;
+}
+[data-theme="light"] .review-pos-alt-select option {
+  background-color: #ffffff;
+  color: #111111;
+}
+
+/* ── Stundenkosten ── */
+.review-stundenkosten {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.review-stunden-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--color-divider);
+}
+.review-stunden-summe {
+  border-color: rgba(255, 106, 0, 0.25);
+  background: rgba(255, 106, 0, 0.04);
+}
+.review-stunden-label {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+.review-stunden-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+.review-stunden-value.editable {
+  cursor: text;
+  transition: color 0.12s ease;
+}
+.review-stunden-value.editable:hover {
+  color: var(--color-accent);
+}
+.review-stunden-value.accent {
+  color: var(--color-accent);
+}
+.review-stunden-input {
+  width: 90px;
+  background: transparent;
+  border: 1px solid var(--color-accent);
+  border-radius: 8px;
+  outline: none;
+  color: var(--color-text-primary);
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  padding: 4px 6px;
+  text-align: right;
+}
+
+/* ── Gesamtpreis ── */
+.review-gesamtpreis-card {
+  border-color: rgba(255, 106, 0, 0.3);
+  background: rgba(255, 106, 0, 0.05);
+}
+.review-gesamtpreis {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.review-gesamtpreis span {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+.review-gesamtpreis strong {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--color-accent);
+}
+
+/* ── KI-Anmerkungen ── */
+.review-anmerkungen-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.review-anmerkung-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 190, 0, 0.06);
+  border: 1px solid rgba(255, 190, 0, 0.2);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text-primary);
+}
+.review-anmerkung-icon {
+  font-size: 14px;
+  color: #e6a800;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ── Freitextfelder ── */
+.review-freitext-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin-bottom: 6px;
+}
+.review-freitext-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--color-divider);
+  border-radius: 14px;
+  outline: none;
+  color: var(--color-text-primary);
+  font-size: 14px;
+  line-height: 1.6;
+  font-family: inherit;
+  padding: 12px 14px;
+  resize: vertical;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.review-freitext-input:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(255, 106, 0, 0.12);
+}
+.review-freitext-input::placeholder {
+  color: var(--color-text-secondary);
+  opacity: 0.6;
+}
+
+/* ── Stichpunkte ── */
 .review-list {
   list-style: none;
   padding: 0;
@@ -97,8 +455,6 @@
   flex-direction: column;
   gap: 6px;
 }
-
-/* Einzelner Stichpunkt */
 .review-item {
   display: flex;
   align-items: flex-start;
@@ -112,18 +468,15 @@
     border-color 0.15s ease;
   cursor: grab;
 }
-
 .review-item:hover {
   background: rgba(255, 255, 255, 0.03);
   border-color: rgba(255, 106, 0, 0.2);
 }
-
-.review-item.dragging {
-  opacity: 0.4;
-  border-color: var(--color-accent);
+.review-item-manuell {
+  border-color: rgba(100, 180, 255, 0.25) !important;
+  background: rgba(100, 180, 255, 0.03) !important;
 }
 
-/* Drag Handle */
 .review-drag-handle {
   color: var(--color-text-secondary);
   font-size: 16px;
@@ -133,8 +486,6 @@
   flex-shrink: 0;
   margin-top: 1px;
 }
-
-/* Text */
 .review-text {
   flex: 1;
   font-size: 14px;
@@ -143,13 +494,10 @@
   cursor: text;
   word-break: break-word;
 }
-
 .review-placeholder {
   color: var(--color-text-secondary);
   font-style: italic;
 }
-
-/* Textarea */
 .review-textarea {
   flex: 1;
   background: transparent;
@@ -163,8 +511,6 @@
   padding: 0;
   width: 100%;
 }
-
-/* Löschen-Button */
 .review-delete-btn {
   background: transparent;
   border: none;
@@ -180,13 +526,10 @@
     background 0.15s ease;
   margin-top: 2px;
 }
-
 .review-delete-btn:hover {
   color: #ff5050;
   background: rgba(255, 80, 80, 0.1);
 }
-
-/* Hinzufügen-Button */
 .review-add-btn {
   width: 100%;
   padding: 10px;
@@ -202,14 +545,24 @@
     color 0.15s ease,
     background 0.15s ease;
 }
-
 .review-add-btn:hover {
   border-color: var(--color-accent);
   color: var(--color-accent);
   background: rgba(255, 106, 0, 0.05);
 }
+.review-sp-badge {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
 
-/* Bestätigen */
+/* ── Stichpunkte-Block ── */
+.review-stichpunkte-block {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-divider);
+}
+
+/* ── Bestätigen ── */
 .review-confirm-card {
   margin-top: 4px;
   display: flex;
@@ -217,29 +570,19 @@
   align-items: center;
   text-align: center;
 }
-
-@media (min-width: 1024px) {
-  .review-confirm-card {
-    grid-column: 1 / -1;
-  }
-}
-
 .review-confirm-hint {
   margin-bottom: 16px;
   font-size: 13px;
 }
-
 .review-confirm-btn {
   width: 100%;
 }
-
 @media (min-width: 768px) {
   .review-confirm-btn {
-    max-width: 400px;
+    max-width: 420px;
   }
 }
 
-/* Erfolg-Animation */
 .review-success {
   display: flex;
   flex-direction: column;
@@ -247,7 +590,6 @@
   gap: 8px;
   padding: 8px 0;
 }
-
 .review-success-icon {
   width: 44px;
   height: 44px;
@@ -260,8 +602,233 @@
   place-items: center;
   box-shadow: 0 8px 20px rgba(255, 106, 0, 0.4);
 }
-
 .review-success p {
   color: var(--color-text-secondary);
   font-size: 14px;
+}
+
+/* ── Mobile Position-Rows ── */
+@media (max-width: 480px) {
+  .review-position-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .review-pos-alt-select {
+    max-width: 100%;
+    width: 100%;
+  }
+  .review-pos-alt-box {
+    width: 100%;
+  }
+  .review-pos-preis-box {
+    align-items: flex-start;
+  }
+}
+
+/* ── Mitarbeiter-Auswahl (Dropdown-Style) ── */
+.review-mitarbeiter-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--color-divider);
+  border-radius: 12px;
+  color: var(--color-text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 8px 32px 8px 12px;
+  cursor: pointer;
+  outline: none;
+  min-width: 140px;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--color-text-secondary) 50%),
+    linear-gradient(135deg, var(--color-text-secondary) 50%, transparent 50%);
+  background-position:
+    calc(100% - 12px) 50%,
+    calc(100% - 7px) 50%;
+  background-size:
+    5px 5px,
+    5px 5px;
+  background-repeat: no-repeat;
+}
+.review-mitarbeiter-select:hover,
+.review-mitarbeiter-select:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(255, 106, 0, 0.12);
+}
+.review-mitarbeiter-select option {
+  background-color: #1a1a1c;
+  color: #ffffff;
+}
+[data-theme="light"] .review-mitarbeiter-select option {
+  background-color: #ffffff;
+  color: #111111;
+}
+
+.review-mitarbeiter-satz {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-accent);
+  white-space: nowrap;
+}
+
+/* ── Mehrere Mitarbeiter-Zeilen ── */
+/* 5 Spalten: nr | mitarbeiter+badge | stunden | kosten | ✕ */
+.review-ma-liste {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.review-ma-header {
+  display: grid;
+  grid-template-columns: 20px 1fr 80px 72px auto;
+  gap: 8px;
+  padding: 0 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.review-ma-zeile {
+  display: grid;
+  grid-template-columns: 20px 1fr 80px 72px auto;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--color-divider);
+  background: rgba(255, 255, 255, 0.02);
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+.review-ma-zeile:hover {
+  border-color: rgba(255, 106, 0, 0.2);
+}
+.review-ma-zeile.manuell {
+  border-color: rgba(100, 180, 255, 0.35);
+  background: rgba(100, 180, 255, 0.04);
+}
+
+.review-ma-index {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+/* Spalte 2: Dropdown + Stundensatz + Badge untereinander */
+.review-ma-select-wrap {
+  display: flex;
+  flex-direction: column; /* untereinander stapeln */
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* Badge direkt unter dem Stundensatz, kein eigener Grid-Track */
+.review-ma-badge-inline {
+  margin-top: 2px;
+}
+
+.review-ma-stunden-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+.review-ma-stunden-value {
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.review-ma-kosten {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.review-ma-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-end;
+}
+.review-ma-add-btn {
+  margin-bottom: 0;
+}
+
+/* ── Mobile: Mitarbeiter-Grid ── */
+@media (max-width: 520px) {
+  .review-ma-header {
+    display: none;
+  }
+  .review-ma-zeile {
+    grid-template-columns: 1fr auto; /* MA-Info links, ✕ rechts */
+    grid-template-rows: auto auto; /* zwei Zeilen: MA | Stunden+Kosten */
+    gap: 8px;
+  }
+  /* Zeile 1, volle Breite: Index verstecken, MA-Block */
+  .review-ma-index {
+    display: none;
+  }
+  .review-ma-select-wrap {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  /* ✕ oben rechts */
+  .review-ma-actions {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: start;
+  }
+  /* Zeile 2: Stunden + Kosten nebeneinander */
+  .review-ma-stunden-wrap {
+    grid-column: 1;
+    grid-row: 2;
+    justify-content: flex-start;
+  }
+  .review-ma-kosten {
+    grid-column: 2;
+    grid-row: 2;
+    text-align: right;
+  }
+}
+
+/* Löschen-Button in der Order-Spalte */
+.review-order-del-btn {
+  margin-top: 4px;
+  color: var(--color-text-secondary);
+  opacity: 0.5;
+  transition:
+    color 0.12s ease,
+    opacity 0.12s ease,
+    background 0.12s ease;
+}
+.review-order-del-btn:hover {
+  color: #ff5050;
+  background: rgba(255, 80, 80, 0.1);
+  opacity: 1;
+}
+
+/* Menge-Input inline */
+.review-pos-menge-input {
+  width: 52px;
+  background: transparent;
+  border: 1px solid var(--color-accent);
+  border-radius: 6px;
+  outline: none;
+  color: var(--color-text-primary);
+  font-size: 12px;
+  font-family: inherit;
+  padding: 2px 4px;
+  text-align: right;
 }
