@@ -21,14 +21,12 @@ public class UserResourceTest {
 
     @Test
     public void testRegisterEndpoint() {
-        // Wir erstellen ein Test-Objekt für den Request
         UserResource.RegistrationRequest request = new UserResource.RegistrationRequest();
         request.email = "test@example.com";
         request.password = "password123";
         request.firstName = "Max";
         request.lastName = "Mustermann";
 
-        // Wir rufen den Endpoint auf. Da der Service gemockt ist, wird kein echter DB-Code ausgeführt.
         given()
                 .contentType("application/json")
                 .body(request)
@@ -40,7 +38,6 @@ public class UserResourceTest {
     @Test
     @TestSecurity(user = "testUser", roles = {"OWNER"})
     public void testMeEndpointWithMockedUser() {
-        // Wir sagen dem Mock, was er zurückgeben soll, wenn er gefragt wird
         UserEntity mockUser = new UserEntity();
         mockUser.email = "test@example.com";
         mockUser.firstName = "Mock";
@@ -48,7 +45,6 @@ public class UserResourceTest {
         
         Mockito.when(userService.syncUserWithDatabase()).thenReturn(mockUser);
 
-        // Wir testen den /me Endpoint mit einem simulierten Login
         given()
                 .when().get("/api/users/me")
                 .then()
