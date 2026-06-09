@@ -74,13 +74,14 @@ class OfferResourceTest {
 
         Mockito.doNothing()
                 .when(processEngineClient)
-                .sendAngebotPayload(any(), any(), any(), any());
+                .sendAngebotPayload(any(), any(), any(), any(), any());
 
         Number offerId = given()
                 .contentType(ContentType.JSON)
                 .body("""
                 {
                   "customerId": 1,
+                  "handwerkerId": 99,
                   "speechSnippet": "Kunde möchte Badrenovierung"
                 }
                 """)
@@ -113,6 +114,9 @@ class OfferResourceTest {
         ArgumentCaptor<Long> customerIdCaptor =
                 ArgumentCaptor.forClass(Long.class);
 
+        ArgumentCaptor<Long> handwerkerIdCaptor =
+                ArgumentCaptor.forClass(Long.class);
+
         ArgumentCaptor<String> speechSnippetCaptor =
                 ArgumentCaptor.forClass(String.class);
 
@@ -122,11 +126,13 @@ class OfferResourceTest {
         verify(processEngineClient, times(1)).sendAngebotPayload(
                 businessKeyCaptor.capture(),
                 customerIdCaptor.capture(),
+                handwerkerIdCaptor.capture(),
                 speechSnippetCaptor.capture(),
                 vorlageCaptor.capture()
         );
 
         assertEquals(1L, customerIdCaptor.getValue());
+        assertEquals(99L, handwerkerIdCaptor.getValue());
 
         assertEquals(
                 "Kunde möchte Badrenovierung",
@@ -175,6 +181,7 @@ class OfferResourceTest {
         // Setup des Testangebots
         Offer offer = new Offer();
         offer.customerId = 1L;
+        offer.handwerkerId = 99L;
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
         offer.status = Offer.STATUS_IN_BEARBEITUNG;
 
@@ -258,6 +265,7 @@ class OfferResourceTest {
     void shouldReturn409WhenOfferNotInBearbeitung() {
         Offer offer = new Offer();
         offer.customerId = 1L;
+        offer.handwerkerId = 99L;
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
         offer.status = Offer.STATUS_ERFASST;
         
@@ -305,7 +313,7 @@ class OfferResourceTest {
     void shouldGetAllOffersSortedByCreatedAtDesc() throws Exception {
         Mockito.doNothing()
                 .when(processEngineClient)
-                .sendAngebotPayload(any(), any(), any(), any());
+                .sendAngebotPayload(any(), any(), any(), any(), any());
 
         // Erstes Angebot anlegen
         given()
@@ -313,6 +321,7 @@ class OfferResourceTest {
                 .body("""
                 {
                   "customerId": 10,
+                  "handwerkerId": 99,
                   "speechSnippet": "Erstes Angebot"
                 }
                 """)
@@ -330,6 +339,7 @@ class OfferResourceTest {
                 .body("""
                 {
                   "customerId": 20,
+                  "handwerkerId": 99,
                   "speechSnippet": "Zweites Angebot"
                 }
                 """)
@@ -369,7 +379,7 @@ class OfferResourceTest {
     void shouldGetOfferById() {
         Mockito.doNothing()
                 .when(processEngineClient)
-                .sendAngebotPayload(any(), any(), any(), any());
+                .sendAngebotPayload(any(), any(), any(), any(), any());
 
         // Angebot erstellen
         Number offerId = given()
@@ -377,6 +387,7 @@ class OfferResourceTest {
                 .body("""
                 {
                   "customerId": 42,
+                  "handwerkerId": 99,
                   "speechSnippet": "Detailansicht Test"
                 }
                 """)
@@ -424,6 +435,7 @@ class OfferResourceTest {
     void shouldAcceptOfferSuccessfully() {
         Offer offer = new Offer();
         offer.customerId = 1L;
+        offer.handwerkerId = 99L;
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
         offer.annahmeToken = UUID.randomUUID().toString();
         offer.status = Offer.STATUS_VERSENDET;
@@ -463,6 +475,7 @@ class OfferResourceTest {
     void shouldRejectOfferSuccessfully() {
         Offer offer = new Offer();
         offer.customerId = 1L;
+        offer.handwerkerId = 99L;
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
         offer.annahmeToken = UUID.randomUUID().toString();
         offer.status = Offer.STATUS_VERSENDET;
@@ -517,6 +530,7 @@ class OfferResourceTest {
     void shouldReturn409WhenOfferNotVersendet() {
         Offer offer = new Offer();
         offer.customerId = 1L;
+        offer.handwerkerId = 99L;
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
         offer.annahmeToken = UUID.randomUUID().toString();
         offer.status = Offer.STATUS_ERFASST;
@@ -542,6 +556,7 @@ class OfferResourceTest {
     void shouldReturn400WhenDecisionInvalid() {
         Offer offer = new Offer();
         offer.customerId = 1L;
+        offer.handwerkerId = 99L;
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
         offer.annahmeToken = UUID.randomUUID().toString();
         offer.status = Offer.STATUS_VERSENDET;
@@ -576,6 +591,7 @@ class OfferResourceTest {
     void shouldCreateArbeitszeitPositionWhenDauerSet() throws RoutingException {
         Offer offer = new Offer();
         offer.customerId = 1L;
+        offer.handwerkerId = 99L;
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
         offer.status = Offer.STATUS_KI_FERTIG;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
@@ -627,6 +643,7 @@ class OfferResourceTest {
     void shouldNotCreateArbeitszeitPositionWhenDauerNull() {
         Offer offer = new Offer();
         offer.customerId = 1L;
+        offer.handwerkerId = 99L;
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
         offer.status = Offer.STATUS_KI_FERTIG;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
@@ -671,6 +688,7 @@ class OfferResourceTest {
     void shouldCalculateAnfahrtskostenPauschale() throws RoutingException {
         Offer offer = new Offer();
         offer.customerId = 1L;
+        offer.handwerkerId = 99L;
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
         offer.status = Offer.STATUS_IN_BEARBEITUNG;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
@@ -723,6 +741,7 @@ class OfferResourceTest {
     void shouldCalculateAnfahrtskostenPauschalePlusKm() throws RoutingException {
         Offer offer = new Offer();
         offer.customerId = 1L;
+        offer.handwerkerId = 99L;
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
         offer.status = Offer.STATUS_IN_BEARBEITUNG;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
@@ -776,6 +795,7 @@ class OfferResourceTest {
     void shouldCalculateAnfahrtskostenNurKm() throws RoutingException {
         Offer offer = new Offer();
         offer.customerId = 1L;
+        offer.handwerkerId = 99L;
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
         offer.status = Offer.STATUS_IN_BEARBEITUNG;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
@@ -830,6 +850,7 @@ class OfferResourceTest {
     void shouldSkipAnfahrtskostenWhenOsrmFails() throws RoutingException {
         Offer offer = new Offer();
         offer.customerId = 1L;
+        offer.handwerkerId = 99L;
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
         offer.status = Offer.STATUS_IN_BEARBEITUNG;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
@@ -902,6 +923,7 @@ class OfferResourceTest {
     void arbeitsstunden_shouldReturn409WhenOfferNotKiFertig() {
         Offer offer = new Offer();
         offer.customerId = 1L;
+        offer.handwerkerId = 99L;
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
         offer.status = Offer.STATUS_ERFASST;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
@@ -927,6 +949,7 @@ class OfferResourceTest {
     void arbeitsstunden_shouldReturn400WhenArbeitsdauerNull() {
         Offer offer = new Offer();
         offer.customerId = 1L;
+        offer.handwerkerId = 99L;
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
         offer.status = Offer.STATUS_KI_FERTIG;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
@@ -947,6 +970,7 @@ class OfferResourceTest {
     void arbeitsstunden_shouldReturn400WhenArbeitsdauerNegative() {
         Offer offer = new Offer();
         offer.customerId = 1L;
+        offer.handwerkerId = 99L;
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
         offer.status = Offer.STATUS_KI_FERTIG;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
@@ -971,6 +995,7 @@ class OfferResourceTest {
     void arbeitsstunden_shouldBeIdempotent() {
         Offer offer = new Offer();
         offer.customerId = 1L;
+        offer.handwerkerId = 99L;
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
         offer.status = Offer.STATUS_KI_FERTIG;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
@@ -1031,6 +1056,7 @@ class OfferResourceTest {
     void arbeitsstunden_shouldSkipArbeitszeitWhenUserServiceFails() {
         Offer offer = new Offer();
         offer.customerId = 1L;
+        offer.handwerkerId = 99L;
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
         offer.status = Offer.STATUS_KI_FERTIG;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
