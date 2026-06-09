@@ -42,11 +42,17 @@ class DashboardResourceTest {
         offer.annahmeToken = UUID.randomUUID().toString();
         offer.status = status;
         offer.persist();
+
+        OfferStatusHistory history = new OfferStatusHistory();
+        history.offer = offer;
+        history.status = status;
+        history.zeitpunkt = LocalDateTime.now();
+        history.persist();
+
         return offer;
     }
 
     Offer createStaleVersendetOffer(int daysAgo) {
-        // Tx 1: Offer persistieren und ID sichern
         final long[] offerId = new long[1];
         QuarkusTransaction.requiringNew().run(() -> {
             Offer offer = new Offer();
@@ -57,15 +63,12 @@ class DashboardResourceTest {
             offer.status = Offer.STATUS_VERSENDET;
             offer.persist();
             offerId[0] = offer.id;
-        });
 
-        // Tx 2: updatedAt per JPQL setzen — umgeht @PreUpdate-Callback
-        QuarkusTransaction.requiringNew().run(() -> {
-            Offer.getEntityManager()
-                    .createQuery("UPDATE Offer o SET o.updatedAt = :cutoff WHERE o.id = :id")
-                    .setParameter("cutoff", LocalDateTime.now().minusDays(daysAgo))
-                    .setParameter("id", offerId[0])
-                    .executeUpdate();
+            OfferStatusHistory history = new OfferStatusHistory();
+            history.offer = offer;
+            history.status = Offer.STATUS_VERSENDET;
+            history.zeitpunkt = LocalDateTime.now().minusDays(daysAgo);
+            history.persist();
         });
 
         return Offer.findById(offerId[0]);

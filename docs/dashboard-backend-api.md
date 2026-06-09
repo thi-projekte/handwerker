@@ -112,13 +112,13 @@ Gibt die neuesten **10** Einträge aus der Tabelle `OfferStatusHistory` zurück 
 
 Liefert eine Liste von Angeboten, bei denen Handlungsbedarf besteht.
 Ein Angebot taucht hier auf, wenn:
-1. Der Status `VERSENDET` ist, **und**
-2. Das Feld `updatedAt` (Zeitpunkt des Versands) **älter als 14 Tage** ist.
+1. Der Status aktuell `VERSENDET` ist, **und**
+2. Der Übergangs-Zeitpunkt in den Status `VERSENDET` in der Historie (`OfferStatusHistory`) **älter als 14 Tage** ist.
 
 * **`offerId`** (`long`): ID des Angebots.
 * **`businessKey`** (`string`): Eindeutiger Identifikator des Angebots.
 * **`customerId`** (`long`): Die ID des Kunden.
-* **`versendetAm`** (`ISO-8601 string`): Zeitpunkt des Versands (`updatedAt`).
+* **`versendetAm`** (`ISO-8601 string`): Zeitpunkt des Versands (`OfferStatusHistory.zeitpunkt`).
 
 ---
 

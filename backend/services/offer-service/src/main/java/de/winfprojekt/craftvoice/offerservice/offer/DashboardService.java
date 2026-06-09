@@ -80,23 +80,29 @@ public class DashboardService {
                 .toList();
 
         // ── Benötigt Aufmerksamkeit ──────────────────────────────────────────
-        // Angebote in VERSENDET, deren updatedAt älter als ATTENTION_TAGE ist
+        // Angebote in VERSENDET, deren Wechsel in VERSENDET (aus OfferStatusHistory) älter als ATTENTION_TAGE ist
 
         LocalDateTime cutoff = LocalDateTime.now().minusDays(ATTENTION_TAGE);
 
-        List<Offer> staleOffers = Offer
-                .find("status = 'VERSENDET' AND updatedAt < ?1", cutoff)
-                .list();
+        List<Offer> activeVersendetOffers = Offer.find("status = 'VERSENDET'").list();
 
-        stats.aufmerksamkeitErforderlich = staleOffers.stream()
+        stats.aufmerksamkeitErforderlich = activeVersendetOffers.stream()
                 .map(o -> {
-                    AufmerksamkeitDTO dto = new AufmerksamkeitDTO();
-                    dto.offerId = o.id;
-                    dto.businessKey = o.businessKey;
-                    dto.customerId = o.customerId;
-                    dto.versendetAm = o.updatedAt;
-                    return dto;
+                    OfferStatusHistory latestVersendet = OfferStatusHistory
+                            .find("offer = ?1 AND status = 'VERSENDET'", Sort.by("zeitpunkt").descending(), o)
+                            .firstResult();
+
+                    if (latestVersendet != null && latestVersendet.zeitpunkt.isBefore(cutoff)) {
+                        AufmerksamkeitDTO dto = new AufmerksamkeitDTO();
+                        dto.offerId = o.id;
+                        dto.businessKey = o.businessKey;
+                        dto.customerId = o.customerId;
+                        dto.versendetAm = latestVersendet.zeitpunkt;
+                        return dto;
+                    }
+                    return null;
                 })
+                .filter(java.util.Objects::nonNull)
                 .toList();
 
         // ── Zeitreihendaten (Angebotsübersicht der letzten 6 Monate) ──────────
