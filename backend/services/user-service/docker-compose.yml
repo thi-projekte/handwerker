@@ -32,6 +32,7 @@ services:
       craftvoice-user-db:
         condition: service_healthy
     networks:
+      - nginx-proxy-manager
       - intern
 
   # 3. Keycloak
@@ -52,6 +53,7 @@ services:
       craftvoice-keycloak-db:
         condition: service_healthy
     networks:
+      - nginx-proxy-manager
       - intern
 
   # 4. Datenbank für Keycloak
@@ -73,8 +75,8 @@ services:
       - intern
 
 networks:
-  # Wir lassen das Netzwerk hier lokal, damit Portainer nicht abstürzt.
-  # In Portainer solltest du diesen Stack dem Proxy-Netzwerk hinzufügen.
+  nginx-proxy-manager:
+    external: true
   intern:
     driver: bridge
 
