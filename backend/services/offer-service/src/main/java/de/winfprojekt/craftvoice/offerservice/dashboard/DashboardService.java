@@ -1,9 +1,11 @@
-package de.winfprojekt.craftvoice.offerservice.offer;
+package de.winfprojekt.craftvoice.offerservice.dashboard;
 
-import de.winfprojekt.craftvoice.offerservice.offer.dto.AktivitaetDTO;
-import de.winfprojekt.craftvoice.offerservice.offer.dto.AufmerksamkeitDTO;
-import de.winfprojekt.craftvoice.offerservice.offer.dto.DashboardStats;
-import de.winfprojekt.craftvoice.offerservice.offer.dto.ChartDataDTO;
+import de.winfprojekt.craftvoice.offerservice.dashboard.dto.AktivitaetDTO;
+import de.winfprojekt.craftvoice.offerservice.dashboard.dto.AufmerksamkeitDTO;
+import de.winfprojekt.craftvoice.offerservice.dashboard.dto.DashboardStats;
+import de.winfprojekt.craftvoice.offerservice.dashboard.dto.ChartDataDTO;
+import de.winfprojekt.craftvoice.offerservice.offer.Offer;
+import de.winfprojekt.craftvoice.offerservice.offer.OfferStatusHistory;
 import io.quarkus.panache.common.Sort;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;

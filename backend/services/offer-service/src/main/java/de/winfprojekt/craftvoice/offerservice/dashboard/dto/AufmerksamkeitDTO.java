@@ -1,4 +1,4 @@
-package de.winfprojekt.craftvoice.offerservice.offer.dto;
+package de.winfprojekt.craftvoice.offerservice.dashboard.dto;
 
 import java.time.LocalDateTime;
 
@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
  * DTO für einen Eintrag in der "Benötigt Aufmerksamkeit"-Liste des Dashboards.
  *
  * <p>Repräsentiert ein Angebot im Status VERSENDET, auf das seit mehr als
- * {@value de.winfprojekt.craftvoice.offerservice.offer.DashboardService#ATTENTION_TAGE}
+ * {@value de.winfprojekt.craftvoice.offerservice.dashboard.DashboardService#ATTENTION_TAGE}
  * Tagen keine Rückmeldung eingegangen ist.
  */
 public class AufmerksamkeitDTO {

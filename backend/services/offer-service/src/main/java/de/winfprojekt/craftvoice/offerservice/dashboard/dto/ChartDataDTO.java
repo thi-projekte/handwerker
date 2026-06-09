@@ -1,4 +1,4 @@
-package de.winfprojekt.craftvoice.offerservice.offer.dto;
+package de.winfprojekt.craftvoice.offerservice.dashboard.dto;
 
 /**
  * DTO für einen Datenpunkt im Dashboard-Diagramm (Zeitreihe).

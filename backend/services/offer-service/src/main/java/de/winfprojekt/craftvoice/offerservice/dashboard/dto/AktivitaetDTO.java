@@ -1,4 +1,4 @@
-package de.winfprojekt.craftvoice.offerservice.offer.dto;
+package de.winfprojekt.craftvoice.offerservice.dashboard.dto;
 
 import java.time.LocalDateTime;
 

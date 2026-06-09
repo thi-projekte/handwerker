@@ -1,6 +1,6 @@
-package de.winfprojekt.craftvoice.offerservice.offer;
+package de.winfprojekt.craftvoice.offerservice.dashboard;
 
-import de.winfprojekt.craftvoice.offerservice.offer.dto.DashboardStats;
+import de.winfprojekt.craftvoice.offerservice.dashboard.dto.DashboardStats;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;

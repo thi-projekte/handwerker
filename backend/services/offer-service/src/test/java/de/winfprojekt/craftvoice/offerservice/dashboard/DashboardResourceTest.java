@@ -1,10 +1,12 @@
-package de.winfprojekt.craftvoice.offerservice.offer;
+package de.winfprojekt.craftvoice.offerservice.dashboard;
 
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Test;
 
+import de.winfprojekt.craftvoice.offerservice.offer.Offer;
+import de.winfprojekt.craftvoice.offerservice.offer.OfferStatusHistory;
 import de.winfprojekt.craftvoice.offerservice.processengine.ProcessEngineClient;
 
 import java.math.BigDecimal;
