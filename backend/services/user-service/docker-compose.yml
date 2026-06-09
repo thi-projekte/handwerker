@@ -19,7 +19,7 @@ services:
 
   # 2. Der User-Service (nutzt das fertige Image aus GHCR)
   craftvoice-user-service:
-    image: ghcr.io/thi-projekte/handwerker/user-service:main
+    image: ghcr.io/thi-projekte/handwerker/user-service:sprint4
     container_name: craftvoice-user-service
     environment:
       DB_HOST: craftvoice-user-db
