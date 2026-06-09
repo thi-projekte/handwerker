@@ -47,13 +47,18 @@ public class ProcessEngineClient {
          *
          * @param businessKey     eindeutiger Business-Key des Angebots
          * @param customerId      ID des zugehörigen Kunden
+         * @param handwerkerId    ID des erstellenden Handwerkers
          * @param sprachschnipsel erfasster Sprachschnipsel zur Anfrage
          * @param vorlage         optionale Angebotsvorlage
          */
-        public void sendAngebotPayload(String businessKey, Long customerId, String sprachschnipsel, Object vorlage) {
+        public void sendAngebotPayload(String businessKey, Long customerId, Long handwerkerId, String sprachschnipsel, Object vorlage) {
 
                 Map<String, Object> kundendaten = Map.of(
                                 "value", customerId,
+                                "type", "Long");
+
+                Map<String, Object> handwerkerdaten = Map.of(
+                                "value", handwerkerId,
                                 "type", "Long");
 
                 Map<String, Object> sprachschnipselMap = Map.of(
@@ -66,6 +71,7 @@ public class ProcessEngineClient {
 
                 Map<String, Object> processVariables = Map.of(
                                 "kundendaten", kundendaten,
+                                "handwerkerId", handwerkerdaten,
                                 "sprachschnipsel", sprachschnipselMap,
                                 "vorlage", vorlageMap);
 

@@ -65,6 +65,7 @@ public class OfferService {
         Offer offer = new Offer();
 
         offer.customerId = request.customerId;
+        offer.handwerkerId = request.handwerkerId;
         offer.annahmeToken = UUID.randomUUID().toString();
         offer.businessKey = "angebot-" + UUID.randomUUID();
         offer.speechSnippet = request.speechSnippet;
@@ -76,7 +77,7 @@ public class OfferService {
 
         offer.persist();
 
-        processEngineClient.sendAngebotPayload(offer.businessKey, offer.customerId, request.speechSnippet, null);
+        processEngineClient.sendAngebotPayload(offer.businessKey, offer.customerId, offer.handwerkerId, request.speechSnippet, null);
 
         return OfferResponse.fromEntity(offer);
     }

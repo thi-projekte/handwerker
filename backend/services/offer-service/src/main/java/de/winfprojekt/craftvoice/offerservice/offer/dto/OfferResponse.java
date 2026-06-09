@@ -15,6 +15,7 @@ public class OfferResponse {
     public String businessKey;
     public String status;
     public Long customerId;
+    public Long handwerkerId;
     public String speechSnippet;
     public List<OfferPosition> positions;
     public List<OfferStatusHistory> statusHistory;
@@ -30,6 +31,7 @@ public class OfferResponse {
         response.businessKey = offer.businessKey;
         response.status = offer.status;
         response.customerId = offer.customerId;
+        response.handwerkerId = offer.handwerkerId;
         response.speechSnippet = offer.speechSnippet;
         response.positions = offer.positions != null ? new java.util.ArrayList<>(offer.positions) : null;
         response.statusHistory = offer.statusHistory != null ? new java.util.ArrayList<>(offer.statusHistory) : null;
