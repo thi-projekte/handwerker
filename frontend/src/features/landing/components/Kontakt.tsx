@@ -3,8 +3,6 @@ import { Link } from "react-router-dom";
 import "./LegalPages.css";
 import logoWhite from "/src/assets/logos/CraftVoice_Logo_white.png";
 import logoBlack from "/src/assets/logos/CraftVoice_Logo_black.png";
-import fullLogoWhite from "@/assets/logos/CraftVoice_Logo_white_text.png";
-import fullLogoBlack from "@/assets/logos/CraftVoice_Logo_black_text.png";
 
 export const Kontakt = () => {
     const [isLight, setIsLight] = useState(
@@ -26,7 +24,6 @@ export const Kontakt = () => {
         return () => observer.disconnect();
     }, []);
 
-    const fullLogo = isLight ? fullLogoBlack : fullLogoWhite;
     const logo = isLight ? logoBlack : logoWhite;
 
     return (
