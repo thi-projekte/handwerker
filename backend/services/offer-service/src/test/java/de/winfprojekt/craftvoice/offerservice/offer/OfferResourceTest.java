@@ -29,6 +29,7 @@ import java.util.List;
 import static io.restassured.RestAssured.given;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 
 /**
  * Integrationstests für {@link OfferResource}: Prüfung des Angebots-Anlegens sowie einen fehlerhaften Request.
@@ -195,7 +196,7 @@ class OfferResourceTest {
         // Stub des Catalog-Clients
         CatalogPriceResponse priceResponse = new CatalogPriceResponse();
         priceResponse.preis = new BigDecimal("49.99");
-        Mockito.when(catalogServiceClient.getPreis(42L)).thenReturn(priceResponse);
+        when(catalogServiceClient.getPreis(42L)).thenReturn(priceResponse);
 
         // Stub der Process Engine
         Mockito.doNothing().when(processEngineClient).sendAiResult(any(), any());
@@ -601,7 +602,7 @@ class OfferResourceTest {
         // UserService-Mock: 65 €/h
         StundensatzResponse stundensatzResponse = new StundensatzResponse();
         stundensatzResponse.stundensatz = new BigDecimal("65.00");
-        Mockito.when(userServiceClient.getStundensatz()).thenReturn(stundensatzResponse);
+        when(userServiceClient.getStundensatz()).thenReturn(stundensatzResponse);
 
         // ProcessEngine-Mock
         Mockito.doNothing().when(processEngineClient).sendAiResult(any(), any());
@@ -694,13 +695,13 @@ class OfferResourceTest {
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
         final Long offerId = offer.id;
 
-        Mockito.when(catalogServiceClient.getPreis(any())).thenReturn(null);
+        when(catalogServiceClient.getPreis(any())).thenReturn(null);
 
         AnfahrtskostenKonfiguration konfig = new AnfahrtskostenKonfiguration();
         konfig.modell = "PAUSCHALE";
         konfig.pauschale = new BigDecimal("50.00");
         konfig.adresse = "Maximilianstraße 1, 80538 München";
-        Mockito.when(userServiceClient.getAnfahrtskostenKonfiguration()).thenReturn(konfig);
+        when(userServiceClient.getAnfahrtskostenKonfiguration()).thenReturn(konfig);
         // Kein osrmClient-Mock — OSRM darf bei PAUSCHALE nicht aufgerufen werden
 
         given()
@@ -747,7 +748,7 @@ class OfferResourceTest {
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
         final Long offerId = offer.id;
 
-        Mockito.when(catalogServiceClient.getPreis(any())).thenReturn(null);
+        when(catalogServiceClient.getPreis(any())).thenReturn(null);
         Mockito.doNothing().when(processEngineClient).sendAiResult(any(), any());
 
         AnfahrtskostenKonfiguration konfig = new AnfahrtskostenKonfiguration();
@@ -755,9 +756,9 @@ class OfferResourceTest {
         konfig.pauschale = new BigDecimal("20.00");
         konfig.kmSatz = new BigDecimal("0.30");
         konfig.adresse = "Maximilianstraße 1, 80538 München";
-        Mockito.when(userServiceClient.getAnfahrtskostenKonfiguration()).thenReturn(konfig);
+        when(userServiceClient.getAnfahrtskostenKonfiguration()).thenReturn(konfig);
         // 20 km → 20.00 + (20 × 0.30) = 26.00
-        Mockito.when(osrmClient.getDistanzKm(anyString(), anyString()))
+        when(osrmClient.getDistanzKm(anyString(), anyString()))
                 .thenReturn(new BigDecimal("20.00"));
 
         given()
@@ -801,16 +802,16 @@ class OfferResourceTest {
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
         final Long offerId = offer.id;
 
-        Mockito.when(catalogServiceClient.getPreis(any())).thenReturn(null);
+        when(catalogServiceClient.getPreis(any())).thenReturn(null);
         Mockito.doNothing().when(processEngineClient).sendAiResult(any(), any());
 
         AnfahrtskostenKonfiguration konfig = new AnfahrtskostenKonfiguration();
         konfig.modell = "NUR_KM";
         konfig.kmSatz = new BigDecimal("0.30");
         konfig.adresse = "Maximilianstraße 1, 80538 München";
-        Mockito.when(userServiceClient.getAnfahrtskostenKonfiguration()).thenReturn(konfig);
+        when(userServiceClient.getAnfahrtskostenKonfiguration()).thenReturn(konfig);
         // 15 km → 15 × 0.30 = 4.50
-        Mockito.when(osrmClient.getDistanzKm(anyString(), anyString()))
+        when(osrmClient.getDistanzKm(anyString(), anyString()))
                 .thenReturn(new BigDecimal("15.00"));
 
         given()
@@ -856,16 +857,16 @@ class OfferResourceTest {
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
         final Long offerId = offer.id;
 
-        Mockito.when(catalogServiceClient.getPreis(any())).thenReturn(null);
+        when(catalogServiceClient.getPreis(any())).thenReturn(null);
 
         AnfahrtskostenKonfiguration konfig = new AnfahrtskostenKonfiguration();
         konfig.modell = "NUR_KM";
         konfig.kmSatz = new BigDecimal("0.30");
         konfig.adresse = "Maximilianstraße 1, 80538 München";
-        Mockito.when(userServiceClient.getAnfahrtskostenKonfiguration()).thenReturn(konfig);
+        when(userServiceClient.getAnfahrtskostenKonfiguration()).thenReturn(konfig);
 
         // OsrmClient wirft RoutingException
-        Mockito.when(osrmClient.getDistanzKm(anyString(), anyString()))
+        when(osrmClient.getDistanzKm(anyString(), anyString()))
                 .thenThrow(new RoutingException("OSRM nicht erreichbar (Testfehler)"));
 
         given()
@@ -1003,7 +1004,7 @@ class OfferResourceTest {
 
         StundensatzResponse stundensatzResponse = new StundensatzResponse();
         stundensatzResponse.stundensatz = new BigDecimal("65.00");
-        Mockito.when(userServiceClient.getStundensatz()).thenReturn(stundensatzResponse);
+        when(userServiceClient.getStundensatz()).thenReturn(stundensatzResponse);
         Mockito.doNothing().when(processEngineClient).sendAiResult(any(), any());
 
         // Erster Aufruf: 2 Stunden
@@ -1064,7 +1065,7 @@ class OfferResourceTest {
         final String businessKey = offer.businessKey;
 
         // user-service wirft eine Exception
-        Mockito.when(userServiceClient.getStundensatz())
+        when(userServiceClient.getStundensatz())
                 .thenThrow(new RuntimeException("user-service nicht erreichbar"));
         Mockito.doNothing().when(processEngineClient).sendAiResult(any(), any());
 
@@ -1089,6 +1090,128 @@ class OfferResourceTest {
 
         // sendAiResult muss trotzdem aufgerufen werden
         verify(processEngineClient, times(1)).sendAiResult(Mockito.eq(businessKey), anyString());
+    }
+
+    @Test
+    void acceptAiResult_shouldSetStatusToKI_BEARBEITUNG_ABGESCHLOSSEN() {
+
+        Long offerId = QuarkusTransaction.requiringNew().call(() -> {
+            Offer offer = new Offer();
+            offer.customerId = 1L;
+            offer.handwerkerId = 99L;
+            offer.businessKey = "test-" + UUID.randomUUID();
+            offer.annahmeToken = UUID.randomUUID().toString();
+            offer.status = Offer.STATUS_KI_FERTIG;
+
+            offer.persist();
+            return offer.id;
+        });
+
+        given()
+                .when()
+                .post("/offers/{id}/review/approve", offerId)
+                .then()
+                .statusCode(204);
+
+        Offer updated = Offer.findById(offerId);
+
+        assertEquals(Offer.STATUS_KI_BEARBEITUNG_ABGESCHLOSSEN , updated.status);
+
+        assertTrue(
+                updated.statusHistory.stream()
+                        .anyMatch(h -> Offer.STATUS_KI_BEARBEITUNG_ABGESCHLOSSEN .equals(h.status))
+        );
+    }
+
+    @Test
+    void acceptAiResult_shouldReturn409_whenStatusIsNotKiFertig() {
+
+        Long offerId = QuarkusTransaction.requiringNew().call(() -> {
+            Offer offer = new Offer();
+            offer.customerId = 1L;
+            offer.handwerkerId = 99L;
+            offer.businessKey = "test-" + UUID.randomUUID();
+            offer.annahmeToken = UUID.randomUUID().toString();
+            offer.status = Offer.STATUS_IN_BEARBEITUNG;
+
+            offer.persist();
+            return offer.id;
+        });
+
+        given()
+                .when()
+                .post("/offers/{id}/review/approve", offerId)
+                .then()
+                .statusCode(409);
+    }
+
+    @Test
+    void acceptAiResult_shouldReturn404_whenOfferDoesNotExist() {
+        given()
+                .when()
+                .post("/offers/999999/review/approve")
+                .then()
+                .statusCode(404);
+    }
+
+    @Test
+    void acceptAiResult_shouldCreateStatusHistoryEntry() {
+
+        Long offerId = given()
+                .contentType(ContentType.JSON)
+                .body("""
+            {
+              "customerId": 1,
+              "handwerkerId": 99,
+              "speechSnippet": "Test"
+            }
+            """)
+                .when()
+                .post("/offers")
+                .then()
+                .statusCode(201)
+                .extract()
+                .jsonPath()
+                .getLong("id");
+
+        QuarkusTransaction.requiringNew().run(() -> {
+            Offer managed = Offer.findById(offerId);
+            managed.status = Offer.STATUS_IN_BEARBEITUNG;
+        });
+
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+            {
+              "strukturierteAngebotspositionen": [],
+              "korrekturvorschlaege": []
+            }
+            """)
+                .when()
+                .post("/angebote/" + offerId + "/ki-ergebnis")
+                .then()
+                .statusCode(200);
+
+        given()
+                .when()
+                .post("/offers/{id}/review/approve", offerId)
+                .then()
+                .statusCode(204);
+        final Long offerIdFinal = offerId;
+
+        Offer updated = QuarkusTransaction.requiringNew().call(() -> {
+            Offer o = Offer.findById(offerIdFinal);
+
+            o.statusHistory.size();
+
+            return o;
+        });
+        assertEquals(Offer.STATUS_KI_BEARBEITUNG_ABGESCHLOSSEN, updated.status);
+
+        assertTrue(
+                updated.statusHistory.stream()
+                        .anyMatch(h -> Offer.STATUS_KI_BEARBEITUNG_ABGESCHLOSSEN.equals(h.status))
+        );
     }
 
 }
