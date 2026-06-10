@@ -2,10 +2,7 @@ import "../Login.css";
 import logo from "/src/assets/logos/CraftVoice_Logo_white_text.png";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import {
-  isAuthenticated,
-  loginWithKeycloak,
-} from "@/services/authService";
+import { isAuthenticated, loginWithKeycloak } from "@/services/authService";
 import { getCurrentUser } from "@/services/userService";
 
 export const LoginPage = () => {
@@ -63,9 +60,7 @@ export const LoginPage = () => {
         </div>
 
         <h1>Login</h1>
-        <p className="text-secondary">
-          Melde dich sicher über Keycloak an.
-        </p>
+        <p className="text-secondary">Melde dich sicher über Keycloak an.</p>
 
         <div className="divider"></div>
 
