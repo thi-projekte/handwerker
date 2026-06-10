@@ -118,6 +118,7 @@
 }
 
 @keyframes logoGlow {
+
     0%,
     100% {
         filter:
@@ -368,6 +369,13 @@
     color: var(--color-accent);
 }
 
+.footer-copy {
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+    opacity: 0.8;
+}
+
 /* RIGHT SOCIALS */
 .footer-socials {
     display: flex;
@@ -395,6 +403,10 @@
         grid-template-columns: 1fr;
         text-align: center;
         gap: 10px;
+    }
+
+    .footer-copy {
+        order: 3;
     }
 
     .footer-socials {

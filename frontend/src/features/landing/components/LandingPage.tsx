@@ -159,7 +159,9 @@ export const LandingPage = () => {
                         <a onClick={() => navigate("/impressum")}>Impressum</a>
                         <a onClick={() => navigate("/datenschutz")}>Datenschutz</a>
                     </div>
-
+                    <div className="footer-copy">
+                        © {new Date().getFullYear()} CraftVoice • KI-gestützte Angebote
+                    </div>
                     <div className="footer-right">
                         <div className="footer-socials">
                             <InstagramIcon />
