@@ -21,6 +21,10 @@ import { PasswordChangePage } from "@/features/password-change/components/Passwo
 
 import { LadenPage } from "@/features/Laden/components/LadenPage";
 
+import { Impressum } from "@/features/landing/components/Impressum";
+import { Datenschutz } from "@/features/landing/components/Datenschutz";
+import { Kontakt } from "@/features/landing/components/Kontakt";
+
 export function AppRoutes() {
   return (
     <Routes>
@@ -157,6 +161,33 @@ export function AppRoutes() {
         element={
           <AppLayout hideNav hideHeader>
             <LadenPage />
+          </AppLayout>
+        }
+      />
+
+      <Route
+        path="/impressum"
+        element={
+          <AppLayout hideNav hideHeader>
+            <Impressum />
+          </AppLayout>
+        }
+      />
+
+      <Route
+        path="/datenschutz"
+        element={
+          <AppLayout hideNav hideHeader>
+            <Datenschutz />
+          </AppLayout>
+        }
+      />
+
+      <Route
+        path="/kontakt"
+        element={
+          <AppLayout hideNav hideHeader>
+            <Kontakt />
           </AppLayout>
         }
       />
