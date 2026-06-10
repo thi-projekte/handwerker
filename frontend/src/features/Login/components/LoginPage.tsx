@@ -1,25 +1,52 @@
 import "../Login.css";
 import logo from "/src/assets/logos/CraftVoice_Logo_white_text.png";
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { isAuthenticated, loginWithKeycloak } from "@/services/authService";
+import { getCurrentUser } from "@/services/userService";
 
 export const LoginPage = () => {
   const navigate = useNavigate();
 
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = () => {
+  useEffect(() => {
+    const syncUserAfterLogin = async () => {
+      if (!isAuthenticated()) {
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        await getCurrentUser();
+        navigate("/dashboard");
+      } catch {
+        setError(
+          "Login war erfolgreich, aber das Benutzerprofil konnte nicht synchronisiert werden.",
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    syncUserAfterLogin();
+  }, [navigate]);
+
+  const handleLogin = async () => {
     setError("");
 
-    if (!username.trim()) return setError("Bitte gib deinen Benutzernamen ein.");
-    if (!password) return setError("Bitte gib dein Passwort ein.");
+    try {
+      setIsLoading(true);
+      await loginWithKeycloak();
+    } catch {
+      setError("Keycloak-Login konnte nicht gestartet werden.");
+      setIsLoading(false);
+    }
 
     navigate("/home");
   };
 
-  // Fehler nach 5 Sekunden ausblenden
   useEffect(() => {
     if (error) {
       const timer = setTimeout(() => setError(""), 5000);
@@ -30,13 +57,12 @@ export const LoginPage = () => {
   return (
     <div className="app">
       <div className="card login-card">
-
         <div className="logo-container">
           <img src={logo} alt="Logo" className="logo" />
         </div>
 
         <h1>Login</h1>
-        <p className="text-secondary">Melde dich in deinem Account an</p>
+        <p className="text-secondary">Melde dich sicher über Keycloak an.</p>
 
         <div className="divider"></div>
 
@@ -47,24 +73,12 @@ export const LoginPage = () => {
           </div>
         )}
 
-        <input
-          className="input-field"
-          type="text"
-          placeholder="Benutzername"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        />
-
-        <input
-          className="input-field"
-          type="password"
-          placeholder="Passwort"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-
-        <button className="button-primary login-btn" onClick={handleLogin}>
-          Einloggen
+        <button
+          className="button-primary login-btn"
+          onClick={handleLogin}
+          disabled={isLoading}
+        >
+          {isLoading ? "Login wird gestartet..." : "Mit Keycloak einloggen"}
         </button>
 
         <button
@@ -79,7 +93,6 @@ export const LoginPage = () => {
             Passwort vergessen?
           </a>
         </div>
-
       </div>
     </div>
   );

@@ -1,20 +1,53 @@
 import { useState } from "react";
 import "@/assets/stylesheets/stylesheet.css";
 import "./PasswordChangePage.css";
+import { openKeycloakAccountConsole } from "@/services/authService";
+import { initiatePasswordReset } from "@/services/userService";
+import keycloak from "@/core/keycloak";
 
 export const PasswordChangePage = () => {
-  const [oldPassword, setOldPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [repeatPassword, setRepeatPassword] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const passwordsDoNotMatch =
-    repeatPassword.length > 0 && newPassword !== repeatPassword;
+  const userEmail =
+    typeof keycloak.tokenParsed?.email === "string"
+      ? keycloak.tokenParsed.email
+      : "";
 
-  const isFormIncomplete =
-    oldPassword.length === 0 ||
-    newPassword.length === 0 ||
-    repeatPassword.length === 0 ||
-    passwordsDoNotMatch;
+  const handleOpenAccountConsole = () => {
+    setError("");
+
+    try {
+      openKeycloakAccountConsole();
+    } catch {
+      setError("Keycloak-Kontoverwaltung konnte nicht geöffnet werden.");
+    }
+  };
+
+  const handlePasswordReset = async () => {
+    setError("");
+    setSuccessMessage("");
+
+    if (!userEmail) {
+      setError("Für den eingeloggten User wurde keine E-Mail gefunden.");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      await initiatePasswordReset({
+        email: userEmail,
+      });
+
+      setSuccessMessage("Eine Passwort-E-Mail wurde an dein Konto gesendet.");
+    } catch {
+      setError("Passwort-Reset konnte nicht gestartet werden.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="app password-page">
@@ -22,64 +55,41 @@ export const PasswordChangePage = () => {
         <span className="password-eyebrow">Sicherheit</span>
         <h1>Passwort ändern</h1>
         <p className="text-secondary">
-          Aktualisiere dein Passwort, um dein Konto zu schützen.
+          Die Passwortverwaltung läuft über Keycloak. Du kannst dein Passwort in
+          der Keycloak-Kontoverwaltung ändern oder dir eine Reset-Mail senden
+          lassen.
         </p>
       </header>
 
       <section className="card password-card">
-        <label className="password-field">
-          <span>Altes Passwort</span>
-          <input
-            className="input-field"
-            type="password"
-            value={oldPassword}
-            onChange={(event) => setOldPassword(event.target.value)}
-            placeholder="Altes Passwort eingeben"
-          />
-        </label>
+        {error && <p className="password-error">{error}</p>}
 
-        <label className="password-field">
-          <span>Neues Passwort</span>
-          <input
-            className="input-field"
-            type="password"
-            value={newPassword}
-            onChange={(event) => setNewPassword(event.target.value)}
-            placeholder="Neues Passwort eingeben"
-          />
-        </label>
-
-        <label className="password-field">
-          <span>Neues Passwort wiederholen</span>
-          <input
-            className="input-field"
-            type="password"
-            value={repeatPassword}
-            onChange={(event) => setRepeatPassword(event.target.value)}
-            placeholder="Neues Passwort wiederholen"
-          />
-        </label>
-
-        {passwordsDoNotMatch && (
-          <p className="password-error">
-            Die neuen Passwörter stimmen nicht überein.
-          </p>
+        {successMessage && (
+          <p className="password-success">{successMessage}</p>
         )}
 
         <button
           className="button-primary password-submit-button"
-          disabled={isFormIncomplete}
+          type="button"
+          onClick={handleOpenAccountConsole}
         >
-          Passwort speichern
+          Keycloak-Kontoverwaltung öffnen
+        </button>
+
+        <button
+          className="password-secondary-button"
+          type="button"
+          onClick={handlePasswordReset}
+          disabled={isLoading}
+        >
+          {isLoading ? "Wird gesendet..." : "Passwort-Reset per E-Mail senden"}
         </button>
 
         <p className="text-secondary password-hint">
-          Die technische Passwortänderung muss später mit Keycloak oder dem
-          Backend verbunden werden.
+          Es gibt aktuell keinen eigenen Backend-Endpunkt für Passwortänderungen
+          mit altem und neuem Passwort.
         </p>
       </section>
-
-      
     </div>
   );
 };
