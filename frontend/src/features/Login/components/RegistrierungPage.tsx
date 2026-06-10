@@ -58,6 +58,7 @@ export const RegistrierungPage = () => {
     } finally {
       setIsLoading(false);
     }
+    navigate("/home");
   };
 
   useEffect(() => {

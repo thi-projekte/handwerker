@@ -1,0 +1,340 @@
+{
+  "_comment": "Testdatenset fuer LLM-Call 1 (Sprachschnipsel + Vorlage -> strukturierte Angebotspositionen). Issue #535. Gold-Referenzen = Soll-Loesung pro Szenario. ENTWURF - wird Szenario fuer Szenario gemeinsam erarbeitet und vom Team gegengeprueft.",
+  "version": "0.3-entwurf",
+  "stand": "2026-05-31",
+
+  "_hinweisVorlage": "Die 'vorlage' ist der Stammdaten-/Leistungskatalog des Handwerkers (einmal beim Onboarding gepflegt, haengt automatisch an jedem Auftrag). Sie gibt dem Modell den fachlichen Rahmen. Normalfall = gefuellt; ein Szenario testet bewusst den leeren Fallback (neuer Handwerker).",
+
+  "_scoringPhilosophie": "Mitdenken + bei Mehrdeutigkeit fragen. Das Modell SOLL fachlich implizite Positionen im selben Gewerk ergaenzen (Leitung, Dose, Anschluss bei Elektro). Bei einer echten fachlichen Weiche (Neuinstallation vs. Austausch) ist das Gold-Verhalten NICHT raten, sondern eine dokumentierte Annahme treffen ODER per korrekturvorschlaege nachfragen. Fremdes Gewerk halluzinieren (Maler/Fliesen beim Elektroauftrag) = K.O.",
+
+  "_scoringStruktur": "Jedes Szenario trennt hardChecks (binaer/automatisch per Code pruefbar: Mengen, Dedup, kein Preis, kein Fremdgewerk, Katalog-Treue) von softChecks (semantisch, brauchen Feld-Check auf korrekturvorschlaege + LLM-Judge: dokumentierte Annahme, sinnvolle Rueckfrage).",
+
+  "_katalogGoldRegel": "WICHTIG: Jedes Gold-Item muss exakt einem Eintrag in der vorlage (Katalog) entsprechen, sonst wuerde ein korrekt arbeitendes Modell zum Halluzinieren gezwungen und faelschlich per K.O. bestraft. Leistung 'Steckdose montieren' bleibt, auch wenn Material 'Doppelsteckdose UP' heisst - das ist die gewollte Katalog-Abbildung.",
+
+  "systemPrompt": "Du bist ein erfahrener Kalkulator im deutschen Handwerk. Aus einer gesprochenen Notiz (Sprachschnipsel) und dem hinterlegten Leistungskatalog des Handwerkers (Vorlage) erstellst du strukturierte Angebotspositionen.\n\nREGELN:\n1. Antworte AUSSCHLIESSLICH mit gueltigem JSON in exakt diesem Schema:\n{\n  \"strukturierteAngebotspositionen\": {\n    \"leistungen\": [ {\"bezeichnung\": \"...\", \"beschreibung\": \"...\", \"menge\": <Zahl|null>, \"einheit\": \"...\"} ],\n    \"material\": [ {\"bezeichnung\": \"...\", \"beschreibung\": \"...\", \"menge\": <Zahl|null>, \"einheit\": \"...\"} ],\n    \"notizen\": [ \"...\" ]\n  },\n  \"korrekturvorschlaege\": [ \"...\" ]\n}\n2. NIEMALS Preise, Kosten, Stundensaetze oder Geldbetraege ausgeben. Kein 'preis'-Feld, keine Eurobetraege in Texten. Preise werden spaeter aus einer Datenbank ergaenzt.\n3. 'menge' ist immer eine Zahl (z.B. 15 oder 2.5), niemals Text wie 'ca. 15'. Ist eine Menge unbekannt, setze null und weise in 'korrekturvorschlaege' darauf hin.\n4. Nennt der Handwerker eine Menge explizit, uebernimm sie exakt. Korrigiert er sich selbst ('nein, drei statt zwei'), gilt die letzte Angabe.\n5. Nutze die Vorlage als fachlichen Rahmen: waehle die zum Auftrag passenden Leistungen/Materialien des Handwerkers aus und ergaenze fachlich zwingende Positionen desselben Gewerks (z.B. Leitung/Dose/Anschluss bei Elektroarbeiten), auch wenn sie nicht woertlich genannt wurden.\n6. Erfinde KEINE fremden Gewerke. Erschliesse nur, was fachlich zum genannten Auftrag gehoert.\n7. Bei einer echten fachlichen Weiche, die das Ergebnis stark aendert (z.B. Neuinstallation vs. Geraeteaustausch), rate nicht: triff eine begruendete Annahme und dokumentiere sie in 'korrekturvorschlaege', oder stelle dort die noetige Rueckfrage.\n8. Ignoriere Fuellwoerter, Selbstgespraeche und Stoerungen ('aehm', 'Moment', 'der Kundenname egal'). Verarbeite keine Kundendaten.\n9. Antworte auf Deutsch.",
+
+  "_elektrikerKatalog": "Wird von S1a und S1b geteilt (derselbe Handwerker). Hier einmal definiert, in beiden input.vorlage identisch eingesetzt.",
+
+  "scenarios": [
+    {
+      "id": "call1-s1a-floor-extraktion",
+      "name": "S1a - Floor-Case: reine Extraktion (Elektro, Austausch)",
+      "schwierigkeit": "niedrig (Untergrenze - soll auch ein Budget-/Mini-Modell schaffen)",
+      "prueft": "Reine Extraktion ohne fachliche Weiche: Geraete + Mengen korrekt ziehen, Selbstkorrektur der Menge beachten, Dedup (ein Geraet mit zwei Woertern beschrieben), Filler/Kundenname ignorieren. Bewusst ein Austausch-Auftrag -> KEINE Neuinstallations-Tiefe noetig, KEINE Ambiguitaet.",
+      "input": {
+        "sprachschnipsel": "So, kurz fuern Angebot - Kundenname trag ich nach, aehm, egal jetzt. Beim Kunden im Wohnzimmer sind son paar alte Schalter und Dosen, die sollen einfach gegen neue getauscht werden, gleiche Stelle, alles schon verkabelt. Und zwar: die Doppelsteckdosen - zwei... nee warte, drei Stueck. Und einen Lichtschalter, also son Wechselschalter halt, einen. Mehr nicht.",
+        "vorlage": {
+          "leistungen": [
+            { "bezeichnung": "Steckdose montieren", "beschreibung": "Setzen und Anklemmen einer Steckdose", "menge": null, "einheit": "Stk" },
+            { "bezeichnung": "Schalter montieren", "beschreibung": "Setzen und Anklemmen eines Schalters", "menge": null, "einheit": "Stk" },
+            { "bezeichnung": "Leitung verlegen", "beschreibung": "Verlegen von Installationsleitung unter Putz", "menge": null, "einheit": "m" },
+            { "bezeichnung": "Stemmarbeiten", "beschreibung": "Schlitze und Dosenloecher stemmen", "menge": null, "einheit": "Stk" }
+          ],
+          "material": [
+            { "bezeichnung": "Doppelsteckdose UP", "beschreibung": "Unterputz-Steckdose 2-fach, Standardprogramm", "menge": null, "einheit": "Stk" },
+            { "bezeichnung": "Wechselschalter UP", "beschreibung": "Unterputz-Wechselschalter, Standardprogramm", "menge": null, "einheit": "Stk" },
+            { "bezeichnung": "Geraetedose UP", "beschreibung": "Unterputz-Hohlwand-/Geraetedose", "menge": null, "einheit": "Stk" },
+            { "bezeichnung": "Installationsleitung NYM-J", "beschreibung": "Mantelleitung, gaengiger Querschnitt", "menge": null, "einheit": "m" }
+          ],
+          "notizen": [ "Anfahrt nach Aufwand" ]
+        }
+      },
+      "gold": {
+        "pflichtLeistungen": [
+          { "katalogEintrag": "Steckdose montieren", "menge": 3, "einheit": "Stk" },
+          { "katalogEintrag": "Schalter montieren", "menge": 1, "einheit": "Stk" }
+        ],
+        "pflichtMaterial": [
+          { "katalogEintrag": "Doppelsteckdose UP", "menge": 3, "einheit": "Stk" },
+          { "katalogEintrag": "Wechselschalter UP", "menge": 1, "einheit": "Stk" }
+        ],
+        "nichtErwartet": {
+          "begruendung": "Reiner Austausch ('gleiche Stelle, alles schon verkabelt') -> KEINE Neuinstallations-Positionen.",
+          "positionen": ["Leitung verlegen", "Stemmarbeiten", "Geraetedose UP", "Installationsleitung NYM-J"]
+        },
+        "hardChecks": [
+          { "id": "menge-steckdose-3", "regel": "Steckdose-Menge = 3 (NICHT 2 - Selbstkorrektur 'zwei nee warte drei')" },
+          { "id": "dedup-schalter-1", "regel": "Schalter-Menge = 1. 'Lichtschalter, also son Wechselschalter halt' = EIN Geraet (Apposition), nicht zwei." },
+          { "id": "kein-preis", "regel": "Kein preis/stundensatz/eurobetrag in irgendeinem Feld." },
+          { "id": "kein-fremdgewerk", "regel": "Keine fremden Gewerke (Maler/Fliesen/Trockenbau)." },
+          { "id": "keine-kundendaten", "regel": "'Kundenname' taucht nicht als Position/Notiz/Kundenobjekt auf." },
+          { "id": "katalog-treue", "regel": "Alle Positionen entsprechen Katalog-Eintraegen (kein erfundenes Wording)." }
+        ],
+        "softChecks": [],
+        "ko": [
+          "preis/stundensatz/eurobetrag",
+          "fremdes Gewerk halluziniert",
+          "Steckdose-Menge 2 statt 3",
+          "Schalter-Menge 2 statt 1 (Dedup verfehlt)"
+        ]
+      }
+    },
+    {
+      "id": "call1-s1b-mittel-ambiguitaet",
+      "name": "S1b - Mittel: gleiche Geraete, aber Neuinstallation-Weiche offen",
+      "schwierigkeit": "mittel (fachliche Tiefe + Ambiguitaets-Handling)",
+      "prueft": "Wie S1a (Geraete/Mengen/Dedup/Filler), ABER der Auftrag laesst offen, ob Neuinstallation oder Austausch. Gold-Verhalten: implizite Neuinstallations-Positionen ergaenzen UND als Annahme dokumentieren ODER nachfragen. Zusatz: Leitungslaenge (m) ist nicht ableitbar -> null + Hinweis, keine erfundene Meterzahl.",
+      "input": {
+        "sprachschnipsel": "So, kurz fuern Angebot - Kundenname trag ich nach. Im Wohnzimmer brauchen wir Doppelsteckdosen, Unterputz - zwei... nee, drei Stueck. Und einen Lichtschalter, also son Wechselschalter halt, einen. Wand ist Massiv. Mehr hab ich erstmal nicht.",
+        "vorlage": {
+          "leistungen": [
+            { "bezeichnung": "Steckdose montieren", "beschreibung": "Setzen und Anklemmen einer Steckdose", "menge": null, "einheit": "Stk" },
+            { "bezeichnung": "Schalter montieren", "beschreibung": "Setzen und Anklemmen eines Schalters", "menge": null, "einheit": "Stk" },
+            { "bezeichnung": "Leitung verlegen", "beschreibung": "Verlegen von Installationsleitung unter Putz", "menge": null, "einheit": "m" },
+            { "bezeichnung": "Stemmarbeiten", "beschreibung": "Schlitze und Dosenloecher stemmen", "menge": null, "einheit": "Stk" }
+          ],
+          "material": [
+            { "bezeichnung": "Doppelsteckdose UP", "beschreibung": "Unterputz-Steckdose 2-fach, Standardprogramm", "menge": null, "einheit": "Stk" },
+            { "bezeichnung": "Wechselschalter UP", "beschreibung": "Unterputz-Wechselschalter, Standardprogramm", "menge": null, "einheit": "Stk" },
+            { "bezeichnung": "Geraetedose UP", "beschreibung": "Unterputz-Hohlwand-/Geraetedose", "menge": null, "einheit": "Stk" },
+            { "bezeichnung": "Installationsleitung NYM-J", "beschreibung": "Mantelleitung, gaengiger Querschnitt", "menge": null, "einheit": "m" }
+          ],
+          "notizen": [ "Anfahrt nach Aufwand" ]
+        }
+      },
+      "gold": {
+        "pflichtLeistungen": [
+          { "katalogEintrag": "Steckdose montieren", "menge": 3, "einheit": "Stk" },
+          { "katalogEintrag": "Schalter montieren", "menge": 1, "einheit": "Stk" }
+        ],
+        "pflichtMaterial": [
+          { "katalogEintrag": "Doppelsteckdose UP", "menge": 3, "einheit": "Stk" },
+          { "katalogEintrag": "Wechselschalter UP", "menge": 1, "einheit": "Stk" }
+        ],
+        "konditionalPflicht": {
+          "bedingung": "NUR wenn Modell Neuinstallation annimmt (begruendet). Dann konsistent BEIDE Seiten:",
+          "leistungen": [
+            { "katalogEintrag": "Stemmarbeiten", "menge": 4, "einheit": "Stk", "hinweis": "3 Dosen + 1 Schalter = 4 Dosenloecher" },
+            { "katalogEintrag": "Leitung verlegen", "menge": null, "einheit": "m", "hinweis": "Meterzahl NICHT ableitbar -> null + Hinweis" }
+          ],
+          "material": [
+            { "katalogEintrag": "Geraetedose UP", "menge": 4, "einheit": "Stk", "hinweis": "3 Steckdosen + 1 Schalter" },
+            { "katalogEintrag": "Installationsleitung NYM-J", "menge": null, "einheit": "m", "hinweis": "an Leitung verlegen gekoppelt; Menge null" }
+          ]
+        },
+        "hardChecks": [
+          { "id": "menge-steckdose-3", "regel": "Steckdose-Menge = 3 (Selbstkorrektur)." },
+          { "id": "dedup-schalter-1", "regel": "Schalter-Menge = 1 (Apposition, ein Geraet)." },
+          { "id": "kein-preis", "regel": "Kein preis/stundensatz/eurobetrag." },
+          { "id": "kein-fremdgewerk", "regel": "Keine fremden Gewerke." },
+          { "id": "keine-kundendaten", "regel": "Keine Kundendaten verarbeitet." },
+          { "id": "katalog-treue", "regel": "Alle Positionen entsprechen Katalog-Eintraegen." },
+          { "id": "leitung-menge-null", "regel": "FALLS Leitung verlegen enthalten: Menge MUSS null sein (keine erfundene Meterzahl)." },
+          { "id": "dose-konsistenz", "regel": "FALLS Neuinstallation: Geraetedose-Menge = Stemmarbeiten-Menge = 4 (konsistent)." }
+        ],
+        "softChecks": [
+          { "id": "ambiguitaet-neu-vs-austausch", "regel": "korrekturvorschlaege enthaelt entweder dokumentierte Annahme ('Annahme: Neuinstallation...') ODER Rueckfrage Neu-vs-Austausch. Stilles Raten ohne Hinweis = Punktabzug.", "judge": true },
+          { "id": "leitungslaenge-hinweis", "regel": "FALLS Leitung verlegen enthalten: Hinweis, dass Meterzahl vor Ort zu klaeren ist.", "judge": true },
+          { "id": "wechselschaltung-rueckfrage", "regel": "OPTIONAL/Bonus: Hinweis, dass echte Wechselschaltung 2 Schaltpunkte braucht.", "judge": true, "bonus": true }
+        ],
+        "ko": [
+          "preis/stundensatz/eurobetrag",
+          "fremdes Gewerk halluziniert",
+          "Steckdose-Menge 2 statt 3",
+          "Schalter-Menge 2 statt 1 (Dedup verfehlt)",
+          "erfundene Leitungs-Meterzahl statt null"
+        ]
+      }
+    },
+    {
+      "id": "call1-s2-komplex-bad",
+      "name": "S2 - Komplexe Mehrpositionen-Anfrage (Badsanierung)",
+      "schwierigkeit": "hoch (Kern: Vollstaendigkeit bei vielen Positionen)",
+      "prueft": "Kann das Modell einen komplexen, mehrteiligen Auftrag sauber in viele Positionen aufgliedern und dabei die passenden Katalog-Eintraege treffen? Fokus liegt auf Recall (nichts Wichtiges vergessen), NICHT auf weiteren Mengen-Fallen.",
+      "input": {
+        "sprachschnipsel": "Angebot Bad Familie Krenz. Komplette Sanierung, das Bad ist so um die acht Quadratmeter. Alles raus erstmal - alte Fliesen runter von Boden und Wand, alte Wanne und das Waschbecken auch weg. Dann neu fliesen, Boden und Wand komplett. Statt der Wanne wollen sie ne bodengleiche Dusche, neues Waschbecken mit Unterschrank, und das WC wird auch gleich mit erneuert. Den ganzen Bauschutt nehmen wir mit.",
+        "vorlage": {
+          "leistungen": [
+            { "bezeichnung": "Fliesen entfernen", "beschreibung": "Alte Fliesen von Wand/Boden abschlagen", "menge": null, "einheit": "m2" },
+            { "bezeichnung": "Sanitaerobjekt demontieren", "beschreibung": "Demontage von Wanne/WC/Waschbecken", "menge": null, "einheit": "Stk" },
+            { "bezeichnung": "Fliesen verlegen", "beschreibung": "Neue Fliesen Wand/Boden verlegen inkl. Verfugung", "menge": null, "einheit": "m2" },
+            { "bezeichnung": "Abdichtung aufbringen", "beschreibung": "Verbundabdichtung im Nassbereich", "menge": null, "einheit": "m2" },
+            { "bezeichnung": "Dusche montieren", "beschreibung": "Bodengleiche Dusche inkl. Ablauf setzen", "menge": null, "einheit": "Stk" },
+            { "bezeichnung": "Waschtisch montieren", "beschreibung": "Waschbecken inkl. Armatur montieren", "menge": null, "einheit": "Stk" },
+            { "bezeichnung": "WC montieren", "beschreibung": "WC setzen und anschliessen", "menge": null, "einheit": "Stk" },
+            { "bezeichnung": "Bauschutt entsorgen", "beschreibung": "Abtransport und Entsorgung", "menge": null, "einheit": "pauschal" }
+          ],
+          "material": [
+            { "bezeichnung": "Bodenfliese", "beschreibung": "Feinsteinzeug, Standard", "menge": null, "einheit": "m2" },
+            { "bezeichnung": "Wandfliese", "beschreibung": "Wandfliese, Standard", "menge": null, "einheit": "m2" },
+            { "bezeichnung": "Abdichtungsset", "beschreibung": "Dichtbahn/Dichtschlaemme Nassbereich", "menge": null, "einheit": "Stk" },
+            { "bezeichnung": "Duschrinne/Ablauf", "beschreibung": "Ablauf fuer bodengleiche Dusche", "menge": null, "einheit": "Stk" },
+            { "bezeichnung": "Waschtisch mit Unterschrank", "beschreibung": "Waschbecken inkl. Unterschrank", "menge": null, "einheit": "Stk" },
+            { "bezeichnung": "Wand-WC", "beschreibung": "WC-Keramik", "menge": null, "einheit": "Stk" }
+          ],
+          "notizen": [ "Anfahrt nach Aufwand", "Nassbereiche immer abdichten" ]
+        }
+      },
+      "gold": {
+        "_fokus": "Recall - moeglichst alle dieser Positionen erkannt. Mengen sind hier grossteils nicht ableitbar (null + Hinweis), das ist erwartet und kein Fehler.",
+        "pflichtLeistungen": [
+          { "katalogEintrag": "Fliesen entfernen", "hinweis": "explizit genannt (Boden+Wand)" },
+          { "katalogEintrag": "Sanitaerobjekt demontieren", "hinweis": "Wanne + Waschbecken (+ WC) demontieren" },
+          { "katalogEintrag": "Abdichtung aufbringen", "hinweis": "PFLICHT bei bodengleicher Dusche (Verbundabdichtung DIN 18534). Ohne Abdichtung im Duschbereich = Wasserschaden. Kein Fliesenleger/Sanitaer laesst das weg." },
+          { "katalogEintrag": "Fliesen verlegen", "hinweis": "explizit (Boden+Wand)" },
+          { "katalogEintrag": "Dusche montieren", "hinweis": "bodengleiche Dusche" },
+          { "katalogEintrag": "Waschtisch montieren" },
+          { "katalogEintrag": "WC montieren" },
+          { "katalogEintrag": "Bauschutt entsorgen", "hinweis": "'nehmen wir mit'" }
+        ],
+        "pflichtMaterial": [
+          { "katalogEintrag": "Bodenfliese" },
+          { "katalogEintrag": "Wandfliese" },
+          { "katalogEintrag": "Abdichtungsset", "hinweis": "PFLICHT - gehoert zur zwingenden Verbundabdichtung." },
+          { "katalogEintrag": "Duschrinne/Ablauf" },
+          { "katalogEintrag": "Waschtisch mit Unterschrank" },
+          { "katalogEintrag": "Wand-WC" }
+        ],
+        "mengenHinweis": "Die Bodenflaeche (~8 m2) IST genannt -> ein Modell darf Bodenfliesen ca. 8 m2 (als Annahme) ansetzen, das ist korrekt, NICHT als Fehler werten. Die Wandflaeche ist daraus NICHT ableitbar -> null + Hinweis. Sanitaer-Stueckzahlen (Dusche 1, Waschtisch 1, WC 1) sind aus dem Kontext je 1.",
+        "hardChecks": [
+          { "id": "kein-preis", "regel": "Kein preis/stundensatz/eurobetrag." },
+          { "id": "kein-fremdgewerk", "regel": "Kein fremdes Gewerk (z.B. Elektro/Heizung), das nicht genannt wurde." },
+          { "id": "katalog-treue", "regel": "Alle Positionen entsprechen Katalog-Eintraegen." },
+          { "id": "abdichtung-pflicht", "regel": "Abdichtung aufbringen (Leistung) UND Abdichtungsset (Material) MUESSEN vorhanden sein - bei bodengleicher Dusche fachlich zwingend." },
+          { "id": "recall-kern", "regel": "Mindestens 7 der 8 Pflicht-Leistungen UND 5 der 6 Pflicht-Materialien erfasst (Abdichtung zaehlt mit)." },
+          { "id": "wandflaeche-nicht-erfunden", "regel": "Wandfliesen-Menge ist NICHT 8 (das ist die Bodenflaeche) und nicht frei erfunden -> null oder Hinweis. Bodenfliesen ~8 m2 ist erlaubt." }
+        ],
+        "softChecks": [
+          { "id": "wandflaeche-hinweis", "regel": "Hinweis, dass die Wandflaeche vor Ort aufzumessen ist (aus 8 m2 Boden nicht ableitbar).", "judge": true },
+          { "id": "profi-extras", "regel": "Bonus: Duschrinne/Gefaelle, Armaturen (Dusch-/Waschtischmischer), Silikon/Verfugung mitgeplant.", "judge": true, "bonus": true }
+        ],
+        "ko": [
+          "preis/stundensatz/eurobetrag",
+          "fremdes Gewerk halluziniert",
+          "Abdichtung bei bodengleicher Dusche vergessen (fachlich grober Fehler)",
+          "Wandflaeche mit 8 m2 (Bodenwert) gleichgesetzt oder frei erfunden"
+        ]
+      }
+    },
+    {
+      "id": "call1-s3-vage-kueche",
+      "name": "S3 - Vages Freitext-Parsing (Kueche)",
+      "schwierigkeit": "mittel-hoch (Kern: Umgang mit Vagheit + Nachfrage-Verhalten)",
+      "prueft": "Unstrukturierte, schwammige Kundenbeschreibung ohne konkrete Mengen. Kann das Modell die wenigen klaren Positionen ziehen UND das Vage als Nachfrage flaggen, statt Mengen/Details zu erfinden? Maler-Anstrich + Arbeitsplatte sind im Katalog; 'was Modernes' ist bewusst unkonkret.",
+      "input": {
+        "sprachschnipsel": "Ja der Kunde, der will seine Kueche son bisschen aufhuebschen. Nichts grosses. Die Waende sollen neu gestrichen werden, ham jetzt son altes Gelb, das soll weg. Und die Arbeitsplatte ist total abgenutzt, die alte soll raus und was Moderneres hin. Genaue Masse hab ich noch nicht, muss ich nochmal hin.",
+        "vorlage": {
+          "leistungen": [
+            { "bezeichnung": "Waende streichen", "beschreibung": "Innenanstrich Waende, inkl. Grundierung bei Bedarf", "menge": null, "einheit": "m2" },
+            { "bezeichnung": "Arbeitsplatte demontieren", "beschreibung": "Alte Arbeitsplatte ausbauen", "menge": null, "einheit": "m" },
+            { "bezeichnung": "Arbeitsplatte montieren", "beschreibung": "Neue Arbeitsplatte zuschneiden und einbauen", "menge": null, "einheit": "m" },
+            { "bezeichnung": "Altmaterial entsorgen", "beschreibung": "Abtransport und Entsorgung", "menge": null, "einheit": "pauschal" }
+          ],
+          "material": [
+            { "bezeichnung": "Wandfarbe innen", "beschreibung": "Dispersionsfarbe, Standard", "menge": null, "einheit": "l" },
+            { "bezeichnung": "Arbeitsplatte", "beschreibung": "Kuechenarbeitsplatte, Dekor nach Wahl", "menge": null, "einheit": "m" }
+          ],
+          "notizen": [ "Anfahrt nach Aufwand" ]
+        }
+      },
+      "gold": {
+        "_fokus": "Vagheit korrekt behandeln: klare Positionen ziehen, ALLE Mengen null (nichts genannt), und aktiv nachfragen statt erfinden.",
+        "pflichtLeistungen": [
+          { "katalogEintrag": "Waende streichen", "menge": null, "hinweis": "Flaeche unbekannt" },
+          { "katalogEintrag": "Arbeitsplatte demontieren", "menge": null },
+          { "katalogEintrag": "Arbeitsplatte montieren", "menge": null }
+        ],
+        "pflichtMaterial": [
+          { "katalogEintrag": "Wandfarbe innen", "menge": null },
+          { "katalogEintrag": "Arbeitsplatte", "menge": null }
+        ],
+        "konditionalPflicht": {
+          "bedingung": "Fachlich naheliegend (Bonus): Altmaterial entsorgen (alte Arbeitsplatte muss weg).",
+          "leistungen": [ { "katalogEintrag": "Altmaterial entsorgen" } ],
+          "material": []
+        },
+        "hardChecks": [
+          { "id": "kein-preis", "regel": "Kein preis/stundensatz/eurobetrag." },
+          { "id": "kein-fremdgewerk", "regel": "Kein fremdes Gewerk (z.B. Fliesen/Elektro), nur Anstrich + Arbeitsplatte." },
+          { "id": "katalog-treue", "regel": "Alle Positionen entsprechen Katalog-Eintraegen." },
+          { "id": "alle-mengen-null", "regel": "ALLE Mengen null - es wurde keine einzige Menge/Mass genannt. Jede konkrete Zahl ist erfunden = Fehler." }
+        ],
+        "softChecks": [
+          { "id": "nachfrage-masse", "regel": "korrekturvorschlaege fragt aktiv nach Massen (Wandflaeche, Laenge Arbeitsplatte) - Handwerker sagt selbst 'Masse hab ich noch nicht'.", "judge": true },
+          { "id": "nachfrage-material", "regel": "Rueckfrage zum Arbeitsplatten-Material ('was Moderneres' = Laminat/Stein/Holz? unbestimmt) - zweiter legitimer Nachfrage-Punkt.", "judge": true },
+          { "id": "anstrich-aufbau", "regel": "Bonus: erkennt dass altes kraeftiges Gelb Grundierung + 2x deckenden Anstrich braucht (schlaegt sonst durch).", "judge": true, "bonus": true }
+        ],
+        "ko": [
+          "preis/stundensatz/eurobetrag",
+          "fremdes Gewerk halluziniert",
+          "erfundene konkrete Menge (z.B. '20 m2 Wand') obwohl nichts genannt"
+        ]
+      }
+    },
+    {
+      "id": "call1-s4-korrektur",
+      "name": "S4 - Korrektur-Fall (2. echter Use-Case)",
+      "schwierigkeit": "mittel (Kern: bestehende Positionen gezielt aendern, nicht neu erfinden)",
+      "prueft": "Der Korrektur-Pfad des ai-service: Input ist NICHT vorlage+sprachschnipsel, sondern strukturierteAngebotspositionen (bestehender Stand) + korrekturschnipsel. Modell muss die genannte Aenderung praezise einarbeiten und den Rest unveraendert lassen.",
+      "_inputHinweis": "Dieser Fall nutzt die Korrektur-Variante des Schnittstellenvertrags: strukturierteAngebotspositionen + korrekturschnipsel statt vorlage + sprachschnipsel.",
+      "input": {
+        "strukturierteAngebotspositionen": {
+          "leistungen": [
+            { "bezeichnung": "Fliesen verlegen", "beschreibung": "Bodenfliesen Bad verlegen inkl. Verfugung", "menge": 15, "einheit": "m2" }
+          ],
+          "material": [
+            { "bezeichnung": "Bodenfliese Feinsteinzeug 60x60", "beschreibung": "grossformatig, matt", "menge": 15, "einheit": "m2" }
+          ],
+          "notizen": [ "Untergrund vor Ort pruefen" ]
+        },
+        "korrekturschnipsel": "Pass mal an: die Fliesen sollen jetzt 80x80 sein statt 60x60. Und wir brauchen noch Sockelleisten rundherum, so 18 Meter."
+      },
+      "gold": {
+        "_fokus": "Praezise Aenderung: Format 60x60 -> 80x80, Sockelleisten NEU mit Menge 18 m, bestehende Fliesen-Leistung (15 m2) bleibt unveraendert erhalten.",
+        "muss": [
+          "Bodenfliese-Bezeichnung/Beschreibung auf 80x80 geaendert (nicht mehr 60x60)",
+          "Bestehende Position 'Fliesen verlegen' (15 m2) bleibt erhalten - NICHT geloescht",
+          "Neue Leistung 'Sockelleisten setzen/montieren', Menge 18, einheit lfm (laufende Meter)",
+          "Neues Material 'Sockelleisten' (Sockelfliesen), Menge 18, einheit lfm"
+        ],
+        "hardChecks": [
+          { "id": "format-geaendert", "regel": "60x60 kommt im Output NICHT mehr vor; 80x80 ist gesetzt." },
+          { "id": "bestand-erhalten", "regel": "Fliesen verlegen 15 m2 weiterhin vorhanden (nicht ueberschrieben/geloescht)." },
+          { "id": "sockel-menge-18", "regel": "Sockelleisten mit Menge 18 und Einheit laufende Meter (lfm/m), NICHT m2. '18 Meter' ist eine Laengenangabe - wer daraus 18 m2 macht, liegt falsch." },
+          { "id": "kein-preis", "regel": "Kein preis/stundensatz/eurobetrag." },
+          { "id": "kein-wildwuchs", "regel": "Keine zusaetzlichen, nicht angefragten Positionen erfunden (nur Format-Aenderung + Sockelleisten)." }
+        ],
+        "softChecks": [
+          { "id": "sockel-konsistenz", "regel": "Sockelleisten fachlich konsistent (Leistung 'setzen' + Material), nicht nur halb.", "judge": true, "bonus": true }
+        ],
+        "ko": [
+          "preis/stundensatz/eurobetrag",
+          "bestehende Fliesen-Position geloescht/ueberschrieben statt geaendert",
+          "Format weiterhin 60x60 (Aenderung ignoriert)",
+          "Sockelleisten in m2 statt lfm (Einheitenfehler)",
+          "komplettes Neu-Erfinden des Angebots statt gezielter Korrektur"
+        ]
+      }
+    },
+    {
+      "id": "call1-s5-minimal-leer",
+      "name": "S5 - Edge-Case: minimaler Input, LEERE Vorlage",
+      "schwierigkeit": "edge (Kern: nicht halluzinieren bei zu wenig Info + Cold-Start ohne Katalog)",
+      "prueft": "Doppelter Stresstest: (1) Der Sprachschnipsel ist viel zu vage fuer konkrete Positionen. (2) Die Vorlage ist LEER (neuer Handwerker, kein gepflegter Katalog - der BPMN-Fallback). Gold-Verhalten: KEINE Positionen erfinden, stattdessen gezielt nachfragen.",
+      "input": {
+        "sprachschnipsel": "Mach mal eben das Angebot fuer den Schmidt fertig, das von neulich. Du weisst schon.",
+        "vorlage": { "leistungen": [], "material": [], "notizen": [] }
+      },
+      "gold": {
+        "_fokus": "Das beste Verhalten ist NICHTS zu erfinden. Kein Auftrag, kein Gewerk, keine Mengen erkennbar - und kein Katalog als Stuetze.",
+        "erwartetesVerhalten": "Leere oder nahezu leere Positionslisten. korrekturvorschlaege MUSS aktiv nachfragen: welches Gewerk/welche Leistung, welcher Auftrag ('das von neulich' ist fuer die KI nicht aufloesbar).",
+        "pflichtLeistungen": [],
+        "pflichtMaterial": [],
+        "hardChecks": [
+          { "id": "keine-erfundenen-positionen", "regel": "Keine konkreten Leistungs-/Materialpositionen erfunden (es gibt keine Grundlage)." },
+          { "id": "kein-preis", "regel": "Kein preis/stundensatz/eurobetrag." },
+          { "id": "keine-kundendaten", "regel": "'Schmidt' nicht als Position/Kundenobjekt verarbeitet." },
+          { "id": "keine-vorgetaeuschte-historie", "regel": "Das Modell darf NICHT so tun, als kenne es 'das von neulich' / den frueheren Auftrag. Kein Bezug auf eine angebliche Historie, keine Annahme welches Gewerk es 'letztes Mal' war. Das ist der eigentliche Trap im Wording." }
+        ],
+        "softChecks": [
+          { "id": "aktive-nachfrage", "regel": "korrekturvorschlaege fragt konkret nach Gewerk/Auftragsinhalt, statt etwas zu raten.", "judge": true }
+        ],
+        "ko": [
+          "erfundene Positionen ohne jede Grundlage (Haupt-Failure dieses Tests)",
+          "preis/stundensatz/eurobetrag",
+          "vorgetaeuschter Zugriff auf eine fruehere Anfrage/Historie ('das von neulich' so behandeln, als sei es bekannt)"
+        ]
+      }
+    }
+  ]
+}

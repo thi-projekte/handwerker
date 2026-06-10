@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0ejgl0b" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.45.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.24.0">
+  <bpmn:collaboration id="Collaboration_042vbpn">
+    <bpmn:participant id="pool_03" name="Sprachschnipselverarbeitung" processRef="sprachschnipselverarbeitung" />
+    <bpmn:participant id="Participant_09kwgqt" name="Backend" />
+    <bpmn:messageFlow id="Flow_19wur4r" name="Sprachschnipsel&#10;und Vorlage" sourceRef="Activity_3.1" targetRef="Participant_09kwgqt" />
+    <bpmn:messageFlow id="Flow_0n6lggq" name="strukturierte Angebots-positionen und Korrektur-vorschläge" sourceRef="Participant_09kwgqt" targetRef="Activity_3.2" />
+  </bpmn:collaboration>
+  <bpmn:process id="sprachschnipselverarbeitung" isExecutable="true" camunda:historyTimeToLive="10">
+    <bpmn:startEvent id="Event_1c6l65c" name="Sprachschnipsel müssen verarbeitet werden">
+      <bpmn:outgoing>Flow_1lb7m41</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:endEvent id="Event_1xgl5t6" name="Verarbeitung erfolgreich">
+      <bpmn:incoming>Flow_1hhu01x</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sendTask id="Activity_3.1" name="Sprach-schnipsel und Vorlage versenden">
+      <bpmn:extensionElements>
+        <camunda:connector>
+          <camunda:inputOutput>
+            <camunda:inputParameter name="url">https://webhook.site/8ffe7a5c-320f-4839-af43-6c010f6e937f</camunda:inputParameter>
+            <camunda:inputParameter name="method">POST</camunda:inputParameter>
+            <camunda:inputParameter name="payload">
+              <camunda:script scriptFormat="JavaScript">var korrekturschnipsel = execution.getVariable("korrekturschnipsel");
+var strukturierteAngebotspositionen = execution.getVariable("strukturierteAngebotspositionen");
+
+var vorlage = execution.getVariable("vorlage");
+var sprachschnipsel = execution.getVariable("sprachschnipsel");
+
+var businessKey = execution.getProcessBusinessKey();
+
+var payload = {};
+
+payload.businessKey = businessKey;
+
+if (korrekturschnipsel !== null &amp;&amp; strukturierteAngebotspositionen !== null) {
+
+  payload.prompt = "Überarbeite die strukturierten Angebotspositionen anhand des Korrekturschnipsels.";
+
+  payload.strukturierteAngebotspositionen = JSON.parse(
+    strukturierteAngebotspositionen.toString()
+  );
+
+  payload.korrekturschnipsel = korrekturschnipsel.toString();
+
+} else {
+
+  payload.prompt = "Erstelle ein Erstangebot anhand von Vorlage und Sprachschnipsel.";
+
+  payload.vorlage = vorlage !== null
+    ? JSON.parse(vorlage.toString())
+    : {
+        leistungen: [],
+        material: [],
+        notizen: []
+      };
+
+  payload.sprachschnipsel = sprachschnipsel === null
+    ? ""
+    : sprachschnipsel.toString();
+}
+
+JSON.stringify(payload);</camunda:script>
+            </camunda:inputParameter>
+          </camunda:inputOutput>
+          <camunda:connectorId>http-connector</camunda:connectorId>
+        </camunda:connector>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1lb7m41</bpmn:incoming>
+      <bpmn:outgoing>Flow_0gfrtp2</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:receiveTask id="Activity_3.2" name="strukturierte Angebots-positionen und Korrektur-vorschläge  empfangen" messageRef="Message_3c00n9k">
+      <bpmn:extensionElements>
+        <camunda:executionListener event="end">
+          <camunda:script scriptFormat="JavaScript">var ergebnisKIString = execution.getVariable("ergebnisKI").toString();
+var ergebnisKIJson = S(ergebnisKIString);
+
+execution.setVariable("ergebnisKI", ergebnisKIJson);</camunda:script>
+        </camunda:executionListener>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0gfrtp2</bpmn:incoming>
+      <bpmn:outgoing>Flow_1hhu01x</bpmn:outgoing>
+    </bpmn:receiveTask>
+    <bpmn:sequenceFlow id="Flow_1lb7m41" sourceRef="Event_1c6l65c" targetRef="Activity_3.1" />
+    <bpmn:sequenceFlow id="Flow_1hhu01x" sourceRef="Activity_3.2" targetRef="Event_1xgl5t6" />
+    <bpmn:sequenceFlow id="Flow_0gfrtp2" sourceRef="Activity_3.1" targetRef="Activity_3.2" />
+  </bpmn:process>
+  <bpmn:message id="Message_3c00n9k" name="ergebnisKI" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_042vbpn">
+      <bpmndi:BPMNShape id="Participant_1y5lqsw_di" bpmnElement="pool_03" isHorizontal="true">
+        <dc:Bounds x="159" y="135" width="710" height="270" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_0mtov3c" bpmnElement="Event_1c6l65c">
+        <dc:Bounds x="229" y="307" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="207" y="350" width="81" height="53" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1xgl5t6_di" bpmnElement="Event_1xgl5t6">
+        <dc:Bounds x="779" y="307" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="767" y="350" width="63" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_19f7r52_di" bpmnElement="Activity_3.1">
+        <dc:Bounds x="367" y="285" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1rydv4d_di" bpmnElement="Activity_3.2">
+        <dc:Bounds x="577" y="285" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1lb7m41_di" bpmnElement="Flow_1lb7m41">
+        <di:waypoint x="265" y="325" />
+        <di:waypoint x="367" y="325" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1hhu01x_di" bpmnElement="Flow_1hhu01x">
+        <di:waypoint x="677" y="325" />
+        <di:waypoint x="779" y="325" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0gfrtp2_di" bpmnElement="Flow_0gfrtp2">
+        <di:waypoint x="467" y="325" />
+        <di:waypoint x="577" y="325" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Participant_1uhmnb2_di" bpmnElement="Participant_09kwgqt" isHorizontal="true">
+        <dc:Bounds x="159" y="40" width="708" height="60" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_19wur4r_di" bpmnElement="Flow_19wur4r">
+        <di:waypoint x="417" y="285" />
+        <di:waypoint x="417" y="100" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="326" y="218" width="81" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0n6lggq_di" bpmnElement="Flow_0n6lggq">
+        <di:waypoint x="637" y="100" />
+        <di:waypoint x="637" y="285" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="651" y="186" width="72" height="66" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

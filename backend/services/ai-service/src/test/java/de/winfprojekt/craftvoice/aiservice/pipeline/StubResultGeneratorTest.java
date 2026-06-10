@@ -63,10 +63,20 @@ class StubResultGeneratorTest {
     }
 
     @Test
-    void position_record_hat_genau_vier_komponenten() {
-        // Strukturwaechter: schlaegt an, sobald jemand ein Feld (z.B. preis) ergaenzt.
-        assertEquals(4, Position.class.getRecordComponents().length,
-                "Position muss exakt {bezeichnung, beschreibung, menge, einheit} haben — "
-                        + "kein preis!");
+    void position_record_hat_kein_preis_feld() {
+        // Strukturwaechter (Datenschutz): Position darf NIE ein Preis-Feld bekommen.
+        // katalogProduktId (Call 2, #541) ist KEIN Preis, sondern eine Katalog-Referenz.
+        var namen = Stream.of(Position.class.getRecordComponents())
+                .map(java.lang.reflect.RecordComponent::getName)
+                .toList();
+        assertFalse(
+                namen.stream().anyMatch(n -> n.toLowerCase().contains("preis")
+                        || n.toLowerCase().contains("price")),
+                "Position darf kein Preis-Feld haben (Datenschutz-Constraint).");
+        // Erwartete Struktur inkl. katalogProduktId.
+        assertEquals(
+                java.util.List.of("bezeichnung", "beschreibung", "menge", "einheit", "katalogProduktId"),
+                namen,
+                "Unerwartete Position-Struktur — Vertrag pruefen.");
     }
 }
