@@ -29,7 +29,7 @@ export const LadenPage = () => {
         </div>
 
         <a href="/review" hidden />
-        <a href="/angebot-final" hidden />
+        <a href="/angebotFinal" hidden />
       </div>
     </div>
   );

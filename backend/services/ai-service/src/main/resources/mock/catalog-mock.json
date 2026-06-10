@@ -1,0 +1,36 @@
+{
+  "_comment": "Interner Mock-Katalog fuer LLM-Call 2, solange der echte catalog-service-Such-Endpoint (#540, Michi) nicht steht. Wird nur bei catalog.mock.enabled=true genutzt. Kompakter, repraesentativer Querschnitt mehrerer Gewerke inkl. Synonym-/Fallen-Faellen (z.B. Fliesenkreuze, PE-Schaum). Bewusst OHNE Preise.",
+  "materials": [
+    { "id": 1001, "articleNumber": "FLI-1001", "name": "Feinsteinzeug Eiche-natur 8mm", "description": "Bodenfliese Feinsteinzeug Holzoptik, Eiche natur, 8 mm", "unit": "m2", "categoryName": "Fliesen" },
+    { "id": 1002, "articleNumber": "FLI-1002", "name": "Feinsteinzeug Betonoptik grau 60x60", "description": "Bodenfliese Feinsteinzeug Betonoptik grau, 60x60 cm", "unit": "m2", "categoryName": "Fliesen" },
+    { "id": 1003, "articleNumber": "FLI-1003", "name": "Wandfliese weiss glaenzend 20x40", "description": "Glasierte Wandfliese weiss glaenzend, 20x40 cm", "unit": "m2", "categoryName": "Fliesen" },
+    { "id": 1004, "articleNumber": "FLI-1004", "name": "Mosaikfliese Glas anthrazit", "description": "Glasmosaik anthrazit auf Netz, 30x30 cm", "unit": "m2", "categoryName": "Fliesen" },
+    { "id": 1005, "articleNumber": "FLI-1005", "name": "Fliesenkreuze 3mm", "description": "Verlegehilfe Fugenkreuze 3 mm, Beutel 250 Stueck", "unit": "Pkg", "categoryName": "Verlegezubehoer" },
+    { "id": 1006, "articleNumber": "FLI-1006", "name": "Flexkleber grau 25kg", "description": "Flexibler Fliesenkleber C2TE, 25 kg Sack", "unit": "Sack", "categoryName": "Verlegezubehoer" },
+    { "id": 1007, "articleNumber": "FLI-1007", "name": "Fugenmoertel zementgrau 5kg", "description": "Flexfuge zementgrau, 1-6 mm, 5 kg", "unit": "Pkg", "categoryName": "Verlegezubehoer" },
+
+    { "id": 2001, "articleNumber": "BOD-2001", "name": "Laminat Eiche hell 7mm", "description": "Laminatboden Holzoptik Eiche hell, Klicksystem, 7 mm", "unit": "m2", "categoryName": "Bodenbelaege" },
+    { "id": 2002, "articleNumber": "BOD-2002", "name": "Klick-Vinyl Landhausdiele 5mm", "description": "Klick-Vinyl Landhausdiele, 5 mm, wasserfest", "unit": "m2", "categoryName": "Bodenbelaege" },
+    { "id": 2003, "articleNumber": "BOD-2003", "name": "Trittschalldaemmung PE-Schaum 2mm", "description": "PE-Schaum Trittschalldaemmung, 2 mm, Rolle", "unit": "m2", "categoryName": "Bodenbelaege" },
+    { "id": 2004, "articleNumber": "BOD-2004", "name": "Sockelleiste Eiche 58mm", "description": "MDF-Sockelleiste foliert Eiche, 58 mm, 2,4 m", "unit": "m", "categoryName": "Bodenbelaege" },
+
+    { "id": 3001, "articleNumber": "ELE-3001", "name": "Doppelsteckdose UP reinweiss", "description": "Unterputz-Steckdose 2-fach, Standardprogramm reinweiss", "unit": "Stk", "categoryName": "Elektroinstallation" },
+    { "id": 3002, "articleNumber": "ELE-3002", "name": "Wechselschalter UP reinweiss", "description": "Unterputz-Wechselschalter, Standardprogramm reinweiss", "unit": "Stk", "categoryName": "Elektroinstallation" },
+    { "id": 3003, "articleNumber": "ELE-3003", "name": "Geraetedose UP tief", "description": "Unterputz-Geraetedose / Hohlwanddose, tief", "unit": "Stk", "categoryName": "Elektroinstallation" },
+    { "id": 3004, "articleNumber": "ELE-3004", "name": "Installationsleitung NYM-J 3x1,5", "description": "Mantelleitung NYM-J 3x1,5 mm2, Ring 100 m", "unit": "m", "categoryName": "Elektroinstallation" },
+    { "id": 3005, "articleNumber": "ELE-3005", "name": "LED-Einbauspot dimmbar warmweiss", "description": "LED-Einbaustrahler 6W, dimmbar, warmweiss", "unit": "Stk", "categoryName": "Beleuchtung" },
+    { "id": 3006, "articleNumber": "ELE-3006", "name": "Feuchtraumsteckdose AP IP44", "description": "Aufputz-Steckdose Feuchtraum, IP44, grau", "unit": "Stk", "categoryName": "Elektroinstallation" },
+
+    { "id": 4001, "articleNumber": "SAN-4001", "name": "Waschtisch-Einhebelmischer chrom", "description": "Einhebel-Waschtischarmatur, chrom, ohne Ablaufgarnitur", "unit": "Stk", "categoryName": "Sanitaerarmaturen" },
+    { "id": 4002, "articleNumber": "SAN-4002", "name": "WC-Spuelkasten UP 2-Mengen", "description": "Unterputz-Spuelkasten 2-Mengen-Technik", "unit": "Stk", "categoryName": "Sanitaer" },
+    { "id": 4003, "articleNumber": "SAN-4003", "name": "Wand-WC spuelrandlos weiss", "description": "Wandhaengendes WC spuelrandlos, Tiefspueler, weiss", "unit": "Stk", "categoryName": "Sanitaer" },
+    { "id": 4004, "articleNumber": "SAN-4004", "name": "Duschrinne 800mm Edelstahl", "description": "Bodenebene Duschrinne 80 cm, Edelstahl", "unit": "Stk", "categoryName": "Sanitaer" },
+    { "id": 4005, "articleNumber": "SAN-4005", "name": "Sanitaer-Silikon transparent", "description": "Sanitaer-Silikon fungizid, transparent, 310 ml", "unit": "Stk", "categoryName": "Dichtstoffe" },
+
+    { "id": 5001, "articleNumber": "MAL-5001", "name": "Wandfarbe weiss matt 10L", "description": "Innendispersion weiss matt, hohe Deckkraft, 10 l", "unit": "Eimer", "categoryName": "Anstrichmittel" },
+    { "id": 5002, "articleNumber": "MAL-5002", "name": "Tiefengrund LF 5L", "description": "Loesemittelfreier Tiefengrund, 5 l", "unit": "Kanister", "categoryName": "Anstrichmittel" },
+    { "id": 5003, "articleNumber": "MAL-5003", "name": "Acryl-Dichtmasse weiss", "description": "Maler-Acryl weiss, ueberstreichbar, 310 ml", "unit": "Stk", "categoryName": "Dichtstoffe" },
+    { "id": 5004, "articleNumber": "MAL-5004", "name": "Renoviervlies 150g", "description": "Malervlies glatt 150 g/m2, Rolle", "unit": "m2", "categoryName": "Tapeten" },
+    { "id": 5005, "articleNumber": "MAL-5005", "name": "Maler-Kreppband 50mm", "description": "Kreppband fein, 50 mm x 50 m", "unit": "Stk", "categoryName": "Malerzubehoer" }
+  ]
+}

@@ -231,7 +231,7 @@ export const HomeView = () => {
               <button
                 className="new-customer-btn"
                 onClick={() =>
-                  navigate("/customers/new")
+                  navigate("/unternehmen?tab=kunde")
                 }
               >
                 ➜  Neuer Kunde

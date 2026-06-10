@@ -2,6 +2,7 @@ package de.winfprojekt.craftvoice.userservice;
 
 import io.quarkus.security.Authenticated;
 import io.quarkus.security.identity.SecurityIdentity;
+import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
@@ -26,6 +27,7 @@ public class UserResource {
 
     @POST
     @Path("/register")
+    @jakarta.annotation.security.PermitAll
     public Response register(RegistrationRequest request) {
         UserEntity user = new UserEntity();
         user.email = request.email;
@@ -52,7 +54,6 @@ public class UserResource {
 
     @PUT
     @Path("/company")
-    @Authenticated
     @RolesAllowed("OWNER")
     public Response updateCompany(UserEntity data) {
         userService.updateCompanyData(getUserId(), data);
@@ -67,7 +68,6 @@ public class UserResource {
     }
 
     @DELETE
-    @Authenticated
     @RolesAllowed("OWNER")
     public Response deleteAccount() {
         userService.deleteAccount(getUserId());

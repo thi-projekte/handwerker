@@ -3,6 +3,10 @@ package de.winfprojekt.craftvoice.offerservice.offer;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.AiResultRequest;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.CreateOfferRequest;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.OfferResponse;
+import de.winfprojekt.craftvoice.offerservice.offer.dto.OfferAcceptanceRequest;
+import de.winfprojekt.craftvoice.offerservice.offer.dto.SetArbeitsstundenRequest;
+import de.winfprojekt.craftvoice.offerservice.offer.dto.OfferAcceptanceResponse;
+import jakarta.annotation.security.PermitAll;
 
 import jakarta.inject.Inject;
 import jakarta.ws.rs.POST;
@@ -62,6 +66,21 @@ public class OfferResource {
     }
 
     /**
+     * Verarbeitet die manuell eingetragene Arbeitsdauer des Handwerkers.
+     * Legt ggf. eine Arbeitszeit-Position an und informiert die Process Engine.
+     *
+     * @param id      ID des Angebots (muss im Status KI_FERTIG sein)
+     * @param request Arbeitsstunden-Eingabe des Handwerkers
+     * @return HTTP-Response 200 mit dem aktualisierten Angebot
+     */
+    @POST
+    @Path("/angebote/{id}/arbeitsstunden")
+    public Response setArbeitsstunden(@PathParam("id") Long id, @Valid SetArbeitsstundenRequest request) {
+        OfferResponse response = offerService.setArbeitsstunden(id, request);
+        return Response.ok(response).build();
+    }
+
+    /**
      * Gibt eine Liste aller Angebote zurück, sortiert nach Erstellungsdatum absteigend (neueste zuerst).
      *
      * @return HTTP-Response mit Statuscode 200 und der Liste aller Angebote
@@ -85,6 +104,22 @@ public class OfferResource {
         if (response == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
+        return Response.ok(response).build();
+    }
+
+    /**
+     * Endpunkt zur Annahme oder Ablehnung eines Angebots durch den Kunden über einen Token.
+     * Dieser Endpunkt ist öffentlich zugänglich.
+     *
+     * @param token Der eindeutige Annahme-Token des Angebots
+     * @param request Die Kundenentscheidung (angenommen / abgelehnt)
+     * @return HTTP-Response 200 mit Bestätigungsantwort oder Fehlermeldung
+     */
+    @POST
+    @Path("/angebote/annahme/{token}")
+    @PermitAll
+    public Response acceptOrRejectOffer(@PathParam("token") String token, @Valid OfferAcceptanceRequest request) {
+        OfferAcceptanceResponse response = offerService.acceptOrRejectOffer(token, request);
         return Response.ok(response).build();
     }
 }

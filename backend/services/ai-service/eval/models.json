@@ -1,0 +1,16 @@
+{
+  "_comment": "Die 12 Eval-Modelle fuer LLM-Call 1. Preise = USD pro 1 Mio. Tokens (Stand /v1/models 2026-05-30). klasse dient nur der Gruppierung im Report.",
+  "models": [
+    { "id": "claude-opus-4-8",              "anbieter": "Anthropic", "klasse": "premium", "preisInput": 5.00, "preisOutput": 25.00 },
+    { "id": "claude-sonnet-4-6",            "anbieter": "Anthropic", "klasse": "mittel",  "preisInput": 3.00, "preisOutput": 15.00 },
+    { "id": "claude-haiku-4-5-20251001",    "anbieter": "Anthropic", "klasse": "budget",  "preisInput": 1.00, "preisOutput": 5.00 },
+    { "id": "gpt-5.5",                      "anbieter": "OpenAI",    "klasse": "premium", "preisInput": 5.00, "preisOutput": 30.00 },
+    { "id": "gpt-5.4",                      "anbieter": "OpenAI",    "klasse": "mittel",  "preisInput": 2.50, "preisOutput": 15.00 },
+    { "id": "gpt-5.4-mini",                 "anbieter": "OpenAI",    "klasse": "budget",  "preisInput": 0.75, "preisOutput": 4.50 },
+    { "id": "gemini-3.1-pro-preview",       "anbieter": "Google",    "klasse": "premium", "preisInput": 1.25, "preisOutput": 10.00 },
+    { "id": "gemini-3.5-flash",             "anbieter": "Google",    "klasse": "mittel",  "preisInput": 1.50, "preisOutput": 9.00 },
+    { "id": "gemini-3-flash-preview",       "anbieter": "Google",    "klasse": "budget",  "preisInput": 0.30, "preisOutput": 2.50 },
+    { "id": "grok-4.3",                     "anbieter": "xAI",       "klasse": "premium", "preisInput": 1.25, "preisOutput": 2.50 },
+    { "id": "google-gemma-4-26b",           "anbieter": "Google",    "klasse": "wildcard","preisInput": 0.15, "preisOutput": 0.60 }
+  ]
+}

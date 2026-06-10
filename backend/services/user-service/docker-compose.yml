@@ -1,29 +1,87 @@
 version: '3.8'
 
 services:
+  # 1. Datenbank für den User-Service
   user-db:
     image: postgres:15
     container_name: user-db
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
       POSTGRES_DB: user-db
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - intern
 
+  # 2. Der User-Service (Baut sich in Portainer selbst!)
   user-service:
     build:
       context: .
-      dockerfile: src/main/docker/Dockerfile.jvm
+      dockerfile: Dockerfile.build
     container_name: user-service
     environment:
       DB_HOST: user-db
       DB_USER: postgres
-      DB_PASSWORD: postgres
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
       DB_NAME: user-db
+      KEYCLOAK_URL: https://id-craftvoice.winfprojekt.de
+      KEYCLOAK_REALM: handwerker-realm
     depends_on:
       user-db:
         condition: service_healthy
+    networks:
+      - nginx-reverse-proxy
+      - intern
+
+  # 3. Keycloak
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.2
+    container_name: keycloak
+    command: start
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${KC_DB_PASSWORD}
+      KC_HOSTNAME: id-craftvoice.winfprojekt.de
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY_HEADERS: xforwarded
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+    networks:
+      - nginx-reverse-proxy
+      - intern
+
+  # 4. Datenbank für Keycloak
+  keycloak-db:
+    image: postgres:16
+    container_name: keycloak-db
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: ${KC_DB_PASSWORD}
+    volumes:
+      - keycloak_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - intern
+
+networks:
+  nginx-reverse-proxy:
+    external: true
+  intern:
+    driver: bridge
+
+volumes:
+  keycloak_postgres_data:

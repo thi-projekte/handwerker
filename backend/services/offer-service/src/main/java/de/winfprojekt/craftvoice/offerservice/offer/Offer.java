@@ -37,6 +37,9 @@ public class Offer extends BaseEntity {
     @Column(name = "customer_id", nullable = false)
     public Long customerId;
 
+    @Column(name = "handwerker_id", nullable = false)
+    public Long handwerkerId;
+
     @Column(unique = true)
     public String annahmeToken;     // UUID für öffentlichen Annahme-Link
 

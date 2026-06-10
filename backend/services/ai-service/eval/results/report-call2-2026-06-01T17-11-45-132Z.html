@@ -1,0 +1,102 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Call-2-Eval — Produktauswahl</title>
+<style>
+ :root{--bg:#faf9f7;--card:#fff;--ink:#1d1c1a;--mut:#6b6862;--line:#e7e3dd;--accent:#d97757;--good:#2e9e6b;--bad:#d4503e}
+ *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 -apple-system,Segoe UI,Roboto,sans-serif}
+ main{max-width:980px;margin:0 auto;padding:32px 22px 80px}
+ h1{font-size:30px;margin:0 0 4px}h2{font-size:21px;margin:38px 0 10px;padding-top:14px;border-top:2px solid var(--line)}h3{font-size:16px;margin:20px 0 8px}
+ .sub{color:var(--mut);font-size:14px}.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:12px 0}
+ .grid{display:grid;gap:12px}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}.g2{grid-template-columns:repeat(2,1fr)}
+ .kpi{text-align:center}.kpi .n{font-size:30px;font-weight:700;color:var(--accent)}.kpi .l{font-size:12px;color:var(--mut)}
+ .pipe{display:flex;align-items:stretch;gap:0;flex-wrap:wrap}
+ .pbox{flex:1;min-width:150px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;text-align:center}
+ .pbox .t{font-weight:600;font-size:13px}.pbox .d{font-size:12px;color:var(--mut);margin-top:3px}
+ .parr{display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--accent);padding:0 6px}
+ .barrow{display:flex;align-items:center;gap:10px;margin:7px 0}.blab{width:190px;font-size:13px;text-align:right;color:var(--mut)}
+ .btrack{flex:1;background:#efece7;border-radius:6px;height:18px;overflow:hidden}.bfill{display:block;height:100%}
+ .bval{width:84px;font-size:13px;font-weight:600}
+ table{border-collapse:collapse;width:100%;font-size:13px;margin-top:6px}th,td{border:1px solid var(--line);padding:6px 8px;text-align:left}th{background:#f3f0ea}
+ .ok{color:var(--good);font-weight:700}.no{color:var(--bad);font-weight:700}.tag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:20px;background:#efece7;color:var(--mut)}
+ .lead{font-size:16px}.hl{background:#fff6f2;border-left:3px solid var(--accent);padding:12px 16px;border-radius:0 8px 8px 0;margin:12px 0}
+ .lim{background:#fbfaf8;border:1px dashed var(--line)}.muted{color:var(--mut)}.chip{display:inline-block;font-size:12px;padding:2px 9px;border-radius:20px;border:1px solid var(--line);margin:2px}
+</style></head><body><main>
+
+<h1>Call-2-Evaluation — Produktauswahl</h1>
+<div class="sub">ai-service · Stand 2026-06-01 · pro Position aus dem Katalog das passende Produkt wählen. <b>Der KI werden nie Preise übergeben.</b></div>
+
+<h2>Die Pipeline</h2>
+<div class="pipe">
+ <div class="pbox"><div class="t">Position</div><div class="d">aus Call 1 (z. B. „Laminat 8 mm, 25 m²")</div></div>
+ <div class="parr">→</div>
+ <div class="pbox"><div class="t">Vorfilter (BM25)</div><div class="d">400 Artikel → 15 Kandidaten<br><b>ohne Preise</b></div></div>
+ <div class="parr">→</div>
+ <div class="pbox"><div class="t">LLM Call 2</div><div class="d">wählt 1 Artikel<br>oder „kein Treffer"</div></div>
+ <div class="parr">→</div>
+ <div class="pbox"><div class="t">Produktreferenz</div><div class="d">Preis ergänzt später<br>(nicht von der KI)</div></div>
+</div>
+<div class="hl"><b>Kernidee:</b> Wir messen <b>zwei Dinge getrennt</b> — wie gut der <b>Vorfilter</b> sucht (Retrieval-Recall, modellunabhängig) und wie gut die <b>Auswahl</b> trifft. So vermischen sich Such- und Modellfehler nie.</div>
+
+<h2>Setup</h2>
+<div class="grid g4">
+ <div class="card kpi"><div class="n">400</div><div class="l">Artikel im Katalog<br>(Material-Schema #594)</div></div>
+ <div class="card kpi"><div class="n">16</div><div class="l">Test-Szenarien<br>(6 Fallen-Typen)</div></div>
+ <div class="card kpi"><div class="n">15</div><div class="l">Kandidaten je Position<br>(Top-k Vorfilter)</div></div>
+ <div class="card kpi"><div class="n">4×16×5</div><div class="l">LLM-Calls<br>(Modelle×Szen.×Runs)</div></div>
+</div>
+<div class="card"><h3>Katalog (synthetisch, im echten Material-Schema)</h3>
+ <div><span class="chip">BOD: 120</span> <span class="chip">FLI: 80</span> <span class="chip">SAN: 80</span> <span class="chip">TRB: 60</span> <span class="chip">MAL: 40</span> <span class="chip">KLM: 20</span></div>
+ <div class="sub" style="margin-top:8px">63 testtragende Artikel (Gold + gezielte Near-Duplicates) handkuratiert, Rest deterministisch als Rauschen erzeugt. Sechs Fallen-Sorten: Dimensions-, Dekor-, Marken-Varianten, Synonyme, Distraktoren, Gebinde.</div>
+ <div style="margin-top:8px"><span class="chip">Typ A: 1</span> <span class="chip">Typ B: 4</span> <span class="chip">Typ C: 3</span> <span class="chip">Typ D: 4</span> <span class="chip">Typ E: 2</span> <span class="chip">Typ F: 2</span>
+ <span class="sub"> &nbsp;A eindeutig · B Maß · C Synonym · D Distraktor · E kein Treffer · F mehrere ok</span></div>
+</div>
+
+<h2>Ergebnis 1 — Vorfilter (Stichwort-Suche, BM25)</h2>
+<div class="sub">War der richtige Artikel unter den Top-15? (nur Szenarien mit Gold)</div>
+<div class="card">
+ <div class="barrow"><span class="blab">Recall@5</span><span class="btrack"><span class="bfill" style="width:93%;background:#4285f4"></span></span><span class="bval">93%</span></div>
+ <div class="barrow"><span class="blab">Recall@10</span><span class="btrack"><span class="bfill" style="width:93%;background:#4285f4"></span></span><span class="bval">93%</span></div>
+ <div class="barrow"><span class="blab">Recall@15</span><span class="btrack"><span class="bfill" style="width:100%;background:#2e9e6b"></span></span><span class="bval">100%</span></div>
+ <div class="sub" style="margin-top:8px">13/14 Gold-Artikel schon auf Rang 1–2. Einzige Lücke: <b>S6</b> (Rang 13) — „Fugenkreuze" (Position) vs. „Fliesenkreuze" (Katalog): die klassische Synonym-Schwäche der Stichwort-Suche.</div>
+</div>
+
+<h2>Ergebnis 2 — Reicht Programmierung, oder braucht es die KI?</h2>
+<div class="sub">Auswahl aus den 15 Kandidaten, gegen das Gold (16 Szenarien).</div>
+<div class="card">
+ <div class="barrow"><span class="blab">Programmierung: Top-1</span><span class="btrack"><span class="bfill" style="width:69%;background:#b9b3a8"></span></span><span class="bval">11/16</span></div>
+ <div class="barrow"><span class="blab">Programmierung: + Attribut-Matching</span><span class="btrack"><span class="bfill" style="width:94%;background:#e0a23c"></span></span><span class="bval">15/16</span></div>
+ <div class="barrow"><span class="blab">LLM (jedes der 4 Modelle)</span><span class="btrack"><span class="bfill" style="width:100%;background:#2e9e6b"></span></span><span class="bval">16/16</span></div>
+</div>
+<div class="hl"><b>Der entscheidende Fall ist S15:</b> Position will <b>Echtmarmor</b>, der Katalog hat „Marmoroptik-<i>Keramik</i> … kein Naturstein". Regeln greifen die Wörter <i>marmor/poliert/naturstein</i> und wählen den Köder. Der LLM <b>versteht</b>, dass das kein echter Marmor ist, und lehnt ab. Genau dort verdient die KI ihr Geld — plus: sie braucht <b>keine handgepflegten Regeln</b>.</div>
+<table><tr><th>Szenario</th><th>Typ</th><th>Soll</th><th>Top-1</th><th>+ Attribut</th><th>LLM (alle 4)</th></tr>
+<tr><td>C2-S1</td><td><span class="tag">B</span></td><td>BOD-1008</td><td><span class="no">✗</span></td><td><span class="ok">✓</span></td><td><span class="ok">✓</span></td></tr><tr><td>C2-S2</td><td><span class="tag">C</span></td><td>BOD-1105</td><td><span class="no">✗</span></td><td><span class="ok">✓</span></td><td><span class="ok">✓</span></td></tr><tr><td>C2-S3</td><td><span class="tag">D</span></td><td>BOD-1210</td><td><span class="ok">✓</span></td><td><span class="ok">✓</span></td><td><span class="ok">✓</span></td></tr><tr><td>C2-S4</td><td><span class="tag">B</span></td><td>FLI-2060</td><td><span class="ok">✓</span></td><td><span class="ok">✓</span></td><td><span class="ok">✓</span></td></tr><tr><td>C2-S5</td><td><span class="tag">D</span></td><td>FLI-2300</td><td><span class="ok">✓</span></td><td><span class="ok">✓</span></td><td><span class="ok">✓</span></td></tr><tr><td>C2-S6</td><td><span class="tag">F</span></td><td>FLI-2410/FLI-2411</td><td><span class="no">✗</span></td><td><span class="ok">✓</span></td><td><span class="ok">✓</span></td></tr><tr><td>C2-S7</td><td><span class="tag">C</span></td><td>SAN-3010</td><td><span class="ok">✓</span></td><td><span class="ok">✓</span></td><td><span class="ok">✓</span></td></tr><tr><td>C2-S8</td><td><span class="tag">A</span></td><td>SAN-3210</td><td><span class="ok">✓</span></td><td><span class="ok">✓</span></td><td><span class="ok">✓</span></td></tr><tr><td>C2-S9</td><td><span class="tag">E</span></td><td>kein Treffer</td><td><span class="no">✗</span></td><td><span class="ok">✓</span></td><td><span class="ok">✓</span></td></tr><tr><td>C2-S10</td><td><span class="tag">C</span></td><td>TRB-4010</td><td><span class="ok">✓</span></td><td><span class="ok">✓</span></td><td><span class="ok">✓</span></td></tr><tr><td>C2-S11</td><td><span class="tag">B</span></td><td>TRB-4210</td><td><span class="ok">✓</span></td><td><span class="ok">✓</span></td><td><span class="ok">✓</span></td></tr><tr><td>C2-S12</td><td><span class="tag">F</span></td><td>MAL-5010/MAL-5011</td><td><span class="ok">✓</span></td><td><span class="ok">✓</span></td><td><span class="ok">✓</span></td></tr><tr><td>C2-S13</td><td><span class="tag">D</span></td><td>MAL-5110</td><td><span class="ok">✓</span></td><td><span class="ok">✓</span></td><td><span class="ok">✓</span></td></tr><tr><td>C2-S14</td><td><span class="tag">D</span></td><td>KLM-6010</td><td><span class="ok">✓</span></td><td><span class="ok">✓</span></td><td><span class="ok">✓</span></td></tr><tr><td>C2-S15</td><td><span class="tag">E</span></td><td>kein Treffer</td><td><span class="no">✗</span></td><td><span class="no">✗</span></td><td><span class="ok">✓</span></td></tr><tr><td>C2-S16</td><td><span class="tag">B</span></td><td>FLI-2350</td><td><span class="ok">✓</span></td><td><span class="ok">✓</span></td><td><span class="ok">✓</span></td></tr>
+</table>
+
+<h2>Ergebnis 3 — Welches Modell? (teuer ≠ besser)</h2>
+<div class="sub">Alle Modelle über 5 Läufe je Szenario. Genauigkeit identisch — der Unterschied ist nur der Preis.</div>
+<div class="card">
+ <table><tr><th>Modell</th><th>Preis (in/out $/1M)</th><th>Treffer gesamt</th><th>kein-Treffer</th><th>ungültig</th><th>Ø Latenz</th><th>Kosten/Lauf</th></tr>
+ <tr><td><b>google-gemma-4-26b</b></td><td class="muted">0,15/0,60 $</td><td class="ok">100%</td><td>100%</td><td>0</td><td>7897 ms</td><td>$0.0382</td></tr><tr><td><b>gemini-3-flash-preview</b></td><td class="muted">0,30/2,50 $</td><td class="ok">100%</td><td>100%</td><td>0</td><td>3609 ms</td><td>$0.0326</td></tr><tr><td><b>gemini-3.5-flash</b></td><td class="muted">1,50/9,00 $</td><td class="ok">100%</td><td>100%</td><td>0</td><td>3106 ms</td><td>$0.1543</td></tr><tr><td><b>claude-opus-4-8</b></td><td class="muted">5,00/25,00 $</td><td class="ok">100%</td><td>100%</td><td>0 <span class="muted">(9× API-Fehler)</span></td><td>2306 ms</td><td>$0.6256</td></tr>
+ </table>
+ <h3 style="margin-top:16px">Kosten je Lauf (gleiche Trefferquote!)</h3>
+ <div class="barrow"><span class="blab">google-gemma-4-26b</span><span class="btrack"><span class="bfill" style="width:6%;background:#4285f4"></span></span><span class="bval">$0.0382</span></div><div class="barrow"><span class="blab">gemini-3-flash-preview</span><span class="btrack"><span class="bfill" style="width:5%;background:#4285f4"></span></span><span class="bval">$0.0326</span></div><div class="barrow"><span class="blab">gemini-3.5-flash</span><span class="btrack"><span class="bfill" style="width:25%;background:#4285f4"></span></span><span class="bval">$0.1543</span></div><div class="barrow"><span class="blab">claude-opus-4-8</span><span class="btrack"><span class="bfill" style="width:100%;background:#d97757"></span></span><span class="bval">$0.6256</span></div>
+ <div class="sub" style="margin-top:8px">Das billigste Modell (gemma-4-26b) trifft genauso wie das teuerste (opus, ~16× teurer). Wie bei Call 1: <b>höherer Preis ⇏ besseres Ergebnis.</b></div>
+</div>
+
+<h2>Befund</h2>
+<div class="card lead">
+ <p><b>Call 2 lohnt sich — mit einem billigen Modell.</b> Die Auswahl ist mit jedem getesteten LLM perfekt und stabil; der Mehrwert gegenüber reiner Programmierung ist <b>Generalisierung ohne Regelpflege</b> und korrektes „passt nichts".</p>
+ <p><b>Die eigentliche Schwierigkeit ist das Retrieval, nicht das Modell.</b> Der Vorfilter sortiert 400 → 15 vor; die KI wählt aus guten Kandidaten. Künftiger Aufwand gehört deshalb in den Vorfilter (semantische Suche / Embedding, #543), nicht in ein teureres Auswahl-Modell.</p>
+</div>
+
+<h2>Grenzen (offen benannt)</h2>
+<div class="card lim">
+ <ul>
+  <li><b>Die Auswahl ist die leichte Hälfte</b> — der Vorfilter (Recall@15 = 100%) macht die harte Vorarbeit.</li>
+  <li><b>Sauberer synthetischer Katalog + von uns designte Fallen.</b> Ein echter DATANORM-Katalog (kryptische Namen, dünne Beschreibungen) fordert Retrieval <i>und</i> Auswahl stärker.</li>
+  <li><b>16 Szenarien</b> sind indikativ, keine Produktionsgarantie. Der <b>Embedding-Vergleich (#543)</b> gegen BM25 steht noch aus.</li>
+  <li>Die Programmier-Regeln sind handgebaut — hohe Trefferquote hier heißt nicht, dass sie auf fremden Katalogen hält (genau das Argument für den LLM).</li>
+ </ul>
+</div>
+
+<div class="sub" style="margin-top:30px">Reproduzierbar: Katalog <code>eval/data/catalog-call2.json</code> (Seed 20260601) · Datenset <code>docs/eval-datenset-call2.json</code> · Skripte <code>vorfilter-call2.mjs</code>, <code>auswahl-baseline-call2.mjs</code>, <code>call2-llm-eval.mjs</code>.</div>
+</main></body></html>
