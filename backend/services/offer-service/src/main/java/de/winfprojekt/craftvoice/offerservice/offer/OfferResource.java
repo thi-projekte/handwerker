@@ -122,4 +122,20 @@ public class OfferResource {
         OfferAcceptanceResponse response = offerService.acceptOrRejectOffer(token, request);
         return Response.ok(response).build();
     }
+
+    /**
+     * Endpunkt zur Annahme eines Angebots durch den Handwerker nach KI-Durchlauf.
+     * Dieser Endpunkt ist öffentlich zugänglich.
+     * @param id Angebots-ID des angenommenen Angebots
+     * @return HTTP-Response mit "204 No Content status code" im Happy Path oder alternativ eine Fehlermeldung
+     */
+    @POST
+    @Path("/offers/{id}/review/approve")
+    @Consumes(MediaType.WILDCARD)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response acceptAiResult(@PathParam("id") Long id) {
+        offerService.acceptAiResult(id);
+        return Response.noContent().build();
+    }
+
 }
