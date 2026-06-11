@@ -2,9 +2,9 @@ version: '3.8'
 
 services:
   # 1. Datenbank für den User-Service
-  user-db:
+  craftvoice-user-db:
     image: postgres:15
-    container_name: user-db
+    container_name: craftvoice-user-db
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
@@ -17,52 +17,49 @@ services:
     networks:
       - intern
 
-  # 2. Der User-Service (Baut sich in Portainer selbst!)
-  user-service:
-    build:
-      context: .
-      dockerfile: Dockerfile.build
-    container_name: user-service
+  # 2. Der User-Service (nutzt das fertige Image aus GHCR)
+  craftvoice-user-service:
+    image: ghcr.io/thi-projekte/handwerker/user-service:sprint4
+    container_name: craftvoice-user-service
     environment:
-      DB_HOST: user-db
+      DB_HOST: craftvoice-user-db
       DB_USER: postgres
       DB_PASSWORD: ${DB_PASSWORD:-postgres}
       DB_NAME: user-db
       KEYCLOAK_URL: https://id-craftvoice.winfprojekt.de
       KEYCLOAK_REALM: handwerker-realm
     depends_on:
-      user-db:
+      craftvoice-user-db:
         condition: service_healthy
     networks:
-      - nginx-reverse-proxy
+      - nginx-proxy-manager
       - intern
 
   # 3. Keycloak
-  keycloak:
+  craftvoice-keycloak:
     image: quay.io/keycloak/keycloak:26.2
-    container_name: keycloak
-    command: start
+    container_name: craftvoice-keycloak
+    command: start --proxy-headers xforwarded --hostname=id-craftvoice.winfprojekt.de
     environment:
       KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_URL: jdbc:postgresql://craftvoice-keycloak-db:5432/keycloak
       KC_DB_USERNAME: keycloak
       KC_DB_PASSWORD: ${KC_DB_PASSWORD}
       KC_HOSTNAME: id-craftvoice.winfprojekt.de
       KC_HTTP_ENABLED: "true"
-      KC_PROXY_HEADERS: xforwarded
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
     depends_on:
-      keycloak-db:
+      craftvoice-keycloak-db:
         condition: service_healthy
     networks:
-      - nginx-reverse-proxy
+      - nginx-proxy-manager
       - intern
 
   # 4. Datenbank für Keycloak
-  keycloak-db:
+  craftvoice-keycloak-db:
     image: postgres:16
-    container_name: keycloak-db
+    container_name: craftvoice-keycloak-db
     environment:
       POSTGRES_DB: keycloak
       POSTGRES_USER: keycloak
@@ -78,7 +75,7 @@ services:
       - intern
 
 networks:
-  nginx-reverse-proxy:
+  nginx-proxy-manager:
     external: true
   intern:
     driver: bridge
