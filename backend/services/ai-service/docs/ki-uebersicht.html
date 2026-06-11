@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KI im CraftVoice-Projekt — Übersicht</title>
+<style>
+  :root{
+    --ki:#15a394; --prog:#e8772e; --db:#2f6fb0;
+    --navy:#0e2235; --ink:#1f2a33; --muted:#5b6b78; --line:#e3e8ec; --bg:#f6f8fa;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;}
+  .page{max-width:900px;margin:0 auto;padding:32px 28px 64px;background:#fff;}
+  header{background:var(--navy);color:#fff;border-radius:14px;padding:24px 28px;margin-bottom:22px}
+  header h1{margin:0 0 6px;font-size:26px;letter-spacing:.2px}
+  header p{margin:0;color:#c4d2dd;font-size:14.5px}
+  h2{font-size:20px;margin:34px 0 12px;padding-bottom:7px;border-bottom:2px solid var(--line)}
+  h3{font-size:16px;margin:22px 0 8px;color:var(--navy)}
+  p{margin:10px 0}
+  small,.muted{color:var(--muted)}
+  code{background:#eef2f5;padding:1px 6px;border-radius:5px;font-size:13.5px;
+    font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+
+  /* Badges */
+  .b{display:inline-block;font-size:12px;font-weight:700;color:#fff;border-radius:20px;
+    padding:2px 9px;white-space:nowrap}
+  .b.ki{background:var(--ki)} .b.prog{background:var(--prog)} .b.db{background:var(--db)}
+  .b.none{background:#8895a0}
+
+  /* Kompakte Pipeline (Vogelperspektive) */
+  .pipe{display:flex;align-items:flex-start;justify-content:center;flex-wrap:wrap;gap:5px;margin:18px 0 8px}
+  .pcol{display:flex;flex-direction:column;align-items:center;gap:4px;flex:0 1 122px}
+  .svc{font-size:10.5px;color:var(--muted);font-weight:700;height:14px;line-height:14px;white-space:nowrap}
+  .pi{width:100%;min-height:60px;border:1px solid var(--line);border-radius:10px;padding:8px 7px;background:#fff;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .pi .t{font-weight:600;font-size:12.5px;line-height:1.2}
+  .pi .bs{margin-top:6px;display:flex;gap:3px;justify-content:center;flex-wrap:wrap}
+  .pi.ki{border-top:3px solid var(--ki)}
+  .pi.prog{border-top:3px solid var(--prog)}
+  .pi.both{border-top:3px solid var(--db)}
+  .pi.neutral{border-top:3px solid #b8c2cb}
+  .pi.start,.pi.end{background:var(--navy);color:#fff;font-weight:700;border:0}
+  .arr{color:#9aa7b1;font-size:17px;font-weight:700;margin-top:34px}
+  .legend{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;color:var(--muted);font-size:13px;margin:8px 0 0}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .dot{width:11px;height:11px;border-radius:50%;display:inline-block}
+
+  .callout{background:#f0f9f7;border:1px solid #bfe6df;border-left:5px solid var(--ki);
+    border-radius:10px;padding:14px 16px;margin:16px 0}
+
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:14.5px}
+  th,td{border:1px solid var(--line);padding:8px 11px;text-align:left;vertical-align:top}
+  th{background:#eef2f5}
+  td.c,th.c{text-align:center}
+  ul{margin:8px 0 8px 2px;padding-left:20px} li{margin:4px 0}
+  .no{color:#b23b3b;font-weight:700}.yes{color:#2e8b57;font-weight:700}
+
+  /* Kosten-Sektion */
+  .hero{display:flex;gap:16px;flex-wrap:wrap;margin:14px 0}
+  .heroBox{flex:1;min-width:240px;border-radius:14px;padding:20px 22px;color:#fff}
+  .heroBox.cost{background:linear-gradient(135deg,#15a394,#0d7d72)}
+  .heroBox.time{background:linear-gradient(135deg,#2f6fb0,#244e89)}
+  .heroBox .big{font-size:38px;font-weight:800;line-height:1}
+  .heroBox .lab{margin-top:8px;font-size:14px;opacity:.92}
+  .chips{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 2px}
+  .chip{border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:13.5px;background:#fff}
+  .chip b{display:block;font-size:15px}
+  .op{font-size:18px;color:var(--muted);font-weight:700}
+  .chip.total{background:#f0f9f7;border-color:#bfe6df}
+
+  /* Latenz-Aufschlüsselung */
+  .latbar{display:flex;height:34px;border-radius:9px;overflow:hidden;margin:12px 0;
+    font-size:13px;font-weight:700;color:#fff}
+  .latbar .seg{display:flex;align-items:center;justify-content:center;white-space:nowrap}
+  .latbar .c1{background:var(--ki)}
+  .latbar .c2{background:#7ccfc6;color:#0d4d47}
+
+  .rows{margin:14px 0}
+  .row{display:grid;grid-template-columns:78px 1fr 70px 64px;align-items:center;gap:10px;margin:7px 0}
+  .row .pos{font-weight:700}
+  .bar{height:14px;border-radius:7px;background:#e7edf1;overflow:hidden}
+  .bar>span{display:block;height:100%;background:linear-gradient(90deg,#15a394,#3bc4b6)}
+  .row .val{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+  .row .lat{text-align:right;color:var(--db);font-weight:600}
+  .rowhead{display:grid;grid-template-columns:78px 1fr 70px 64px;gap:10px;font-size:12.5px;color:var(--muted);margin-bottom:2px}
+  .rowhead .val,.rowhead .lat{text-align:right}
+
+  @media print{
+    body{background:#fff} .page{max-width:none;padding:0 6mm}
+    header{border-radius:0}
+    .pi,.callout,.heroBox,.row,.chip{break-inside:avoid}
+    h2{break-after:avoid}
+    a{color:inherit;text-decoration:none}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+<header>
+  <h1>KI im CraftVoice-Projekt — Übersicht</h1>
+  <p>Wann kommt die <b>KI</b>, wann reine <b>Programmierung</b>, wann die <b>Datenbank</b> zum Einsatz — plus Kosten &amp; Latenz pro Angebot.</p>
+</header>
+
+<h2>Sprach-Ablauf (Erstangebot) — Vogelperspektive</h2>
+<div class="pipe">
+  <div class="pcol"><div class="svc">Frontend</div><div class="pi start">SPRACHE</div></div>
+  <span class="arr">→</span>
+  <div class="pcol"><div class="svc">offer-service</div><div class="pi neutral"><div class="t">Speech-to-Text<br>(Deepgram)</div></div></div>
+  <span class="arr">→</span>
+  <div class="pcol"><div class="svc">ai-service</div><div class="pi ki"><div class="t">Call 1<br>Extraktion</div><div class="bs"><span class="b ki">🧠 KI</span></div></div></div>
+  <span class="arr">→</span>
+  <div class="pcol"><div class="svc">catalog-service</div><div class="pi both"><div class="t">Vorfilter<br>(Produktsuche)</div><div class="bs"><span class="b prog">⚙️</span><span class="b db">🗄️</span></div></div></div>
+  <span class="arr">→</span>
+  <div class="pcol"><div class="svc">ai-service</div><div class="pi ki"><div class="t">Call 2<br>Produktauswahl</div><div class="bs"><span class="b ki">🧠 KI</span></div></div></div>
+  <span class="arr">→</span>
+  <div class="pcol"><div class="svc">offer-service</div><div class="pi both"><div class="t">Preise &amp; Summen</div><div class="bs"><span class="b prog">⚙️</span><span class="b db">🗄️</span></div></div></div>
+  <span class="arr">→</span>
+  <div class="pcol"><div class="svc">offer-service</div><div class="pi end">ANGEBOT</div></div>
+</div>
+<div class="legend">
+  <span><i class="dot" style="background:var(--ki)"></i> 🧠 KI — versteht &amp; übersetzt Sprache</span>
+  <span><i class="dot" style="background:var(--prog)"></i> ⚙️ Programmierung — sucht &amp; rechnet</span>
+  <span><i class="dot" style="background:var(--db)"></i> 🗄️ Datenbank — speichert &amp; liefert (inkl. Preise)</span>
+</div>
+
+<h2>1. Was macht die KI im Projekt?</h2>
+<p>Die KI ist der <b>Übersetzer</b> von unstrukturierter Sprache in strukturierte Angebotsdaten.
+Sie hat genau <b>zwei Jobs</b>:</p>
+<ul>
+  <li><b>Call 1 – Extraktion:</b> aus dem gesprochenen Text strukturierte Positionen bauen.</li>
+  <li><b>Call 2 – Produktauswahl:</b> zu jeder Materialposition das passende Katalogprodukt wählen.</li>
+</ul>
+<p><b>Was die KI bewusst NICHT macht:</b></p>
+<ul>
+  <li><span class="no">✗</span> kein Speech-to-Text (macht Deepgram im offer-service)</li>
+  <li><span class="no">✗</span> keine Preise sehen oder bestimmen (Datenschutz-Constraint)</li>
+  <li><span class="no">✗</span> kein Rechnen (Summen, Stundensatz, Anfahrt → offer-service)</li>
+  <li><span class="no">✗</span> keine eigene Datenbank (der ai-service ist stateless)</li>
+</ul>
+<p class="muted">Modell: <code>gemini-3-flash-preview</code> für beide Calls (Ergebnis der Modell-Evaluation — günstig, schnell, treffsicher).</p>
+
+<h2>2. Call 1 — Extraktion (Sprache → Positionen) · <span class="b ki">🧠 KI</span></h2>
+<p><b>Eingang:</b> transkribierter Sprachschnipsel + Vorlage (Stammdaten/Leistungskatalog).
+<b>Ausgang:</b> strukturierte Positionen, <b>ohne Preise</b>.</p>
+<ul>
+  <li>Die Process Engine schickt Sprachschnipsel + Vorlage an den ai-service.</li>
+  <li>Die KI wandelt den Fließtext in <b>Leistungen</b> und <b>Materialien</b> um — je mit Bezeichnung, Beschreibung, Menge, Einheit.</li>
+  <li>Sie ergänzt fachlich zwingende Positionen desselben Gewerks (z. B. Dose/Leitung bei Elektro) und schreibt Rückfragen in die Korrekturvorschläge.</li>
+  <li><b>Mengen:</b> explizit Genanntes wird exakt übernommen; Unbekanntes → leer + Hinweis (kein Raten).</li>
+  <li><b>Arbeitsdauer:</b> nur wenn der Handwerker eine Dauer <b>ausspricht</b> („zwei Stunden") — die KI schätzt nicht selbst.</li>
+</ul>
+
+<h2>3. Call 2 — Produktauswahl (Position → Katalogprodukt)</h2>
+<p>Hier arbeiten <b>Programmierung, DB und KI zusammen</b> — in zwei Schritten pro Materialposition:</p>
+<h3>Schritt A — Vorfilter (Katalog-Suche) · <span class="b prog">⚙️</span> <span class="b db">🗄️ DB</span></h3>
+<ul>
+  <li>Eine <b>Volltextsuche</b> im Katalog liefert die <b>Top-15 Kandidaten</b>. Das ist <b>keine KI</b> — reine Such-Mechanik.</li>
+  <li>Die Kandidaten gehen <b>ohne Preise</b> weiter.</li>
+</ul>
+<h3>Schritt B — Auswahl · <span class="b ki">🧠 KI</span></h3>
+<ul>
+  <li>Die KI bekommt die 15 Kandidaten (neutral sortiert, ohne Preise) und wählt <b>genau einen</b> — oder gibt <code>KEIN_TREFFER</code> zurück, wenn nichts passt.</li>
+  <li>Ergebnis: die <code>katalogProduktId</code> wird an die Position gehängt.</li>
+</ul>
+<div class="callout">
+  <b>Wichtig:</b> Läuft <b>parallel</b> über alle Materialpositionen (bei 40–60 Positionen sonst zu langsam).
+  Der eigentliche Hebel ist die <b>Suche</b>, nicht das Modell — die KI macht nur die Bedeutungs-Feinauswahl
+  (z. B. „Marmoroptik" ≠ „Echtmarmor"). <b>Danach</b> holt der offer-service über die <code>katalogProduktId</code>
+  den Preis und rechnet — das ist keine KI mehr.
+</div>
+
+<h2>4. Korrektur über die UI — ohne KI · <span class="b prog">⚙️</span> <span class="b db">🗄️ DB</span></h2>
+<p>Wenn der Handwerker ein fertiges Angebot <b>manuell in der UI</b> ändert (Position bearbeiten, Menge ändern, Material tauschen, ergänzen):</p>
+<ul>
+  <li>Er tippt/wählt direkt — <b>die KI ist nicht beteiligt.</b></li>
+  <li>Tauscht/ergänzt er ein <b>Material</b>, hilft die <b>Katalog-Suche</b>, das Produkt zu finden — die Auswahl trifft <b>er selbst</b>.</li>
+  <li>Der offer-service <b>rechnet die Preise neu</b>.</li>
+</ul>
+<div class="callout">
+  <b>Warum keine KI?</b> Beim manuellen Editieren gibt es nichts „zu verstehen" — der Mensch entscheidet.
+  KI lohnt nur dort, wo unstrukturierte <b>Sprache</b> in Struktur übersetzt werden muss.
+</div>
+<p><b>Zwei Korrektur-Wege:</b></p>
+<ul>
+  <li><b>Korrektur per Sprache</b> (Korrekturschnipsel einsprechen) → <b>mit KI</b> über Call 1 (Korrektur-Modus) + ggf. Call 2.</li>
+  <li><b>Korrektur per UI</b> (manuelles Editieren) → <b>ohne KI.</b></li>
+</ul>
+
+<h2>5. Wann KI / wann Programmierung / wann DB?</h2>
+<table>
+  <tr><th>Aufgabe</th><th class="c">🧠 KI</th><th class="c">⚙️ Prog.</th><th class="c">🗄️ DB</th><th>Preise im Spiel?</th></tr>
+  <tr><td>Sprache → Text (Deepgram)</td><td class="c"></td><td class="c">✓</td><td class="c"></td><td>nein</td></tr>
+  <tr><td><b>Call 1:</b> Text → Positionen</td><td class="c">✓</td><td class="c"></td><td class="c"></td><td class="no">nein</td></tr>
+  <tr><td>Vorfilter: Katalog-Suche (Top-15)</td><td class="c"></td><td class="c">✓</td><td class="c">✓</td><td>nein (Preise rausgefiltert)</td></tr>
+  <tr><td><b>Call 2:</b> Produkt wählen</td><td class="c">✓</td><td class="c"></td><td class="c"></td><td class="no">nein</td></tr>
+  <tr><td>Preis-Lookup + Rechnen (Angebot)</td><td class="c"></td><td class="c">✓</td><td class="c">✓</td><td class="yes">ja (erst hier!)</td></tr>
+  <tr><td>Manuelle UI-Korrektur</td><td class="c"></td><td class="c">✓</td><td class="c">✓</td><td>ja</td></tr>
+</table>
+<p><b>In einem Satz:</b> Die <b>KI</b> kommt nur an den <b>2 Übersetzungs-Stellen</b> beim Diktieren zum Einsatz;
+<b>Suchen, Rechnen und alle manuellen Änderungen</b> sind <b>Programmierung + DB</b>.</p>
+
+<h2>6. Was kostet ein Angebot? (Kosten &amp; Latenz)</h2>
+<p>Beispiel: ein Angebot mit <b>10 Positionen</b>, einmal komplett durch die KI-Pipeline.</p>
+
+<div class="hero">
+  <div class="heroBox cost">
+    <div class="big">&lt; 1 Cent</div>
+    <div class="lab">10 Positionen · einmal komplett durch (~0,7 Cent)</div>
+  </div>
+  <div class="heroBox time">
+    <div class="big">~15 Sek.</div>
+    <div class="lab">Latenz für den ganzen Durchlauf</div>
+  </div>
+</div>
+
+<h3>Kosten-Aufschlüsselung</h3>
+<div class="chips">
+  <div class="chip"><span>🧠 Call 1 (1×)</span><b>~0,3 ct</b></div>
+  <span class="op">+</span>
+  <div class="chip"><span>🧠 Call 2 (10× parallel)</span><b>~0,4 ct</b></div>
+  <span class="op">=</span>
+  <div class="chip total"><span>Gesamt</span><b>~0,7 ct</b></div>
+</div>
+
+<h3>Woher kommen die ~15 Sekunden?</h3>
+<div class="latbar">
+  <span class="seg c1" style="width:80%">Call 1 · ~12 s</span>
+  <span class="seg c2" style="width:20%">Call 2 · ~3 s</span>
+</div>
+<div class="chips">
+  <div class="chip"><span>🧠 Call 1 — Extraktion (1 Aufruf)</span><b>~12 s</b></div>
+  <span class="op">+</span>
+  <div class="chip"><span>🧠 Call 2 — alle Positionen parallel</span><b>~3 s</b></div>
+  <span class="op">=</span>
+  <div class="chip total"><span>Gesamt</span><b>~15 s</b></div>
+</div>
+<p class="muted" style="font-size:13px">Call 1 ist der größere Block (ein Aufruf, mehr Text). Call 2 läuft <b>parallel über alle Positionen</b> → ~3 s, egal ob 5 oder 40 Positionen. Deshalb bleibt die Gesamtlatenz fast konstant.</p>
+
+<h3>Andere Angebotsgrößen</h3>
+<div class="rowhead">
+  <div>Positionen</div><div>Kosten (relativ)</div><div class="val">Kosten</div><div class="lat">Latenz</div>
+</div>
+<div class="rows">
+  <div class="row"><div class="pos">5</div><div class="bar"><span style="width:25%"></span></div><div class="val">~0,5 ct</div><div class="lat">~15 s</div></div>
+  <div class="row"><div class="pos">10</div><div class="bar"><span style="width:35%"></span></div><div class="val">~0,7 ct</div><div class="lat">~15 s</div></div>
+  <div class="row"><div class="pos">20</div><div class="bar"><span style="width:55%"></span></div><div class="val">~1,1 ct</div><div class="lat">~15 s</div></div>
+  <div class="row"><div class="pos">40</div><div class="bar"><span style="width:100%"></span></div><div class="val">~2,0 ct</div><div class="lat">~16 s</div></div>
+</div>
+
+<div class="callout">
+  <b>Das Muster:</b> Die <b>Kosten</b> wachsen mit den Positionen (je ein Call 2 pro Position) — bleiben aber
+  winzig. Die <b>Latenz bleibt fast gleich</b>, weil alle Call-2-Aufrufe <b>parallel</b> laufen.
+</div>
+<p class="muted" style="font-size:12.5px">Grobe Schätzwerte (Modell <code>gemini-3-flash-preview</code>, MegaLLM-Preise). Annahme: ein Such-/Auswahl-Durchgang pro Position. Speech-to-Text nicht eingerechnet.</p>
+
+</div>
+</body>
+</html>
