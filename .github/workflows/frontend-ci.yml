@@ -86,7 +86,7 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
 
             # latest nur bei echten Releases
-            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
 
       # Docker-Image bauen und pushen
       - name: Build and push Docker image
