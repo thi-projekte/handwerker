@@ -1,9 +1,10 @@
 package de.winfprojekt.craftvoice.offerservice.offer;
 
 import de.winfprojekt.craftvoice.offerservice.processengine.ProcessEngineClient;
+import de.winfprojekt.craftvoice.offerservice.routing.RoutingException;
 import jakarta.inject.Inject;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.CreateOfferRequest;
-import de.winfprojekt.craftvoice.offerservice.offer.dto.AiResultRequest;
+import de.winfprojekt.craftvoice.offerservice.offer.dto.OfferChangesRequest;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.StructuredOfferPositionDTO;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.OfferAcceptanceRequest;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.SetArbeitsstundenRequest;
@@ -13,7 +14,6 @@ import de.winfprojekt.craftvoice.offerservice.catalog.CatalogPriceResponse;
 import de.winfprojekt.craftvoice.offerservice.user.UserServiceClient;
 import de.winfprojekt.craftvoice.offerservice.user.AnfahrtskostenKonfiguration;
 import de.winfprojekt.craftvoice.offerservice.routing.OsrmClient;
-import de.winfprojekt.craftvoice.offerservice.routing.RoutingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.ws.rs.WebApplicationException;
@@ -110,41 +110,68 @@ public class OfferService {
     }
 
     /**
-     * Verarbeitet das KI-Ergebnis für ein Angebot:
-     * - Prüft, ob das Angebot existiert und sich im Status IN_BEARBEITUNG befindet.
-     * - Lädt für jede Position den Preis vom catalog-service (Stub).
-     * - Persistiert alle Positionen.
-     * - Setzt den Status des Angebots auf KI_FERTIG und legt einen OfferStatusHistory-Eintrag an.
+     * Initialisiert oder aktualisiert ein Angebot auf Basis eines KI-Ergebnisses oder den Änderungen des Handwerkers im Frontend:
+     * - Prüft, ob das Angebot existiert und sich in einem gültigen Status befindet
+     *   (IN_BEARBEITUNG oder KI_FERTIG).
+     * - Entfernt bei bestehenden KI_FERTIG-Angeboten die bisherigen Materialpositionen
+     *   und ersetzt sie durch die neuen KI-/Frontend-Positionen.
+     * - Lädt für jede Materialposition den Preis vom catalog-service (Stub).
+     * - Persistiert alle Angebotspositionen inklusive optionaler Anfahrtskosten.
+     * - Setzt beim ersten KI-Durchlauf den Status auf KI_FERTIG und legt einen
+     *   OfferStatusHistory-Eintrag an.
      *
      * <p>Die Process Engine wird hier NICHT mehr informiert. Das geschieht erst,
      * wenn der Handwerker seine Arbeitsstunden eingetragen und bestätigt hat
      * (via {@link #setArbeitsstunden(Long, SetArbeitsstundenRequest)}).
      *
      * @param id ID des Angebots
-     * @param request AI-Result-Daten
+     * @param request KI- oder Frontend-Result-Daten für die Angebotspositionen
      */
     @Transactional
-    public void processAiResult(Long id, AiResultRequest request) {
+    public void initializeOrUpdateOfferFromAiOrFrontend(Long id, OfferChangesRequest request) {
+
         Offer offer = Offer.findById(id);
         if (offer == null) {
             throw new WebApplicationException("Angebot mit ID " + id + " nicht gefunden", 404);
         }
 
-        if (!Offer.STATUS_IN_BEARBEITUNG.equals(offer.status)) {
-            throw new WebApplicationException("Angebot mit ID " + id + " befindet sich nicht im Status IN_BEARBEITUNG", 409);
+        if (!Offer.STATUS_IN_BEARBEITUNG.equals(offer.status)
+                && !Offer.STATUS_KI_FERTIG.equals(offer.status)) {
+            throw new WebApplicationException(
+                    "Angebot mit ID " + id + " befindet sich nicht im Status IN_BEARBEITUNG oder KI_FERTIG",
+                    409
+            );
         }
 
         int reihenfolge = 1;
+
+        // =========================
+        // 1. KOMPLETT RESET (WICHTIG)
+        // =========================
+        offer.positions.removeIf(p -> p.type == OfferPositionType.MATERIAL);
+
+        OfferPosition existingAnfahrt = offer.positions.stream()
+                .filter(p -> p.type == OfferPositionType.ANFAHRT)
+                .findFirst()
+                .orElse(null);
+
+        // =========================
+        // 2. MATERIAL NEU
+        // =========================
         for (StructuredOfferPositionDTO posDto : request.strukturierteAngebotspositionen) {
+
             BigDecimal preis = BigDecimal.ZERO;
+
             if (posDto.katalogProduktId != null) {
                 CatalogPriceResponse priceResponse = catalogServiceClient.getPreis(posDto.katalogProduktId);
+
                 if (priceResponse != null && priceResponse.preis != null) {
                     preis = priceResponse.preis;
                 }
             }
 
             OfferPosition position = new OfferPosition();
+            position.type = OfferPositionType.MATERIAL;
             position.offer = offer;
             position.hersteller = posDto.hersteller;
             position.bezeichnung = posDto.bezeichnung;
@@ -155,17 +182,17 @@ public class OfferService {
             position.preis = preis;
             position.reihenfolge = reihenfolge++;
 
-            // Map price back to DTO for serialization in sendAiResult
             posDto.preis = preis;
 
             offer.positions.add(position);
         }
 
-        // --- Anfahrtskosten-Position ---
+        // =========================
+        // 3. ANFAHRT IMMER NEU SETZEN (WICHTIG)
+        // =========================
         try {
             AnfahrtskostenKonfiguration konfig = userServiceClient.getAnfahrtskostenKonfiguration();
 
-            // Kundenadresse: vorerst Stub-Adresse (Abstimmungspunkt 1 — customer-service/user-service)
             String kundenadresse = ermittleKundenadresse(offer.customerId);
 
             BigDecimal anfahrtspreis;
@@ -173,14 +200,12 @@ public class OfferService {
             BigDecimal menge;
 
             if ("PAUSCHALE".equals(konfig.modell)) {
-                // Pauschale benötigt keine Distanz — Routing wird NICHT aufgerufen
                 anfahrtspreis = berechneAnfahrtskosten(konfig, null);
                 einheit = "pauschal";
                 menge = BigDecimal.ONE;
-                LOG.debugf("Anfahrtskosten-Position angelegt: Modell=PAUSCHALE, Preis=%s €", anfahrtspreis);
             } else {
-                // NUR_KM und PAUSCHALE_PLUS_KM benötigen die Distanz
                 BigDecimal distanzKm = osrmClient.getDistanzKm(konfig.adresse, kundenadresse);
+
                 anfahrtspreis = berechneAnfahrtskosten(konfig, distanzKm);
                 einheit = "km";
                 menge = distanzKm;
@@ -188,17 +213,22 @@ public class OfferService {
                         konfig.modell, distanzKm, anfahrtspreis);
             }
 
-            OfferPosition anfahrtsPosition = new OfferPosition();
-            anfahrtsPosition.offer = offer;
-            anfahrtsPosition.bezeichnung = "Anfahrtskosten";
-            anfahrtsPosition.einheit = einheit;
-            anfahrtsPosition.menge = menge;
-            anfahrtsPosition.preis = anfahrtspreis;
-            anfahrtsPosition.katalogProduktId = null;
-            anfahrtsPosition.reihenfolge = reihenfolge++;
+            OfferPosition anfahrtsPosition  = (existingAnfahrt != null)
+                    ? existingAnfahrt
+                    : new OfferPosition();
 
-            offer.positions.add(anfahrtsPosition);
+            anfahrtsPosition .type = OfferPositionType.ANFAHRT;
+            anfahrtsPosition .offer = offer;
+            anfahrtsPosition .bezeichnung = "Anfahrtskosten";
+            anfahrtsPosition .einheit = einheit;
+            anfahrtsPosition .menge = menge;
+            anfahrtsPosition .preis = anfahrtspreis;
+            anfahrtsPosition .katalogProduktId = null;
+            anfahrtsPosition .reihenfolge = reihenfolge;
 
+            if (existingAnfahrt == null) {
+                offer.positions.add(anfahrtsPosition );
+            }
         } catch (RoutingException e) {
             LOG.warnf("Anfahrtskosten konnten nicht berechnet werden, Position wird übersprungen: %s",
                     e.getMessage());
@@ -207,12 +237,16 @@ public class OfferService {
                     e.getMessage());
         }
 
-        offer.status = Offer.STATUS_KI_FERTIG;
-
-        OfferStatusHistory history = new OfferStatusHistory();
-        history.offer = offer;
-        history.status = Offer.STATUS_KI_FERTIG;
-        offer.statusHistory.add(history);
+        // =========================
+        // 4. STATUS
+        // =========================
+        if (!Offer.STATUS_KI_FERTIG.equals(offer.status)) {
+            offer.status = Offer.STATUS_KI_FERTIG;
+            OfferStatusHistory history = new OfferStatusHistory();
+            history.offer = offer;
+            history.status = Offer.STATUS_KI_FERTIG;
+            offer.statusHistory.add(history);
+        }
 
         offer.persist();
     }

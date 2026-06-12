@@ -1,11 +1,6 @@
 package de.winfprojekt.craftvoice.offerservice.offer;
 
-import de.winfprojekt.craftvoice.offerservice.offer.dto.AiResultRequest;
-import de.winfprojekt.craftvoice.offerservice.offer.dto.CreateOfferRequest;
-import de.winfprojekt.craftvoice.offerservice.offer.dto.OfferResponse;
-import de.winfprojekt.craftvoice.offerservice.offer.dto.OfferAcceptanceRequest;
-import de.winfprojekt.craftvoice.offerservice.offer.dto.SetArbeitsstundenRequest;
-import de.winfprojekt.craftvoice.offerservice.offer.dto.OfferAcceptanceResponse;
+import de.winfprojekt.craftvoice.offerservice.offer.dto.*;
 import jakarta.annotation.security.PermitAll;
 
 import jakarta.inject.Inject;
@@ -58,9 +53,25 @@ public class OfferResource {
      */
     @POST
     @Path("/angebote/{id}/ki-ergebnis")
-    public Response processAiResult(@PathParam("id") Long id, @Valid AiResultRequest request) {
+    public Response processAiResult(@PathParam("id") Long id, @Valid OfferChangesRequest request) {
 
-        offerService.processAiResult(id, request);
+        offerService.initializeOrUpdateOfferFromAiOrFrontend(id, request);
+
+        return Response.status(200).build();
+    }
+
+    /**
+     * Verarbeitet die Änderungen des Handwerkers im Frontend für ein bestimmtes Angebot.
+     *
+     * @param id ID des Angebots
+     * @param request Anfrageobjekt mit dem KI-Ergebnis
+     * @return HTTP-Response mit Statuscode 200 bei Erfolg
+     */
+    @POST
+    @Path("/angebote/{id}/positionen")
+    public Response processOfferChanges(@PathParam("id") Long id, @Valid OfferChangesRequest request) {
+
+        offerService.initializeOrUpdateOfferFromAiOrFrontend(id, request);
 
         return Response.status(200).build();
     }
