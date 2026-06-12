@@ -33,6 +33,25 @@ export const UnternehmenPage = () => {
       : "allgemein";
   });
 
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const handleTabChange = (tab: Tab) => {
+    setActiveTab(tab);
+    setIsMobileMenuOpen(false);
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
+
+  const getActiveTabLabel = () => {
+    if (activeTab === "allgemein") return "Allgemein";
+    if (activeTab === "kunde") return "Kunden";
+    if (activeTab === "stundensatz") return "Stundensatz";
+    return "Preisliste";
+  };
+
   const [logo, setLogo] = useState<string | null>(null);
 
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -237,49 +256,80 @@ export const UnternehmenPage = () => {
         <h1>Unternehmen & Verwaltung</h1>
       </header>
 
-      <section className="card company-tab-card">
+      <section className="card mobile-section-menu company-mobile-menu">
         <button
-          className={`company-tab ${activeTab === "allgemein"
-            ? "active"
-            : ""
-            }`}
-          onClick={() =>
-            setActiveTab("allgemein")
-          }
+          className="mobile-section-menu-button"
+          type="button"
+          onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+        >
+          <span>☰ {getActiveTabLabel()}</span>
+          <span>{isMobileMenuOpen ? "▲" : "▼"}</span>
+        </button>
+
+        {isMobileMenuOpen && (
+          <div className="mobile-section-menu-list">
+            <button
+              className={activeTab === "allgemein" ? "active" : ""}
+              type="button"
+              onClick={() => handleTabChange("allgemein")}
+            >
+              Allgemein
+            </button>
+
+            <button
+              className={activeTab === "kunde" ? "active" : ""}
+              type="button"
+              onClick={() => handleTabChange("kunde")}
+            >
+              Kunden
+            </button>
+
+            <button
+              className={activeTab === "stundensatz" ? "active" : ""}
+              type="button"
+              onClick={() => handleTabChange("stundensatz")}
+            >
+              Stundensatz
+            </button>
+
+            <button
+              className={activeTab === "preisliste" ? "active" : ""}
+              type="button"
+              onClick={() => handleTabChange("preisliste")}
+            >
+              Preisliste
+            </button>
+          </div>
+        )}
+      </section>
+
+      <section className="card company-tab-card desktop-section-tabs">
+        <button
+          className={`company-tab ${activeTab === "allgemein" ? "active" : ""}`}
+          onClick={() => handleTabChange("allgemein")}
         >
           Allgemein
         </button>
 
         <button
-          className={`company-tab ${activeTab === "kunde"
-            ? "active"
-            : ""
-            }`}
-          onClick={() => setActiveTab("kunde")}
+          className={`company-tab ${activeTab === "kunde" ? "active" : ""}`}
+          onClick={() => handleTabChange("kunde")}
         >
           Kunde
         </button>
 
         <button
-          className={`company-tab ${activeTab === "stundensatz"
-            ? "active"
-            : ""
-            }`}
-          onClick={() =>
-            setActiveTab("stundensatz")
-          }
+          className={`company-tab ${
+            activeTab === "stundensatz" ? "active" : ""
+          }`}
+          onClick={() => handleTabChange("stundensatz")}
         >
           Stundensatz
         </button>
 
         <button
-          className={`company-tab ${activeTab === "preisliste"
-            ? "active"
-            : ""
-            }`}
-          onClick={() =>
-            setActiveTab("preisliste")
-          }
+          className={`company-tab ${activeTab === "preisliste" ? "active" : ""}`}
+          onClick={() => handleTabChange("preisliste")}
         >
           Preisliste
         </button>
