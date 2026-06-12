@@ -31,6 +31,7 @@ export const ProfilPage = () => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [activeTab, setActiveTab] = useState<Tab>("profil");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const [isLightMode, setIsLightMode] = useState(() => {
     const savedTheme =
@@ -62,6 +63,22 @@ export const ProfilPage = () => {
     localStorage.setItem("theme", theme);
     setCookieValue(THEME_COOKIE_NAME, theme);
   }, [isLightMode]);
+
+  const handleTabChange = (tab: Tab) => {
+    setActiveTab(tab);
+    setIsMobileMenuOpen(false);
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
+
+  const getActiveTabLabel = () => {
+    if (activeTab === "profil") return "Profil";
+    if (activeTab === "darstellung") return "Darstellung";
+    return "Benachrichtigungen";
+  };
 
   const handleInputChange = (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -119,10 +136,49 @@ export const ProfilPage = () => {
         <h1>Profil & Einstellungen</h1>
       </header>
 
-      <section className="card profile-tab-card">
+      <section className="card mobile-section-menu profile-mobile-menu">
+        <button
+          className="mobile-section-menu-button"
+          type="button"
+          onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+        >
+          <span>☰ {getActiveTabLabel()}</span>
+          <span>{isMobileMenuOpen ? "▲" : "▼"}</span>
+        </button>
+
+        {isMobileMenuOpen && (
+          <div className="mobile-section-menu-list">
+            <button
+              className={activeTab === "profil" ? "active" : ""}
+              type="button"
+              onClick={() => handleTabChange("profil")}
+            >
+              Profil
+            </button>
+
+            <button
+              className={activeTab === "darstellung" ? "active" : ""}
+              type="button"
+              onClick={() => handleTabChange("darstellung")}
+            >
+              Darstellung
+            </button>
+
+            <button
+              className={activeTab === "benachrichtigungen" ? "active" : ""}
+              type="button"
+              onClick={() => handleTabChange("benachrichtigungen")}
+            >
+              Benachrichtigungen
+            </button>
+          </div>
+        )}
+      </section>
+
+      <section className="card profile-tab-card desktop-section-tabs">
         <button
           className={`profile-tab ${activeTab === "profil" ? "active" : ""}`}
-          onClick={() => setActiveTab("profil")}
+          onClick={() => handleTabChange("profil")}
         >
           Profil
         </button>
@@ -131,7 +187,7 @@ export const ProfilPage = () => {
           className={`profile-tab ${
             activeTab === "darstellung" ? "active" : ""
           }`}
-          onClick={() => setActiveTab("darstellung")}
+          onClick={() => handleTabChange("darstellung")}
         >
           Darstellung
         </button>
@@ -140,7 +196,7 @@ export const ProfilPage = () => {
           className={`profile-tab ${
             activeTab === "benachrichtigungen" ? "active" : ""
           }`}
-          onClick={() => setActiveTab("benachrichtigungen")}
+          onClick={() => handleTabChange("benachrichtigungen")}
         >
           Benachrichtigungen
         </button>
