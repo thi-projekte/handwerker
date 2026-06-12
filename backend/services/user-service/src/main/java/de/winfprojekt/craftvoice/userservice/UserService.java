@@ -148,4 +148,24 @@ public class UserService {
         
         AuditLogEntity.log(userId, "ACCOUNT_DELETED", "User account deleted (Synced with Keycloak)");
     }
+
+    @Transactional
+    public UserEntity createCustomer(UserEntity customerData) {
+        if (UserEntity.findByEmail(customerData.email) != null) {
+            throw new BadRequestException("User with this email already exists");
+        }
+        
+        customerData.status = UserStatus.ACTIVE;
+        customerData.roles.add(UserRole.CUSTOMER);
+        customerData.persist();
+        
+        AuditLogEntity.log(customerData.id, "CUSTOMER_CREATED", "Customer profile created by craftsman");
+        return customerData;
+    }
+
+    public List<UserEntity> listCustomers() {
+        // Simple implementation: return all users with CUSTOMER role
+        // In a real multi-tenant app, this would be filtered by company
+        return UserEntity.list("from UserEntity u join u.roles r where r = ?1", UserRole.CUSTOMER);
+    }
 }

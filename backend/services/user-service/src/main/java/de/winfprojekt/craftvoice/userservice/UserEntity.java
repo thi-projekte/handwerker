@@ -64,5 +64,5 @@ enum UserStatus {
 }
 
 enum UserRole {
-    OWNER, EMPLOYEE, ACCOUNTANT
+    OWNER, EMPLOYEE, ACCOUNTANT, CUSTOMER
 }

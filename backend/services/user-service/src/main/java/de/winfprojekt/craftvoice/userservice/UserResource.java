@@ -74,6 +74,21 @@ public class UserResource {
         return Response.ok("Account deleted in Keycloak and anonymized locally").build();
     }
 
+    @POST
+    @Path("/customers")
+    @RolesAllowed({"OWNER", "EMPLOYEE"})
+    public Response createCustomer(UserEntity customer) {
+        UserEntity created = userService.createCustomer(customer);
+        return Response.status(Response.Status.CREATED).entity(created).build();
+    }
+
+    @GET
+    @Path("/customers")
+    @RolesAllowed({"OWNER", "EMPLOYEE"})
+    public List<UserEntity> listCustomers() {
+        return userService.listCustomers();
+    }
+
     private Long getUserId() {
         UserEntity user = UserEntity.findByKeycloakId(jwt.getSubject());
         if (user == null) throw new NotFoundException("User not synced");
