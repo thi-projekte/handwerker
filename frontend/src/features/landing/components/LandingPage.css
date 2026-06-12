@@ -55,9 +55,8 @@
     height: calc(100% + 80px);
     border-radius: 20%;
     border: 1px solid transparent;
-    border-top-color: rgba(255, 255, 255, 0.35);
-    border-right-color: rgba(255, 255, 255, 0.16);
-    box-shadow: 0 0 30px rgba(255, 255, 255, 0.08);
+    border-top-color: var(--color-text-secondary);
+    box-shadow: 0 0 30px var(--color-divider);
     animation: orbit 12s linear infinite;
     transform-origin: center center;
     --orbit-scale: 1;
@@ -157,7 +156,7 @@
 }
 
 .landing-copy p {
-    color: rgba(255, 255, 255, 0.76);
+    color: var(--color-text-secondary);
     max-width: 640px;
     line-height: 1.7;
     font-size: 1rem;
@@ -211,7 +210,7 @@
 }
 
 .landing-info-card p {
-    color: rgba(255, 255, 255, 0.72);
+    color: var(--color-text-secondary);
     line-height: 1.7;
 }
 
@@ -227,7 +226,7 @@
 }
 
 .landing-pricing-header p {
-    color: rgba(255, 255, 255, 0.72);
+    color: var(--color-text-secondary);
     margin-top: 10px;
     max-width: 600px;
 }
@@ -260,17 +259,17 @@
 
 .pricing-title {
     font-weight: 700;
-    color: #fff;
+    color: var(--color-text-primary);
 }
 
 .pricing-card strong {
     display: block;
     font-size: 2rem;
-    color: white;
+    color: var(--color-text-primary);
 }
 
 .pricing-subtitle {
-    color: rgba(255, 255, 255, 0.72);
+    color: var(--color-text-secondary);
 }
 
 @media (max-width: 900px) {
@@ -332,4 +331,85 @@
 
 .landing-brand-voice {
     color: var(--color-accent);
+}
+
+/* Footer styles */
+.sticky-footer {
+    border-top: 1px solid var(--color-divider);
+}
+
+/* collapsed state (default) */
+.footer-inner {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr;
+    align-items: center;
+
+    padding: 22px 0px;
+    gap: 30px;
+}
+
+/* CENTER LINKS */
+.footer-center {
+    display: flex;
+    gap: 28px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.footer-center a {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    position: relative;
+    transition: 0.2s ease;
+}
+
+.footer-center a:hover {
+    color: var(--color-accent);
+}
+
+.footer-copy {
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+    opacity: 0.8;
+}
+
+/* RIGHT SOCIALS */
+.footer-socials {
+    display: flex;
+    justify-content: flex-end;
+    gap: 16px;
+}
+
+/* ICON BUTTONS */
+.footer-socials svg {
+    width: 18px;
+    height: 18px;
+    fill: var(--color-text-secondary);
+    transition: 0.2s ease;
+    cursor: pointer;
+}
+
+.footer-socials svg:hover {
+    fill: var(--color-accent);
+    transform: translateY(-2px);
+}
+
+/* MOBILE STACK */
+@media (max-width: 768px) {
+    .footer-inner {
+        grid-template-columns: 1fr;
+        text-align: center;
+        gap: 10px;
+    }
+
+    .footer-copy {
+        order: 3;
+    }
+
+    .footer-socials {
+        justify-content: center;
+    }
 }

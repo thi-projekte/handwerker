@@ -53,7 +53,7 @@ public class DashboardService {
                 "status IN ('ANGENOMMEN', 'ABGELEHNT')");
 
         stats.nichtFertiggestellt = Offer.count(
-                "status IN ('ERFASST', 'IN_BEARBEITUNG', 'KI_FERTIG')");
+                "status IN ('ERFASST', 'IN_BEARBEITUNG', 'KI_FERTIG', 'KI_BEARBEITUNG_ABGESCHLOSSEN')");
 
         // ── Rechnungs-Kacheln (vorerst 0 — kein Rechnungs-Service) ──────────
 

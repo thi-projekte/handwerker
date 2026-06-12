@@ -22,6 +22,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.List;
 import org.jboss.logging.Logger;
@@ -407,5 +408,32 @@ public class OfferService {
         offer.persist();
 
         return new OfferAcceptanceResponse(entscheidung);
+    }
+
+    /**
+     * Methode, die den Status eines angenommenen Angebots durch den Handwerker nach KI-Durchlauf entsprechend ändert und abspeichert
+     * @param id Angebots-ID des angenommenen Angebots
+     */
+    @Transactional
+    public void acceptAiResult(Long id) {
+
+        Offer offer = Offer.findById(id);
+
+        if (offer == null) {
+            throw new WebApplicationException("not found", 404);
+        }
+
+        if (!Offer.STATUS_KI_FERTIG.equals(offer.status)) {
+            throw new WebApplicationException("wrong status", 409);
+        }
+
+        offer.status = Offer.STATUS_KI_BEARBEITUNG_ABGESCHLOSSEN;
+
+        OfferStatusHistory history = new OfferStatusHistory();
+        history.offer = offer;
+        history.status = Offer.STATUS_KI_BEARBEITUNG_ABGESCHLOSSEN;
+        history.zeitpunkt = LocalDateTime.now();
+
+        offer.statusHistory.add(history);
     }
 }
