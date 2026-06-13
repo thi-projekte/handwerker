@@ -18,4 +18,8 @@ public class MaterialRepository implements PanacheRepositoryBase<Material, UUID>
         return find("ownerId = ?1 and articleNumber = ?2", ownerId, articleNumber)
                 .firstResultOptional();
     }
+
+    public long countByOwnerIdIncludingInactive(String ownerId) {
+        return count("ownerId = ?1", ownerId);
+    }
 }

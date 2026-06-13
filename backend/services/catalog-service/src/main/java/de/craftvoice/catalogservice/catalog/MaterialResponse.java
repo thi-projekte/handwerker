@@ -11,18 +11,13 @@ public class MaterialResponse {
     public String articleNumber;
     public String name;
     public String description;
+    public String manufacturer;
 
-    public String supplierNumber;
-    public String supplierName;
-
-    public String categoryCode;
-    public String categoryName;
+    public String category;
 
     public String unit;
 
-    public BigDecimal priceNet;
-    public BigDecimal priceGross;
-    public BigDecimal vatRate;
+    public BigDecimal price;
 
     public String currency;
 
@@ -35,19 +30,14 @@ public class MaterialResponse {
         response.id = material.id;
         response.articleNumber = material.articleNumber;
         response.name = material.name;
+        response.manufacturer = material.manufacturer;
         response.description = material.description;
 
-        response.supplierNumber = material.supplierNumber;
-        response.supplierName = material.supplierName;
-
-        response.categoryCode = material.categoryCode;
-        response.categoryName = material.categoryName;
+        response.category = material.category;
 
         response.unit = material.unit;
 
-        response.priceNet = material.priceNet;
-        response.priceGross = material.priceGross;
-        response.vatRate = material.vatRate;
+        response.price = material.price;
 
         response.currency = material.currency;
 
