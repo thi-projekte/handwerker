@@ -14,5 +14,5 @@ public interface CatalogServiceClient {
      * @param katalogProduktId ID des Produkts im Katalog
      * @return Preisantwort
      */
-    CatalogPriceResponse getPreis(Long katalogProduktId);
+    CatalogPriceResponse getPreis(String katalogProduktId);
 }

@@ -196,7 +196,7 @@ class OfferResourceTest {
         // Stub des Catalog-Clients
         CatalogPriceResponse priceResponse = new CatalogPriceResponse();
         priceResponse.preis = new BigDecimal("49.99");
-        when(catalogServiceClient.getPreis(42L)).thenReturn(priceResponse);
+        when(catalogServiceClient.getPreis("42")).thenReturn(priceResponse);
 
         // Stub der Process Engine
         Mockito.doNothing().when(processEngineClient).sendAiResult(any(), any());
@@ -241,7 +241,7 @@ class OfferResourceTest {
             assertEquals("Komplette Sanierung", materialPosition.beschreibung);
             assertEquals(new BigDecimal("2").setScale(0), materialPosition.menge.setScale(0));
             assertEquals("Pauschal", materialPosition.einheit);
-            assertEquals(42L, materialPosition.katalogProduktId);
+            assertEquals("42", materialPosition.katalogProduktId);
             assertEquals(new BigDecimal("49.99"), materialPosition.preis);
 
             // Status-Historie prüfen
