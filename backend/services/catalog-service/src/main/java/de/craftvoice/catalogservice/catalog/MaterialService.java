@@ -116,6 +116,14 @@ public class MaterialService {
         if (dto.name == null || dto.name.isBlank()) {
             throw new BadRequestException("name is required");
         }
+
+        if (dto.unit == null || dto.unit.isBlank()) {
+            throw new BadRequestException("unit is required");
+        }
+
+        if (dto.price == null || dto.price.signum() < 0) {
+            throw new BadRequestException("price must be >= 0");
+        }
     }
 
     private String generateNextArticleNumber(String ownerId) {
