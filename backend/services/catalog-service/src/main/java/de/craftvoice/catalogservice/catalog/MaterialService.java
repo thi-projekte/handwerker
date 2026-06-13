@@ -106,9 +106,34 @@ public class MaterialService {
         material.unit = safe(dto.unit);
 
         material.price = dto.price;
-        material.currency = safe(dto.currency);
+        material.currency =
+                dto.currency == null || dto.currency.isBlank()
+                        ? "EUR"
+                        : dto.currency;
 
         material.active = true;
+    }
+
+    public MaterialSearchResultResponse search(String query, Integer limit, String ownerId) {
+
+        if (query == null || query.isBlank()) {
+            return new MaterialSearchResultResponse(List.of());
+        }
+
+        int safeLimit = limit == null ? 15 : limit;
+
+        if (safeLimit < 1) {
+            safeLimit = 15;
+        }
+
+        if (safeLimit > 50) {
+            safeLimit = 50;
+        }
+
+        List<MaterialSearchResponse> candidates =
+                repository.search(ownerId, query, safeLimit);
+
+        return new MaterialSearchResultResponse(candidates);
     }
 
     private void validate(DatanormMaterialDto dto) {
