@@ -139,6 +139,10 @@ public class OfferService {
             throw new WebApplicationException("Angebot mit ID " + id + " befindet sich nicht im Status IN_BEARBEITUNG oder KI_FERTIG", 409);
         }
 
+        if (Offer.STATUS_KI_FERTIG.equals(offer.status)) {
+            offer.status = Offer.STATUS_IN_BEARBEITUNG;
+        }
+
         int reihenfolge = 1;
         // =========================
         // 1. KOMPLETT RESET (WICHTIG)
@@ -236,14 +240,13 @@ public class OfferService {
         // =========================
         // 4. STATUS
         // =========================
-        if (!Offer.STATUS_KI_FERTIG.equals(offer.status)) {
-            offer.status = Offer.STATUS_KI_FERTIG;
+        offer.status = Offer.STATUS_KI_FERTIG;
 
-            OfferStatusHistory history = new OfferStatusHistory();
-            history.offer = offer;
-            history.status = Offer.STATUS_KI_FERTIG;
-            offer.statusHistory.add(history);
-        }
+        OfferStatusHistory history = new OfferStatusHistory();
+        history.offer = offer;
+        history.status = Offer.STATUS_KI_FERTIG;
+        offer.statusHistory.add(history);
+
         offer.persist();
     }
 
