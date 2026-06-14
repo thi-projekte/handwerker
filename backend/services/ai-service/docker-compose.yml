@@ -1,0 +1,54 @@
+version: '3.8'
+
+# ---------------------------------------------------------------------------
+# Standalone-Stack fuer den ai-service (Portainer / Repository-Deploy).
+#
+# - Nutzt das von der Backend-CI gebaute GHCR-Image (Tag = Branchname, z.B. sprint4).
+# - Der ai-service ist STATELESS (keine eigene DB).
+# - Er wird von der Process Engine per HTTP-Connector aufgerufen (POST /ai/process)
+#   und korreliert das Ergebnis (ergebnisKI-Message) per businessKey zurueck.
+# - Der Reverse-Proxy (Nginx Proxy Manager) routet eine Domain auf  ai-service:8081
+#   ueber das externe Netz "nginx-proxy-manager" -> daher KEIN ports:-Mapping noetig.
+#
+# Alle Werte sind ueber Portainer-Stack-Variablen ueberschreibbar. ZWINGEND zu setzen:
+#   MEGALLM_API_KEY   (geheim, niemals committen)
+# Pruefen/anpassen je nach Topologie:
+#   CAMUNDA_ENGINE_URL  -> denselben Wert wie der offer-service-Stack (dort PE_URL) nehmen
+# ---------------------------------------------------------------------------
+
+services:
+  ai-service:
+    image: ghcr.io/thi-projekte/handwerker/ai-service:${IMAGE_TAG:-sprint4}
+    container_name: ai-service
+    restart: unless-stopped
+    environment:
+      # Server-Port im Container. Der Reverse-Proxy zeigt auf ai-service:8081.
+      HTTP_PORT: "8081"
+
+      # ---- MegaLLM (LLM-Provider) ----
+      # API-Key ZWINGEND als Portainer-Stack-Variable setzen (kein Default => Pflicht).
+      MEGALLM_API_KEY: ${MEGALLM_API_KEY}
+      MEGALLM_API_URL: ${MEGALLM_API_URL:-https://ai.megallm.io/v1}
+      MEGALLM_MODEL: ${MEGALLM_MODEL:-gemini-3-flash-preview}
+
+      # ---- Process Engine (Camunda / CIB seven) ----
+      # Muss auf /engine-rest enden. Denselben Wert wie offer-service (PE_URL) verwenden.
+      CAMUNDA_ENGINE_URL: ${CAMUNDA_ENGINE_URL:-http://host.docker.internal:8081/engine-rest}
+
+      # ---- Catalog-Suche (LLM-Call 2) ----
+      # Mock=true => kein catalog-service noetig (Default fuer den ersten Deploy).
+      # Auf false setzen, sobald der echte catalog-service erreichbar ist.
+      CATALOG_MOCK_ENABLED: ${CATALOG_MOCK_ENABLED:-true}
+      CATALOG_SERVICE_URL: ${CATALOG_SERVICE_URL:-http://catalog-service:8080}
+
+    extra_hosts:
+      # Erlaubt host.docker.internal auch auf Linux-Hosts (Portainer-Server).
+      - "host.docker.internal:host-gateway"
+
+    networks:
+      - nginx-proxy-manager
+
+networks:
+  # Externes Netz des Nginx Proxy Managers - der Reverse-Proxy erreicht ai-service hierueber.
+  nginx-proxy-manager:
+    external: true
