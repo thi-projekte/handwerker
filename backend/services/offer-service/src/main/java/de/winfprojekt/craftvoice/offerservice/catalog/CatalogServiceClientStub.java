@@ -14,7 +14,7 @@ import java.math.BigDecimal;
 public class CatalogServiceClientStub implements CatalogServiceClient {
 
     @Override
-    public CatalogPriceResponse getPreis(Long katalogProduktId) {
+    public CatalogPriceResponse getPreis(String katalogProduktId) {
         CatalogPriceResponse response = new CatalogPriceResponse();
         response.preis = BigDecimal.ZERO;
         return response;

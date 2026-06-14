@@ -26,7 +26,7 @@ public class OfferPosition extends BaseEntity {
     public String beschreibung;
     public BigDecimal menge;
     public String einheit;
-    public Long katalogProduktId;   // Referenz auf catalog-service, keine FK
+    public String katalogProduktId;   // Referenz auf catalog-service, keine FK
     public BigDecimal preis;
     public Integer reihenfolge;
 }
