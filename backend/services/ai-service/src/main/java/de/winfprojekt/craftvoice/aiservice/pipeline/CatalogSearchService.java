@@ -133,7 +133,7 @@ public class CatalogSearchService {
             List<CatalogCandidate> list = new ArrayList<>();
             for (JsonNode m : materials) {
                 list.add(new CatalogCandidate(
-                        m.path("id").isNull() ? null : m.path("id").asLong(),
+                        m.path("id").isNull() ? null : m.path("id").asText(),
                         text(m, "articleNumber"),
                         text(m, "name"),
                         text(m, "description"),

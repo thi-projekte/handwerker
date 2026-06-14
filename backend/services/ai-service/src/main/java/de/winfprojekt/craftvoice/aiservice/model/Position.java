@@ -24,11 +24,15 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
  * landet hier und dient dem offer-service als Verknuepfung (Preis-Lookup). Bei Leistungs-
  * positionen sowie bei Eingaben (Vorlage/Korrektur) bleibt das Feld {@code null}.
  *
+ * <p><b>Typ {@code String}:</b> Der catalog-service vergibt Katalog-IDs als UUID (PR #701).
+ * Wir reichen sie als undurchsichtigen String durch — der offer-service nutzt sie unveraendert
+ * fuer den Preis-Lookup.
+ *
  * @param bezeichnung     Kurzname der Position (z.B. "Bodenfliesen Feinsteinzeug 60x60")
  * @param beschreibung    Laengere Beschreibung der Leistung/des Materials
  * @param menge           numerische Menge (z.B. 15 fuer "15 m²")
  * @param einheit         Einheit der Menge (z.B. "m²", "Stk.", "h")
- * @param katalogProduktId Katalog-ID des in Call 2 gewaehlten Produkts (sonst {@code null})
+ * @param katalogProduktId Katalog-ID (UUID-String) des in Call 2 gewaehlten Produkts (sonst {@code null})
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record Position(
@@ -36,7 +40,7 @@ public record Position(
         String beschreibung,
         Double menge,
         String einheit,
-        Long katalogProduktId
+        String katalogProduktId
 ) {
 
     /**
@@ -48,7 +52,7 @@ public record Position(
     }
 
     /** Liefert eine Kopie dieser Position mit gesetzter Katalog-ID (Call 2). */
-    public Position withKatalogProduktId(Long katalogProduktId) {
+    public Position withKatalogProduktId(String katalogProduktId) {
         return new Position(bezeichnung, beschreibung, menge, einheit, katalogProduktId);
     }
 }
