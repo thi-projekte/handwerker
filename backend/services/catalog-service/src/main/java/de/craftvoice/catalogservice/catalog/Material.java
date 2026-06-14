@@ -19,21 +19,16 @@ public class Material extends PanacheEntityBase {
 
     public String articleNumber = "";
     public String name = "";
+    public String manufacturer = "";
 
     @Column(length = 5000)
     public String description = "";
 
-    public String supplierNumber = "";
-    public String supplierName = "";
-
-    public String categoryCode = "";
-    public String categoryName = "";
+    public String category = "";
 
     public String unit = "";
 
-    public BigDecimal priceNet = BigDecimal.ZERO;
-    public BigDecimal priceGross = BigDecimal.ZERO;
-    public BigDecimal vatRate = BigDecimal.ZERO;
+    public BigDecimal price = BigDecimal.ZERO;
 
     public String currency = "EUR";
 
