@@ -458,3 +458,68 @@ select.input-field option {
   white-space: nowrap;
 }
 
+
+/* Mobile Sticky Menü für Unternehmen */
+.mobile-section-menu {
+  display: none;
+}
+
+@media (max-width: 600px) {
+  .desktop-section-tabs {
+    display: none;
+  }
+
+  .mobile-section-menu {
+    display: block;
+    position: sticky;
+    top: 10px;
+    z-index: 20;
+    padding: 10px;
+    background: rgba(26, 26, 28, 0.94);
+    backdrop-filter: blur(14px);
+  }
+
+  [data-theme="light"] .mobile-section-menu {
+    background: rgba(255, 255, 255, 0.94);
+  }
+
+  .mobile-section-menu-button {
+    width: 100%;
+    padding: 14px;
+    border-radius: 16px;
+    border: 1px solid var(--color-divider);
+    background: var(--color-surface);
+    color: var(--color-text-primary);
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .mobile-section-menu-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .mobile-section-menu-list button {
+    width: 100%;
+    padding: 13px;
+    border-radius: 14px;
+    border: 1px solid var(--color-divider);
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-weight: 700;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .mobile-section-menu-list button.active {
+    background: var(--color-accent-gradient);
+    color: #ffffff;
+    border-color: transparent;
+    box-shadow: 0 8px 20px rgba(255, 106, 0, 0.28);
+  }
+}

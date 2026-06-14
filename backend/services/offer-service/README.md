@@ -46,6 +46,7 @@ Befolge diese Schritte, um die Entwicklungsumgebung zu starten:
    cp .env.deepgram_example .env
    ```
    Öffne die neue `.env`-Datei und trage deinen echten API-Key ein.
+   Entweder nutzt du hierfür den bestehenden API-Key von Cluster 3 oder erstellst kostenlos einen eigenen unter https://console.deepgram.com/signup
 
 3. **Datenbank starten** (aus dem Verzeichnis `backend/`):
    ```bash

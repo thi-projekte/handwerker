@@ -13,19 +13,38 @@ type ProfileFormData = {
   rolle: string;
 };
 
+const THEME_COOKIE_NAME = "craftvoice-theme";
+
+const getCookieValue = (name: string) => {
+  return document.cookie
+    .split("; ")
+    .find((row) => row.startsWith(`${name}=`))
+    ?.split("=")[1];
+};
+
+const setCookieValue = (name: string, value: string) => {
+  document.cookie = `${name}=${value}; path=/; max-age=2592000; SameSite=Lax`;
+};
+
 export const ProfilPage = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [activeTab, setActiveTab] = useState<Tab>("profil");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const [isLightMode, setIsLightMode] = useState(
-    () => localStorage.getItem("theme") === "light",
-  );
+  const [isLightMode, setIsLightMode] = useState(() => {
+    const savedTheme =
+      getCookieValue(THEME_COOKIE_NAME) ?? localStorage.getItem("theme");
+
+    return savedTheme === "light";
+  });
 
   const [profileImage, setProfileImage] = useState<string | null>(() => {
     return localStorage.getItem("profileImage");
   });
+
+  const [showSaveSuccess, setShowSaveSuccess] = useState(false);
 
   const [formData, setFormData] = useState<ProfileFormData>({
     vorname: "Christian",
@@ -42,13 +61,38 @@ export const ProfilPage = () => {
 
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("theme", theme);
+    setCookieValue(THEME_COOKIE_NAME, theme);
   }, [isLightMode]);
 
+  const handleTabChange = (tab: Tab) => {
+    setActiveTab(tab);
+    setIsMobileMenuOpen(false);
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
+
+  const getActiveTabLabel = () => {
+    if (activeTab === "profil") return "Profil";
+    if (activeTab === "darstellung") return "Darstellung";
+    return "Benachrichtigungen";
+  };
+
   const handleInputChange = (
-    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSaveChanges = () => {
+    setShowSaveSuccess(true);
+
+    window.setTimeout(() => {
+      setShowSaveSuccess(false);
+    }, 2500);
   };
 
   const handleProfileImageChange = (
@@ -92,10 +136,49 @@ export const ProfilPage = () => {
         <h1>Profil & Einstellungen</h1>
       </header>
 
-      <section className="card profile-tab-card">
+      <section className="card mobile-section-menu profile-mobile-menu">
+        <button
+          className="mobile-section-menu-button"
+          type="button"
+          onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+        >
+          <span>☰ {getActiveTabLabel()}</span>
+          <span>{isMobileMenuOpen ? "▲" : "▼"}</span>
+        </button>
+
+        {isMobileMenuOpen && (
+          <div className="mobile-section-menu-list">
+            <button
+              className={activeTab === "profil" ? "active" : ""}
+              type="button"
+              onClick={() => handleTabChange("profil")}
+            >
+              Profil
+            </button>
+
+            <button
+              className={activeTab === "darstellung" ? "active" : ""}
+              type="button"
+              onClick={() => handleTabChange("darstellung")}
+            >
+              Darstellung
+            </button>
+
+            <button
+              className={activeTab === "benachrichtigungen" ? "active" : ""}
+              type="button"
+              onClick={() => handleTabChange("benachrichtigungen")}
+            >
+              Benachrichtigungen
+            </button>
+          </div>
+        )}
+      </section>
+
+      <section className="card profile-tab-card desktop-section-tabs">
         <button
           className={`profile-tab ${activeTab === "profil" ? "active" : ""}`}
-          onClick={() => setActiveTab("profil")}
+          onClick={() => handleTabChange("profil")}
         >
           Profil
         </button>
@@ -104,7 +187,7 @@ export const ProfilPage = () => {
           className={`profile-tab ${
             activeTab === "darstellung" ? "active" : ""
           }`}
-          onClick={() => setActiveTab("darstellung")}
+          onClick={() => handleTabChange("darstellung")}
         >
           Darstellung
         </button>
@@ -113,7 +196,7 @@ export const ProfilPage = () => {
           className={`profile-tab ${
             activeTab === "benachrichtigungen" ? "active" : ""
           }`}
-          onClick={() => setActiveTab("benachrichtigungen")}
+          onClick={() => handleTabChange("benachrichtigungen")}
         >
           Benachrichtigungen
         </button>
@@ -220,28 +303,33 @@ export const ProfilPage = () => {
 
               <label className="profile-field">
                 <span>Rolle</span>
-                <select
-                  className="input-field profile-select"
-                  name="rolle"
-                  value={formData.rolle}
-                  onChange={handleInputChange}
-                >
-                  <option value="Inhaber">Inhaber</option>
-                  <option value="Mitarbeiter">Mitarbeiter</option>
-                  <option value="Büro / Verwaltung">Büro / Verwaltung</option>
-                </select>
+                <div className="profile-readonly-field">{formData.rolle}</div>
+                <p className="profile-field-hint">
+                  Die Rolle wird im Unternehmensbereich vergeben und kann hier
+                  nicht geändert werden.
+                </p>
               </label>
             </div>
 
             <div className="profile-actions">
-              <button className="button-primary profile-save-button">
+              <button
+                className="button-primary profile-save-button"
+                type="button"
+                onClick={handleSaveChanges}
+              >
                 Änderungen speichern
               </button>
+
+              {showSaveSuccess && (
+                <p className="profile-save-success">
+                  Wurde erfolgreich gespeichert
+                </p>
+              )}
 
               <button
                 className="profile-password-button"
                 type="button"
-                onClick={() => navigate("/passwort-aendern")}
+                onClick={() => navigate("/passwortAendern")}
               >
                 Passwort ändern
               </button>

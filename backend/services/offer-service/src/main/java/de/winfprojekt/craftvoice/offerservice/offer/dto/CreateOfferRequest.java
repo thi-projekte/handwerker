@@ -10,6 +10,9 @@ public class CreateOfferRequest {
     public Long customerId;
 
     @NotNull
+    public Long handwerkerId;
+
+    @NotNull
     public String speechSnippet;
     // hier könnte eine oder ggf. mehrere Vorlagen als zusätzlicher Input mitgegeben werden
 }

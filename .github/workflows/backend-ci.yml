@@ -30,8 +30,11 @@ jobs:
             dockerfile: docker/Dockerfile.jvm
           - service: ai-service
             dockerfile: docker/Dockerfile.jvm
-
+          - service: document-service
+            dockerfile: docker/Dockerfile.jvm
           - service: catalog-service
+            dockerfile: docker/Dockerfile.jvm
+          - service: user-service
             dockerfile: src/main/docker/Dockerfile.jvm
 
     steps:

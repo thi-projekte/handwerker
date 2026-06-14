@@ -1,8 +1,7 @@
 package de.winfprojekt.craftvoice.offerservice.offer;
 
-import de.winfprojekt.craftvoice.offerservice.offer.dto.AiResultRequest;
-import de.winfprojekt.craftvoice.offerservice.offer.dto.CreateOfferRequest;
-import de.winfprojekt.craftvoice.offerservice.offer.dto.OfferResponse;
+import de.winfprojekt.craftvoice.offerservice.offer.dto.*;
+import jakarta.annotation.security.PermitAll;
 
 import jakarta.inject.Inject;
 import jakarta.ws.rs.POST;
@@ -54,11 +53,42 @@ public class OfferResource {
      */
     @POST
     @Path("/angebote/{id}/ki-ergebnis")
-    public Response processAiResult(@PathParam("id") Long id, @Valid AiResultRequest request) {
+    public Response processAiResult(@PathParam("id") Long id, @Valid OfferChangesRequest request) {
 
-        offerService.processAiResult(id, request);
+        offerService.initializeOrUpdateOfferFromAiOrFrontend(id, request);
 
         return Response.status(200).build();
+    }
+
+    /**
+     * Verarbeitet die Änderungen des Handwerkers im Frontend für ein bestimmtes Angebot.
+     *
+     * @param id ID des Angebots
+     * @param request Anfrageobjekt mit dem KI-Ergebnis
+     * @return HTTP-Response mit Statuscode 200 bei Erfolg
+     */
+    @POST
+    @Path("/angebote/{id}/positionen")
+    public Response processOfferChanges(@PathParam("id") Long id, @Valid OfferChangesRequest request) {
+
+        offerService.initializeOrUpdateOfferFromAiOrFrontend(id, request);
+
+        return Response.status(200).build();
+    }
+
+    /**
+     * Verarbeitet die manuell eingetragene Arbeitsdauer des Handwerkers.
+     * Legt ggf. eine Arbeitszeit-Position an und informiert die Process Engine.
+     *
+     * @param id      ID des Angebots (muss im Status KI_FERTIG sein)
+     * @param request Arbeitsstunden-Eingabe des Handwerkers
+     * @return HTTP-Response 200 mit dem aktualisierten Angebot
+     */
+    @POST
+    @Path("/angebote/{id}/arbeitsstunden")
+    public Response setArbeitsstunden(@PathParam("id") Long id, @Valid SetArbeitsstundenRequest request) {
+        OfferResponse response = offerService.setArbeitsstunden(id, request);
+        return Response.ok(response).build();
     }
 
     /**
@@ -87,4 +117,36 @@ public class OfferResource {
         }
         return Response.ok(response).build();
     }
+
+    /**
+     * Endpunkt zur Annahme oder Ablehnung eines Angebots durch den Kunden über einen Token.
+     * Dieser Endpunkt ist öffentlich zugänglich.
+     *
+     * @param token Der eindeutige Annahme-Token des Angebots
+     * @param request Die Kundenentscheidung (angenommen / abgelehnt)
+     * @return HTTP-Response 200 mit Bestätigungsantwort oder Fehlermeldung
+     */
+    @POST
+    @Path("/angebote/annahme/{token}")
+    @PermitAll
+    public Response acceptOrRejectOffer(@PathParam("token") String token, @Valid OfferAcceptanceRequest request) {
+        OfferAcceptanceResponse response = offerService.acceptOrRejectOffer(token, request);
+        return Response.ok(response).build();
+    }
+
+    /**
+     * Endpunkt zur Annahme eines Angebots durch den Handwerker nach KI-Durchlauf.
+     * Dieser Endpunkt ist öffentlich zugänglich.
+     * @param id Angebots-ID des angenommenen Angebots
+     * @return HTTP-Response mit "204 No Content status code" im Happy Path oder alternativ eine Fehlermeldung
+     */
+    @POST
+    @Path("/offers/{id}/review/approve")
+    @Consumes(MediaType.WILDCARD)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response acceptAiResult(@PathParam("id") Long id) {
+        offerService.acceptAiResult(id);
+        return Response.noContent().build();
+    }
+
 }

@@ -4,6 +4,7 @@ import { AppLayout } from "@/shared/components/AppLayout";
 import { DashboardView } from "@/features/dashboard/components/DashboardView";
 import { DocumentPage } from "@/features/document/components/DocumentPage";
 import { HomeView } from "@/features/voice-input/components/HomeView";
+import { LandingPage } from "@/features/landing/components/LandingPage";
 import { UnternehmenPage } from "@/features/unternehmen/components/UnternehmenPage";
 import { ProfilPage } from "@/features/profil/components/ProfilPage";
 import { ReviewPage } from "@/features/review/components/ReviewPage";
@@ -20,12 +21,25 @@ import { PasswordChangePage } from "@/features/password-change/components/Passwo
 
 import { LadenPage } from "@/features/Laden/components/LadenPage";
 
+import { Impressum } from "@/features/landing/components/Impressum";
+import { Datenschutz } from "@/features/landing/components/Datenschutz";
+import { Kontakt } from "@/features/landing/components/Kontakt";
+
 export function AppRoutes() {
   return (
     <Routes>
       {/* ── Seiten MIT Header + Navbar ── */}
       <Route
         path="/"
+        element={
+          <AppLayout hideNav hideHeader>
+            <LandingPage />
+          </AppLayout>
+        }
+      />
+
+      <Route
+        path="/home"
         element={
           <AppLayout>
             <HomeView />
@@ -34,7 +48,7 @@ export function AppRoutes() {
       />
 
       <Route
-        path="/angebote"
+        path="/dokumente"
         element={
           <AppLayout>
             <DocumentPage />
@@ -70,7 +84,7 @@ export function AppRoutes() {
       />
 
       <Route
-        path="/passwort-aendern"
+        path="/passwortAendern"
         element={
           <AppLayout>
             <PasswordChangePage />
@@ -87,24 +101,23 @@ export function AppRoutes() {
         }
       />
 
-<Route
-  path="/angebot-teilen"
-  element={
-    <AppLayout>
-      <OfferSharePage />
-    </AppLayout>
-  }
-/>
-
+      <Route
+        path="/angebotTeilen"
+        element={
+          <AppLayout>
+            <OfferSharePage />
+          </AppLayout>
+        }
+      />
 
       <Route
-  path="/angebot-ergebnis"
-  element={
-    <AppLayout>
-      <OfferResultPage />
-    </AppLayout>
-  }
-/>
+        path="/angebotErgebnis"
+        element={
+          <AppLayout>
+            <OfferResultPage />
+          </AppLayout>
+        }
+      />
 
       {/* ── Auth-Seiten OHNE Header + Navbar ── */}
       <Route
@@ -126,7 +139,7 @@ export function AppRoutes() {
       />
 
       <Route
-        path="/registrierung"
+        path="/registrieren"
         element={
           <AppLayout hideNav hideHeader>
             <RegistrierungPage />
@@ -152,6 +165,32 @@ export function AppRoutes() {
         }
       />
 
+      <Route
+        path="/impressum"
+        element={
+          <AppLayout hideNav hideHeader>
+            <Impressum />
+          </AppLayout>
+        }
+      />
+
+      <Route
+        path="/datenschutz"
+        element={
+          <AppLayout hideNav hideHeader>
+            <Datenschutz />
+          </AppLayout>
+        }
+      />
+
+      <Route
+        path="/kontakt"
+        element={
+          <AppLayout hideNav hideHeader>
+            <Kontakt />
+          </AppLayout>
+        }
+      />
     </Routes>
   );
 }

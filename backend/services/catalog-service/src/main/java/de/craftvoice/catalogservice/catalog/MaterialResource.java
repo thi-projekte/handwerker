@@ -27,31 +27,34 @@ public class MaterialResource {
     JsonWebToken jwt;
 
     @GET
-    public List<Material> getAll() {
-        return service.getAll(ownerId());
+    public List<MaterialResponse> getAll() {
+        return service.getAll(ownerId())
+                .stream()
+                .map(MaterialResponse::fromEntity)
+                .toList();
     }
 
     @GET
     @Path("/{id}")
-    public Material getById(@PathParam("id") UUID id) {
+    public MaterialResponse getById(@PathParam("id") UUID id) {
         Material material = service.getById(id);
 
         if (!material.ownerId.equals(ownerId())) {
             throw new NotFoundException("Material not found");
         }
 
-        return material;
+        return MaterialResponse.fromEntity(material);
     }
 
     @POST
-    public Material createManual(DatanormMaterialDto dto) {
-        return service.createManual(dto, ownerId());
+    public MaterialResponse createManual(DatanormMaterialDto dto) {
+        return MaterialResponse.fromEntity(service.createManual(dto, ownerId()));
     }
 
     @PUT
     @Path("/{id}")
-    public Material update(@PathParam("id") UUID id, DatanormMaterialDto dto) {
-        return service.update(id, dto, ownerId());
+    public MaterialResponse update(@PathParam("id") UUID id, DatanormMaterialDto dto) {
+        return MaterialResponse.fromEntity(service.update(id, dto, ownerId()));
     }
 
     @DELETE
@@ -76,10 +79,19 @@ public class MaterialResource {
         }
     }
 
+    @GET
+    @Path("/search")
+    public MaterialSearchResultResponse search(
+            @QueryParam("q") String query,
+            @QueryParam("limit") Integer limit
+    ) {
+        return service.search(query, limit, ownerId());
+    }
+
     @POST
     @Path("/import/datanorm")
-    public Material importFromDatanorm(DatanormMaterialDto dto) {
-        return service.importFromDatanorm(dto, ownerId());
+    public MaterialResponse importFromDatanorm(DatanormMaterialDto dto) {
+        return MaterialResponse.fromEntity(service.importFromDatanorm(dto, ownerId()));
     }
 
     private String ownerId() {

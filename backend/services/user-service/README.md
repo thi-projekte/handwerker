@@ -42,25 +42,116 @@ Der **User Service** ist das zentrale Modul für Identitätsmanagement, Authenti
 
 ---
 
-## 📡 API-Endpunkte
+## 📡 API-Endpunkte & Frontend-Integration
 
 Alle Endpunkte starten mit dem Präfix `/api/users`.
 
-### Öffentliche Endpunkte
+### 🔐 Authentifizierungs-Flow (WICHTIG für Frontend)
+Der User-Service übernimmt **nicht** den Login-Prozess. 
+1. **Login:** Das Frontend nutzt `keycloak-js` (`keycloak.login()`) direkt gegen den Keycloak-Server.
+2. **Autorisierung:** Nach dem Login muss der `Bearer <Token>` im `Authorization`-Header an alle gesicherten Endpunkte des User-Service gesendet werden.
+3. **Initialer Sync:** Das Frontend sollte nach dem Login einmalig `/api/users/me` aufrufen, um das lokale Profil zu initialisieren/synchronisieren.
 
-| Methode | Pfad | Beschreibung |
-| :--- | :--- | :--- |
-| `POST` | `/register` | Erstellt einen User in Keycloak und legt lokalen Rumpf-Datensatz an. |
-| `POST` | `/password-reset/initiate` | Triggert die "Update Password" E-Mail von Keycloak. |
+---
 
-### Gesicherte Endpunkte (Bearer Token erforderlich)
+### Endpunkt-Details
 
-| Methode | Pfad | Erforderliche Rolle | Beschreibung |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/me` | Any | Synchronisiert Keycloak-Daten und gibt das Profil zurück. |
-| `PUT` | `/profile` | Any | Aktualisiert persönliche Daten (lokal & in Keycloak). |
-| `PUT` | `/company` | **OWNER** | Aktualisiert Firmendaten (lokal). |
-| `DELETE` | `/` | **OWNER** | Löscht User in Keycloak und anonymisiert lokale Daten. |
+#### 1. Benutzer Registrierung
+Erstellt einen Account in Keycloak und einen Rumpf-Datensatz in der App-Datenbank. Triggert eine Verifizierungs-Mail.
+
+- **Methode:** `POST`
+- **Pfad:** `/api/users/register`
+- **Body:**
+```json
+{
+  "email": "handwerker@example.com",
+  "password": "sicheresPasswort123",
+  "firstName": "Max",
+  "lastName": "Mustermann"
+}
+```
+- **Response:** `201 Created`
+
+#### 2. Passwort vergessen / Reset
+Triggert den Keycloak-Standard-Workflow für Passwort-Resets.
+
+- **Methode:** `POST`
+- **Pfad:** `/api/users/password-reset/initiate`
+- **Body:**
+```json
+{
+  "email": "handwerker@example.com"
+}
+```
+- **Response:** `200 OK` (Verschickt E-Mail via Keycloak)
+
+#### 3. Eigenes Profil abrufen (Sync)
+Gibt das aktuelle Profil zurück. Falls der User neu ist (z.B. nach externem Login), wird er hier automatisch in die lokale DB synchronisiert.
+
+- **Methode:** `GET`
+- **Pfad:** `/api/users/me`
+- **Header:** `Authorization: Bearer <JWT>`
+- **Response:** `200 OK` mit User-Objekt.
+
+#### 4. Profil aktualisieren
+Aktualisiert persönliche Stammdaten. Vornamen/Nachnamen werden automatisch zurück zu Keycloak synchronisiert.
+
+- **Methode:** `PUT`
+- **Pfad:** `/api/users/profile`
+- **Body:** (siehe Datenmodell)
+
+#### 5. Firmendaten aktualisieren
+Aktualisiert firmenspezifische Metadaten (nur für Nutzer mit Rolle `OWNER`).
+
+- **Methode:** `PUT`
+- **Pfad:** `/api/users/company`
+- **Body:** (siehe Datenmodell)
+
+---
+
+## 📊 Datenmodell (User-Objekt)
+
+Dieses Objekt wird von `/me` zurückgegeben und sollte bei `PUT` Requests (teilweise) gesendet werden.
+
+```json
+{
+  "id": 1,
+  "email": "handwerker@example.com",
+  "firstName": "Max",
+  "lastName": "Mustermann",
+  "phoneNumber": "+49 123 456789",
+  "profilePictureUrl": "https://...",
+  "status": "ACTIVE", // PENDING, ACTIVE, DELETED
+  "roles": ["OWNER"], // OWNER, EMPLOYEE, ACCOUNTANT
+  
+  // Firmendaten (via /company)
+  "companyName": "Musterbau GmbH",
+  "vatId": "DE123456789",
+  "tradeRegisterNumber": "HRB 12345",
+  "companyAddress": "Musterstraße 1, 12345 Musterstadt",
+  
+  // KI-Präferenzen (Zukunft)
+  "toneOfVoice": "DU", // DU, SIE
+  "termsOfPayment": "Zahlbar innerhalb von 14 Tagen...",
+  "disclaimer": "Angebot freibleibend..."
+}
+```
+
+---
+
+## 🛠 Entwicklung & Konfiguration
+
+### Lokale Umgebung
+- **Port:** `8082`
+- **Basis-URL:** `http://localhost:8082/api/users`
+
+### Passwort ändern
+Es gibt keinen direkten API-Endpunkt für Passwortänderungen. Das Frontend sollte:
+1. Den User zur **Keycloak Account Console** weiterleiten.
+2. Oder den `/password-reset/initiate` Workflow nutzen.
+
+### Rollen & Berechtigungen
+Die Rollen `OWNER` und `EMPLOYEE` werden im JWT-Token von Keycloak erwartet. Der Service nutzt diese für `@RolesAllowed` Annotationen.
 
 ---
 
