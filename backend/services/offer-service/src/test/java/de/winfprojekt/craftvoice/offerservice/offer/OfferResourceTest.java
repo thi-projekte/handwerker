@@ -23,6 +23,7 @@ import de.winfprojekt.craftvoice.offerservice.routing.OsrmClient;
 import de.winfprojekt.craftvoice.offerservice.routing.RoutingException;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import java.math.BigDecimal;
+import java.util.Comparator;
 import java.util.UUID;
 import java.util.List;
 
@@ -1212,6 +1213,292 @@ class OfferResourceTest {
                 updated.statusHistory.stream()
                         .anyMatch(h -> Offer.STATUS_KI_BEARBEITUNG_ABGESCHLOSSEN.equals(h.status))
         );
+    }
+
+    @Test
+    void shouldReplaceOnlyMaterialPositionsAndKeepAnfahrt() {
+
+        Long offerId = QuarkusTransaction.requiringNew().call(() -> {
+            Offer offer = new Offer();
+            offer.businessKey = "offer-" + UUID.randomUUID();
+            offer.customerId = 1L;
+            offer.handwerkerId = 99L;
+            offer.status = Offer.STATUS_KI_FERTIG;
+
+            OfferPosition material = new OfferPosition();
+            material.type = OfferPositionType.MATERIAL;
+            material.bezeichnung = "Alt Material";
+            material.reihenfolge = 1;
+            material.offer = offer;
+
+            OfferPosition anfahrt = new OfferPosition();
+            anfahrt.type = OfferPositionType.ANFAHRT;
+            anfahrt.bezeichnung = "Anfahrtskosten";
+            anfahrt.reihenfolge = 2;
+            anfahrt.offer = offer;
+
+            offer.positions.add(material);
+            offer.positions.add(anfahrt);
+
+            offer.persist();
+            return offer.id;
+        });
+
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+        {
+          "strukturierteAngebotspositionen": [
+            {
+              "bezeichnung": "NEU MATERIAL",
+              "hersteller": "Test",
+              "beschreibung": "Neu",
+              "menge": 1,
+              "einheit": "Stk"
+            }
+          ],\s
+          "korrekturvorschlaege": []
+        }
+       \s""")
+                .when()
+                .post("/angebote/{id}/positionen", offerId)
+                .then()
+                .statusCode(200);
+
+        QuarkusTransaction.requiringNew().run(() -> {
+            Offer updated = Offer.findById(offerId);
+
+            assertTrue(updated.positions.stream()
+                    .anyMatch(p -> "NEU MATERIAL".equals(p.bezeichnung)));
+
+            assertTrue(updated.positions.stream()
+                    .anyMatch(p -> "Anfahrtskosten".equals(p.bezeichnung)));
+
+            assertEquals(1,
+                    updated.positions.stream()
+                            .filter(p -> p.type == OfferPositionType.ANFAHRT)
+                            .count());
+        });
+    }
+
+    @Test
+    void shouldAlwaysPutAnfahrtAtEnd() {
+
+        Long offerId = QuarkusTransaction.requiringNew().call(() -> {
+            Offer offer = new Offer();
+            offer.businessKey = "offer-" + UUID.randomUUID();
+            offer.customerId = 1L;
+            offer.handwerkerId = 99L;
+            offer.status = Offer.STATUS_IN_BEARBEITUNG;
+            offer.persist();
+            return offer.id;
+        });
+
+        AnfahrtskostenKonfiguration config = new AnfahrtskostenKonfiguration();
+        config.modell = "PAUSCHALE";
+        config.pauschale = new BigDecimal("10.00");
+        config.adresse = "TEST";
+
+        Mockito.when(userServiceClient.getAnfahrtskostenKonfiguration())
+                .thenReturn(config);
+
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+        {
+          "strukturierteAngebotspositionen": [
+            {"bezeichnung": "A", "menge": 1, "einheit": "Stk"},
+            {"bezeichnung": "B", "menge": 1, "einheit": "Stk"},
+            {"bezeichnung": "C", "menge": 1, "einheit": "Stk"}
+          ],
+          "korrekturvorschlaege": []
+        }
+        """)
+                .when()
+                .post("/angebote/{id}/positionen", offerId)
+                .then()
+                .statusCode(200);
+
+        QuarkusTransaction.requiringNew().run(() -> {
+            Offer updated = Offer.findById(offerId);
+
+            List<OfferPosition> sorted = updated.positions.stream()
+                    .sorted(Comparator.comparingInt(p -> p.reihenfolge))
+                    .toList();
+
+            assertEquals("A", sorted.get(0).bezeichnung);
+            assertEquals("B", sorted.get(1).bezeichnung);
+            assertEquals("C", sorted.get(2).bezeichnung);
+            assertEquals("Anfahrtskosten", sorted.get(3).bezeichnung);
+        });
+    }
+
+    @Test
+    void shouldHandleBothAiAndFrontendRequests() {
+
+        Long offerId = QuarkusTransaction.requiringNew().call(() -> {
+            Offer offer = new Offer();
+            offer.businessKey = "offer-" + UUID.randomUUID();
+            offer.customerId = 1L;
+            offer.handwerkerId = 99L;
+            offer.status = Offer.STATUS_IN_BEARBEITUNG;
+
+            offer.persist();
+            return offer.id;
+        });
+
+        String requestBody = """
+    {
+      "strukturierteAngebotspositionen": [
+        {
+          "bezeichnung": "Material X",
+          "menge": 2,
+          "einheit": "Stk"
+        }
+      ], "korrekturvorschlaege": []
+    }
+    """;
+
+        // KI
+        given()
+                .contentType(ContentType.JSON)
+                .body(requestBody)
+                .when()
+                .post("/angebote/{id}/ki-ergebnis", offerId)
+                .then()
+                .statusCode(200);
+
+        // Frontend
+        given()
+                .contentType(ContentType.JSON)
+                .body(requestBody)
+                .when()
+                .post("/angebote/{id}/positionen", offerId)
+                .then()
+                .statusCode(200);
+    }
+
+    @Test
+    void shouldNeverDuplicateAnfahrt() {
+
+        Long offerId = QuarkusTransaction.requiringNew().call(() -> {
+            Offer offer = new Offer();
+            offer.businessKey = "offer-" + UUID.randomUUID();
+            offer.customerId = 1L;
+            offer.handwerkerId = 99L;
+            offer.status = Offer.STATUS_IN_BEARBEITUNG;
+
+            OfferPosition anfahrt = new OfferPosition();
+            anfahrt.type = OfferPositionType.ANFAHRT;
+            anfahrt.bezeichnung = "Anfahrtskosten";
+            anfahrt.reihenfolge = 1;
+            anfahrt.offer = offer;
+
+            offer.positions.add(anfahrt);
+
+            offer.persist();
+            return offer.id;
+        });
+
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+        {
+          "strukturierteAngebotspositionen": [
+            {"bezeichnung": "Neu", "menge": 1, "einheit": "Stk"}
+          ], "korrekturvorschlaege": []
+        }
+        """)
+                .when()
+                .post("/angebote/{id}/positionen", offerId)
+                .then()
+                .statusCode(200);
+
+        QuarkusTransaction.requiringNew().run(() -> {
+            Offer updated = Offer.findById(offerId);
+
+            long count = updated.positions.stream()
+                    .filter(p -> p.type == OfferPositionType.ANFAHRT)
+                    .count();
+
+            assertEquals(1, count);
+        });
+    }
+
+    @Test
+    void shouldSetStatusToKiFertig() {
+
+        Long offerId = QuarkusTransaction.requiringNew().call(() -> {
+            Offer offer = new Offer();
+            offer.businessKey = "offer-" + UUID.randomUUID();
+            offer.customerId = 1L;
+            offer.handwerkerId = 99L;
+            offer.status = Offer.STATUS_IN_BEARBEITUNG;
+
+            offer.persist();
+            return offer.id;
+        });
+
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+        {
+          "strukturierteAngebotspositionen": [
+            {"bezeichnung": "X", "menge": 1, "einheit": "Stk"}
+          ], "korrekturvorschlaege": []
+        }
+        """)
+                .when()
+                .post("/angebote/{id}/positionen", offerId)
+                .then()
+                .statusCode(200);
+
+        QuarkusTransaction.requiringNew().run(() -> {
+            Offer updated = Offer.findById(offerId);
+            assertEquals(Offer.STATUS_KI_FERTIG, updated.status);
+        });
+    }
+
+    @Test
+    void shouldKeepOnlyAnfahrtWhenEmptyRequest() {
+
+        Long offerId = QuarkusTransaction.requiringNew().call(() -> {
+            Offer offer = new Offer();
+            offer.businessKey = "offer-" + UUID.randomUUID();
+            offer.customerId = 1L;
+            offer.handwerkerId = 99L;
+            offer.status = Offer.STATUS_IN_BEARBEITUNG;
+
+            OfferPosition anfahrt = new OfferPosition();
+            anfahrt.type = OfferPositionType.ANFAHRT;
+            anfahrt.bezeichnung = "Anfahrt";
+            anfahrt.reihenfolge = 1;
+            anfahrt.offer = offer;
+
+            offer.positions.add(anfahrt);
+
+            offer.persist();
+            return offer.id;
+        });
+
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+        {
+          "strukturierteAngebotspositionen": [],"korrekturvorschlaege": []
+        }
+        """)
+                .when()
+                .post("/angebote/{id}/positionen", offerId)
+                .then()
+                .statusCode(200);
+
+        QuarkusTransaction.requiringNew().run(() -> {
+            Offer updated = Offer.findById(offerId);
+
+            assertEquals(1, updated.positions.size());
+            assertEquals(OfferPositionType.ANFAHRT, updated.positions.get(0).type);
+        });
     }
 
 }
