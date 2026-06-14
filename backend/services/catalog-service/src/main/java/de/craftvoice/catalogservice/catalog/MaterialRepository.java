@@ -37,7 +37,7 @@ public class MaterialRepository implements PanacheRepositoryBase<Material, UUID>
                     m.price,
                     m.currency,
                     (
-                        ts_rank(
+                        ts_rank_cd(
                             setweight(to_tsvector('german', coalesce(m.name, '')), 'A') ||
                             setweight(to_tsvector('german', coalesce(m.description, '')), 'B') ||
                             setweight(to_tsvector('german', coalesce(m.category, '')), 'C'),

@@ -3,6 +3,8 @@ package de.craftvoice.catalogservice.catalog;
 import java.math.BigDecimal;
 import java.util.UUID;
 
+
+//Diese Klasse repräsentiert einen einzelnen Suchtreffer
 public class MaterialSearchResponse {
 
     public UUID id;
