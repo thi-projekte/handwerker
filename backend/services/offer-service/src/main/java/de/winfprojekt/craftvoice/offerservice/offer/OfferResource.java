@@ -50,17 +50,17 @@ public class OfferResource {
     }
 
     /**
-     * Verarbeitet das KI-Ergebnis für ein bestimmtes Angebot.
+     * Verarbeitet das KI-Ergebnis für ein bestimmtes Angebot, adressiert über den businessKey.
      *
-     * @param id ID des Angebots
+     * @param businessKey Business-Key des Angebots (von der Process Engine bekannt)
      * @param request Anfrageobjekt mit dem KI-Ergebnis
      * @return HTTP-Response mit Statuscode 200 bei Erfolg
      */
     @POST
-    @Path("/angebote/{id}/ki-ergebnis")
-    public Response processAiResult(@PathParam("id") Long id, @Valid AiResultRequest request) {
+    @Path("/angebote/{businessKey}/ki-ergebnis")
+    public Response processAiResult(@PathParam("businessKey") String businessKey, @Valid AiResultRequest request) {
 
-        offerService.processAiResult(id, request);
+        offerService.processAiResult(businessKey, request);
 
         return Response.status(200).build();
     }

@@ -112,27 +112,27 @@ public class OfferService {
 
     /**
      * Verarbeitet das KI-Ergebnis für ein Angebot:
-     * - Prüft, ob das Angebot existiert und sich im Status IN_BEARBEITUNG befindet.
+     * - Prüft, ob das Angebot existiert und sich im Status ERFASST oder IN_BEARBEITUNG befindet.
      * - Lädt für jede Position den Preis vom catalog-service (Stub).
      * - Persistiert alle Positionen.
      * - Setzt den Status des Angebots auf KI_FERTIG und legt einen OfferStatusHistory-Eintrag an.
+     * - Korreliert die Nachricht "angebotsentwurf" an die Process Engine, damit der Prozess
+     *   (Event_10bgkb0) weiterläuft.
      *
-     * <p>Die Process Engine wird hier NICHT mehr informiert. Das geschieht erst,
-     * wenn der Handwerker seine Arbeitsstunden eingetragen und bestätigt hat
-     * (via {@link #setArbeitsstunden(Long, SetArbeitsstundenRequest)}).
-     *
-     * @param id ID des Angebots
+     * @param businessKey Business-Key des Angebots
      * @param request AI-Result-Daten
      */
     @Transactional
-    public void processAiResult(Long id, AiResultRequest request) {
-        Offer offer = Offer.findById(id);
+    public void processAiResult(String businessKey, AiResultRequest request) {
+        Offer offer = Offer.find("businessKey", businessKey).firstResult();
         if (offer == null) {
-            throw new WebApplicationException("Angebot mit ID " + id + " nicht gefunden", 404);
+            throw new WebApplicationException("Angebot mit BusinessKey " + businessKey + " nicht gefunden", 404);
         }
 
-        if (!Offer.STATUS_IN_BEARBEITUNG.equals(offer.status)) {
-            throw new WebApplicationException("Angebot mit ID " + id + " befindet sich nicht im Status IN_BEARBEITUNG", 409);
+        // Erstdurchlauf: Status ist ERFASST (createOffer setzt ERFASST, niemand setzt IN_BEARBEITUNG)
+        // Korrekturdurchlauf: Status könnte IN_BEARBEITUNG sein
+        if (!Offer.STATUS_ERFASST.equals(offer.status) && !Offer.STATUS_IN_BEARBEITUNG.equals(offer.status)) {
+            throw new WebApplicationException("Angebot " + businessKey + " in unerwartetem Status: " + offer.status, 409);
         }
 
         int reihenfolge = 1;
@@ -155,9 +155,6 @@ public class OfferService {
             position.katalogProduktId = posDto.katalogProduktId;
             position.preis = preis;
             position.reihenfolge = reihenfolge++;
-
-            // Map price back to DTO for serialization in sendAiResult
-            posDto.preis = preis;
 
             offer.positions.add(position);
         }
@@ -216,6 +213,16 @@ public class OfferService {
         offer.statusHistory.add(history);
 
         offer.persist();
+
+        // Correlation: Prozess wartet an Event_10bgkb0 auf "angebotsentwurf"
+        OfferResponse response = OfferResponse.fromEntity(offer);
+        String angebotsentwurfJson;
+        try {
+            angebotsentwurfJson = objectMapper.writeValueAsString(response);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Serialisierung des Angebotsentwurfs fehlgeschlagen", e);
+        }
+        processEngineClient.sendAngebotsentwurf(offer.businessKey, angebotsentwurfJson);
     }
 
     /**
@@ -223,7 +230,6 @@ public class OfferService {
      * - Angebot muss sich im Status KI_FERTIG befinden.
      * - Löscht eine bereits vorhandene Arbeitszeit-Position (Idempotenz bei Korrekturen).
      * - Legt – sofern Stunden > 0 – eine neue Arbeitszeit-Position an (Stunden × Stundensatz).
-     * - Informiert die Process Engine (sendAiResult), damit der Prozess weiterläuft.
      *
      * @param id      ID des Angebots
      * @param request Arbeitsstunden-Eingabe des Handwerkers
@@ -277,21 +283,6 @@ public class OfferService {
         }
 
         offer.persist();
-
-        // Process Engine informieren – Handwerker hat bestätigt, Prozess kann weiterlaufen
-        String ergebnisKiJsonString;
-        try {
-            ergebnisKiJsonString = objectMapper.writeValueAsString(
-                    java.util.Map.of(
-                            "customerId", offer.customerId,
-                            "arbeitsdauerStunden", request.arbeitsdauerStunden
-                    )
-            );
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Fehler beim Serialisieren der Arbeitsstunden zu JSON", e);
-        }
-
-        processEngineClient.sendAiResult(offer.businessKey, ergebnisKiJsonString);
 
         return OfferResponse.fromEntity(offer);
     }

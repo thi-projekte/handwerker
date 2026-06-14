@@ -28,7 +28,7 @@ Test before = true</bpmn:text>
     <bpmn:startEvent id="StartEvent_01" name="Angebotsbedarf mit Kundeninformationen und Sprachschnipsel  und Vorlage empfangen">
       <bpmn:extensionElements>
         <camunda:executionListener event="start">
-          <camunda:script scriptFormat="JavaScript">var kundendaten = execution.getVariable("customerId");
+          <camunda:script scriptFormat="JavaScript">var customerId = execution.getVariable("customerId");
 var sprachschnipsel = execution.getVariable("sprachschnipsel");
 var vorlage = execution.getVariable("vorlage");
 
