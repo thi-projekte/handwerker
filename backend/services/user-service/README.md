@@ -107,19 +107,64 @@ Gibt das aktuelle Profil zurück. Falls der User neu ist (z.B. nach externem Log
 
 #### 4. Profil aktualisieren
 Aktualisiert persönliche Stammdaten. Vornamen/Nachnamen werden automatisch zurück zu Keycloak synchronisiert.
+Es werden nur die Felder aktualisiert, die im Request gesendet werden (Teil-Update unterstützt).
 
 - **Methode:** `PUT`
 - **Pfad:** `/api/users/profile`
-- **Body:** (siehe Datenmodell)
+- **Body:**
+```json
+{
+  "firstName": "Max",
+  "lastName": "Mustermann",
+  "phoneNumber": "+49 123 456789",
+  "profilePictureUrl": "https://..."
+}
+```
 
 #### 5. Firmendaten aktualisieren
 Aktualisiert firmenspezifische Metadaten (nur für Nutzer mit Rolle `OWNER`).
+Es werden nur die Felder aktualisiert, die im Request gesendet werden (Teil-Update unterstützt).
 
 - **Methode:** `PUT`
 - **Pfad:** `/api/users/company`
-- **Body:** (siehe Datenmodell)
+- **Body:**
+```json
+{
+  "companyName": "Malerbetrieb Muster",
+  "vatId": "DE123456789",
+  "tradeRegisterNumber": "HRB 12345",
+  "street": "Musterstraße",
+  "houseNumber": "10",
+  "zipCode": "12345",
+  "city": "Musterstadt",
+  "state": "Bayern",
+  "country": "Deutschland",
+  "companyEmail": "info@maler-muster.de",
+  "companyPhoneNumber": "+49 89 12345",
+  "website": "www.maler-muster.de",
+  "industry": "Maler & Lackierer",
+  "iban": "DE12 3456...",
+  "bic": "GENO...",
+  "bankName": "Musterbank",
+  "accountHolder": "Max Mustermann",
+  "taxNumber": "123/456/789",
+  "legalForm": "Einzelunternehmen",
+  "employeeCount": 5,
+  "customerCount": 150,
+  "hourlyRate": 65.50
+}
+```
 
-#### 6. Kunden anlegen (Neu)
+#### 6. Profilbild hochladen
+Lädt ein Profilbild hoch und speichert es serverseitig.
+
+- **Methode:** `POST`
+- **Pfad:** `/api/users/profile-picture`
+- **Consumes:** `multipart/form-data`
+- **Body:** `file` (Binary)
+- **Response:** `200 OK` mit `{"url": "/api/users/profile-picture/profile_1_... .jpg"}`
+
+#### 7. Kunden anlegen (Neu)
 Erstellt ein Kundenprofil in der Datenbank. Nur für Handwerker erlaubt.
 
 - **Methode:** `POST`
@@ -128,7 +173,7 @@ Erstellt ein Kundenprofil in der Datenbank. Nur für Handwerker erlaubt.
 - **Body:** (User-Objekt ohne `keycloakId`)
 - **Response:** `201 Created`
 
-#### 7. Kunden auflisten (Neu)
+#### 8. Kunden auflisten (Neu)
 Gibt eine Liste aller Profile mit der Rolle `CUSTOMER` zurück.
 
 - **Methode:** `GET`
@@ -140,20 +185,48 @@ Gibt eine Liste aller Profile mit der Rolle `CUSTOMER` zurück.
 
 ## 📊 Datenmodell (User-Objekt)
 
-Dieses Objekt wird von `/me` zurückgegeben und sollte bei `PUT` Requests (teilweise) gesendet werden.
+Dieses Objekt wird von `/me` zurückgegeben und bei `PUT` Requests genutzt.
 
+### Vollständiges Modell
 ```json
 {
   "id": 1,
-  "email": "kunde@beispiel.de",
-  "firstName": "Erika",
+  "email": "handwerker@beispiel.de",
+  "firstName": "Max",
   "lastName": "Mustermann",
   "phoneNumber": "+49 170 1234567",
-  "profilePictureUrl": null,
+  "profilePictureUrl": "/api/users/profile-picture/profile_1.jpg",
   "status": "ACTIVE", 
-  "roles": ["CUSTOMER"], // OWNER, EMPLOYEE, ACCOUNTANT, CUSTOMER
+  "roles": ["OWNER"],
   
-  // ... restliche Felder ...
+  // Firmendaten
+  "companyName": "Malerbetrieb",
+  "vatId": "DE...",
+  "tradeRegisterNumber": "HRB...",
+  "street": "...",
+  "houseNumber": "...",
+  "zipCode": "...",
+  "city": "...",
+  "state": "...",
+  "country": "...",
+  "companyEmail": "...",
+  "companyPhoneNumber": "...",
+  "website": "...",
+  "industry": "...",
+  "iban": "...",
+  "bic": "...",
+  "bankName": "...",
+  "accountHolder": "...",
+  "taxNumber": "...",
+  "legalForm": "...",
+  "employeeCount": 5,
+  "customerCount": 100,
+  "hourlyRate": 60.0,
+  "priceListUrl": null,
+
+  // KI-Präferenzen
+  "toneOfVoice": "Du",
+  "detailLevel": "detailliert"
 }
 ```
 

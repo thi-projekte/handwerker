@@ -9,6 +9,8 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.jwt.JsonWebToken;
+import org.jboss.resteasy.reactive.RestForm;
+import org.jboss.resteasy.reactive.multipart.FileUpload;
 import java.util.List;
 import java.util.Map;
 
@@ -43,6 +45,15 @@ public class UserResource {
     @Authenticated
     public UserEntity me() {
         return userService.syncUserWithDatabase();
+    }
+
+    @POST
+    @Path("/profile-picture")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Authenticated
+    public Response uploadProfilePicture(@RestForm("file") FileUpload file) {
+        String url = userService.uploadProfilePicture(getUserId(), file);
+        return Response.ok(Map.of("url", url)).build();
     }
 
     @PUT
