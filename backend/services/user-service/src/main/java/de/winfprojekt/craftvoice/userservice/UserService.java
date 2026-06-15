@@ -208,7 +208,25 @@ public class UserService {
         user.companyName = null;
         user.vatId = null;
         user.tradeRegisterNumber = null;
-        user.companyAddress = null;
+        
+        // Anonymize Address
+        user.street = null;
+        user.houseNumber = null;
+        user.zipCode = null;
+        user.city = null;
+        user.state = null;
+        user.country = null;
+
+        // Anonymize Contact & Banking
+        user.companyEmail = null;
+        user.companyPhoneNumber = null;
+        user.website = null;
+        user.iban = null;
+        user.bic = null;
+        user.bankName = null;
+        user.accountHolder = null;
+        user.taxNumber = null;
+        user.priceListUrl = null;
         
         AuditLogEntity.log(userId, "ACCOUNT_DELETED", "User account deleted (Synced with Keycloak)");
     }
