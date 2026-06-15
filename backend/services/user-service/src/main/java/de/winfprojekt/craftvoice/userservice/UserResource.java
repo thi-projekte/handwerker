@@ -101,6 +101,13 @@ public class UserResource {
         return userService.listCustomers();
     }
 
+    @GET
+    @Path("/customers/{id}")
+    @RolesAllowed({"OWNER", "EMPLOYEE"})
+    public UserEntity getCustomer(@PathParam("id") Long id) {
+        return userService.getCustomerById(id);
+    }
+
     private Long getUserId() {
         UserEntity user = UserEntity.findByKeycloakId(jwt.getSubject());
         if (user == null) throw new NotFoundException("User not synced");

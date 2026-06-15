@@ -173,13 +173,21 @@ Erstellt ein Kundenprofil in der Datenbank. Nur für Handwerker erlaubt.
 - **Body:** (User-Objekt ohne `keycloakId`)
 - **Response:** `201 Created`
 
-#### 8. Kunden auflisten (Neu)
+#### 8. Kunden auflisten
 Gibt eine Liste aller Profile mit der Rolle `CUSTOMER` zurück.
 
 - **Methode:** `GET`
 - **Pfad:** `/api/users/customers`
 - **Roles:** `OWNER`, `EMPLOYEE`
 - **Response:** `200 OK` (Array von User-Objekten)
+
+#### 9. Einzelnen Kunden abrufen
+Gibt die Details eines spezifischen Kunden zurück.
+
+- **Methode:** `GET`
+- **Pfad:** `/api/users/customers/{id}`
+- **Roles:** `OWNER`, `EMPLOYEE`
+- **Response:** `200 OK` (User-Objekt) oder `404 Not Found`
 
 ---
 

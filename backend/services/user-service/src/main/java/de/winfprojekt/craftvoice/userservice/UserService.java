@@ -250,4 +250,12 @@ public class UserService {
         // In a real multi-tenant app, this would be filtered by company
         return UserEntity.list("from UserEntity u join u.roles r where r = ?1", UserRole.CUSTOMER);
     }
+
+    public UserEntity getCustomerById(Long id) {
+        UserEntity customer = UserEntity.findById(id);
+        if (customer == null || !customer.roles.contains(UserRole.CUSTOMER)) {
+            throw new NotFoundException("Customer not found");
+        }
+        return customer;
+    }
 }
