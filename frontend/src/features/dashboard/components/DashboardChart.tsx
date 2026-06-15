@@ -6,16 +6,19 @@ import {
   Tooltip,
   CartesianGrid,
 } from "recharts";
+import { DashboardStatsResponse } from "@/data/api/dashboardApi";
 
-const data = [
-  { month: "Jan", Angebote: 4 },
-  { month: "Feb", Angebote: 7 },
-  { month: "Mär", Angebote: 12 },
-  { month: "Apr", Angebote: 9 },
-  { month: "Mai", Angebote: 15 },
-];
+type Props = {
+  data: DashboardStatsResponse;
+};
 
-export const DashboardChart = () => {
+export const DashboardChart = ({ data }: Props) => {
+  // Transform the data to match recharts format
+  const chartData = data.angebotsuebersicht.map((item) => ({
+    month: item.month,
+    Angebote: item.angebote,
+  }));
+
   return (
     <div className="dashboard-chart">
       <div className="chart-header">
@@ -29,7 +32,7 @@ export const DashboardChart = () => {
       </div>
 
       <ResponsiveContainer width="100%" height={300}>
-        <LineChart data={data}>
+        <LineChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" />
 
           <XAxis dataKey="month" />
