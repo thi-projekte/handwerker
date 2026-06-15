@@ -17,7 +17,7 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * LLM-Call 2 (#541): waehlt fuer jede <b>Materialposition</b> ein konkretes Katalogprodukt
- * und haengt dessen Katalog-ID an die Position ({@link Position#withKatalogProduktId(Long)}).
+ * und haengt dessen Katalog-ID an die Position ({@link Position#withKatalogProduktId(String)}).
  *
  * <p>Pro Position: Kandidaten ueber {@link CatalogSearchService} holen (Vorfilter, ohne
  * Preise) → LLM waehlt genau einen oder {@code KEIN_TREFFER}. Leistungspositionen bleiben

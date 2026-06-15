@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotNull;
 /**
  * Request-DTO für das KI-Ergebnis.
  */
-public class AiResultRequest {
+public class OfferChangesRequest {
 
     @NotNull
     @Valid

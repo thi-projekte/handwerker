@@ -27,12 +27,12 @@ public class MaterialService {
 
     @Transactional
     public Material createManual(DatanormMaterialDto dto, String ownerId) {
-        return createOrUpdateByArticleNumber(dto, "MANUAL", ownerId);
+        return createMaterial(dto, "MANUAL", ownerId);
     }
 
     @Transactional
     public Material importFromDatanorm(DatanormMaterialDto dto, String ownerId) {
-        return createOrUpdateByArticleNumber(dto, "DATANORM_API", ownerId);
+        return createMaterial(dto, "DATANORM_API", ownerId);
     }
 
     @Transactional
@@ -40,7 +40,7 @@ public class MaterialService {
         int imported = 0;
 
         for (DatanormMaterialDto dto : materials) {
-            createOrUpdateByArticleNumber(dto, "CSV", ownerId);
+            createMaterial(dto, "CSV", ownerId);
             imported++;
         }
 
@@ -76,66 +76,84 @@ public class MaterialService {
     }
 
     @Transactional
-    public Material createOrUpdateByArticleNumber(
+    public Material createMaterial(
             DatanormMaterialDto dto,
             String source,
             String ownerId
     ) {
-
         validate(dto);
 
-        Material material = repository
-                .findByOwnerIdAndArticleNumber(ownerId, dto.articleNumber)
-                .orElseGet(Material::new);
-
-        boolean isNew = material.id == null;
+        Material material = new Material();
 
         applyDto(material, dto);
 
+        material.articleNumber = generateNextArticleNumber(ownerId);
         material.ownerId = ownerId;
         material.source = source;
+        material.createdAt = Instant.now();
         material.updatedAt = Instant.now();
 
-        if (isNew) {
-            material.createdAt = Instant.now();
-            repository.persist(material);
-        }
+        repository.persist(material);
 
         return material;
     }
 
     private void applyDto(Material material, DatanormMaterialDto dto) {
-
-        material.articleNumber = safe(dto.articleNumber);
         material.name = safe(dto.name);
+        material.manufacturer = safe(dto.manufacturer);
         material.description = safe(dto.description);
-
-        material.supplierNumber = safe(dto.supplierNumber);
-        material.supplierName = safe(dto.supplierName);
-
-        material.categoryCode = safe(dto.categoryCode);
-        material.categoryName = safe(dto.categoryName);
-
+        material.category = safe(dto.category);
         material.unit = safe(dto.unit);
 
-        material.priceNet = dto.priceNet;
-        material.priceGross = dto.priceGross;
-        material.vatRate = dto.vatRate;
-
-        material.currency = safe(dto.currency);
+        material.price = dto.price;
+        material.currency =
+                dto.currency == null || dto.currency.isBlank()
+                        ? "EUR"
+                        : dto.currency;
 
         material.active = true;
     }
 
-    private void validate(DatanormMaterialDto dto) {
+    public MaterialSearchResultResponse search(String query, Integer limit, String ownerId) {
 
-        if (dto.articleNumber == null || dto.articleNumber.isBlank()) {
-            throw new BadRequestException("articleNumber is required");
+        if (query == null || query.isBlank()) {
+            return new MaterialSearchResultResponse(List.of());
         }
+
+        int safeLimit = limit == null ? 15 : limit;
+
+        if (safeLimit < 1) {
+            safeLimit = 15;
+        }
+
+        if (safeLimit > 50) {
+            safeLimit = 50;
+        }
+
+        List<MaterialSearchResponse> candidates =
+                repository.search(ownerId, query, safeLimit);
+
+        return new MaterialSearchResultResponse(candidates);
+    }
+
+    private void validate(DatanormMaterialDto dto) {
 
         if (dto.name == null || dto.name.isBlank()) {
             throw new BadRequestException("name is required");
         }
+
+        if (dto.unit == null || dto.unit.isBlank()) {
+            throw new BadRequestException("unit is required");
+        }
+
+        if (dto.price == null || dto.price.signum() < 0) {
+            throw new BadRequestException("price must be >= 0");
+        }
+    }
+
+    private String generateNextArticleNumber(String ownerId) {
+        long nextNumber = repository.countByOwnerIdIncludingInactive(ownerId) + 1;
+        return String.format("MAT-%06d", nextNumber);
     }
 
     private String safe(String value) {
