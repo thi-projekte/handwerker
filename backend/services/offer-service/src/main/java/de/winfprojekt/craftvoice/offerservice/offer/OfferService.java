@@ -70,9 +70,10 @@ public class OfferService {
         offer.annahmeToken = UUID.randomUUID().toString();
         offer.businessKey = "angebot-" + UUID.randomUUID();
         offer.speechSnippet = request.speechSnippet;
+        offer.status = Offer.STATUS_IN_BEARBEITUNG;
 
         OfferStatusHistory history = new OfferStatusHistory();
-        history.status = Offer.STATUS_ERFASST;
+        history.status = Offer.STATUS_IN_BEARBEITUNG;
         history.offer = offer;
         offer.statusHistory.add(history);
 
@@ -110,7 +111,7 @@ public class OfferService {
         return offer != null ? OfferResponse.fromEntity(offer) : null;
     }
 
-
+/**
      * Initialisiert oder aktualisiert ein Angebot auf Basis eines KI-Ergebnisses oder den Änderungen des Handwerkers im Frontend:
      * - Prüft, ob das Angebot existiert und sich in einem gültigen Status befindet
      *   (IN_BEARBEITUNG oder KI_FERTIG).
@@ -132,12 +133,12 @@ public class OfferService {
     public void initializeOrUpdateOfferFromAiOrFrontend(String businessKey, OfferChangesRequest request) {
         Offer offer = Offer.find("businessKey", businessKey).firstResult();
 
-       if (offer == null) {
+        if (offer == null) {
             throw new WebApplicationException("Angebot mit BusinessKey " + businessKey + " nicht gefunden", 404);
         }
 
         if (!Offer.STATUS_IN_BEARBEITUNG.equals(offer.status) && !Offer.STATUS_KI_FERTIG.equals(offer.status)) {
-            throw new WebApplicationException("Angebot mit ID " + id + " befindet sich nicht im Status IN_BEARBEITUNG oder KI_FERTIG", 409);
+            throw new WebApplicationException("Angebot mit BusinessKey " + businessKey + " befindet sich nicht im Status IN_BEARBEITUNG oder KI_FERTIG", 409);
         }
 
         if (Offer.STATUS_KI_FERTIG.equals(offer.status)) {
@@ -269,15 +270,15 @@ public class OfferService {
      * @return aktualisiertes Angebot als DTO
      */
     @Transactional
-    public OfferResponse setArbeitsstunden(Long id, SetArbeitsstundenRequest request) {
-        Offer offer = Offer.findById(id);
+    public OfferResponse setArbeitsstunden(String businessKey, SetArbeitsstundenRequest request) {
+        Offer offer = Offer.find("businessKey", businessKey).firstResult();
         if (offer == null) {
-            throw new WebApplicationException("Angebot mit ID " + id + " nicht gefunden", 404);
+            throw new WebApplicationException("Angebot mit businessKey " + businessKey + " nicht gefunden", 404);
         }
 
         if (!Offer.STATUS_KI_FERTIG.equals(offer.status)) {
             throw new WebApplicationException(
-                    "Angebot mit ID " + id + " befindet sich nicht im Status KI_FERTIG", 409);
+                    "Angebot mit businessKey " + businessKey + " befindet sich nicht im Status KI_FERTIG", 409);
         }
 
         // Idempotenz: bestehende Arbeitszeit-Position entfernen (z. B. bei Korrektur)
@@ -405,9 +406,9 @@ public class OfferService {
      * @param id Angebots-ID des angenommenen Angebots
      */
     @Transactional
-    public void acceptAiResult(Long id) {
+    public void acceptAiResult(String businessKey) {
 
-        Offer offer = Offer.findById(id);
+        Offer offer = Offer.find("businessKey", businessKey).firstResult();
 
         if (offer == null) {
             throw new WebApplicationException("not found", 404);

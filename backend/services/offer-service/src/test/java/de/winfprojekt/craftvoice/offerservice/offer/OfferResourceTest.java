@@ -102,14 +102,14 @@ class OfferResourceTest {
         assertNotNull(offer);
         assertTrue(offer.businessKey.startsWith("angebot-"));
         assertNotNull(offer.annahmeToken);
-        assertEquals(STATUS_ERFASST, offer.status);
+        assertEquals(Offer.STATUS_IN_BEARBEITUNG, offer.status);
         assertEquals("Kunde möchte Badrenovierung", offer.speechSnippet);
 
         List<OfferStatusHistory> history =
                 OfferStatusHistory.find("offer.id", id).list();
 
         assertEquals(1, history.size());
-        assertEquals(STATUS_ERFASST, history.get(0).status);
+        assertEquals(Offer.STATUS_IN_BEARBEITUNG, history.get(0).status);
 
         ArgumentCaptor<String> businessKeyCaptor =
                 ArgumentCaptor.forClass(String.class);
@@ -186,7 +186,7 @@ class OfferResourceTest {
         offer.customerId = 1L;
         offer.handwerkerId = 99L;
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
-        offer.status = Offer.STATUS_ERFASST;
+        offer.status = Offer.STATUS_IN_BEARBEITUNG;
 
         QuarkusTransaction.requiringNew().run(() -> {
             offer.persist();
@@ -270,7 +270,7 @@ class OfferResourceTest {
         offer.customerId = 1L;
         offer.handwerkerId = 99L;
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
-        offer.status = Offer.STATUS_KI_FERTIG;
+        offer.status = Offer.STATUS_KI_BEARBEITUNG_ABGESCHLOSSEN;
         
         QuarkusTransaction.requiringNew().run(() -> {
             offer.persist();
@@ -385,7 +385,7 @@ class OfferResourceTest {
                 .sendAngebotPayload(any(), any(), any(), any(), any());
 
         // Angebot erstellen
-        Number offerId = given()
+        io.restassured.response.ExtractableResponse<?> response = given()
                 .contentType(ContentType.JSON)
                 .body("""
                 {
@@ -398,18 +398,18 @@ class OfferResourceTest {
                 .post("/offers")
                 .then()
                 .statusCode(201)
-                .extract()
-                .path("id");
+                .extract();
 
-        Long id = offerId.longValue();
+        Long id = ((Number) response.path("id")).longValue();
+        String businessKey = response.path("businessKey");
 
         // Positionen und History hinzufügen
         addPositionAndHistoryToOffer(id);
 
-        // Abrufen über GET /offers/{id}
+        // Abrufen über GET /offers/{businessKey}
         given()
                 .when()
-                .get("/offers/" + id)
+                .get("/offers/" + businessKey)
                 .then()
                 .statusCode(200)
                 .body("id", org.hamcrest.Matchers.equalTo(id.intValue()))
@@ -597,6 +597,7 @@ class OfferResourceTest {
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
         offer.status = Offer.STATUS_KI_FERTIG;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
+        final String businessKey = offer.businessKey;
         final Long offerId = offer.id;
 
         // UserService-Mock: 65 €/h
@@ -612,7 +613,7 @@ class OfferResourceTest {
                 }
                 """)
                 .when()
-                .post("/angebote/{id}/arbeitsstunden", offerId)
+                .post("/angebote/{businesskey}/arbeitsstunden", businessKey)
                 .then()
                 .statusCode(200);
 
@@ -642,6 +643,7 @@ class OfferResourceTest {
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
         offer.status = Offer.STATUS_KI_FERTIG;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
+        final String businessKey = offer.businessKey;
         final Long offerId = offer.id;
 
         given()
@@ -652,7 +654,7 @@ class OfferResourceTest {
                 }
                 """)
                 .when()
-                .post("/angebote/{id}/arbeitsstunden", offerId)
+                .post("/angebote/{businesskey}/arbeitsstunden", businessKey)
                 .then()
                 .statusCode(200);
 
@@ -678,7 +680,7 @@ class OfferResourceTest {
         offer.customerId = 1L;
         offer.handwerkerId = 99L;
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
-        offer.status = Offer.STATUS_ERFASST;
+        offer.status = Offer.STATUS_IN_BEARBEITUNG;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
         final Long offerId = offer.id;
         final String businessKey = offer.businessKey;
@@ -730,7 +732,7 @@ class OfferResourceTest {
         offer.customerId = 1L;
         offer.handwerkerId = 99L;
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
-        offer.status = Offer.STATUS_ERFASST;
+        offer.status = Offer.STATUS_IN_BEARBEITUNG;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
         final Long offerId = offer.id;
         final String businessKey = offer.businessKey;
@@ -783,7 +785,7 @@ class OfferResourceTest {
         offer.customerId = 1L;
         offer.handwerkerId = 99L;
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
-        offer.status = Offer.STATUS_ERFASST;
+        offer.status = Offer.STATUS_IN_BEARBEITUNG;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
         final Long offerId = offer.id;
         final String businessKey = offer.businessKey;
@@ -836,7 +838,7 @@ class OfferResourceTest {
         offer.customerId = 1L;
         offer.handwerkerId = 99L;
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
-        offer.status = Offer.STATUS_ERFASST;
+        offer.status = Offer.STATUS_IN_BEARBEITUNG;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
         final Long offerId = offer.id;
         final String businessKey = offer.businessKey;
@@ -896,7 +898,7 @@ class OfferResourceTest {
                 }
                 """)
                 .when()
-                .post("/angebote/{id}/arbeitsstunden", 999999L)
+                .post("/angebote/{businesskey}/arbeitsstunden", "unknown-businesskey")
                 .then()
                 .statusCode(404);
     }
@@ -921,7 +923,7 @@ class OfferResourceTest {
                 }
                 """)
                 .when()
-                .post("/angebote/{id}/arbeitsstunden", offer.id)
+                .post("/angebote/{businesskey}/arbeitsstunden", offer.businessKey)
                 .then()
                 .statusCode(409);
     }
@@ -943,7 +945,7 @@ class OfferResourceTest {
                 .contentType(ContentType.JSON)
                 .body("{}") // kein arbeitsdauerStunden-Feld
                 .when()
-                .post("/angebote/{id}/arbeitsstunden", offer.id)
+                .post("/angebote/{businesskey}/arbeitsstunden", offer.businessKey)
                 .then()
                 .statusCode(400);
     }
@@ -968,7 +970,7 @@ class OfferResourceTest {
                 }
                 """)
                 .when()
-                .post("/angebote/{id}/arbeitsstunden", offer.id)
+                .post("/angebote/{businesskey}/arbeitsstunden", offer.businessKey)
                 .then()
                 .statusCode(400);
     }
@@ -984,6 +986,7 @@ class OfferResourceTest {
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
         offer.status = Offer.STATUS_KI_FERTIG;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
+        final String businessKey = offer.businessKey;
         final Long offerId = offer.id;
 
         StundensatzResponse stundensatzResponse = new StundensatzResponse();
@@ -999,7 +1002,7 @@ class OfferResourceTest {
                 }
                 """)
                 .when()
-                .post("/angebote/{id}/arbeitsstunden", offerId)
+                .post("/angebote/{businesskey}/arbeitsstunden", businessKey)
                 .then()
                 .statusCode(200);
 
@@ -1012,7 +1015,7 @@ class OfferResourceTest {
                 }
                 """)
                 .when()
-                .post("/angebote/{id}/arbeitsstunden", offerId)
+                .post("/angebote/{businesskey}/arbeitsstunden", businessKey)
                 .then()
                 .statusCode(200);
 
@@ -1044,6 +1047,7 @@ class OfferResourceTest {
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
         offer.status = Offer.STATUS_KI_FERTIG;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
+        final String businessKey = offer.businessKey;
         final Long offerId = offer.id;
 
         // user-service wirft eine Exception
@@ -1058,7 +1062,7 @@ class OfferResourceTest {
                 }
                 """)
                 .when()
-                .post("/angebote/{id}/arbeitsstunden", offerId)
+                .post("/angebote/{businesskey}/arbeitsstunden", businessKey)
                 .then()
                 .statusCode(200);
 
@@ -1073,21 +1077,23 @@ class OfferResourceTest {
     @Test
     void acceptAiResult_shouldSetStatusToKI_BEARBEITUNG_ABGESCHLOSSEN() {
 
-        Long offerId = QuarkusTransaction.requiringNew().call(() -> {
-            Offer offer = new Offer();
-            offer.customerId = 1L;
-            offer.handwerkerId = 99L;
-            offer.businessKey = "test-" + UUID.randomUUID();
-            offer.annahmeToken = UUID.randomUUID().toString();
-            offer.status = Offer.STATUS_KI_FERTIG;
+        Offer offer = QuarkusTransaction.requiringNew().call(() -> {
+            Offer o = new Offer();
+            o.customerId = 1L;
+            o.handwerkerId = 99L;
+            o.businessKey = "test-" + UUID.randomUUID();
+            o.annahmeToken = UUID.randomUUID().toString();
+            o.status = Offer.STATUS_KI_FERTIG;
 
-            offer.persist();
-            return offer.id;
+            o.persist();
+            return o;
         });
+        final String businessKey = offer.businessKey;
+        final Long offerId = offer.id;
 
         given()
                 .when()
-                .post("/offers/{id}/review/approve", offerId)
+                .post("/offers/{businessKey}/review/approve", businessKey)
                 .then()
                 .statusCode(204);
 
@@ -1104,21 +1110,22 @@ class OfferResourceTest {
     @Test
     void acceptAiResult_shouldReturn409_whenStatusIsNotKiFertig() {
 
-        Long offerId = QuarkusTransaction.requiringNew().call(() -> {
-            Offer offer = new Offer();
-            offer.customerId = 1L;
-            offer.handwerkerId = 99L;
-            offer.businessKey = "test-" + UUID.randomUUID();
-            offer.annahmeToken = UUID.randomUUID().toString();
-            offer.status = Offer.STATUS_IN_BEARBEITUNG;
+        Offer offer = QuarkusTransaction.requiringNew().call(() -> {
+            Offer o = new Offer();
+            o.customerId = 1L;
+            o.handwerkerId = 99L;
+            o.businessKey = "test-" + UUID.randomUUID();
+            o.annahmeToken = UUID.randomUUID().toString();
+            o.status = Offer.STATUS_IN_BEARBEITUNG;
 
-            offer.persist();
-            return offer.id;
+            o.persist();
+            return o;
         });
+        final String businessKey = offer.businessKey;
 
         given()
                 .when()
-                .post("/offers/{id}/review/approve", offerId)
+                .post("/offers/{businessKey}/review/approve", businessKey)
                 .then()
                 .statusCode(409);
     }
@@ -1127,7 +1134,7 @@ class OfferResourceTest {
     void acceptAiResult_shouldReturn404_whenOfferDoesNotExist() {
         given()
                 .when()
-                .post("/offers/999999/review/approve")
+                .post("/offers/unknown-businesskey/review/approve")
                 .then()
                 .statusCode(404);
     }
@@ -1175,7 +1182,7 @@ class OfferResourceTest {
 
         given()
                 .when()
-                .post("/offers/{id}/review/approve", offerId)
+                .post("/offers/{businessKey}/review/approve", businessKey)
                 .then()
                 .statusCode(204);
         final Long offerIdFinal = offerId;
@@ -1198,31 +1205,33 @@ class OfferResourceTest {
     @Test
     void shouldReplaceOnlyMaterialPositionsAndKeepAnfahrt() {
 
-        Long offerId = QuarkusTransaction.requiringNew().call(() -> {
-            Offer offer = new Offer();
-            offer.businessKey = "offer-" + UUID.randomUUID();
-            offer.customerId = 1L;
-            offer.handwerkerId = 99L;
-            offer.status = Offer.STATUS_KI_FERTIG;
+        Offer offer = QuarkusTransaction.requiringNew().call(() -> {
+            Offer o = new Offer();
+            o.businessKey = "offer-" + UUID.randomUUID();
+            o.customerId = 1L;
+            o.handwerkerId = 99L;
+            o.status = Offer.STATUS_KI_FERTIG;
 
             OfferPosition material = new OfferPosition();
             material.type = OfferPositionType.MATERIAL;
             material.bezeichnung = "Alt Material";
             material.reihenfolge = 1;
-            material.offer = offer;
+            material.offer = o;
 
             OfferPosition anfahrt = new OfferPosition();
             anfahrt.type = OfferPositionType.ANFAHRT;
             anfahrt.bezeichnung = "Anfahrtskosten";
             anfahrt.reihenfolge = 2;
-            anfahrt.offer = offer;
+            anfahrt.offer = o;
 
-            offer.positions.add(material);
-            offer.positions.add(anfahrt);
+            o.positions.add(material);
+            o.positions.add(anfahrt);
 
-            offer.persist();
-            return offer.id;
+            o.persist();
+            return o;
         });
+        final Long offerId = offer.id;
+        final String businessKey = offer.businessKey;
 
         given()
                 .contentType(ContentType.JSON)
@@ -1241,7 +1250,7 @@ class OfferResourceTest {
         }
        \s""")
                 .when()
-                .post("/angebote/{id}/positionen", offerId)
+                .post("/angebote/{businesskey}/positionen", businessKey)
                 .then()
                 .statusCode(200);
 
@@ -1264,15 +1273,17 @@ class OfferResourceTest {
     @Test
     void shouldAlwaysPutAnfahrtAtEnd() {
 
-        Long offerId = QuarkusTransaction.requiringNew().call(() -> {
-            Offer offer = new Offer();
-            offer.businessKey = "offer-" + UUID.randomUUID();
-            offer.customerId = 1L;
-            offer.handwerkerId = 99L;
-            offer.status = Offer.STATUS_IN_BEARBEITUNG;
-            offer.persist();
-            return offer.id;
+        Offer offer = QuarkusTransaction.requiringNew().call(() -> {
+            Offer o = new Offer();
+            o.businessKey = "offer-" + UUID.randomUUID();
+            o.customerId = 1L;
+            o.handwerkerId = 99L;
+            o.status = Offer.STATUS_IN_BEARBEITUNG;
+            o.persist();
+            return o;
         });
+        final Long offerId = offer.id;
+        final String businessKey = offer.businessKey;
 
         AnfahrtskostenKonfiguration config = new AnfahrtskostenKonfiguration();
         config.modell = "PAUSCHALE";
@@ -1295,7 +1306,7 @@ class OfferResourceTest {
         }
         """)
                 .when()
-                .post("/angebote/{id}/positionen", offerId)
+                .post("/angebote/{businesskey}/positionen", businessKey)
                 .then()
                 .statusCode(200);
 
@@ -1316,16 +1327,19 @@ class OfferResourceTest {
     @Test
     void shouldHandleBothAiAndFrontendRequests() {
 
-        Long offerId = QuarkusTransaction.requiringNew().call(() -> {
-            Offer offer = new Offer();
-            offer.businessKey = "offer-" + UUID.randomUUID();
-            offer.customerId = 1L;
-            offer.handwerkerId = 99L;
-            offer.status = Offer.STATUS_IN_BEARBEITUNG;
+        Offer offer = QuarkusTransaction.requiringNew().call(() -> {
+            Offer o = new Offer();
+            o.businessKey = "offer-" + UUID.randomUUID();
+            o.customerId = 1L;
+            o.handwerkerId = 99L;
+            o.status = Offer.STATUS_IN_BEARBEITUNG;
 
-            offer.persist();
-            return offer.id;
+            o.persist();
+            return o;
         });
+
+        final String businessKey = offer.businessKey;
+        final Long offerId = offer.id;
 
         String requestBody = """
     {
@@ -1344,7 +1358,7 @@ class OfferResourceTest {
                 .contentType(ContentType.JSON)
                 .body(requestBody)
                 .when()
-                .post("/angebote/{id}/ki-ergebnis", offerId)
+                .post("/angebote/{businessKey}/ki-ergebnis", businessKey)
                 .then()
                 .statusCode(200);
 
@@ -1353,7 +1367,7 @@ class OfferResourceTest {
                 .contentType(ContentType.JSON)
                 .body(requestBody)
                 .when()
-                .post("/angebote/{id}/positionen", offerId)
+                .post("/angebote/{businesskey}/positionen", businessKey)
                 .then()
                 .statusCode(200);
     }
@@ -1361,24 +1375,26 @@ class OfferResourceTest {
     @Test
     void shouldNeverDuplicateAnfahrt() {
 
-        Long offerId = QuarkusTransaction.requiringNew().call(() -> {
-            Offer offer = new Offer();
-            offer.businessKey = "offer-" + UUID.randomUUID();
-            offer.customerId = 1L;
-            offer.handwerkerId = 99L;
-            offer.status = Offer.STATUS_IN_BEARBEITUNG;
+        Offer offer = QuarkusTransaction.requiringNew().call(() -> {
+            Offer o = new Offer();
+            o.businessKey = "offer-" + UUID.randomUUID();
+            o.customerId = 1L;
+            o.handwerkerId = 99L;
+            o.status = Offer.STATUS_IN_BEARBEITUNG;
 
             OfferPosition anfahrt = new OfferPosition();
             anfahrt.type = OfferPositionType.ANFAHRT;
             anfahrt.bezeichnung = "Anfahrtskosten";
             anfahrt.reihenfolge = 1;
-            anfahrt.offer = offer;
+            anfahrt.offer = o;
 
-            offer.positions.add(anfahrt);
+            o.positions.add(anfahrt);
 
-            offer.persist();
-            return offer.id;
+            o.persist();
+            return o;
         });
+        final Long offerId = offer.id;
+        final String businessKey = offer.businessKey;
 
         given()
                 .contentType(ContentType.JSON)
@@ -1390,7 +1406,7 @@ class OfferResourceTest {
         }
         """)
                 .when()
-                .post("/angebote/{id}/positionen", offerId)
+                .post("/angebote/{businesskey}/positionen", businessKey)
                 .then()
                 .statusCode(200);
 
@@ -1408,16 +1424,18 @@ class OfferResourceTest {
     @Test
     void shouldSetStatusToKiFertig() {
 
-        Long offerId = QuarkusTransaction.requiringNew().call(() -> {
-            Offer offer = new Offer();
-            offer.businessKey = "offer-" + UUID.randomUUID();
-            offer.customerId = 1L;
-            offer.handwerkerId = 99L;
-            offer.status = Offer.STATUS_IN_BEARBEITUNG;
+        Offer offer = QuarkusTransaction.requiringNew().call(() -> {
+            Offer o = new Offer();
+            o.businessKey = "offer-" + UUID.randomUUID();
+            o.customerId = 1L;
+            o.handwerkerId = 99L;
+            o.status = Offer.STATUS_IN_BEARBEITUNG;
 
-            offer.persist();
-            return offer.id;
+            o.persist();
+            return o;
         });
+        final Long offerId = offer.id;
+        final String businessKey = offer.businessKey;
 
         given()
                 .contentType(ContentType.JSON)
@@ -1429,7 +1447,7 @@ class OfferResourceTest {
         }
         """)
                 .when()
-                .post("/angebote/{id}/positionen", offerId)
+                .post("/angebote/{businesskey}/positionen", businessKey)
                 .then()
                 .statusCode(200);
 
@@ -1442,24 +1460,26 @@ class OfferResourceTest {
     @Test
     void shouldKeepOnlyAnfahrtWhenEmptyRequest() {
 
-        Long offerId = QuarkusTransaction.requiringNew().call(() -> {
-            Offer offer = new Offer();
-            offer.businessKey = "offer-" + UUID.randomUUID();
-            offer.customerId = 1L;
-            offer.handwerkerId = 99L;
-            offer.status = Offer.STATUS_IN_BEARBEITUNG;
+        Offer offer = QuarkusTransaction.requiringNew().call(() -> {
+            Offer o = new Offer();
+            o.businessKey = "offer-" + UUID.randomUUID();
+            o.customerId = 1L;
+            o.handwerkerId = 99L;
+            o.status = Offer.STATUS_IN_BEARBEITUNG;
 
             OfferPosition anfahrt = new OfferPosition();
             anfahrt.type = OfferPositionType.ANFAHRT;
             anfahrt.bezeichnung = "Anfahrt";
             anfahrt.reihenfolge = 1;
-            anfahrt.offer = offer;
+            anfahrt.offer = o;
 
-            offer.positions.add(anfahrt);
+            o.positions.add(anfahrt);
 
-            offer.persist();
-            return offer.id;
+            o.persist();
+            return o;
         });
+        final Long offerId = offer.id;
+        final String businessKey = offer.businessKey;
 
         given()
                 .contentType(ContentType.JSON)
@@ -1469,7 +1489,7 @@ class OfferResourceTest {
         }
         """)
                 .when()
-                .post("/angebote/{id}/positionen", offerId)
+                .post("/angebote/{businesskey}/positionen", businessKey)
                 .then()
                 .statusCode(200);
 
