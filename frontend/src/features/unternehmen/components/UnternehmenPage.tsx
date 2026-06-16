@@ -83,6 +83,7 @@ export const UnternehmenPage = () => {
       vorname: string;
       nachname: string;
       email: string;
+      adresse: string;
       telefon: string;
       image: string | null;
     }[]
@@ -122,6 +123,7 @@ export const UnternehmenPage = () => {
   const [customerData, setCustomerData] = useState({
     vorname: "",
     nachname: "",
+    adresse: "",
     email: "",
     telefon: "",
   });
@@ -840,6 +842,7 @@ export const UnternehmenPage = () => {
                 setCustomerData({
                   vorname: "",
                   nachname: "",
+                  adresse: "",
                   email: "",
                   telefon: "",
                 });
@@ -899,6 +902,7 @@ export const UnternehmenPage = () => {
                         setCustomerData({
                           vorname: c.vorname,
                           nachname: c.nachname,
+                          adresse: c.adresse,
                           email: c.email,
                           telefon: c.telefon,
                         });
@@ -968,7 +972,13 @@ export const UnternehmenPage = () => {
                 value={customerData.nachname}
                 onChange={handleCustomerChange}
               />
-
+ <input
+                className="input-field"
+                name="adresse"
+                placeholder="Adresse"
+                value={customerData.adresse}
+                onChange={handleCustomerChange}
+              />
               <input
                 className="input-field"
                 type="email"
@@ -992,6 +1002,8 @@ export const UnternehmenPage = () => {
                   }))
                 }
               />
+
+             
 
               <button
                 className="button-primary company-add-button"
@@ -1020,6 +1032,7 @@ export const UnternehmenPage = () => {
                   setCustomerData({
                     vorname: "",
                     nachname: "",
+                    adresse: "",
                     email: "",
                     telefon: "",
                   });
