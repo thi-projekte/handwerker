@@ -289,6 +289,7 @@ export const UnternehmenPage = () => {
       headers: getAuthHeaders(),
     });
 
+    
     if (!response.ok) {
       throw new Error("Fehler beim Laden");
     }
