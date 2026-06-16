@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import React from "react";
 import { useLocation } from "react-router-dom";
 import {
   getCurrentUser,
@@ -32,11 +33,16 @@ type Customer = {
 };
 
 type Material = {
+  id?: string;
   name: string;
   description: string;
-  price: string;
-  size: string;
+  manufacturer: string;  
+  category: string;    
   unit: string;
+  price: number;        
+  currency: string;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 type CompanyFormData = {
@@ -1585,6 +1591,7 @@ export const UnternehmenPage = () => {
               />
 
               <span>CSV Datei hochladen</span>
+
             </label>
           </label>
 
@@ -1610,12 +1617,14 @@ export const UnternehmenPage = () => {
                 setEditingMaterialIndex(null);
 
                 setMaterialData({
-                  name: "",
-                  description: "",
-                  price: "",
-                  size: "",
-                  unit: "",
-                });
+      name: "",
+  description: "",
+  manufacturer: "",    
+  category: "",        
+  unit: "",
+  price: 0,
+  currency: "EUR",    
+});
               }}
             >
               {showMaterialForm ? "−" : "+"}
@@ -1765,24 +1774,18 @@ export const UnternehmenPage = () => {
                     ]);
                   }
 
-                  setMaterialData({
-                    name: "",
-                    description: "",
-                    price: "",
-                    size: "",
-                    unit: "",
-                  });
+    setShowMaterialForm(false);
+  } catch (error) {
+    console.error(error);
+    alert("❌ Fehler beim Speichern");
+  }
+}}
+    >
+      {materialData.id ? "Material speichern" : "Material hinzufügen"}
+    </button>
+  </div>
+)}
 
-                  setEditingMaterialIndex(null);
-                  setShowMaterialForm(false);
-                }}
-              >
-                {editingMaterialIndex !== null
-                  ? "Material speichern"
-                  : "Material hinzufügen"}
-              </button>
-            </div>
-          )}
         </section>
       )}
     </div>
