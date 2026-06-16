@@ -38,8 +38,9 @@ public class SpeechCaptureResource {
                     .build();
         }
 
+        byte[] audioData = null;
         try {
-            byte[] audioData = Files.readAllBytes(audio.uploadedFile());
+            audioData = Files.readAllBytes(audio.uploadedFile());
             String transcript = deepgramClient.transcribe(audioData, contentType);
 
             if (transcript == null || transcript.trim().isEmpty()) {
@@ -58,6 +59,19 @@ public class SpeechCaptureResource {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity("Failed to read audio file: " + e.getMessage())
                     .build();
+        } finally {
+            // Delete the temporary file from the disk immediately
+            if (audio.uploadedFile() != null) {
+                try {
+                    Files.deleteIfExists(audio.uploadedFile());
+                } catch (IOException e) {
+                    // Ignores deletion failure
+                }
+            }
+            // Overwrite the audio bytes in memory immediately
+            if (audioData != null) {
+                java.util.Arrays.fill(audioData, (byte) 0);
+            }
         }
     }
 }
