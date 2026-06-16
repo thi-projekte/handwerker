@@ -1,5 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
-import React from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 import { useLocation } from "react-router-dom";
 import {
   getCurrentUser,
@@ -8,6 +16,20 @@ import {
 } from "@/services/userService";
 import "./UnternehmenPage.css";
 import "./UnternehmenPage-additions.css";
+
+const getAuthHeaders = () => {
+  const token = localStorage.getItem("authToken");
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  return headers;
+};
 
 type Tab = "allgemein" | "kunde" | "stundensatz" | "preisliste";
 
@@ -30,19 +52,27 @@ type Customer = {
   email: string;
   telefon: string;
   image: string | null;
+
+  adresse: string;
+  plz: string;
+  ort: string;
+
 };
 
 type Material = {
   id?: string;
+  articleNumber?: string;
   name: string;
   description: string;
-  manufacturer: string;  
-  category: string;    
+  manufacturer: string;
+  category: string;
   unit: string;
-  price: number;        
+  price: number;
   currency: string;
+  active?: boolean;
   createdAt?: string;
   updatedAt?: string;
+  score?: number;
 };
 
 type CompanyFormData = {
@@ -141,28 +171,18 @@ export const UnternehmenPage = () => {
       rolle: "",
     });
 
-  const [editingGeneralEmployeeIndex, setEditingGeneralEmployeeIndex] =
-    useState<number | null>(null);
-
-  const [customers, setCustomers] = useState<
-    {
-      vorname: string;
-      nachname: string;
-      email: string;
-      adresse: string;
-      telefon: string;
-      image: string | null;
-    }[]
-  >([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [showCustomerForm, setShowCustomerForm] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
   const [customerData, setCustomerData] = useState({
     vorname: "",
     nachname: "",
-    adresse: "",
     email: "",
     telefon: "",
+    adresse: "",
+    plz: "",
+    ort: "",
   });
 
   const [customerImage, setCustomerImage] = useState<string | null>(null);
@@ -170,17 +190,17 @@ export const UnternehmenPage = () => {
   const [materials, setMaterials] = useState<Material[]>([]);
   const [showMaterialForm, setShowMaterialForm] = useState(false);
 
-  const [editingMaterialIndex, setEditingMaterialIndex] = useState<
-    number | null
-  >(null);
 
   const [materialData, setMaterialData] = useState<Material>({
-    name: "",
-    description: "",
-    price: "",
-    size: "",
-    unit: "",
-  });
+  id: undefined,
+  name: "",
+  description: "",
+  manufacturer: "",
+  category: "",
+  unit: "",
+  price: 0,
+  currency: "EUR",
+});
 
   const [companyData, setCompanyData] = useState<CompanyFormData>({
     firmenname: "",
@@ -241,27 +261,45 @@ export const UnternehmenPage = () => {
     return "Preisliste";
   };
 
-  const handleChange =
-    <T extends Record<string, string>>(
-      setState: React.Dispatch<React.SetStateAction<T>>,
-    ) =>
-    (
-      event: React.ChangeEvent<
-        HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-      >,
-    ) => {
-      const { name, value } = event.target;
+ const handleChange =
+  <T extends Record<string, any>>(
+    setState: Dispatch<SetStateAction<T>>,
+  ) =>
+  (
+    event: ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >,
+  ) => {
+    const { name, value } = event.target;
 
-      setState((previousState) => ({
-        ...previousState,
-        [name]: value,
-      }));
-    };
+    setState((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
 
   const handleCompanyChange = handleChange(setCompanyData);
   const handleEmployeeChange = handleChange(setEmployeeData);
   const handleCustomerChange = handleChange(setCustomerData);
   const handleMaterialChange = handleChange(setMaterialData);
+
+  const loadMaterials = async () => {
+  try {
+    const response = await fetch("/catalog/material", {
+      headers: getAuthHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error("Fehler beim Laden");
+    }
+
+    const data = await response.json();
+    setMaterials(data.filter((m: any) => m.active !== false));
+  } catch (error) {
+    console.error(error);
+    setCompanyErrorMessage("Materialien konnten nicht geladen werden.");
+  }
+};
 
   const applyUserProfileToCompanyData = useCallback((user: UserProfile) => {
     const roles = user.roles ?? [];
@@ -301,47 +339,46 @@ export const UnternehmenPage = () => {
   }, []);
 
   useEffect(() => {
-    let isMounted = true;
+  let isMounted = true;
 
-    const loadCompanyData = async () => {
-      setIsLoadingCompany(true);
-      setCompanyErrorMessage("");
+  const loadCompanyData = async () => {
+    setIsLoadingCompany(true);
+    setCompanyErrorMessage("");
 
-      try {
-        const user = await getCurrentUser();
+    try {
+      const user = await getCurrentUser();
 
-        if (!isMounted) {
-          return;
-        }
+      if (!isMounted) return;
 
-        applyUserProfileToCompanyData(user);
-      } catch (error) {
-        if (!isMounted) {
-          return;
-        }
+      applyUserProfileToCompanyData(user);
+    } catch (error) {
+      if (!isMounted) return;
 
-        setCompanyErrorMessage(
-          `Unternehmensdaten konnten nicht geladen werden: ${getErrorMessage(
-            error,
-          )}`,
-        );
-      } finally {
-        if (isMounted) {
-          setIsLoadingCompany(false);
-        }
+      setCompanyErrorMessage(
+        `Unternehmensdaten konnten nicht geladen werden: ${getErrorMessage(error)}`
+      );
+    } finally {
+      if (isMounted) {
+        setIsLoadingCompany(false);
       }
-    };
+    }
+  };
 
-    void loadCompanyData();
+  const init = async () => {
+    await loadCompanyData();
+    await loadMaterials();
+  };
 
-    return () => {
-      isMounted = false;
+  void init();
 
-      if (successTimeoutRef.current !== null) {
-        window.clearTimeout(successTimeoutRef.current);
-      }
-    };
-  }, [applyUserProfileToCompanyData]);
+  return () => {
+    isMounted = false;
+
+    if (successTimeoutRef.current !== null) {
+      window.clearTimeout(successTimeoutRef.current);
+    }
+  };
+}, [applyUserProfileToCompanyData]);
     const handleSaveCompany = async () => {
     if (!isOwner) {
       setCompanyErrorMessage(
@@ -444,46 +481,78 @@ export const UnternehmenPage = () => {
     setCustomerImage(URL.createObjectURL(file));
   };
 
-  const handleMaterialCsvUpload = async (
+  const handleMaterialCsvUpload =
+  async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
-    const file = event.target.files?.[0];
+    const file =
+      event.target.files?.[0];
 
     if (!file) {
       return;
     }
 
-    const text = await file.text();
+    const formData =
+      new FormData();
 
-    const rows = text
-      .split("\n")
-      .map((row) => row.trim())
-      .filter(Boolean);
+    formData.append(
+      "file",
+      file,
+    );
 
-    const parsed: Material[] = rows.map((row) => {
-      const [name, description, price, size, unit] = row.split(",");
+    try {
+      const response =
+        await fetch(
+          "/catalog/material/import/csv",
+          {
+            method: "POST",
+            headers: {
+              Authorization:
+                localStorage.getItem(
+                  "authToken",
+                )
+                  ? `Bearer ${localStorage.getItem(
+                      "authToken",
+                    )}`
+                  : "",
+            },
+            body: formData,
+          },
+        );
 
-      return {
-        name: name ?? "",
-        description: description ?? "",
-        price: price ?? "",
-        size: size ?? "",
-        unit: unit ?? "",
-      };
-    });
+      if (!response.ok) {
+        throw new Error(
+          "CSV Import fehlgeschlagen",
+        );
+      }
 
-    setMaterials((previousMaterials) => [
-      ...previousMaterials,
-      ...parsed,
-    ]);
+      const text = await response.text();
+const importedCount = Number(text);
+
+      setCompanySuccessMessage(
+        `✅ ${importedCount} Materialien importiert`,
+      );
+
+      await loadMaterials();
+
+      event.target.value =
+        "";
+    } catch (error) {
+      console.error(error);
+
+      setCompanyErrorMessage(
+        "❌ CSV-Import fehlgeschlagen",
+      );
+    }
   };
 
   const isMaterialValid =
-    Boolean(materialData.name) &&
-    Boolean(materialData.description) &&
-    Boolean(materialData.price) &&
-    Boolean(materialData.size) &&
-    Boolean(materialData.unit);
+  !!materialData.name &&
+  !!materialData.description &&
+  !!materialData.manufacturer &&
+  !!materialData.category &&
+  materialData.price >= 0 &&
+  !!materialData.unit;
 
   return (
     <div className="app company-page">
@@ -1191,9 +1260,11 @@ export const UnternehmenPage = () => {
                 setCustomerData({
                   vorname: "",
                   nachname: "",
-                  adresse: "",
                   email: "",
                   telefon: "",
+                  adresse: "",
+                  plz: "",
+                  ort: "",
                 });
 
                 setCustomerImage(null);
@@ -1253,11 +1324,13 @@ export const UnternehmenPage = () => {
                       type="button"
                       onClick={() => {
                         setCustomerData({
-                          vorname: c.vorname,
-                          nachname: c.nachname,
-                          adresse: c.adresse,
-                          email: c.email,
-                          telefon: c.telefon,
+                          vorname: customer.vorname,
+                          nachname: customer.nachname,
+                          email: customer.email,
+                          telefon: customer.telefon,
+                          adresse: customer.adresse,
+                          plz: customer.plz,
+                          ort: customer.ort,
                         });
 
                         setCustomerImage(customer.image);
@@ -1330,13 +1403,31 @@ export const UnternehmenPage = () => {
                 value={customerData.nachname}
                 onChange={handleCustomerChange}
               />
- <input
+              <input
                 className="input-field"
                 name="adresse"
                 placeholder="Adresse"
                 value={customerData.adresse}
                 onChange={handleCustomerChange}
               />
+<input
+  className="input-field"
+  name="plz"
+  placeholder="PLZ"
+  value={customerData.plz}
+  onChange={(event) =>
+    setCustomerData((prev) => ({
+      ...prev,
+      plz: event.target.value.replace(/\D/g, "").slice(0, 5),
+    }))
+  }
+/><input
+  className="input-field"
+  name="ort"
+  placeholder="Ort"
+  value={customerData.ort}
+  onChange={handleCustomerChange}
+/>
               <input
                 className="input-field"
                 type="email"
@@ -1360,8 +1451,6 @@ export const UnternehmenPage = () => {
                   }))
                 }
               />
-
-             
 
               <button
                 className="button-primary company-add-button"
@@ -1400,9 +1489,11 @@ export const UnternehmenPage = () => {
                   setCustomerData({
                     vorname: "",
                     nachname: "",
-                    adresse: "",
                     email: "",
                     telefon: "",
+                    adresse: "",
+                    plz: "",
+                    ort: "",
                   });
 
                   setCustomerImage(null);
@@ -1615,7 +1706,6 @@ export const UnternehmenPage = () => {
               />
 
               <span>CSV Datei hochladen</span>
-
             </label>
           </label>
 
@@ -1638,16 +1728,14 @@ export const UnternehmenPage = () => {
                   (previousValue) => !previousValue,
                 );
 
-                setEditingMaterialIndex(null);
-
                 setMaterialData({
-      name: "",
+  name: "",
   description: "",
-  manufacturer: "",    
-  category: "",        
+  manufacturer: "",
+  category: "",
   unit: "",
   price: 0,
-  currency: "EUR",    
+  currency: "EUR",
 });
               }}
             >
@@ -1678,8 +1766,8 @@ export const UnternehmenPage = () => {
                     </p>
 
                     <p className="text-secondary">
-                      <b>Menge:</b> {material.size}
-                    </p>
+  <b>Einheit:</b> {material.unit}
+</p>
 
                     <p className="text-secondary">
                       <b>Preis:</b> {material.price} €
@@ -1691,28 +1779,70 @@ export const UnternehmenPage = () => {
                       className="employee-edit-button"
                       type="button"
                       onClick={() => {
-                        setMaterialData(material);
-                        setEditingMaterialIndex(index);
-                        setShowMaterialForm(true);
-                      }}
+  setMaterialData({
+    id: material.id,
+    name: material.name ?? "",
+    description: material.description ?? "",
+    manufacturer: material.manufacturer ?? "",
+    category: material.category ?? "",
+    unit: material.unit ?? "",
+    price: material.price ?? 0,
+    currency: material.currency ?? "EUR",
+  });
+
+  setShowMaterialForm(true);
+}}
                     >
                       ✎
                     </button>
 
                     <button
-                      className="employee-remove-button"
-                      type="button"
-                      onClick={() =>
-                        setMaterials((previousMaterials) =>
-                          previousMaterials.filter(
-                            (_, materialIndex) =>
-                              materialIndex !== index,
-                          ),
-                        )
-                      }
-                    >
-                      🗑
-                    </button>
+  className="employee-remove-button"
+  type="button"
+  onClick={async () => {
+    const confirmed =
+      window.confirm(
+        "Material wirklich löschen?",
+      );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      const response =
+        await fetch(
+          `/catalog/material/${material.id}`,
+          {
+            method: "DELETE",
+            headers:
+              getAuthHeaders(),
+          },
+        );
+
+      if (!response.ok) {
+        throw new Error(
+          "Löschen fehlgeschlagen",
+        );
+      }
+       setMaterials((prev) =>
+      prev.filter((m) => m.id !== material.id)
+    );
+
+      setCompanySuccessMessage(
+        "Material gelöscht",
+      );
+    } catch (error) {
+      console.error(error);
+
+      setCompanyErrorMessage(
+        "Material konnte nicht gelöscht werden.",
+      );
+    }
+  }}
+>
+  🗑
+</button>
                   </div>
                 </div>
               ))}
@@ -1738,78 +1868,152 @@ export const UnternehmenPage = () => {
               />
 
               <input
-                className="input-field"
-                name="price"
-                placeholder="Preis"
-                value={materialData.price}
-                onChange={(event) =>
-                  setMaterialData((previousData) => ({
-                    ...previousData,
-                    price: event.target.value.replace(
-                      /[^0-9.,]/g,
-                      "",
-                    ),
-                  }))
-                }
-              />
+  className="input-field"
+  name="manufacturer"
+  placeholder="Hersteller"
+  value={
+    materialData.manufacturer
+  }
+  onChange={
+    handleMaterialChange
+  }
+/>
 
-              <input
-                className="input-field"
-                name="size"
-                placeholder="Menge"
-                value={materialData.size}
-                onChange={(event) =>
-                  setMaterialData((previousData) => ({
-                    ...previousData,
-                    size: event.target.value.replace(/\D/g, ""),
-                  }))
-                }
-              />
+<input
+  className="input-field"
+  name="category"
+  placeholder="Kategorie"
+  value={
+    materialData.category
+  }
+  onChange={
+    handleMaterialChange
+  }
+/>
 
-              <input
-                className="input-field"
-                name="unit"
-                placeholder="Einheit (z. B. Stück, Liter, m²)"
-                value={materialData.unit}
-                onChange={handleMaterialChange}
-              />
+<input
+  className="input-field"
+  name="unit"
+  placeholder="Einheit"
+  value={materialData.unit}
+  onChange={
+    handleMaterialChange
+  }
+/>
+
+<input
+  className="input-field"
+  name="price"
+  type="number"
+  placeholder="Preis (€)"
+  value={materialData.price}
+  step="0.01"
+  onChange={(event) =>
+    setMaterialData(
+      (
+        previousData,
+      ) => ({
+        ...previousData,
+        price:
+          parseFloat(
+            event.target.value,
+          ) || 0,
+      }),
+    )
+  }
+/>
 
               <button
-                className="button-primary company-add-button"
-                type="button"
-                disabled={!isMaterialValid}
-                onClick={() => {
-                  if (!isMaterialValid) {
-                    return;
-                  }
+  className="button-primary company-add-button"
+  type="button"
+  disabled={!isMaterialValid}
+  onClick={async () => {
+    if (!isMaterialValid) {
+      return;
+    }
 
-                  if (editingMaterialIndex !== null) {
-                    setMaterials((previousMaterials) =>
-                      previousMaterials.map((material, index) =>
-                        index === editingMaterialIndex
-                          ? materialData
-                          : material,
-                      ),
-                    );
-                  } else {
-                    setMaterials((previousMaterials) => [
-                      ...previousMaterials,
-                      materialData,
-                    ]);
-                  }
+    try {
+      const payload = {
+        name: materialData.name,
+        description:
+          materialData.description,
+        manufacturer:
+          materialData.manufacturer,
+        category:
+          materialData.category,
+        unit: materialData.unit,
+        price:
+          materialData.price,
+        currency:
+          materialData.currency,
+      };
 
-    setShowMaterialForm(false);
-  } catch (error) {
-    console.error(error);
-    alert("❌ Fehler beim Speichern");
-  }
-}}
-    >
-      {materialData.id ? "Material speichern" : "Material hinzufügen"}
-    </button>
-  </div>
-)}
+      // UPDATE oder CREATE
+      const method =
+        materialData.id
+          ? "PUT"
+          : "POST";
 
+      const url =
+        materialData.id
+          ? `/catalog/material/${materialData.id}`
+          : "/catalog/material";
+
+      const response =
+        await fetch(url, {
+          method,
+          headers:
+            getAuthHeaders(),
+          body: JSON.stringify(
+            payload,
+          ),
+        });
+
+      if (!response.ok) {
+        throw new Error(
+          "Speichern fehlgeschlagen",
+        );
+      }
+
+      // Neu laden vom Backend
+      await loadMaterials();
+
+      setCompanySuccessMessage(
+        "Material gespeichert",
+      );
+
+      // Formular leeren
+      setMaterialData({
+  id: undefined,
+  name: "",
+  description: "",
+  manufacturer: "",
+  category: "",
+  unit: "",
+  price: 0,
+  currency: "EUR",
+});
+
+
+
+      setShowMaterialForm(
+        false,
+      );
+    } catch (error) {
+      console.error(error);
+
+      setCompanyErrorMessage(
+        "Fehler beim Speichern",
+      );
+    }
+  }}
+>
+  {materialData.id
+    ? "Material speichern"
+    : "Material hinzufügen"}
+</button>
+            </div>
+          )}
         </section>
       )}
     </div>
