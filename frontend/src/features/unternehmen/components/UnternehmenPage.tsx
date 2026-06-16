@@ -1,13 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ChangeEvent,
-  type Dispatch,
-  type SetStateAction,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import {
   getCurrentUser,
@@ -60,19 +51,11 @@ type Customer = {
 };
 
 type Material = {
-  id?: string;
-  articleNumber?: string;
   name: string;
   description: string;
-  manufacturer: string;
-  category: string;
+  price: string;
+  size: string;
   unit: string;
-  price: number;
-  currency: string;
-  active?: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-  score?: number;
 };
 
 type CompanyFormData = {
@@ -1729,14 +1712,12 @@ const importedCount = Number(text);
                 );
 
                 setMaterialData({
-  name: "",
-  description: "",
-  manufacturer: "",
-  category: "",
-  unit: "",
-  price: 0,
-  currency: "EUR",
-});
+                  name: "",
+                  description: "",
+                  price: "",
+                  size: "",
+                  unit: "",
+                });
               }}
             >
               {showMaterialForm ? "−" : "+"}
@@ -1978,40 +1959,22 @@ const importedCount = Number(text);
       // Neu laden vom Backend
       await loadMaterials();
 
-      setCompanySuccessMessage(
-        "Material gespeichert",
-      );
+                  setMaterialData({
+                    name: "",
+                    description: "",
+                    price: "",
+                    size: "",
+                    unit: "",
+                  });
 
-      // Formular leeren
-      setMaterialData({
-  id: undefined,
-  name: "",
-  description: "",
-  manufacturer: "",
-  category: "",
-  unit: "",
-  price: 0,
-  currency: "EUR",
-});
-
-
-
-      setShowMaterialForm(
-        false,
-      );
-    } catch (error) {
-      console.error(error);
-
-      setCompanyErrorMessage(
-        "Fehler beim Speichern",
-      );
-    }
-  }}
->
-  {materialData.id
-    ? "Material speichern"
-    : "Material hinzufügen"}
-</button>
+                  setEditingMaterialIndex(null);
+                  setShowMaterialForm(false);
+                }}
+              >
+                {editingMaterialIndex !== null
+                  ? "Material speichern"
+                  : "Material hinzufügen"}
+              </button>
             </div>
           )}
         </section>

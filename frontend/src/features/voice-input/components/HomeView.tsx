@@ -33,12 +33,12 @@ export const HomeView = () => {
     isRecording,
     volume,
     toggle,
-    audioBlobUrl,
+    audioSegments,
     transcript,
     setTranscript,
     state,
     reset,
-    finalizeRecording,
+    finalizeRecording
   } = useVoiceInput();
   const navigate = useNavigate();
   const [customerError, setCustomerError] =
@@ -100,34 +100,22 @@ export const HomeView = () => {
             <div className="voice-section review">
               <h2>Deine Aufnahme:</h2>
 
+              {audioSegments.map((url, index) => (
+                <div key={index} className="audio-segment">
+                  <p>Spracheingabe {index + 1}</p>
+                  <audio controls src={url} />
+                </div>
+              ))}
+
               <div className="audio-actions">
                 <button onClick={reset}>⭰ Neu aufnehmen</button>
 
                 <button onClick={toggle}>
                   ▶ Aufnahme fortsetzen
                 </button>
-
-                <button onClick={finalizeRecording}>
-                  ✓ Aufnahme abschließén
-                </button>
-              </div>
-            </div>
-          )}
-          {state === "finished" && (
-            <div className="voice-section review">
-              <h2>Deine finale Aufnahme</h2>
-
-              {audioBlobUrl && (
-                <audio controls src={audioBlobUrl} />
-              )}
-
-              <div className="audio-actions">
-                <button onClick={reset}>
-                  ⭰ Neu aufnehmen
-                </button>
-
                 <button
                   onClick={() => {
+                    finalizeRecording();
                     const hasCustomer = !!selectedCustomer;
                     setCustomerError(!hasCustomer);
                     if (!hasCustomer) {
