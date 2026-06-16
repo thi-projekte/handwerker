@@ -235,3 +235,9 @@
   font-size: 13px;
   font-weight: 700;
 }
+.footer-center {
+    display: flex;
+    gap: 28px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
