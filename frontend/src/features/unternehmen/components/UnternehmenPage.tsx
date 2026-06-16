@@ -1,12 +1,10 @@
-import { useMemo, useState } from "react";
-import "./UnternehmenPage.css";
+import { useEffect, useMemo, useState } from "react";
 import React from "react";
+import { useLocation } from "react-router-dom";
+import "./UnternehmenPage.css";
+import "./UnternehmenPage-additions.css";
 
-type Tab =
-  | "allgemein"
-  | "kunde"
-  | "stundensatz"
-  | "preisliste";
+type Tab = "allgemein" | "kunde" | "stundensatz" | "preisliste";
 
 type Employee = {
   vorname: string;
@@ -29,11 +27,21 @@ type Material = {
 };
 
 export const UnternehmenPage = () => {
-  const [activeTab, setActiveTab] = useState<Tab>("allgemein");
+  const location = useLocation();
+
+  const [activeTab, setActiveTab] = useState<Tab>(() => {
+    const tab = new URLSearchParams(location.search).get("tab");
+
+    return tab === "kunde" ||
+      tab === "stundensatz" ||
+      tab === "preisliste"
+      ? tab
+      : "allgemein";
+  });
 
   const [logo, setLogo] = useState<string | null>(null);
 
-  const [employees, setEmployees] = useState<Employee[]>([],);
+  const [employees, setEmployees] = useState<Employee[]>([]);
 
   type GeneralEmployee = {
     vorname: string;
@@ -41,7 +49,9 @@ export const UnternehmenPage = () => {
     rolle: string;
   };
 
-  const [generalEmployees, setGeneralEmployees] = useState<GeneralEmployee[]>([]);
+  const [generalEmployees, setGeneralEmployees] = useState<GeneralEmployee[]>(
+    [],
+  );
 
   const [showGeneralEmployeeForm, setShowGeneralEmployeeForm] = useState(false);
 
@@ -68,13 +78,12 @@ export const UnternehmenPage = () => {
 
   const [showEmployeeForm, setShowEmployeeForm] = useState(false);
 
-  const [employeeData, setEmployeeData] =
-    useState<Employee>({
-      vorname: "",
-      nachname: "",
-      rolle: "",
-      stundensatz: "",
-    });
+  const [employeeData, setEmployeeData] = useState<Employee>({
+    vorname: "",
+    nachname: "",
+    rolle: "",
+    stundensatz: "",
+  });
 
   const handleChange = <T extends object>(
   setState: React.Dispatch<React.SetStateAction<T>>
@@ -92,8 +101,9 @@ export const UnternehmenPage = () => {
 };
 
   const handleEmployeeChange = handleChange(setEmployeeData);
-  const [editingEmployeeIndex, setEditingEmployeeIndex] =
-    useState<number | null>(null);
+  const [editingEmployeeIndex, setEditingEmployeeIndex] = useState<
+    number | null
+  >(null);
   const [customerData, setCustomerData] = useState({
     vorname: "",
     nachname: "",
@@ -154,8 +164,6 @@ const loadMaterials = async () => {
     console.error(error);
   }
 };
-
-
 React.useEffect(() => {
   loadMaterials();
 }, []);
@@ -216,17 +224,13 @@ React.useEffect(() => {
       .toUpperCase();
   }, [companyData.firmenname]);
 
-  const handleLogoUpload = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
+  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
 
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      alert(
-        "Fehler: Bitte wähle eine Bilddatei aus.",
-      );
+      alert("Fehler: Bitte wähle eine Bilddatei aus.");
 
       event.target.value = "";
 
@@ -241,20 +245,21 @@ React.useEffect(() => {
   const [materials, setMaterials] = useState<Material[]>([]);
   const [showMaterialForm, setShowMaterialForm] = useState(false);
   const [editingMaterialIndex, setEditingMaterialIndex] =
-    useState<number | null>(null);
+  useState<number | null>(null);
 
-  const [materialData, setMaterialData] = useState<Material>({
-  name: "",
-  description: "",
-  manufacturer: "",     
-  category: "",         
-  unit: "",
-  price: 0,            
-  currency: "EUR",   
-});
+  const [materialData, setMaterialData] =
+  useState<Material>({
+    name: "",
+    description: "",
+    manufacturer: "",
+    category: "",
+    unit: "",
+    price: 0,
+    currency: "EUR",
+  });
   const handleMaterialChange = handleChange(setMaterialData);
 
-const getAuthHeaders = () => {
+  const getAuthHeaders = () => {
   const token = localStorage.getItem("authToken");
   return {
     "Authorization": token ? `Bearer ${token}` : "",
@@ -264,17 +269,15 @@ const getAuthHeaders = () => {
   const isMaterialValid =
   !!materialData.name &&
   !!materialData.description &&
-  !!materialData.manufacturer &&  
-  !!materialData.category &&      
-  materialData.price >= 0 &&       
+  !!materialData.manufacturer &&
+  !!materialData.category &&
+  materialData.price >= 0 &&
   !!materialData.unit;
 
   return (
     <div className="app company-page">
       <header className="card company-header compact">
-        <span className="company-eyebrow">
-          CraftVoice Unternehmen
-        </span>
+        <span className="company-eyebrow">CraftVoice Unternehmen</span>
 
         <h1>Unternehmen & Verwaltung</h1>
       </header>
@@ -282,8 +285,8 @@ const getAuthHeaders = () => {
       <section className="card company-tab-card">
         <button
           className={`company-tab ${activeTab === "allgemein"
-              ? "active"
-              : ""
+            ? "active"
+            : ""
             }`}
           onClick={() =>
             setActiveTab("allgemein")
@@ -294,8 +297,8 @@ const getAuthHeaders = () => {
 
         <button
           className={`company-tab ${activeTab === "kunde"
-              ? "active"
-              : ""
+            ? "active"
+            : ""
             }`}
           onClick={() => setActiveTab("kunde")}
         >
@@ -304,8 +307,8 @@ const getAuthHeaders = () => {
 
         <button
           className={`company-tab ${activeTab === "stundensatz"
-              ? "active"
-              : ""
+            ? "active"
+            : ""
             }`}
           onClick={() =>
             setActiveTab("stundensatz")
@@ -316,8 +319,8 @@ const getAuthHeaders = () => {
 
         <button
           className={`company-tab ${activeTab === "preisliste"
-              ? "active"
-              : ""
+            ? "active"
+            : ""
             }`}
           onClick={() =>
             setActiveTab("preisliste")
@@ -339,15 +342,10 @@ const getAuthHeaders = () => {
                     className="company-logo-preview"
                   />
                 ) : (
-                  <div className="company-logo-placeholder">
-                    {initials}
-                  </div>
+                  <div className="company-logo-placeholder">{initials}</div>
                 )}
 
-                <label
-                  htmlFor="logo-upload"
-                  className="company-logo-button"
-                >
+                <label htmlFor="logo-upload" className="company-logo-button">
                   Logo ändern
                 </label>
 
@@ -363,9 +361,7 @@ const getAuthHeaders = () => {
               <div className="company-main-info">
                 <h2>{companyData.firmenname}</h2>
 
-                <p className="text-secondary">
-                  {companyData.branche}
-                </p>
+                <p className="text-secondary">{companyData.branche}</p>
               </div>
             </div>
           </section>
@@ -399,7 +395,7 @@ const getAuthHeaders = () => {
                 <span>Rolle / Berechtigung</span>
 
                 <div className="input-field readonly-field">
-                   {companyData.rolle}
+                  {companyData.rolle}
                 </div>
               </label>
             </div>
@@ -437,8 +433,10 @@ const getAuthHeaders = () => {
             {!showGeneralEmployeeForm && generalEmployees.length > 0 && (
               <div className="employee-list">
                 {generalEmployees.map((e, index) => (
-                  <div key={index} className="employee-card-modern employee-card">
-
+                  <div
+                    key={index}
+                    className="employee-card-modern employee-card"
+                  >
                     <div>
                       <strong className="general-employee-name">
                         {e.vorname} {e.nachname}
@@ -450,7 +448,6 @@ const getAuthHeaders = () => {
                     </div>
 
                     <div className="employee-actions">
-
                       {/* EDIT */}
                       <button
                         className="employee-edit-button"
@@ -468,15 +465,13 @@ const getAuthHeaders = () => {
                         className="employee-remove-button"
                         onClick={() =>
                           setGeneralEmployees((prev) =>
-                            prev.filter((_, i) => i !== index)
+                            prev.filter((_, i) => i !== index),
                           )
                         }
                       >
                         🗑
                       </button>
-
                     </div>
-
                   </div>
                 ))}
               </div>
@@ -485,7 +480,6 @@ const getAuthHeaders = () => {
             {/* FORM */}
             {showGeneralEmployeeForm && (
               <div className="employee-input-grid">
-
                 <input
                   className="input-field"
                   name="vorname"
@@ -547,8 +541,8 @@ const getAuthHeaders = () => {
                         prev.map((emp, i) =>
                           i === editingGeneralEmployeeIndex
                             ? generalEmployeeData
-                            : emp
-                        )
+                            : emp,
+                        ),
                       );
                     } else {
                       // CREATE
@@ -572,7 +566,6 @@ const getAuthHeaders = () => {
                     ? "Mitarbeiter speichern"
                     : "Mitarbeiter hinzufügen"}
                 </button>
-
               </div>
             )}
           </section>
@@ -611,9 +604,7 @@ const getAuthHeaders = () => {
                   value={companyData.rechtsform}
                   onChange={handleCompanyChange}
                 >
-                  <option value="">
-                    Bitte auswählen
-                  </option>
+                  <option value="">Bitte auswählen</option>
                   <option>Einzelunternehmen</option>
                   <option>GbR</option>
                   <option>UG</option>
@@ -713,7 +704,8 @@ const getAuthHeaders = () => {
                   onChange={(e) =>
                     setCompanyData((prev) => ({
                       ...prev,
-                      handy: e.target.value.replace(/[^\d+]/g, "")
+                      handy: e.target.value
+                        .replace(/[^\d+]/g, "")
                         .replace(/(?!^)\+/g, ""),
                     }))
                   }
@@ -765,7 +757,7 @@ const getAuthHeaders = () => {
                 />
               </label>
 
-            <label className="company-field">
+              <label className="company-field">
                 <span>BIK</span>
                 <input
                   className="input-field"
@@ -828,14 +820,11 @@ const getAuthHeaders = () => {
 
       {activeTab === "kunde" && (
         <section className="card company-content-card">
-
           {/* HEADER + TOGGLE */}
           <div className="employee-card-modern">
             <div>
               <h2 className="section-title">Kunden</h2>
-              <p className="text-secondary">
-                Kundenprofile verwalten
-              </p>
+              <p className="text-secondary">Kundenprofile verwalten</p>
             </div>
 
             <button
@@ -870,7 +859,6 @@ const getAuthHeaders = () => {
                 <div
                   key={index}
                   className="employee-card-modern employee-card small"
-
                 >
                   {/* LEFT SIDE */}
                   <div className="customer-card-info">
@@ -922,7 +910,7 @@ const getAuthHeaders = () => {
                       className="employee-remove-button"
                       onClick={() => {
                         setCustomers((prev) =>
-                          prev.filter((_, i) => i !== index)
+                          prev.filter((_, i) => i !== index),
                         );
                       }}
                     >
@@ -937,7 +925,6 @@ const getAuthHeaders = () => {
           {/* FORM */}
           {showCustomerForm && (
             <div className="employee-input-grid">
-
               {/* IMAGE */}
               <div className="company-logo-wrapper">
                 {customerImage ? (
@@ -947,9 +934,7 @@ const getAuthHeaders = () => {
                     alt="Kunde"
                   />
                 ) : (
-                  <div className="company-logo-placeholder">
-                    👤
-                  </div>
+                  <div className="company-logo-placeholder">👤</div>
                 )}
 
                 <label className="company-logo-button">
@@ -996,7 +981,8 @@ const getAuthHeaders = () => {
                 onChange={(e) =>
                   setCustomerData((prev) => ({
                     ...prev,
-                    telefon: e.target.value.replace(/[^\d+]/g, "")
+                    telefon: e.target.value
+                      .replace(/[^\d+]/g, "")
                       .replace(/(?!^)\+/g, ""),
                   }))
                 }
@@ -1012,8 +998,8 @@ const getAuthHeaders = () => {
                       prev.map((c, i) =>
                         i === editingIndex
                           ? { ...customerData, image: customerImage }
-                          : c
-                      )
+                          : c,
+                      ),
                     );
                     setEditingIndex(null);
                   } else {
@@ -1047,17 +1033,12 @@ const getAuthHeaders = () => {
       )}
       {activeTab === "stundensatz" && (
         <section className="card company-content-card">
-
           {/* HEADER */}
           <div className="employee-card-modern">
             <div>
-              <h2 className="section-title">
-                Mitarbeiter & Stundensätze
-              </h2>
+              <h2 className="section-title">Mitarbeiter & Stundensätze</h2>
 
-              <p className="text-secondary">
-                Mitarbeiter verwalten
-              </p>
+              <p className="text-secondary">Mitarbeiter verwalten</p>
             </div>
 
             <button
@@ -1080,85 +1061,65 @@ const getAuthHeaders = () => {
           </div>
 
           {/* EMPTY STATE */}
-          {!showEmployeeForm &&
-            employees.length === 0 && (
-              <p className="text-secondary empty-state">
-                Noch keine Mitarbeiter hinzugefügt
-              </p>
-            )}
+          {!showEmployeeForm && employees.length === 0 && (
+            <p className="text-secondary empty-state">
+              Noch keine Mitarbeiter hinzugefügt
+            </p>
+          )}
 
           {/* LISTE */}
-          {!showEmployeeForm &&
-            employees.length > 0 && (
-              <div className="employee-list">
+          {!showEmployeeForm && employees.length > 0 && (
+            <div className="employee-list">
+              {employees.map((employee, index) => (
+                <div key={index} className="employee-card-modern employee-card">
+                  <div>
+                    <strong className="employee-name">
+                      {employee.vorname} {employee.nachname}
+                    </strong>
 
-                {employees.map(
-                  (employee, index) => (
-                    <div
-                      key={index}
-                      className="employee-card-modern employee-card"
+                    <p className="text-secondary employee-role">
+                      {employee.rolle}
+                    </p>
+
+                    <p className="text-secondary">
+                      {employee.stundensatz}
+                      {" € / Stunde"}
+                    </p>
+                  </div>
+
+                  <div className="employee-actions">
+                    <button
+                      className="employee-edit-button"
+                      onClick={() => {
+                        setEmployeeData(employee);
+
+                        setEditingEmployeeIndex(index);
+
+                        setShowEmployeeForm(true);
+                      }}
                     >
-                      <div>
-                        <strong className="employee-name">
-                          {employee.vorname}{" "}
-                          {employee.nachname}
-                        </strong>
+                      ✎
+                    </button>
 
-                        <p className="text-secondary employee-role">
-                          {employee.rolle}
-                        </p>
-
-                        <p className="text-secondary">
-                          {employee.stundensatz}
-                          {" € / Stunde"}
-                        </p>
-                      </div>
-
-                      <div className="employee-actions">
-                        <button
-                          className="employee-edit-button"
-                          onClick={() => {
-                            setEmployeeData(
-                              employee,
-                            );
-
-                            setEditingEmployeeIndex(
-                              index,
-                            );
-
-                            setShowEmployeeForm(
-                              true,
-                            );
-                          }}
-                        >
-                          ✎
-                        </button>
-
-                        <button
-                          className="employee-remove-button"
-                          onClick={() => {
-                            setEmployees(
-                              (prev) =>
-                                prev.filter(
-                                  (_, i) =>
-                                    i !== index,
-                                ),
-                            );
-                          }}
-                        >
-                          🗑
-                        </button>
-                      </div>
-                    </div>
-                  ),
-                )}
-              </div>
-            )}
+                    <button
+                      className="employee-remove-button"
+                      onClick={() => {
+                        setEmployees((prev) =>
+                          prev.filter((_, i) => i !== index),
+                        );
+                      }}
+                    >
+                      🗑
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* FORMULAR */}
           {showEmployeeForm && (
             <div className="employee-input-grid">
-
               <input
                 className="input-field"
                 name="vorname"
@@ -1199,29 +1160,16 @@ const getAuthHeaders = () => {
               <button
                 className="button-primary company-add-button"
                 onClick={() => {
-                  if (
-                    !employeeData.vorname ||
-                    !employeeData.nachname
-                  )
-                    return;
+                  if (!employeeData.vorname || !employeeData.nachname) return;
 
-                  if (
-                    editingEmployeeIndex !==
-                    null
-                  ) {
+                  if (editingEmployeeIndex !== null) {
                     setEmployees((prev) =>
                       prev.map((e, i) =>
-                        i ===
-                          editingEmployeeIndex
-                          ? employeeData
-                          : e,
+                        i === editingEmployeeIndex ? employeeData : e,
                       ),
                     );
                   } else {
-                    setEmployees((prev) => [
-                      ...prev,
-                      employeeData,
-                    ]);
+                    setEmployees((prev) => [...prev, employeeData]);
                   }
 
                   setEmployeeData({
@@ -1231,15 +1179,12 @@ const getAuthHeaders = () => {
                     stundensatz: "",
                   });
 
-                  setEditingEmployeeIndex(
-                    null,
-                  );
+                  setEditingEmployeeIndex(null);
 
                   setShowEmployeeForm(false);
                 }}
               >
-                {editingEmployeeIndex !==
-                  null
+                {editingEmployeeIndex !== null
                   ? "Mitarbeiter speichern"
                   : "Mitarbeiter hinzufügen"}
               </button>
@@ -1248,7 +1193,7 @@ const getAuthHeaders = () => {
         </section>
       )}
 
-      {activeTab === "preisliste" && (
+       {activeTab === "preisliste" && (
         <section className="card company-content-card">
           {/* CSV UPLOAD */}
           <label className="company-field csv-upload-field">
