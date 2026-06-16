@@ -5,8 +5,35 @@ import { DashboardFilters } from "@/features/dashboard/components/DashboardFilte
 import { DashboardChart } from "@/features/dashboard/components/DashboardChart";
 import { DashboardAttention } from "@/features/dashboard/components/DashboardAttention";
 import { DashboardActivity } from "@/features/dashboard/components/DashboardActivity";
+import { useDashboard } from "@/features/dashboard/hooks/useDashboard";
 
 export const DashboardView = () => {
+  const { data, loading, error } = useDashboard();
+
+  if (loading) {
+    return (
+      <div className="dashboard-page">
+        <header className="card">
+          <h1>Dashboard</h1>
+          <p className="text-secondary">Laden...</p>
+        </header>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="dashboard-page">
+        <header className="card">
+          <h1>Dashboard</h1>
+          <p className="text-secondary" style={{ color: "red" }}>
+            Fehler beim Laden: {error.message}
+          </p>
+        </header>
+      </div>
+    );
+  }
+
   return (
     <div className="dashboard-page">
       <header className="card">
@@ -18,20 +45,16 @@ export const DashboardView = () => {
       <div className="dashboard-content">
         <DashboardFilters />
 
-        <DashboardStats />
+        {data && <DashboardStats data={data} />}
 
-        <DashboardChart />
+        {data && <DashboardChart data={data} />}
 
         <div className="dashboard-grid">
+          {data && <DashboardAttention data={data} />}
 
-          <DashboardAttention />
-
-          <DashboardActivity />
-
+          {data && <DashboardActivity data={data} />}
         </div>
-
       </div>
-
     </div>
   );
 };

@@ -53,7 +53,7 @@ public class ProcessEngineClient {
          */
         public void sendAngebotPayload(String businessKey, Long customerId, Long handwerkerId, String sprachschnipsel, Object vorlage) {
 
-                Map<String, Object> kundendaten = Map.of(
+                Map<String, Object> customerIdMap = Map.of(
                                 "value", customerId,
                                 "type", "Long");
 
@@ -70,7 +70,7 @@ public class ProcessEngineClient {
                 vorlageMap.put("type", "Json");
 
                 Map<String, Object> processVariables = Map.of(
-                                "kundendaten", kundendaten,
+                                "customerId", customerIdMap,
                                 "handwerkerId", handwerkerdaten,
                                 "sprachschnipsel", sprachschnipselMap,
                                 "vorlage", vorlageMap);
@@ -86,22 +86,21 @@ public class ProcessEngineClient {
         }
 
         /**
-         * Sendet das KI-Ergebnis an die Process Engine.
+         * Korreliert den erstellten Angebotsentwurf zurück an die Process Engine.
+         * Der Prozess wartet an Event_10bgkb0 auf die Nachricht "angebotsentwurf".
          *
-         * @param businessKey          businessKey des Angebots
-         * @param ergebnisKiJsonString strukturierteAngebotspositionen und
-         *                             korrekturvorschlaege als JSON-String
+         * @param businessKey         businessKey des Angebots
+         * @param angebotsentwurfJson das serialisierte OfferResponse-DTO als JSON-String
          */
-        public void sendAiResult(String businessKey, String ergebnisKiJsonString) {
+        public void sendAngebotsentwurf(String businessKey, String angebotsentwurfJson) {
 
                 Map<String, Object> processVariables = Map.of(
-                        "ergebnisKI", Map.of(
-                                "value", ergebnisKiJsonString,
-                                "type", "String"));
-
+                        "angebotsentwurf", Map.of(
+                                "value", angebotsentwurfJson,
+                                "type", "Json"));
 
                 PeMessagePayload payload = new PeMessagePayload(
-                        "ergebnisKI",
+                        "angebotsentwurf",
                         businessKey,
                         processVariables,
                         false

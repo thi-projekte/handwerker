@@ -30,15 +30,15 @@
             <camunda:inputParameter name="method">POST</camunda:inputParameter>
             <camunda:inputParameter name="payload">
               <camunda:script scriptFormat="JavaScript">var ergebnisKI = execution.getVariable("ergebnisKI");
-var kundendaten = execution.getVariable("customerId");
+var customerId = execution.getVariable("customerId");
 var businessKey = execution.getProcessBusinessKey();
 
 JSON.stringify({
   businessKey: businessKey,
 
-  customerId: customerId, 
+  customerId: customerId,
 
-  strukturierteAngebotspositione: JSON.parse(
+  strukturierteAngebotspositionen: JSON.parse(
     ergebnisKI.prop("strukturierteAngebotspositionen").toString()
   ),
 

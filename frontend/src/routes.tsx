@@ -21,6 +21,7 @@ import { PasswordChangePage } from "@/features/password-change/components/Passwo
 
 import { LadenPage } from "@/features/Laden/components/LadenPage";
 
+import { AboPage } from "@/features/landing/components/AboPage";
 import { Impressum } from "@/features/landing/components/Impressum";
 import { Datenschutz } from "@/features/landing/components/Datenschutz";
 import { Kontakt } from "@/features/landing/components/Kontakt";
@@ -188,6 +189,15 @@ export function AppRoutes() {
         element={
           <AppLayout hideNav hideHeader>
             <Kontakt />
+          </AppLayout>
+        }
+      />
+
+      <Route
+        path="/abo"
+        element={
+          <AppLayout hideNav hideHeader>
+            <AboPage />
           </AppLayout>
         }
       />

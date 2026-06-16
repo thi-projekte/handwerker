@@ -1,0 +1,196 @@
+.abo-page {
+  padding: 40px;
+  color: #fff;
+  background: radial-gradient(
+      circle at top,
+      rgba(255, 106, 0, 0.08),
+      transparent 40%
+    ),
+    #0f0f10;
+}
+
+/* HEADER */
+.abo-header {
+  margin-bottom: 30px;
+}
+
+.abo-eyebrow {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: var(--color-accent);
+  text-transform: uppercase;
+  opacity: 0.9;
+}
+
+.abo-header h1 {
+  margin: 6px 0;
+  font-size: 34px;
+  font-weight: 800;
+}
+
+.abo-header p {
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 14px;
+}
+
+/* GRID */
+.abo-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+/* CARD */
+.abo-card {
+  position: relative;
+  border-radius: 20px;
+  padding: 18px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(14px);
+  transition: all 0.25s ease;
+  cursor: pointer;
+
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.abo-card:hover {
+  transform: translateY(-8px);
+  border-color: rgba(255, 106, 0, 0.4);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5);
+}
+
+/* ACTIVE CARD (PREMIUM GLOW) */
+.abo-card.active {
+  border: 1px solid rgba(255, 106, 0, 0.8);
+  box-shadow: 0 20px 60px rgba(255, 106, 0, 0.18);
+  transform: translateY(-6px);
+}
+
+/* TOP HEADER */
+.abo-top {
+  text-align: center;
+  padding: 14px;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.35);
+  margin-bottom: 14px;
+}
+
+.abo-top h2 {
+  margin: 0;
+  font-size: 16px;
+  letter-spacing: 0.08em;
+}
+
+.abo-sub {
+  font-size: 12px;
+  opacity: 0.7;
+  margin-top: 4px;
+}
+
+/* ICON AREA */
+.abo-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 120px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  margin-bottom: 14px;
+}
+
+/* PRICE */
+.abo-price {
+  text-align: center;
+  font-size: 30px;
+  font-weight: 800;
+  margin: 10px 0;
+}
+
+.abo-price span {
+  display: block;
+  font-size: 12px;
+  opacity: 0.6;
+  margin-top: 4px;
+}
+
+.abo-button {
+  margin-top: 10px;
+  width: 100%;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: transparent;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  color: #ffffff;
+  opacity: 0.85;
+}
+
+.abo-button:hover {
+  opacity: 1;
+  border-color: rgba(255, 255, 255, 0.35);
+  transform: scale(1.02);
+}
+
+/* 🔥 ACTIVE BUTTON = ORANGE */
+.abo-card.active .abo-button {
+  background: linear-gradient(135deg, #ff6a00, #ff3d00);
+  border-color: transparent;
+  color: #fff;
+  opacity: 1;
+  box-shadow: 0 10px 25px rgba(255, 106, 0, 0.25);
+}
+
+.abo-card.active .abo-button:hover {
+  transform: scale(1.03);
+}
+
+/* FOOTER (VORTEIL BOX) */
+.abo-footer {
+  margin-top: 16px;
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.abo-footer strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+.abo-footer p {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+/* RESPONSIVE */
+@media (max-width: 1100px) {
+  .abo-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .abo-header h1 {
+    font-size: 26px;
+  }
+}
+
+.abo-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  height: 140px; /* 🔥 größer als vorher */
+  font-size: 54px; /* 🔥 ICON SIZE */
+  border-radius: 16px;
+
+  background: rgba(255, 255, 255, 0.04);
+  margin-bottom: 14px;
+}

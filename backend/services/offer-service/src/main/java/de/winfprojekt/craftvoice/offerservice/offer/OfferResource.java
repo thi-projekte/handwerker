@@ -45,33 +45,40 @@ public class OfferResource {
     }
 
     /**
-     * Verarbeitet das KI-Ergebnis für ein bestimmtes Angebot.
+     * Verarbeitet das KI-Ergebnis für ein bestimmtes Angebot, adressiert über den
+     * businessKey.
      *
-     * @param id ID des Angebots
-     * @param request Anfrageobjekt mit dem KI-Ergebnis
+     * @param businessKey Business-Key des Angebots (von der Process Engine bekannt)
+     * @param request     Anfrageobjekt mit dem KI-Ergebnis
      * @return HTTP-Response mit Statuscode 200 bei Erfolg
      */
     @POST
-    @Path("/angebote/{id}/ki-ergebnis")
-    public Response processAiResult(@PathParam("id") Long id, @Valid OfferChangesRequest request) {
+    @Path("/angebote/{businessKey}/ki-ergebnis")
+    public Response processAiResult(@PathParam("businessKey") String businessKey, @Valid OfferChangesRequest request) {
 
-        offerService.initializeOrUpdateOfferFromAiOrFrontend(id, request);
+        offerService.initializeOrUpdateOfferFromAiOrFrontend(businessKey, request);
 
         return Response.status(200).build();
     }
 
     /**
-     * Verarbeitet die Änderungen des Handwerkers im Frontend für ein bestimmtes Angebot.
+     * Verarbeitet die Änderungen des Handwerkers im Frontend für ein bestimmtes
+     * Angebot.
      *
-     * @param id ID des Angebots
+     * @param id      ID des Angebots
      * @param request Anfrageobjekt mit dem KI-Ergebnis
      * @return HTTP-Response mit Statuscode 200 bei Erfolg
      */
     @POST
-    @Path("/angebote/{id}/positionen")
-    public Response processOfferChanges(@PathParam("id") Long id, @Valid OfferChangesRequest request) {
+    @Path("/angebote/{businesskey}/positionen")
+    public Response processOfferChanges(@PathParam("businesskey") String businessKey,
+            @Valid OfferChangesRequest request) {
 
-        offerService.initializeOrUpdateOfferFromAiOrFrontend(id, request);
+        Offer offer = Offer.find("businessKey", businessKey).firstResult();
+        if (offer == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+        offerService.initializeOrUpdateOfferFromAiOrFrontend(offer.businessKey, request);
 
         return Response.status(200).build();
     }
@@ -85,14 +92,15 @@ public class OfferResource {
      * @return HTTP-Response 200 mit dem aktualisierten Angebot
      */
     @POST
-    @Path("/angebote/{id}/arbeitsstunden")
-    public Response setArbeitsstunden(@PathParam("id") Long id, @Valid SetArbeitsstundenRequest request) {
-        OfferResponse response = offerService.setArbeitsstunden(id, request);
+    @Path("/angebote/{businesskey}/arbeitsstunden")
+    public Response setArbeitsstunden(@PathParam("businesskey") String businesskey, @Valid SetArbeitsstundenRequest request) {
+        OfferResponse response = offerService.setArbeitsstunden(businesskey, request);
         return Response.ok(response).build();
     }
 
     /**
-     * Gibt eine Liste aller Angebote zurück, sortiert nach Erstellungsdatum absteigend (neueste zuerst).
+     * Gibt eine Liste aller Angebote zurück, sortiert nach Erstellungsdatum
+     * absteigend (neueste zuerst).
      *
      * @return HTTP-Response mit Statuscode 200 und der Liste aller Angebote
      */
@@ -106,23 +114,25 @@ public class OfferResource {
      * Gibt das Angebot mit der angegebenen ID zurück, falls es existiert.
      *
      * @param id ID des gesuchten Angebots
-     * @return HTTP-Response mit Statuscode 200 und dem gefundenen Angebot, oder Statuscode 404
+     * @return HTTP-Response mit Statuscode 200 und dem gefundenen Angebot, oder
+     *         Statuscode 404
      */
     @GET
-    @Path("/offers/{id}")
-    public Response getOfferById(@PathParam("id") Long id) {
-        OfferResponse response = offerService.getOfferById(id);
-        if (response == null) {
+    @Path("/offers/{businessKey}")
+    public Response getOfferById(@PathParam("businessKey") String businessKey) {
+        Offer offer = Offer.find("businessKey", businessKey).firstResult();
+        if (offer == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
-        return Response.ok(response).build();
+        return Response.ok(OfferResponse.fromEntity(offer)).build();
     }
 
     /**
-     * Endpunkt zur Annahme oder Ablehnung eines Angebots durch den Kunden über einen Token.
+     * Endpunkt zur Annahme oder Ablehnung eines Angebots durch den Kunden über
+     * einen Token.
      * Dieser Endpunkt ist öffentlich zugänglich.
      *
-     * @param token Der eindeutige Annahme-Token des Angebots
+     * @param token   Der eindeutige Annahme-Token des Angebots
      * @param request Die Kundenentscheidung (angenommen / abgelehnt)
      * @return HTTP-Response 200 mit Bestätigungsantwort oder Fehlermeldung
      */
@@ -137,15 +147,17 @@ public class OfferResource {
     /**
      * Endpunkt zur Annahme eines Angebots durch den Handwerker nach KI-Durchlauf.
      * Dieser Endpunkt ist öffentlich zugänglich.
+     * 
      * @param id Angebots-ID des angenommenen Angebots
-     * @return HTTP-Response mit "204 No Content status code" im Happy Path oder alternativ eine Fehlermeldung
+     * @return HTTP-Response mit "204 No Content status code" im Happy Path oder
+     *         alternativ eine Fehlermeldung
      */
     @POST
-    @Path("/offers/{id}/review/approve")
+    @Path("/offers/{businessKey}/review/approve")
     @Consumes(MediaType.WILDCARD)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response acceptAiResult(@PathParam("id") Long id) {
-        offerService.acceptAiResult(id);
+    public Response acceptAiResult(@PathParam("businessKey") String businessKey) {
+        offerService.acceptAiResult(businessKey);
         return Response.noContent().build();
     }
 
