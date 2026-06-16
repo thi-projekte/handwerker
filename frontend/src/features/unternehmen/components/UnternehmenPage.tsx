@@ -164,7 +164,7 @@ const loadMaterials = async () => {
     console.error(error);
   }
 };
-React.useEffect(() => {
+useEffect(() => {
   loadMaterials();
 }, []);
   const [customerImage, setCustomerImage] = useState<string | null>(null);
@@ -244,8 +244,6 @@ React.useEffect(() => {
 
   const [materials, setMaterials] = useState<Material[]>([]);
   const [showMaterialForm, setShowMaterialForm] = useState(false);
-  const [editingMaterialIndex, setEditingMaterialIndex] =
-  useState<number | null>(null);
 
   const [materialData, setMaterialData] =
   useState<Material>({
@@ -1224,8 +1222,6 @@ React.useEffect(() => {
               className="employee-edit-button"
               onClick={() => {
                 setShowMaterialForm((p) => !p);
-                setEditingMaterialIndex(null);
-
                 setMaterialData({
       name: "",
   description: "",
@@ -1425,7 +1421,6 @@ React.useEffect(() => {
       currency: "EUR",
     });
 
-    setEditingMaterialIndex(null);
     setShowMaterialForm(false);
   } catch (error) {
     console.error(error);
