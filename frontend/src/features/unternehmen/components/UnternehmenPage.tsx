@@ -1,5 +1,10 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
+import {
+  getCurrentUser,
+  updateCompany,
+  type UserProfile,
+} from "@/services/userService";
 import "./UnternehmenPage.css";
 import "./UnternehmenPage-additions.css";
 
@@ -12,6 +17,20 @@ type Employee = {
   stundensatz: string;
 };
 
+type GeneralEmployee = {
+  vorname: string;
+  nachname: string;
+  rolle: string;
+};
+
+type Customer = {
+  vorname: string;
+  nachname: string;
+  email: string;
+  telefon: string;
+  image: string | null;
+};
+
 type Material = {
   name: string;
   description: string;
@@ -20,8 +39,52 @@ type Material = {
   unit: string;
 };
 
+type CompanyFormData = {
+  firmenname: string;
+  mitarbeiterVorname: string;
+  mitarbeiterNachname: string;
+  rolle: string;
+  strasse: string;
+  hausnummer: string;
+  plz: string;
+  ort: string;
+  bundesland: string;
+  land: string;
+  rechnungsadresse: string;
+  handy: string;
+  email: string;
+  website: string;
+  branche: string;
+  iban: string;
+  BIK: string;
+  bankname: string;
+  kontoinhaber: string;
+  steuernummer: string;
+  rechtsform: string;
+  ustId: string;
+  handelsregisterNummer: string;
+};
+
+const getRoleLabel = (roles: string[]) => {
+  if (roles.includes("OWNER")) return "Inhaber";
+  if (roles.includes("EMPLOYEE")) return "Mitarbeiter";
+  if (roles.includes("ACCOUNTANT")) return "Buchhaltung";
+  if (roles.includes("CUSTOMER")) return "Kunde";
+
+  return roles[0] || "Keine Rolle";
+};
+
+const getErrorMessage = (error: unknown) => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return "Ein unbekannter Fehler ist aufgetreten.";
+};
+
 export const UnternehmenPage = () => {
   const location = useLocation();
+  const successTimeoutRef = useRef<number | null>(null);
 
   const [activeTab, setActiveTab] = useState<Tab>(() => {
     const tab = new URLSearchParams(location.search).get("tab");
@@ -34,6 +97,112 @@ export const UnternehmenPage = () => {
   });
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const [isLoadingCompany, setIsLoadingCompany] = useState(true);
+  const [isSavingCompany, setIsSavingCompany] = useState(false);
+  const [companyErrorMessage, setCompanyErrorMessage] = useState("");
+  const [companySuccessMessage, setCompanySuccessMessage] = useState("");
+  const [currentUserRoles, setCurrentUserRoles] = useState<string[]>([]);
+
+  const [logo, setLogo] = useState<string | null>(null);
+
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [showEmployeeForm, setShowEmployeeForm] = useState(false);
+  const [editingEmployeeIndex, setEditingEmployeeIndex] = useState<
+    number | null
+  >(null);
+
+  const [employeeData, setEmployeeData] = useState<Employee>({
+    vorname: "",
+    nachname: "",
+    rolle: "",
+    stundensatz: "",
+  });
+
+  const [generalEmployees, setGeneralEmployees] = useState<GeneralEmployee[]>(
+    [],
+  );
+
+  const [showGeneralEmployeeForm, setShowGeneralEmployeeForm] = useState(false);
+
+  const [editingGeneralEmployeeIndex, setEditingGeneralEmployeeIndex] =
+    useState<number | null>(null);
+
+  const [generalEmployeeData, setGeneralEmployeeData] =
+    useState<GeneralEmployee>({
+      vorname: "",
+      nachname: "",
+      rolle: "",
+    });
+
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [showCustomerForm, setShowCustomerForm] = useState(false);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+
+  const [customerData, setCustomerData] = useState({
+    vorname: "",
+    nachname: "",
+    email: "",
+    telefon: "",
+  });
+
+  const [customerImage, setCustomerImage] = useState<string | null>(null);
+
+  const [materials, setMaterials] = useState<Material[]>([]);
+  const [showMaterialForm, setShowMaterialForm] = useState(false);
+
+  const [editingMaterialIndex, setEditingMaterialIndex] = useState<
+    number | null
+  >(null);
+
+  const [materialData, setMaterialData] = useState<Material>({
+    name: "",
+    description: "",
+    price: "",
+    size: "",
+    unit: "",
+  });
+
+  const [companyData, setCompanyData] = useState<CompanyFormData>({
+    firmenname: "",
+    mitarbeiterVorname: "",
+    mitarbeiterNachname: "",
+    rolle: "",
+    strasse: "",
+    hausnummer: "",
+    plz: "",
+    ort: "",
+    bundesland: "",
+    land: "Deutschland",
+    rechnungsadresse: "",
+    handy: "",
+    email: "",
+    website: "",
+    branche: "",
+    iban: "",
+    BIK: "",
+    bankname: "",
+    kontoinhaber: "",
+    steuernummer: "",
+    rechtsform: "",
+    ustId: "",
+    handelsregisterNummer: "",
+  });
+
+  const isOwner = currentUserRoles.includes("OWNER");
+  const companyFieldsDisabled = !isOwner || isSavingCompany;
+
+  const initials = useMemo(() => {
+    const value = companyData.firmenname
+      .split(" ")
+      .filter(Boolean)
+      .map((word) => word[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
+
+    return value || "CV";
+  }, [companyData.firmenname]);
 
   const handleTabChange = (tab: Tab) => {
     setActiveTab(tab);
@@ -49,54 +218,9 @@ export const UnternehmenPage = () => {
     if (activeTab === "allgemein") return "Allgemein";
     if (activeTab === "kunde") return "Kunden";
     if (activeTab === "stundensatz") return "Stundensatz";
+
     return "Preisliste";
   };
-
-  const [logo, setLogo] = useState<string | null>(null);
-
-  const [employees, setEmployees] = useState<Employee[]>([]);
-
-  type GeneralEmployee = {
-    vorname: string;
-    nachname: string;
-    rolle: string;
-  };
-
-  const [generalEmployees, setGeneralEmployees] = useState<GeneralEmployee[]>(
-    [],
-  );
-
-  const [showGeneralEmployeeForm, setShowGeneralEmployeeForm] = useState(false);
-
-  const [generalEmployeeData, setGeneralEmployeeData] =
-    useState<GeneralEmployee>({
-      vorname: "",
-      nachname: "",
-      rolle: "",
-    });
-
-  const [editingGeneralEmployeeIndex, setEditingGeneralEmployeeIndex] =
-    useState<number | null>(null);
-
-  const [customers, setCustomers] = useState<
-    {
-      vorname: string;
-      nachname: string;
-      email: string;
-      telefon: string;
-      image: string | null;
-    }[]
-  >([]);
-  const [showCustomerForm, setShowCustomerForm] = useState(false);
-
-  const [showEmployeeForm, setShowEmployeeForm] = useState(false);
-
-  const [employeeData, setEmployeeData] = useState<Employee>({
-    vorname: "",
-    nachname: "",
-    rolle: "",
-    stundensatz: "",
-  });
 
   const handleChange =
     <T extends Record<string, string>>(
@@ -109,27 +233,206 @@ export const UnternehmenPage = () => {
     ) => {
       const { name, value } = event.target;
 
-      setState((prev) => ({
-        ...prev,
+      setState((previousState) => ({
+        ...previousState,
         [name]: value,
       }));
     };
 
+  const handleCompanyChange = handleChange(setCompanyData);
   const handleEmployeeChange = handleChange(setEmployeeData);
-  const [editingEmployeeIndex, setEditingEmployeeIndex] = useState<
-    number | null
-  >(null);
-  const [customerData, setCustomerData] = useState({
-    vorname: "",
-    nachname: "",
-    email: "",
-    telefon: "",
-  });
+  const handleCustomerChange = handleChange(setCustomerData);
+  const handleMaterialChange = handleChange(setMaterialData);
+
+  const applyUserProfileToCompanyData = useCallback((user: UserProfile) => {
+    const roles = user.roles ?? [];
+
+    setCurrentUserRoles(roles);
+
+    setCompanyData((previousData) => ({
+      ...previousData,
+      mitarbeiterVorname: user.firstName ?? "",
+      mitarbeiterNachname: user.lastName ?? "",
+      rolle: getRoleLabel(roles),
+
+      firmenname: user.companyName ?? "",
+      branche: user.industry ?? "",
+      rechtsform: user.legalForm ?? "",
+
+      strasse: user.street ?? "",
+      hausnummer: user.houseNumber ?? "",
+      plz: user.zipCode ?? "",
+      ort: user.city ?? "",
+      bundesland: user.state ?? "",
+      land: user.country ?? "Deutschland",
+
+      handy: user.companyPhoneNumber ?? "",
+      email: user.companyEmail ?? "",
+      website: user.website ?? "",
+
+      iban: user.iban ?? "",
+      BIK: user.bic ?? "",
+      bankname: user.bankName ?? "",
+      kontoinhaber: user.accountHolder ?? "",
+
+      steuernummer: user.taxNumber ?? "",
+      ustId: user.vatId ?? "",
+      handelsregisterNummer: user.tradeRegisterNumber ?? "",
+    }));
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadCompanyData = async () => {
+      setIsLoadingCompany(true);
+      setCompanyErrorMessage("");
+
+      try {
+        const user = await getCurrentUser();
+
+        if (!isMounted) {
+          return;
+        }
+
+        applyUserProfileToCompanyData(user);
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        setCompanyErrorMessage(
+          `Unternehmensdaten konnten nicht geladen werden: ${getErrorMessage(
+            error,
+          )}`,
+        );
+      } finally {
+        if (isMounted) {
+          setIsLoadingCompany(false);
+        }
+      }
+    };
+
+    void loadCompanyData();
+
+    return () => {
+      isMounted = false;
+
+      if (successTimeoutRef.current !== null) {
+        window.clearTimeout(successTimeoutRef.current);
+      }
+    };
+  }, [applyUserProfileToCompanyData]);
+    const handleSaveCompany = async () => {
+    if (!isOwner) {
+      setCompanyErrorMessage(
+        "Nur Nutzer mit der Rolle Inhaber dürfen Unternehmensdaten ändern.",
+      );
+      return;
+    }
+
+    if (!companyData.firmenname.trim()) {
+      setCompanyErrorMessage("Der Firmenname darf nicht leer sein.");
+      return;
+    }
+
+    setIsSavingCompany(true);
+    setCompanyErrorMessage("");
+    setCompanySuccessMessage("");
+
+    try {
+      const updatedUser = await updateCompany({
+        companyName: companyData.firmenname.trim(),
+        industry: companyData.branche.trim(),
+        legalForm: companyData.rechtsform,
+
+        street: companyData.strasse.trim(),
+        houseNumber: companyData.hausnummer.trim(),
+        zipCode: companyData.plz.trim(),
+        city: companyData.ort.trim(),
+        state: companyData.bundesland.trim(),
+        country: companyData.land.trim(),
+
+        companyPhoneNumber: companyData.handy.trim(),
+        companyEmail: companyData.email.trim(),
+        website: companyData.website.trim(),
+
+        iban: companyData.iban.trim(),
+        bic: companyData.BIK.trim(),
+        bankName: companyData.bankname.trim(),
+        accountHolder: companyData.kontoinhaber.trim(),
+
+        taxNumber: companyData.steuernummer.trim(),
+        vatId: companyData.ustId.trim(),
+        tradeRegisterNumber: companyData.handelsregisterNummer.trim(),
+      });
+
+      if (updatedUser) {
+        applyUserProfileToCompanyData(updatedUser);
+      } else {
+        const refreshedUser = await getCurrentUser();
+        applyUserProfileToCompanyData(refreshedUser);
+      }
+
+      setCompanySuccessMessage(
+        "Unternehmensdaten wurden erfolgreich gespeichert.",
+      );
+
+      if (successTimeoutRef.current !== null) {
+        window.clearTimeout(successTimeoutRef.current);
+      }
+
+      successTimeoutRef.current = window.setTimeout(() => {
+        setCompanySuccessMessage("");
+        successTimeoutRef.current = null;
+      }, 3000);
+    } catch (error) {
+      setCompanyErrorMessage(
+        `Unternehmensdaten konnten nicht gespeichert werden: ${getErrorMessage(
+          error,
+        )}`,
+      );
+    } finally {
+      setIsSavingCompany(false);
+    }
+  };
+
+  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      setCompanyErrorMessage("Bitte wähle eine gültige Bilddatei aus.");
+      event.target.value = "";
+      return;
+    }
+
+    setLogo(URL.createObjectURL(file));
+  };
+
+  const handleCustomerImageUpload = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+
+    if (!file || !file.type.startsWith("image/")) {
+      return;
+    }
+
+    setCustomerImage(URL.createObjectURL(file));
+  };
+
   const handleMaterialCsvUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+
+    if (!file) {
+      return;
+    }
 
     const text = await file.text();
 
@@ -150,109 +453,23 @@ export const UnternehmenPage = () => {
       };
     });
 
-    setMaterials((prev) => [...prev, ...parsed]);
-  };
-  const [customerImage, setCustomerImage] = useState<string | null>(null);
-
-  const handleCustomerChange = handleChange(setCustomerData);
-
-  const handleCustomerImageUpload = (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) return;
-
-    setCustomerImage(URL.createObjectURL(file));
+    setMaterials((previousMaterials) => [
+      ...previousMaterials,
+      ...parsed,
+    ]);
   };
 
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
-  const [companyData, setCompanyData] = useState({
-    firmenname: "CraftVoice GmbH",
-
-    mitarbeiterVorname: "",
-    mitarbeiterNachname: "",
-    rolle: "Inhaber",
-
-    strasse: "",
-    hausnummer: "",
-    plz: "",
-    ort: "",
-    bundesland: "",
-    land: "Deutschland",
-
-    rechnungsadresse: "",
-
-    handy: "",
-    email: "kontakt@craftvoice.de",
-    website: "",
-
-    branche: "Handwerk",
-
-    iban: "",
-    BIK: "",
-    bankname: "",
-    kontoinhaber: "",
-
-    steuernummer: "",
-    rechtsform: "",
-    ustId: "DE123456789",
-  });
-
-  const initials = useMemo(() => {
-    return companyData.firmenname
-      .split(" ")
-      .map((word) => word[0])
-      .join("")
-      .slice(0, 2)
-      .toUpperCase();
-  }, [companyData.firmenname]);
-
-  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      alert("Fehler: Bitte wähle eine Bilddatei aus.");
-
-      event.target.value = "";
-
-      return;
-    }
-
-    setLogo(URL.createObjectURL(file));
-  };
-
-  const handleCompanyChange = handleChange(setCompanyData);
-
-  const [materials, setMaterials] = useState<Material[]>([]);
-  const [showMaterialForm, setShowMaterialForm] = useState(false);
-  const [editingMaterialIndex, setEditingMaterialIndex] = useState<
-    number | null
-  >(null);
-
-  const [materialData, setMaterialData] = useState<Material>({
-    name: "",
-    description: "",
-    price: "",
-    size: "",
-    unit: "",
-  });
-  const handleMaterialChange = handleChange(setMaterialData);
   const isMaterialValid =
-    !!materialData.name &&
-    !!materialData.description &&
-    !!materialData.price &&
-    !!materialData.size &&
-    !!materialData.unit;
+    Boolean(materialData.name) &&
+    Boolean(materialData.description) &&
+    Boolean(materialData.price) &&
+    Boolean(materialData.size) &&
+    Boolean(materialData.unit);
 
   return (
     <div className="app company-page">
       <header className="card company-header compact">
         <span className="company-eyebrow">CraftVoice Unternehmen</span>
-
         <h1>Unternehmen & Verwaltung</h1>
       </header>
 
@@ -260,7 +477,9 @@ export const UnternehmenPage = () => {
         <button
           className="mobile-section-menu-button"
           type="button"
-          onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+          onClick={() =>
+            setIsMobileMenuOpen((previousValue) => !previousValue)
+          }
         >
           <span>☰ {getActiveTabLabel()}</span>
           <span>{isMobileMenuOpen ? "▲" : "▼"}</span>
@@ -305,14 +524,20 @@ export const UnternehmenPage = () => {
 
       <section className="card company-tab-card desktop-section-tabs">
         <button
-          className={`company-tab ${activeTab === "allgemein" ? "active" : ""}`}
+          className={`company-tab ${
+            activeTab === "allgemein" ? "active" : ""
+          }`}
+          type="button"
           onClick={() => handleTabChange("allgemein")}
         >
           Allgemein
         </button>
 
         <button
-          className={`company-tab ${activeTab === "kunde" ? "active" : ""}`}
+          className={`company-tab ${
+            activeTab === "kunde" ? "active" : ""
+          }`}
+          type="button"
           onClick={() => handleTabChange("kunde")}
         >
           Kunde
@@ -322,20 +547,58 @@ export const UnternehmenPage = () => {
           className={`company-tab ${
             activeTab === "stundensatz" ? "active" : ""
           }`}
+          type="button"
           onClick={() => handleTabChange("stundensatz")}
         >
           Stundensatz
         </button>
 
         <button
-          className={`company-tab ${activeTab === "preisliste" ? "active" : ""}`}
+          className={`company-tab ${
+            activeTab === "preisliste" ? "active" : ""
+          }`}
+          type="button"
           onClick={() => handleTabChange("preisliste")}
         >
           Preisliste
         </button>
       </section>
 
-      {activeTab === "allgemein" && (
+      {companyErrorMessage && (
+        <div
+          className="company-service-feedback company-service-feedback-error"
+          role="alert"
+        >
+          {companyErrorMessage}
+        </div>
+      )}
+
+      {companySuccessMessage && (
+        <div
+          className="company-service-feedback company-service-feedback-success"
+          role="status"
+        >
+          {companySuccessMessage}
+        </div>
+      )}
+
+      {activeTab === "allgemein" && isLoadingCompany && (
+        <section className="card company-content-card company-service-load-state">
+          <strong>Unternehmensdaten werden geladen …</strong>
+        </section>
+      )}
+
+      {activeTab === "allgemein" &&
+        !isLoadingCompany &&
+        !isOwner && (
+          <div className="company-service-feedback company-service-feedback-info">
+            Du kannst die Unternehmensdaten ansehen. Änderungen dürfen nur
+            Nutzer mit der Rolle Inhaber speichern.
+          </div>
+        )}
+
+      {activeTab === "allgemein" && !isLoadingCompany && (
+
         <>
           <section className="card company-overview-card">
             <div className="company-overview-header">
@@ -347,10 +610,16 @@ export const UnternehmenPage = () => {
                     className="company-logo-preview"
                   />
                 ) : (
-                  <div className="company-logo-placeholder">{initials}</div>
+                  <div className="company-logo-placeholder">
+                    {initials}
+                  </div>
                 )}
 
-                <label htmlFor="logo-upload" className="company-logo-button">
+                <label
+                  htmlFor="logo-upload"
+                  className="company-logo-button"
+                  aria-disabled={companyFieldsDisabled}
+                >
                   Logo ändern
                 </label>
 
@@ -359,58 +628,59 @@ export const UnternehmenPage = () => {
                   type="file"
                   accept="image/*"
                   hidden
+                  disabled={companyFieldsDisabled}
                   onChange={handleLogoUpload}
                 />
               </div>
 
               <div className="company-main-info">
-                <h2>{companyData.firmenname}</h2>
+                <h2>{companyData.firmenname || "Unternehmen"}</h2>
 
-                <p className="text-secondary">{companyData.branche}</p>
+                <p className="text-secondary">
+                  {companyData.branche ||
+                    "Keine Branche hinterlegt"}
+                </p>
               </div>
             </div>
           </section>
 
-          {/* Ansprechpartner */}
           <section className="card company-content-card">
             <h2>Ansprechpartner</h2>
 
             <div className="company-form-grid">
               <label className="company-field">
                 <span>Vorname</span>
-                <input
-                  className="input-field"
-                  name="mitarbeiterVorname"
-                  value={companyData.mitarbeiterVorname}
-                  onChange={handleCompanyChange}
-                />
+
+                <div className="input-field readonly-field">
+                  {companyData.mitarbeiterVorname ||
+                    "Nicht hinterlegt"}
+                </div>
               </label>
 
               <label className="company-field">
                 <span>Nachname</span>
-                <input
-                  className="input-field"
-                  name="mitarbeiterNachname"
-                  value={companyData.mitarbeiterNachname}
-                  onChange={handleCompanyChange}
-                />
+
+                <div className="input-field readonly-field">
+                  {companyData.mitarbeiterNachname ||
+                    "Nicht hinterlegt"}
+                </div>
               </label>
 
               <label className="company-field">
                 <span>Rolle / Berechtigung</span>
 
                 <div className="input-field readonly-field">
-                  {companyData.rolle}
+                  {companyData.rolle || "Keine Rolle"}
                 </div>
               </label>
             </div>
           </section>
 
-          {/* MITARBEITER (ALLGEMEIN) */}
           <section className="card company-content-card">
             <div className="employee-card-modern">
               <div>
                 <h2 className="section-title">Mitarbeiter</h2>
+
                 <p className="text-secondary">
                   Mitarbeiter im Unternehmen verwalten
                 </p>
@@ -418,8 +688,11 @@ export const UnternehmenPage = () => {
 
               <button
                 className="employee-edit-button"
+                type="button"
                 onClick={() => {
-                  setShowGeneralEmployeeForm((p) => !p);
+                  setShowGeneralEmployeeForm(
+                    (previousValue) => !previousValue,
+                  );
 
                   setEditingGeneralEmployeeIndex(null);
 
@@ -433,31 +706,29 @@ export const UnternehmenPage = () => {
                 {showGeneralEmployeeForm ? "−" : "+"}
               </button>
             </div>
-
-            {/* LISTE */}
-            {!showGeneralEmployeeForm && generalEmployees.length > 0 && (
+                        {!showGeneralEmployeeForm && generalEmployees.length > 0 && (
               <div className="employee-list">
-                {generalEmployees.map((e, index) => (
+                {generalEmployees.map((employee, index) => (
                   <div
-                    key={index}
+                    key={`${employee.vorname}-${employee.nachname}-${index}`}
                     className="employee-card-modern employee-card"
                   >
                     <div>
                       <strong className="general-employee-name">
-                        {e.vorname} {e.nachname}
+                        {employee.vorname} {employee.nachname}
                       </strong>
 
                       <p className="text-secondary general-employee-role">
-                        {e.rolle}
+                        {employee.rolle}
                       </p>
                     </div>
 
                     <div className="employee-actions">
-                      {/* EDIT */}
                       <button
                         className="employee-edit-button"
+                        type="button"
                         onClick={() => {
-                          setGeneralEmployeeData(e);
+                          setGeneralEmployeeData(employee);
                           setEditingGeneralEmployeeIndex(index);
                           setShowGeneralEmployeeForm(true);
                         }}
@@ -465,12 +736,14 @@ export const UnternehmenPage = () => {
                         ✎
                       </button>
 
-                      {/* DELETE */}
                       <button
                         className="employee-remove-button"
+                        type="button"
                         onClick={() =>
-                          setGeneralEmployees((prev) =>
-                            prev.filter((_, i) => i !== index),
+                          setGeneralEmployees((previousEmployees) =>
+                            previousEmployees.filter(
+                              (_, employeeIndex) => employeeIndex !== index,
+                            ),
                           )
                         }
                       >
@@ -482,7 +755,6 @@ export const UnternehmenPage = () => {
               </div>
             )}
 
-            {/* FORM */}
             {showGeneralEmployeeForm && (
               <div className="employee-input-grid">
                 <input
@@ -490,10 +762,10 @@ export const UnternehmenPage = () => {
                   name="vorname"
                   placeholder="Mitarbeiter Vorname"
                   value={generalEmployeeData.vorname}
-                  onChange={(e) =>
-                    setGeneralEmployeeData((prev) => ({
-                      ...prev,
-                      vorname: e.target.value,
+                  onChange={(event) =>
+                    setGeneralEmployeeData((previousData) => ({
+                      ...previousData,
+                      vorname: event.target.value,
                     }))
                   }
                 />
@@ -503,10 +775,10 @@ export const UnternehmenPage = () => {
                   name="nachname"
                   placeholder="Mitarbeiter Nachname"
                   value={generalEmployeeData.nachname}
-                  onChange={(e) =>
-                    setGeneralEmployeeData((prev) => ({
-                      ...prev,
-                      nachname: e.target.value,
+                  onChange={(event) =>
+                    setGeneralEmployeeData((previousData) => ({
+                      ...previousData,
+                      nachname: event.target.value,
                     }))
                   }
                 />
@@ -515,10 +787,10 @@ export const UnternehmenPage = () => {
                   className="input-field"
                   name="rolle"
                   value={generalEmployeeData.rolle}
-                  onChange={(e) =>
-                    setGeneralEmployeeData((prev) => ({
-                      ...prev,
-                      rolle: e.target.value,
+                  onChange={(event) =>
+                    setGeneralEmployeeData((previousData) => ({
+                      ...previousData,
+                      rolle: event.target.value,
                     }))
                   }
                 >
@@ -532,27 +804,27 @@ export const UnternehmenPage = () => {
 
                 <button
                   className="button-primary company-add-button"
+                  type="button"
                   onClick={() => {
                     if (
                       !generalEmployeeData.vorname ||
                       !generalEmployeeData.nachname ||
                       !generalEmployeeData.rolle
-                    )
+                    ) {
                       return;
+                    }
 
                     if (editingGeneralEmployeeIndex !== null) {
-                      // UPDATE
-                      setGeneralEmployees((prev) =>
-                        prev.map((emp, i) =>
-                          i === editingGeneralEmployeeIndex
+                      setGeneralEmployees((previousEmployees) =>
+                        previousEmployees.map((employee, index) =>
+                          index === editingGeneralEmployeeIndex
                             ? generalEmployeeData
-                            : emp,
+                            : employee,
                         ),
                       );
                     } else {
-                      // CREATE
-                      setGeneralEmployees((prev) => [
-                        ...prev,
+                      setGeneralEmployees((previousEmployees) => [
+                        ...previousEmployees,
                         generalEmployeeData,
                       ]);
                     }
@@ -575,27 +847,30 @@ export const UnternehmenPage = () => {
             )}
           </section>
 
-          {/* Unternehmensdaten */}
           <section className="card company-content-card">
             <h2>Unternehmensdaten</h2>
 
             <div className="company-form-grid">
               <label className="company-field">
                 <span>Firmenname</span>
+
                 <input
                   className="input-field"
                   name="firmenname"
                   value={companyData.firmenname}
+                  disabled={companyFieldsDisabled}
                   onChange={handleCompanyChange}
                 />
               </label>
 
               <label className="company-field">
                 <span>Firmenbranche</span>
+
                 <input
                   className="input-field"
                   name="branche"
                   value={companyData.branche}
+                  disabled={companyFieldsDisabled}
                   onChange={handleCompanyChange}
                 />
               </label>
@@ -607,6 +882,7 @@ export const UnternehmenPage = () => {
                   className="input-field"
                   name="rechtsform"
                   value={companyData.rechtsform}
+                  disabled={companyFieldsDisabled}
                   onChange={handleCompanyChange}
                 >
                   <option value="">Bitte auswählen</option>
@@ -623,41 +899,48 @@ export const UnternehmenPage = () => {
             </div>
           </section>
 
-          {/* Firmenadresse */}
           <section className="card company-content-card">
             <h2>Firmenadresse</h2>
 
             <div className="company-form-grid">
               <label className="company-field">
                 <span>Straße</span>
+
                 <input
                   className="input-field"
                   name="strasse"
                   value={companyData.strasse}
+                  disabled={companyFieldsDisabled}
                   onChange={handleCompanyChange}
                 />
               </label>
 
               <label className="company-field">
                 <span>Hausnummer</span>
+
                 <input
                   className="input-field"
                   name="hausnummer"
                   value={companyData.hausnummer}
+                  disabled={companyFieldsDisabled}
                   onChange={handleCompanyChange}
                 />
               </label>
 
               <label className="company-field">
                 <span>PLZ</span>
+
                 <input
                   className="input-field"
                   name="plz"
                   value={companyData.plz}
-                  onChange={(e) =>
-                    setCompanyData((prev) => ({
-                      ...prev,
-                      plz: e.target.value.replace(/\D/g, "").slice(0, 5),
+                  disabled={companyFieldsDisabled}
+                  onChange={(event) =>
+                    setCompanyData((previousData) => ({
+                      ...previousData,
+                      plz: event.target.value
+                        .replace(/\D/g, "")
+                        .slice(0, 5),
                     }))
                   }
                 />
@@ -665,51 +948,58 @@ export const UnternehmenPage = () => {
 
               <label className="company-field">
                 <span>Ort</span>
+
                 <input
                   className="input-field"
                   name="ort"
                   value={companyData.ort}
+                  disabled={companyFieldsDisabled}
                   onChange={handleCompanyChange}
                 />
               </label>
 
               <label className="company-field">
                 <span>Bundesland</span>
+
                 <input
                   className="input-field"
                   name="bundesland"
                   value={companyData.bundesland}
+                  disabled={companyFieldsDisabled}
                   onChange={handleCompanyChange}
                 />
               </label>
 
               <label className="company-field">
                 <span>Land</span>
+
                 <input
                   className="input-field"
                   name="land"
                   value={companyData.land}
+                  disabled={companyFieldsDisabled}
                   onChange={handleCompanyChange}
                 />
               </label>
             </div>
           </section>
 
-          {/* Kontakt */}
           <section className="card company-content-card">
             <h2>Kontakt</h2>
 
             <div className="company-form-grid">
               <label className="company-field">
                 <span>Handynummer</span>
+
                 <input
                   className="input-field"
                   name="handy"
                   value={companyData.handy}
-                  onChange={(e) =>
-                    setCompanyData((prev) => ({
-                      ...prev,
-                      handy: e.target.value
+                  disabled={companyFieldsDisabled}
+                  onChange={(event) =>
+                    setCompanyData((previousData) => ({
+                      ...previousData,
+                      handy: event.target.value
                         .replace(/[^\d+]/g, "")
                         .replace(/(?!^)\+/g, ""),
                     }))
@@ -719,42 +1009,47 @@ export const UnternehmenPage = () => {
 
               <label className="company-field">
                 <span>Firmen E-Mail</span>
+
                 <input
                   className="input-field"
                   type="email"
                   name="email"
                   value={companyData.email}
+                  disabled={companyFieldsDisabled}
                   onChange={handleCompanyChange}
                 />
               </label>
 
               <label className="company-field">
                 <span>Website</span>
+
                 <input
                   className="input-field"
                   name="website"
                   value={companyData.website}
+                  disabled={companyFieldsDisabled}
                   onChange={handleCompanyChange}
                 />
               </label>
             </div>
           </section>
 
-          {/* Bankdaten */}
           <section className="card company-content-card">
             <h2>Bankverbindung</h2>
 
             <div className="company-form-grid">
               <label className="company-field">
                 <span>IBAN</span>
+
                 <input
                   className="input-field"
                   name="iban"
                   value={companyData.iban}
-                  onChange={(e) =>
-                    setCompanyData((prev) => ({
-                      ...prev,
-                      iban: e.target.value
+                  disabled={companyFieldsDisabled}
+                  onChange={(event) =>
+                    setCompanyData((previousData) => ({
+                      ...previousData,
+                      iban: event.target.value
                         .toUpperCase()
                         .replace(/[^A-Z0-9]/g, ""),
                     }))
@@ -763,69 +1058,104 @@ export const UnternehmenPage = () => {
               </label>
 
               <label className="company-field">
-                <span>BIK</span>
+                <span>BIC</span>
+
                 <input
                   className="input-field"
                   name="BIK"
                   value={companyData.BIK}
+                  disabled={companyFieldsDisabled}
                   onChange={handleCompanyChange}
                 />
               </label>
 
               <label className="company-field">
                 <span>Bankname</span>
+
                 <input
                   className="input-field"
                   name="bankname"
                   value={companyData.bankname}
+                  disabled={companyFieldsDisabled}
                   onChange={handleCompanyChange}
                 />
               </label>
 
               <label className="company-field">
                 <span>Kontoinhaber</span>
+
                 <input
                   className="input-field"
                   name="kontoinhaber"
                   value={companyData.kontoinhaber}
+                  disabled={companyFieldsDisabled}
                   onChange={handleCompanyChange}
                 />
               </label>
             </div>
           </section>
 
-          {/* Rechtliches */}
           <section className="card company-content-card">
             <h2>Rechtliche Angaben</h2>
 
             <div className="company-form-grid">
               <label className="company-field">
                 <span>Steuernummer</span>
+
                 <input
                   className="input-field"
                   name="steuernummer"
                   value={companyData.steuernummer}
+                  disabled={companyFieldsDisabled}
                   onChange={handleCompanyChange}
                 />
               </label>
 
               <label className="company-field">
                 <span>USt-IdNr.</span>
+
                 <input
                   className="input-field"
                   name="ustId"
                   value={companyData.ustId}
+                  disabled={companyFieldsDisabled}
+                  onChange={handleCompanyChange}
+                />
+              </label>
+
+              <label className="company-field">
+                <span>Handelsregisternummer</span>
+
+                <input
+                  className="input-field"
+                  name="handelsregisterNummer"
+                  value={companyData.handelsregisterNummer}
+                  disabled={companyFieldsDisabled}
                   onChange={handleCompanyChange}
                 />
               </label>
             </div>
           </section>
+
+          <section className="card company-content-card">
+            <div className="company-service-actions">
+              <button
+                className="button-primary company-service-save-button"
+                type="button"
+                disabled={!isOwner || isSavingCompany}
+                onClick={handleSaveCompany}
+              >
+                {isSavingCompany
+                  ? "Unternehmensdaten werden gespeichert …"
+                  : "Unternehmensdaten speichern"}
+              </button>
+            </div>
+          </section>
         </>
       )}
 
-      {activeTab === "kunde" && (
+            {activeTab === "kunde" && (
         <section className="card company-content-card">
-          {/* HEADER + TOGGLE */}
           <div className="employee-card-modern">
             <div>
               <h2 className="section-title">Kunden</h2>
@@ -834,15 +1164,18 @@ export const UnternehmenPage = () => {
 
             <button
               className="employee-edit-button"
+              type="button"
               onClick={() => {
-                setShowCustomerForm((p) => !p);
+                setShowCustomerForm((previousValue) => !previousValue);
                 setEditingIndex(null);
+
                 setCustomerData({
                   vorname: "",
                   nachname: "",
                   email: "",
                   telefon: "",
                 });
+
                 setCustomerImage(null);
               }}
             >
@@ -850,60 +1183,63 @@ export const UnternehmenPage = () => {
             </button>
           </div>
 
-          {/* EMPTY STATE */}
           {!showCustomerForm && customers.length === 0 && (
             <p className="text-secondary empty-state">
               Noch kein Kundenprofil angelegt
             </p>
           )}
 
-          {/* LIST VIEW */}
           {!showCustomerForm && customers.length > 0 && (
             <div className="employee-list">
-              {customers.map((c, index) => (
+              {customers.map((customer, index) => (
                 <div
-                  key={index}
+                  key={`${customer.email}-${index}`}
                   className="employee-card-modern employee-card small"
                 >
-                  {/* LEFT SIDE */}
                   <div className="customer-card-info">
-                    <div className="company-logo-wrapper ">
-                      {c.image ? (
+                    <div className="company-logo-wrapper">
+                      {customer.image ? (
                         <img
-                          src={c.image}
+                          src={customer.image}
                           className="company-logo-preview"
                           alt="Kunde"
                         />
                       ) : (
                         <div className="company-logo-placeholder small-icon small-text">
-                          {c.vorname?.[0]}
-                          {c.nachname?.[0]}
+                          {customer.vorname?.[0]}
+                          {customer.nachname?.[0]}
                         </div>
                       )}
                     </div>
 
                     <div>
                       <strong className="customer-name">
-                        {c.vorname} {c.nachname}
+                        {customer.vorname} {customer.nachname}
                       </strong>
-                      <p className="text-secondary customer-email">{c.email}</p>
-                      <p className="text-secondary">{c.telefon}</p>
+
+                      <p className="text-secondary customer-email">
+                        {customer.email}
+                      </p>
+
+                      <p className="text-secondary">
+                        {customer.telefon}
+                      </p>
                     </div>
                   </div>
 
-                  {/* ACTIONS */}
                   <div className="card-actions">
                     <button
                       className="employee-edit-button"
+                      type="button"
                       onClick={() => {
                         setCustomerData({
-                          vorname: c.vorname,
-                          nachname: c.nachname,
-                          email: c.email,
-                          telefon: c.telefon,
+                          vorname: customer.vorname,
+                          nachname: customer.nachname,
+                          email: customer.email,
+                          telefon: customer.telefon,
                         });
 
-                        setCustomerImage(c.image);
+                        setCustomerImage(customer.image);
                         setEditingIndex(index);
                         setShowCustomerForm(true);
                       }}
@@ -913,11 +1249,15 @@ export const UnternehmenPage = () => {
 
                     <button
                       className="employee-remove-button"
-                      onClick={() => {
-                        setCustomers((prev) =>
-                          prev.filter((_, i) => i !== index),
-                        );
-                      }}
+                      type="button"
+                      onClick={() =>
+                        setCustomers((previousCustomers) =>
+                          previousCustomers.filter(
+                            (_, customerIndex) =>
+                              customerIndex !== index,
+                          ),
+                        )
+                      }
                     >
                       🗑
                     </button>
@@ -927,10 +1267,8 @@ export const UnternehmenPage = () => {
             </div>
           )}
 
-          {/* FORM */}
           {showCustomerForm && (
             <div className="employee-input-grid">
-              {/* IMAGE */}
               <div className="company-logo-wrapper">
                 {customerImage ? (
                   <img
@@ -939,7 +1277,9 @@ export const UnternehmenPage = () => {
                     alt="Kunde"
                   />
                 ) : (
-                  <div className="company-logo-placeholder">👤</div>
+                  <div className="company-logo-placeholder">
+                    👤
+                  </div>
                 )}
 
                 <label className="company-logo-button">
@@ -949,6 +1289,7 @@ export const UnternehmenPage = () => {
                     accept="image/*"
                     onChange={handleCustomerImageUpload}
                   />
+
                   Profilbild
                 </label>
               </div>
@@ -983,10 +1324,10 @@ export const UnternehmenPage = () => {
                 name="telefon"
                 placeholder="Telefon"
                 value={customerData.telefon}
-                onChange={(e) =>
-                  setCustomerData((prev) => ({
-                    ...prev,
-                    telefon: e.target.value
+                onChange={(event) =>
+                  setCustomerData((previousData) => ({
+                    ...previousData,
+                    telefon: event.target.value
                       .replace(/[^\d+]/g, "")
                       .replace(/(?!^)\+/g, ""),
                   }))
@@ -995,21 +1336,31 @@ export const UnternehmenPage = () => {
 
               <button
                 className="button-primary company-add-button"
+                type="button"
                 onClick={() => {
-                  if (!customerData.vorname || !customerData.nachname) return;
+                  if (
+                    !customerData.vorname ||
+                    !customerData.nachname
+                  ) {
+                    return;
+                  }
 
                   if (editingIndex !== null) {
-                    setCustomers((prev) =>
-                      prev.map((c, i) =>
-                        i === editingIndex
-                          ? { ...customerData, image: customerImage }
-                          : c,
+                    setCustomers((previousCustomers) =>
+                      previousCustomers.map((customer, index) =>
+                        index === editingIndex
+                          ? {
+                              ...customerData,
+                              image: customerImage,
+                            }
+                          : customer,
                       ),
                     );
+
                     setEditingIndex(null);
                   } else {
-                    setCustomers((prev) => [
-                      ...prev,
+                    setCustomers((previousCustomers) => [
+                      ...previousCustomers,
                       {
                         ...customerData,
                         image: customerImage,
@@ -1036,20 +1387,27 @@ export const UnternehmenPage = () => {
           )}
         </section>
       )}
+
       {activeTab === "stundensatz" && (
         <section className="card company-content-card">
-          {/* HEADER */}
           <div className="employee-card-modern">
             <div>
-              <h2 className="section-title">Mitarbeiter & Stundensätze</h2>
+              <h2 className="section-title">
+                Mitarbeiter & Stundensätze
+              </h2>
 
-              <p className="text-secondary">Mitarbeiter verwalten</p>
+              <p className="text-secondary">
+                Mitarbeiter verwalten
+              </p>
             </div>
 
             <button
               className="employee-edit-button"
+              type="button"
               onClick={() => {
-                setShowEmployeeForm((prev) => !prev);
+                setShowEmployeeForm(
+                  (previousValue) => !previousValue,
+                );
 
                 setEditingEmployeeIndex(null);
 
@@ -1065,18 +1423,19 @@ export const UnternehmenPage = () => {
             </button>
           </div>
 
-          {/* EMPTY STATE */}
           {!showEmployeeForm && employees.length === 0 && (
             <p className="text-secondary empty-state">
               Noch keine Mitarbeiter hinzugefügt
             </p>
           )}
 
-          {/* LISTE */}
           {!showEmployeeForm && employees.length > 0 && (
             <div className="employee-list">
               {employees.map((employee, index) => (
-                <div key={index} className="employee-card-modern employee-card">
+                <div
+                  key={`${employee.vorname}-${employee.nachname}-${index}`}
+                  className="employee-card-modern employee-card"
+                >
                   <div>
                     <strong className="employee-name">
                       {employee.vorname} {employee.nachname}
@@ -1087,19 +1446,17 @@ export const UnternehmenPage = () => {
                     </p>
 
                     <p className="text-secondary">
-                      {employee.stundensatz}
-                      {" € / Stunde"}
+                      {employee.stundensatz} € / Stunde
                     </p>
                   </div>
 
                   <div className="employee-actions">
                     <button
                       className="employee-edit-button"
+                      type="button"
                       onClick={() => {
                         setEmployeeData(employee);
-
                         setEditingEmployeeIndex(index);
-
                         setShowEmployeeForm(true);
                       }}
                     >
@@ -1108,11 +1465,15 @@ export const UnternehmenPage = () => {
 
                     <button
                       className="employee-remove-button"
-                      onClick={() => {
-                        setEmployees((prev) =>
-                          prev.filter((_, i) => i !== index),
-                        );
-                      }}
+                      type="button"
+                      onClick={() =>
+                        setEmployees((previousEmployees) =>
+                          previousEmployees.filter(
+                            (_, employeeIndex) =>
+                              employeeIndex !== index,
+                          ),
+                        )
+                      }
                     >
                       🗑
                     </button>
@@ -1122,7 +1483,6 @@ export const UnternehmenPage = () => {
             </div>
           )}
 
-          {/* FORMULAR */}
           {showEmployeeForm && (
             <div className="employee-input-grid">
               <input
@@ -1154,27 +1514,41 @@ export const UnternehmenPage = () => {
                 name="stundensatz"
                 placeholder="€/Stunde"
                 value={employeeData.stundensatz}
-                onChange={(e) =>
-                  setEmployeeData((prev) => ({
-                    ...prev,
-                    stundensatz: e.target.value.replace(/[^0-9.,]/g, ""),
+                onChange={(event) =>
+                  setEmployeeData((previousData) => ({
+                    ...previousData,
+                    stundensatz: event.target.value.replace(
+                      /[^0-9.,]/g,
+                      "",
+                    ),
                   }))
                 }
               />
 
               <button
                 className="button-primary company-add-button"
+                type="button"
                 onClick={() => {
-                  if (!employeeData.vorname || !employeeData.nachname) return;
+                  if (
+                    !employeeData.vorname ||
+                    !employeeData.nachname
+                  ) {
+                    return;
+                  }
 
                   if (editingEmployeeIndex !== null) {
-                    setEmployees((prev) =>
-                      prev.map((e, i) =>
-                        i === editingEmployeeIndex ? employeeData : e,
+                    setEmployees((previousEmployees) =>
+                      previousEmployees.map((employee, index) =>
+                        index === editingEmployeeIndex
+                          ? employeeData
+                          : employee,
                       ),
                     );
                   } else {
-                    setEmployees((prev) => [...prev, employeeData]);
+                    setEmployees((previousEmployees) => [
+                      ...previousEmployees,
+                      employeeData,
+                    ]);
                   }
 
                   setEmployeeData({
@@ -1185,7 +1559,6 @@ export const UnternehmenPage = () => {
                   });
 
                   setEditingEmployeeIndex(null);
-
                   setShowEmployeeForm(false);
                 }}
               >
@@ -1198,9 +1571,8 @@ export const UnternehmenPage = () => {
         </section>
       )}
 
-      {activeTab === "preisliste" && (
+            {activeTab === "preisliste" && (
         <section className="card company-content-card">
-          {/* CSV UPLOAD */}
           <label className="company-field csv-upload-field">
             <span>Preisliste (CSV)</span>
 
@@ -1215,17 +1587,26 @@ export const UnternehmenPage = () => {
               <span>CSV Datei hochladen</span>
             </label>
           </label>
-          {/* HEADER */}
+
           <div className="employee-card-modern">
             <div>
-              <h2 className="section-title-no-margin">Material-Preisliste</h2>
-              <p className="text-secondary">Materialien verwalten</p>
+              <h2 className="section-title-no-margin">
+                Material-Preisliste
+              </h2>
+
+              <p className="text-secondary">
+                Materialien verwalten
+              </p>
             </div>
 
             <button
               className="employee-edit-button"
+              type="button"
               onClick={() => {
-                setShowMaterialForm((p) => !p);
+                setShowMaterialForm(
+                  (previousValue) => !previousValue,
+                );
+
                 setEditingMaterialIndex(null);
 
                 setMaterialData({
@@ -1241,39 +1622,43 @@ export const UnternehmenPage = () => {
             </button>
           </div>
 
-          {/* EMPTY */}
           {!showMaterialForm && materials.length === 0 && (
             <p className="text-secondary empty-state">
               Noch keine Materialien angelegt
             </p>
           )}
 
-          {/* LIST */}
           {!showMaterialForm && materials.length > 0 && (
             <div className="employee-list">
-              {materials.map((m, index) => (
-                <div key={index} className="employee-card-modern">
+              {materials.map((material, index) => (
+                <div
+                  key={`${material.name}-${index}`}
+                  className="employee-card-modern"
+                >
                   <div>
-                    <strong className="material-name">{m.name}</strong>
+                    <strong className="material-name">
+                      {material.name}
+                    </strong>
 
                     <p className="text-secondary material-description">
-                      {m.description}
+                      {material.description}
                     </p>
 
                     <p className="text-secondary">
-                      <b>Menge:</b> {m.size}
+                      <b>Menge:</b> {material.size}
                     </p>
 
                     <p className="text-secondary">
-                      <b>Preis:</b> {m.price} €
+                      <b>Preis:</b> {material.price} €
                     </p>
                   </div>
 
                   <div className="emp-edit">
                     <button
                       className="employee-edit-button"
+                      type="button"
                       onClick={() => {
-                        setMaterialData(m);
+                        setMaterialData(material);
                         setEditingMaterialIndex(index);
                         setShowMaterialForm(true);
                       }}
@@ -1283,11 +1668,15 @@ export const UnternehmenPage = () => {
 
                     <button
                       className="employee-remove-button"
-                      onClick={() => {
-                        setMaterials((prev) =>
-                          prev.filter((_, i) => i !== index),
-                        );
-                      }}
+                      type="button"
+                      onClick={() =>
+                        setMaterials((previousMaterials) =>
+                          previousMaterials.filter(
+                            (_, materialIndex) =>
+                              materialIndex !== index,
+                          ),
+                        )
+                      }
                     >
                       🗑
                     </button>
@@ -1297,7 +1686,6 @@ export const UnternehmenPage = () => {
             </div>
           )}
 
-          {/* FORM */}
           {showMaterialForm && (
             <div className="employee-input-grid">
               <input
@@ -1321,10 +1709,13 @@ export const UnternehmenPage = () => {
                 name="price"
                 placeholder="Preis"
                 value={materialData.price}
-                onChange={(e) =>
-                  setMaterialData((prev) => ({
-                    ...prev,
-                    price: e.target.value.replace(/[^0-9.,]/g, ""),
+                onChange={(event) =>
+                  setMaterialData((previousData) => ({
+                    ...previousData,
+                    price: event.target.value.replace(
+                      /[^0-9.,]/g,
+                      "",
+                    ),
                   }))
                 }
               />
@@ -1334,10 +1725,10 @@ export const UnternehmenPage = () => {
                 name="size"
                 placeholder="Menge"
                 value={materialData.size}
-                onChange={(e) =>
-                  setMaterialData((prev) => ({
-                    ...prev,
-                    size: e.target.value.replace(/\D/g, ""),
+                onChange={(event) =>
+                  setMaterialData((previousData) => ({
+                    ...previousData,
+                    size: event.target.value.replace(/\D/g, ""),
                   }))
                 }
               />
@@ -1345,30 +1736,33 @@ export const UnternehmenPage = () => {
               <input
                 className="input-field"
                 name="unit"
-                placeholder="Einheit (z.B. Stück, Liter, m²)"
+                placeholder="Einheit (z. B. Stück, Liter, m²)"
                 value={materialData.unit}
-                onChange={(e) =>
-                  setMaterialData((prev) => ({
-                    ...prev,
-                    unit: e.target.value,
-                  }))
-                }
+                onChange={handleMaterialChange}
               />
 
               <button
                 className="button-primary company-add-button"
+                type="button"
                 disabled={!isMaterialValid}
                 onClick={() => {
-                  if (!isMaterialValid) return;
+                  if (!isMaterialValid) {
+                    return;
+                  }
 
                   if (editingMaterialIndex !== null) {
-                    setMaterials((prev) =>
-                      prev.map((m, i) =>
-                        i === editingMaterialIndex ? materialData : m,
+                    setMaterials((previousMaterials) =>
+                      previousMaterials.map((material, index) =>
+                        index === editingMaterialIndex
+                          ? materialData
+                          : material,
                       ),
                     );
                   } else {
-                    setMaterials((prev) => [...prev, materialData]);
+                    setMaterials((previousMaterials) => [
+                      ...previousMaterials,
+                      materialData,
+                    ]);
                   }
 
                   setMaterialData({
