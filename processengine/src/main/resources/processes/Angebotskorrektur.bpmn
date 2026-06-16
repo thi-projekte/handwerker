@@ -44,12 +44,12 @@ execution.setVariable("korrekturschnipsel", korrekturschnipsel);</camunda:script
             <camunda:inputParameter name="payload">
               <camunda:script scriptFormat="JavaScript">var ergebnisKI = execution.getVariable("ergebnisKI");
 var businessKey = execution.getProcessBusinessKey();
-var kundendaten = execution.getVariable("customerId");
+var customerId = execution.getVariable("customerId");
 
 JSON.stringify({
   businessKey: businessKey,
 
-  customerIdn: customerId,
+  customerId: customerId,
 
   angebotspositionen: JSON.parse(
     ergebnisKI.prop("strukturierteAngebotspositionen").toString()
