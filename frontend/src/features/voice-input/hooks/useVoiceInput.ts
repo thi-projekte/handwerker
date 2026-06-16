@@ -5,7 +5,7 @@ export const useVoiceInput = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [volume, setVolume] = useState(0);
   const [transcript, setTranscript] = useState("");
-  const [setAudioBlobUrl] = useState<string | null>(null);
+  const [audioBlobUrl, setAudioBlobUrl] = useState<string | null>(null);
   const [audioSegments, setAudioSegments] = useState<string[]>([]);
   const [state, setState] = useState<
     "idle" | "recording" | "review" | "finished"
@@ -36,6 +36,7 @@ export const useVoiceInput = () => {
     const dataArray = new Uint8Array(analyser.frequencyBinCount);
 
     const update = () => {
+      if (!analyserRef.current) return;
       analyser.getByteFrequencyData(dataArray);
       const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
 
@@ -63,8 +64,6 @@ export const useVoiceInput = () => {
 
       const url = URL.createObjectURL(blob);
       setAudioBlobUrl(url);
-
-      // 👉 optional: hier später Backend Upload möglich
       console.log("Audio Blob ready:", blob);
     };
 
@@ -78,15 +77,22 @@ export const useVoiceInput = () => {
       cancelAnimationFrame(animationRef.current);
     }
 
-    if (mediaRecorderRef.current?.state === "recording") {
-      mediaRecorderRef.current.stop();
-    }
     if (!mediaRecorderRef.current) return;
 
+    // 🔥 WICHTIG: Den Handler ZUERST definieren, BEVOR .stop() aufgerufen wird!
     mediaRecorderRef.current.onstop = () => {
       const url = createSegment();
       setAudioSegments((prev) => [...prev, url]);
     };
+
+    if (mediaRecorderRef.current.state === "recording") {
+      mediaRecorderRef.current.stop();
+    }
+
+    // AudioContext aufräumen / pausieren
+    if (audioContextRef.current && audioContextRef.current.state !== "closed") {
+      audioContextRef.current.close();
+    }
 
     setIsRecording(false);
     setVolume(0);
@@ -105,28 +111,51 @@ export const useVoiceInput = () => {
       if (e.data.size > 0) chunksRef.current.push(e.data);
     };
 
+    // Auch hier: Erst definieren, dann starten
     mediaRecorder.onstop = () => {
       const url = createSegment();
       setAudioSegments((prev) => [...prev, url]);
     };
+
+    // Visualisierung für die Fortsetzung neu starten
+    const audioContext = new AudioContext();
+    const analyser = audioContext.createAnalyser();
+    const source = audioContext.createMediaStreamSource(stream);
+    source.connect(analyser);
+    analyser.fftSize = 256;
+    audioContextRef.current = audioContext;
+    analyserRef.current = analyser;
+    const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+    const update = () => {
+      analyser.getByteFrequencyData(dataArray);
+      const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+      setVolume(avg);
+      animationRef.current = requestAnimationFrame(update);
+    };
+    update();
 
     mediaRecorder.start();
     setIsRecording(true);
     setState("recording");
   };
 
-  // Aufnahme endgültig beenden und Blob erstellen
+  // Aufnahme endgültig beenden
   const finalizeRecording = () => {
-    mediaRecorderRef.current?.stop();
+    if (mediaRecorderRef.current?.state === "recording") {
+      // Falls finalize direkt aus der Aufnahme aufgerufen wird,
+      // wollen wir das Haupt-onstop-Verhalten aus 'start' nutzen
+      mediaRecorderRef.current.stop();
+    }
     setState("review");
   };
+
   const createSegment = () => {
     const blob = new Blob(chunksRef.current, { type: "audio/webm" });
     const url = URL.createObjectURL(blob);
     return url;
   };
 
-  // 🔀 Schaltet zwischen Start und Stop um
   const toggle = () => {
     if (state === "idle") {
       start();
@@ -141,6 +170,9 @@ export const useVoiceInput = () => {
     setState("idle");
     setTranscript("");
     setAudioSegments([]);
+    setAudioBlobUrl(null);
+    if (animationRef.current) cancelAnimationFrame(animationRef.current);
+    if (audioContextRef.current) audioContextRef.current.close();
   };
 
   return {
@@ -150,6 +182,7 @@ export const useVoiceInput = () => {
     transcript,
     setTranscript,
     audioSegments,
+    audioBlobUrl, // Jetzt auch im Return verfügbar, falls benötigt!
     state,
     reset,
     resume,
