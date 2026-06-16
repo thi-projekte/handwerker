@@ -5,7 +5,7 @@ export const useVoiceInput = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [volume, setVolume] = useState(0);
   const [transcript, setTranscript] = useState("");
-  const [audioBlobUrl, setAudioBlobUrl] = useState<string | null>(null);
+  const [setAudioBlobUrl] = useState<string | null>(null);
   const [audioSegments, setAudioSegments] = useState<string[]>([]);
   const [state, setState] = useState<
     "idle" | "recording" | "review" | "finished"
