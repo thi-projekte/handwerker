@@ -262,7 +262,7 @@ export const UnternehmenPage = () => {
   };
 
  const handleChange =
-  <T extends Record<string, any>>(
+  <T extends Record<string, unknown>>(
     setState: Dispatch<SetStateAction<T>>,
   ) =>
   (
@@ -294,7 +294,7 @@ export const UnternehmenPage = () => {
     }
 
     const data = await response.json();
-    setMaterials(data.filter((m: any) => m.active !== false));
+    setMaterials(data.filter((m: Material) => m.active !== false));
   } catch (error) {
     console.error(error);
     setCompanyErrorMessage("Materialien konnten nicht geladen werden.");
