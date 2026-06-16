@@ -21,7 +21,7 @@ public class StructuredOfferPositionDTO {
     @NotNull
     public String einheit;
 
-    public Long katalogProduktId;
+    public String katalogProduktId;
 
     public BigDecimal preis;
 }

@@ -27,18 +27,13 @@ public class CsvMaterialParser {
 
                 DatanormMaterialDto dto = new DatanormMaterialDto();
 
-                dto.articleNumber = get(columns, 0);
-                dto.name = get(columns, 1);
+                dto.name = get(columns, 0);
+                dto.manufacturer = get(columns, 1);
                 dto.description = get(columns, 2);
-                dto.supplierNumber = get(columns, 3);
-                dto.supplierName = get(columns, 4);
-                dto.categoryCode = get(columns, 5);
-                dto.categoryName = get(columns, 6);
-                dto.unit = get(columns, 7);
-                dto.priceNet = decimal(get(columns, 8));
-                dto.priceGross = decimal(get(columns, 9));
-                dto.vatRate = decimal(get(columns, 10));
-                dto.currency = get(columns, 11).isBlank() ? "EUR" : get(columns, 11);
+                dto.category = get(columns, 3);
+                dto.unit = get(columns, 4);
+                dto.price = decimal(get(columns, 5));
+                dto.currency = get(columns, 6).isBlank() ? "EUR" : get(columns, 6);
 
                 materials.add(dto);
             }

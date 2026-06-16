@@ -3,7 +3,7 @@ package de.winfprojekt.craftvoice.offerservice.offer;
 import de.winfprojekt.craftvoice.offerservice.processengine.ProcessEngineClient;
 import jakarta.inject.Inject;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.CreateOfferRequest;
-import de.winfprojekt.craftvoice.offerservice.offer.dto.AiResultRequest;
+import de.winfprojekt.craftvoice.offerservice.offer.dto.OfferChangesRequest;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.StructuredOfferPositionDTO;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.OfferAcceptanceRequest;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.SetArbeitsstundenRequest;
@@ -70,9 +70,10 @@ public class OfferService {
         offer.annahmeToken = UUID.randomUUID().toString();
         offer.businessKey = "angebot-" + UUID.randomUUID();
         offer.speechSnippet = request.speechSnippet;
+        offer.status = Offer.STATUS_IN_BEARBEITUNG;
 
         OfferStatusHistory history = new OfferStatusHistory();
-        history.status = Offer.STATUS_ERFASST;
+        history.status = Offer.STATUS_IN_BEARBEITUNG;
         history.offer = offer;
         offer.statusHistory.add(history);
 
@@ -110,32 +111,54 @@ public class OfferService {
         return offer != null ? OfferResponse.fromEntity(offer) : null;
     }
 
-    /**
-     * Verarbeitet das KI-Ergebnis für ein Angebot:
-     * - Prüft, ob das Angebot existiert und sich im Status IN_BEARBEITUNG befindet.
-     * - Lädt für jede Position den Preis vom catalog-service (Stub).
-     * - Persistiert alle Positionen.
-     * - Setzt den Status des Angebots auf KI_FERTIG und legt einen OfferStatusHistory-Eintrag an.
+/**
+     * Initialisiert oder aktualisiert ein Angebot auf Basis eines KI-Ergebnisses oder den Änderungen des Handwerkers im Frontend:
+     * - Prüft, ob das Angebot existiert und sich in einem gültigen Status befindet
+     *   (IN_BEARBEITUNG oder KI_FERTIG).
+     * - Entfernt bei bestehenden KI_FERTIG-Angeboten die bisherigen Materialpositionen
+     *   und ersetzt sie durch die neuen KI-/Frontend-Positionen.
+     * - Lädt für jede Materialposition den Preis vom catalog-service (Stub).
+     * - Persistiert alle Angebotspositionen inklusive optionaler Anfahrtskosten.
+     * - Setzt beim ersten KI-Durchlauf den Status auf KI_FERTIG und legt einen
+     *   OfferStatusHistory-Eintrag an.
      *
      * <p>Die Process Engine wird hier NICHT mehr informiert. Das geschieht erst,
      * wenn der Handwerker seine Arbeitsstunden eingetragen und bestätigt hat
      * (via {@link #setArbeitsstunden(Long, SetArbeitsstundenRequest)}).
      *
      * @param id ID des Angebots
-     * @param request AI-Result-Daten
+     * @param request AI- oder Frontend-Result-Daten für die Angebotspositionen
      */
     @Transactional
-    public void processAiResult(Long id, AiResultRequest request) {
-        Offer offer = Offer.findById(id);
+    public void initializeOrUpdateOfferFromAiOrFrontend(String businessKey, OfferChangesRequest request) {
+        Offer offer = Offer.find("businessKey", businessKey).firstResult();
+
         if (offer == null) {
-            throw new WebApplicationException("Angebot mit ID " + id + " nicht gefunden", 404);
+            throw new WebApplicationException("Angebot mit BusinessKey " + businessKey + " nicht gefunden", 404);
         }
 
-        if (!Offer.STATUS_IN_BEARBEITUNG.equals(offer.status)) {
-            throw new WebApplicationException("Angebot mit ID " + id + " befindet sich nicht im Status IN_BEARBEITUNG", 409);
+        if (!Offer.STATUS_IN_BEARBEITUNG.equals(offer.status) && !Offer.STATUS_KI_FERTIG.equals(offer.status)) {
+            throw new WebApplicationException("Angebot mit BusinessKey " + businessKey + " befindet sich nicht im Status IN_BEARBEITUNG oder KI_FERTIG", 409);
+        }
+
+        if (Offer.STATUS_KI_FERTIG.equals(offer.status)) {
+            offer.status = Offer.STATUS_IN_BEARBEITUNG;
         }
 
         int reihenfolge = 1;
+        // =========================
+        // 1. KOMPLETT RESET (WICHTIG)
+        // =========================
+        offer.positions.removeIf(p -> p.type == OfferPositionType.MATERIAL);
+
+        OfferPosition existingAnfahrt = offer.positions.stream()
+                .filter(p -> p.type == OfferPositionType.ANFAHRT)
+                .findFirst()
+                .orElse(null);
+
+        // =========================
+        // 2. MATERIAL NEU
+        // =========================
         for (StructuredOfferPositionDTO posDto : request.strukturierteAngebotspositionen) {
             BigDecimal preis = BigDecimal.ZERO;
             if (posDto.katalogProduktId != null) {
@@ -146,6 +169,7 @@ public class OfferService {
             }
 
             OfferPosition position = new OfferPosition();
+            position.type = OfferPositionType.MATERIAL;
             position.offer = offer;
             position.hersteller = posDto.hersteller;
             position.bezeichnung = posDto.bezeichnung;
@@ -156,13 +180,12 @@ public class OfferService {
             position.preis = preis;
             position.reihenfolge = reihenfolge++;
 
-            // Map price back to DTO for serialization in sendAiResult
-            posDto.preis = preis;
-
             offer.positions.add(position);
         }
 
-        // --- Anfahrtskosten-Position ---
+        // =========================
+        // 3. ANFAHRT IMMER NEU SETZEN
+        // =========================
         try {
             AnfahrtskostenKonfiguration konfig = userServiceClient.getAnfahrtskostenKonfiguration();
 
@@ -189,16 +212,21 @@ public class OfferService {
                         konfig.modell, distanzKm, anfahrtspreis);
             }
 
-            OfferPosition anfahrtsPosition = new OfferPosition();
+            OfferPosition anfahrtsPosition = (existingAnfahrt != null)
+                    ? existingAnfahrt
+                    : new OfferPosition();
+            anfahrtsPosition.type = OfferPositionType.ANFAHRT;
             anfahrtsPosition.offer = offer;
             anfahrtsPosition.bezeichnung = "Anfahrtskosten";
             anfahrtsPosition.einheit = einheit;
             anfahrtsPosition.menge = menge;
             anfahrtsPosition.preis = anfahrtspreis;
             anfahrtsPosition.katalogProduktId = null;
-            anfahrtsPosition.reihenfolge = reihenfolge++;
+            anfahrtsPosition.reihenfolge = reihenfolge;
 
-            offer.positions.add(anfahrtsPosition);
+            if (existingAnfahrt == null) {
+                offer.positions.add(anfahrtsPosition );
+            }
 
         } catch (RoutingException e) {
             LOG.warnf("Anfahrtskosten konnten nicht berechnet werden, Position wird übersprungen: %s",
@@ -208,6 +236,9 @@ public class OfferService {
                     e.getMessage());
         }
 
+        // =========================
+        // 4. STATUS
+        // =========================
         offer.status = Offer.STATUS_KI_FERTIG;
 
         OfferStatusHistory history = new OfferStatusHistory();
@@ -216,6 +247,16 @@ public class OfferService {
         offer.statusHistory.add(history);
 
         offer.persist();
+
+        // Correlation: Prozess wartet an Event_10bgkb0 auf "angebotsentwurf"
+        OfferResponse response = OfferResponse.fromEntity(offer);
+        String angebotsentwurfJson;
+        try {
+            angebotsentwurfJson = objectMapper.writeValueAsString(response);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Serialisierung des Angebotsentwurfs fehlgeschlagen", e);
+        }
+        processEngineClient.sendAngebotsentwurf(offer.businessKey, angebotsentwurfJson);
     }
 
     /**
@@ -223,22 +264,21 @@ public class OfferService {
      * - Angebot muss sich im Status KI_FERTIG befinden.
      * - Löscht eine bereits vorhandene Arbeitszeit-Position (Idempotenz bei Korrekturen).
      * - Legt – sofern Stunden > 0 – eine neue Arbeitszeit-Position an (Stunden × Stundensatz).
-     * - Informiert die Process Engine (sendAiResult), damit der Prozess weiterläuft.
      *
      * @param id      ID des Angebots
      * @param request Arbeitsstunden-Eingabe des Handwerkers
      * @return aktualisiertes Angebot als DTO
      */
     @Transactional
-    public OfferResponse setArbeitsstunden(Long id, SetArbeitsstundenRequest request) {
-        Offer offer = Offer.findById(id);
+    public OfferResponse setArbeitsstunden(String businessKey, SetArbeitsstundenRequest request) {
+        Offer offer = Offer.find("businessKey", businessKey).firstResult();
         if (offer == null) {
-            throw new WebApplicationException("Angebot mit ID " + id + " nicht gefunden", 404);
+            throw new WebApplicationException("Angebot mit businessKey " + businessKey + " nicht gefunden", 404);
         }
 
         if (!Offer.STATUS_KI_FERTIG.equals(offer.status)) {
             throw new WebApplicationException(
-                    "Angebot mit ID " + id + " befindet sich nicht im Status KI_FERTIG", 409);
+                    "Angebot mit businessKey " + businessKey + " befindet sich nicht im Status KI_FERTIG", 409);
         }
 
         // Idempotenz: bestehende Arbeitszeit-Position entfernen (z. B. bei Korrektur)
@@ -277,21 +317,6 @@ public class OfferService {
         }
 
         offer.persist();
-
-        // Process Engine informieren – Handwerker hat bestätigt, Prozess kann weiterlaufen
-        String ergebnisKiJsonString;
-        try {
-            ergebnisKiJsonString = objectMapper.writeValueAsString(
-                    java.util.Map.of(
-                            "customerId", offer.customerId,
-                            "arbeitsdauerStunden", request.arbeitsdauerStunden
-                    )
-            );
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Fehler beim Serialisieren der Arbeitsstunden zu JSON", e);
-        }
-
-        processEngineClient.sendAiResult(offer.businessKey, ergebnisKiJsonString);
 
         return OfferResponse.fromEntity(offer);
     }
@@ -381,9 +406,9 @@ public class OfferService {
      * @param id Angebots-ID des angenommenen Angebots
      */
     @Transactional
-    public void acceptAiResult(Long id) {
+    public void acceptAiResult(String businessKey) {
 
-        Offer offer = Offer.findById(id);
+        Offer offer = Offer.find("businessKey", businessKey).firstResult();
 
         if (offer == null) {
             throw new WebApplicationException("not found", 404);

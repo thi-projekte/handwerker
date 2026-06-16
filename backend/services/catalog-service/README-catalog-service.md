@@ -1,328 +1,234 @@
-# CraftVoice Catalog Service API
+# Catalog Service – Material API
 
-## Einführung
+Der Catalog-Service verwaltet Materialien eines angemeldeten Benutzers. Alle Materialdaten werden über die `ownerId` dem jeweiligen Benutzer zugeordnet. Gelöschte Materialien werden nicht physisch entfernt, sondern über `active = false` deaktiviert.
 
-Der Catalog Service ist für die Verwaltung von Materialien innerhalb der CraftVoice-Plattform verantwortlich. Materialien können manuell erstellt, per CSV-Datei importiert oder zukünftig über Datanorm-Schnittstellen synchronisiert werden.
-
-Jedes Material gehört genau einem Benutzer und besitzt eine interne UUID zur eindeutigen Identifikation. Die fachliche Identifikation erfolgt über die Artikelnummer.
-
-Die Basis-URL aller Endpunkte lautet:
+Basis-URL:
 
 ```text
 /catalog/material
 ```
 
----
+## Endpunkte
 
-## Materialien abrufen
+| Methode  | Pfad                                       | Beschreibung                                                     |
+| -------- | ------------------------------------------ | ---------------------------------------------------------------- |
+| `GET`    | `/catalog/material`                        | Gibt alle aktiven Materialien des angemeldeten Benutzers zurück. |
+| `GET`    | `/catalog/material/{id}`                   | Gibt ein einzelnes Material anhand der ID zurück.                |
+| `POST`   | `/catalog/material`                        | Legt ein neues Material manuell an.                              |
+| `PUT`    | `/catalog/material/{id}`                   | Aktualisiert ein bestehendes Material.                           |
+| `DELETE` | `/catalog/material/{id}`                   | Deaktiviert ein Material.                                        |
+| `GET`    | `/catalog/material/search?q=...&limit=...` | Sucht Materialien mit Ranking und Fuzzy Search.                  |
+| `POST`   | `/catalog/material/import/csv`             | Importiert Materialien aus einer CSV-Datei.                      |
 
-Der Endpunkt `GET /catalog/material` lädt alle aktiven Materialien des aktuellen Benutzers. Die Rückgabe erfolgt als JSON-Liste aller verfügbaren Materialien.
-
-### HTTP-Methode
-
-```http
-GET
-```
-
-### Beispiel
+## Material abrufen
 
 ```http
 GET /catalog/material
 ```
 
-### Antwort
+Antwort:
 
 ```json
 [
   {
-    "id": "e4f59d4f-f73d-48b8-a6af-5d95c5c7d497",
-    "articleNumber": "1001",
-    "name": "Innenfarbe Weiß",
-    "description": "Weiße Wandfarbe",
-    "supplierNumber": "SUP-001",
-    "supplierName": "Brillux",
-    "categoryCode": "FARBE",
-    "categoryName": "Farben",
-    "unit": "L",
-    "priceNet": 39.90,
-    "priceGross": 47.48,
-    "vatRate": 19,
-    "currency": "EUR"
+    "id": "uuid",
+    "articleNumber": "MAT-000001",
+    "name": "Bohrmaschine",
+    "description": "Professionelle Schlagbohrmaschine",
+    "manufacturer": "Bosch",
+    "category": "Werkzeug",
+    "unit": "Stück",
+    "price": 149.99,
+    "currency": "EUR",
+    "createdAt": "2026-06-14T12:00:00Z",
+    "updatedAt": "2026-06-14T12:00:00Z"
   }
 ]
 ```
 
----
-
 ## Einzelnes Material abrufen
 
-Der Endpunkt `GET /catalog/material/{id}` lädt ein einzelnes Material anhand seiner UUID.
-
-### HTTP-Methode
-
 ```http
-GET
+GET /catalog/material/{id}
 ```
 
-### Beispiel
-
-```http
-GET /catalog/material/e4f59d4f-f73d-48b8-a6af-5d95c5c7d497
-```
-
-### Antwort
+Antwort:
 
 ```json
 {
-  "id": "e4f59d4f-f73d-48b8-a6af-5d95c5c7d497",
-  "articleNumber": "1001",
-  "name": "Innenfarbe Weiß",
-  "description": "Weiße Wandfarbe",
-  "supplierNumber": "SUP-001",
-  "supplierName": "Brillux",
-  "categoryCode": "FARBE",
-  "categoryName": "Farben",
-  "unit": "L",
-  "priceNet": 39.90,
-  "priceGross": 47.48,
-  "vatRate": 19,
-  "currency": "EUR"
+  "id": "uuid",
+  "articleNumber": "MAT-000001",
+  "name": "Bohrmaschine",
+  "description": "Professionelle Schlagbohrmaschine",
+  "manufacturer": "Bosch",
+  "category": "Werkzeug",
+  "unit": "Stück",
+  "price": 149.99,
+  "currency": "EUR",
+  "createdAt": "2026-06-14T12:00:00Z",
+  "updatedAt": "2026-06-14T12:00:00Z"
 }
 ```
 
----
-
-## Material erstellen
-
-Der Endpunkt `POST /catalog/material` erstellt ein neues Material. Existiert bereits ein Material mit derselben Artikelnummer für denselben Benutzer, wird der vorhandene Datensatz aktualisiert.
-
-### HTTP-Methode
-
-```http
-POST
-```
-
-### Beispiel
+## Material manuell anlegen
 
 ```http
 POST /catalog/material
 Content-Type: application/json
 ```
 
-### Request Body
+Request:
 
 ```json
 {
-  "articleNumber": "1001",
-  "name": "Innenfarbe Weiß",
-  "description": "Weiße Wandfarbe",
-  "supplierNumber": "SUP-001",
-  "supplierName": "Brillux",
-  "categoryCode": "FARBE",
-  "categoryName": "Farben",
-  "unit": "L",
-  "priceNet": 39.90,
-  "priceGross": 47.48,
-  "vatRate": 19,
+  "name": "Bohrmaschine",
+  "manufacturer": "Bosch",
+  "description": "Professionelle Schlagbohrmaschine",
+  "category": "Werkzeug",
+  "unit": "Stück",
+  "price": 149.99,
   "currency": "EUR"
 }
 ```
 
-### Antwort
+Antwort:
 
-Das gespeicherte Materialobjekt.
-
----
+```json
+{
+  "id": "uuid",
+  "articleNumber": "MAT-000001",
+  "name": "Bohrmaschine",
+  "description": "Professionelle Schlagbohrmaschine",
+  "manufacturer": "Bosch",
+  "category": "Werkzeug",
+  "unit": "Stück",
+  "price": 149.99,
+  "currency": "EUR",
+  "createdAt": "2026-06-14T12:00:00Z",
+  "updatedAt": "2026-06-14T12:00:00Z"
+}
+```
 
 ## Material aktualisieren
 
-Der Endpunkt `PUT /catalog/material/{id}` aktualisiert ein bestehendes Material anhand seiner UUID.
-
-### HTTP-Methode
-
 ```http
-PUT
-```
-
-### Beispiel
-
-```http
-PUT /catalog/material/e4f59d4f-f73d-48b8-a6af-5d95c5c7d497
+PUT /catalog/material/{id}
 Content-Type: application/json
 ```
 
-### Request Body
+Request:
 
 ```json
 {
-  "articleNumber": "1001",
-  "name": "Neue Bezeichnung"
+  "name": "Akkuschrauber",
+  "manufacturer": "Makita",
+  "description": "18V Akkuschrauber",
+  "category": "Werkzeug",
+  "unit": "Stück",
+  "price": 89.99,
+  "currency": "EUR"
 }
 ```
 
-### Antwort
+Antwort:
 
-Das aktualisierte Materialobjekt.
-
----
-
-## Material deaktivieren
-
-Der Endpunkt `DELETE /catalog/material/{id}` deaktiviert ein Material. Der Datensatz bleibt in der Datenbank erhalten und wird lediglich auf inaktiv gesetzt. Dadurch bleiben Referenzen in zukünftigen Angeboten, Rechnungen oder Historien erhalten.
-
-### HTTP-Methode
-
-```http
-DELETE
+```json
+{
+  "id": "uuid",
+  "articleNumber": "MAT-000001",
+  "name": "Akkuschrauber",
+  "description": "18V Akkuschrauber",
+  "manufacturer": "Makita",
+  "category": "Werkzeug",
+  "unit": "Stück",
+  "price": 89.99,
+  "currency": "EUR",
+  "createdAt": "2026-06-14T12:00:00Z",
+  "updatedAt": "2026-06-14T12:30:00Z"
+}
 ```
 
-### Beispiel
+## Material löschen
 
 ```http
-DELETE /catalog/material/e4f59d4f-f73d-48b8-a6af-5d95c5c7d497
+DELETE /catalog/material/{id}
 ```
 
-### Antwort
+Beschreibung:
 
-```http
+Das Material wird nicht aus der Datenbank entfernt, sondern über `active = false` deaktiviert.
+
+Antwort:
+
+```text
 204 No Content
 ```
 
----
-
-## CSV-Import
-
-Der Endpunkt `POST /catalog/material/import/csv` importiert Materialien aus einer CSV-Datei. Die Datei wird verarbeitet, in Materialobjekte umgewandelt und anschließend gespeichert. Existiert bereits dieselbe Artikelnummer für denselben Benutzer, wird der Datensatz aktualisiert.
-
-### HTTP-Methode
+## Materialien suchen
 
 ```http
-POST
+GET /catalog/material/search?q=bohrmaschine&limit=15
 ```
 
-### Content-Type
+Beschreibung:
 
-```http
-multipart/form-data
-```
+Die Suche verwendet PostgreSQL Full-Text-Search mit gewichteten Feldern und zusätzlicher Fuzzy Search. Es werden nur aktive Materialien des angemeldeten Benutzers durchsucht.
 
-### Formularfeld
-
-| Name | Typ       | Beschreibung                   |
-| ---- | --------- | ------------------------------ |
-| file | CSV-Datei | Zu importierende Materialdatei |
-
-### CSV-Struktur
-
-```csv
-articleNumber;name;description;supplierNumber;supplierName;categoryCode;categoryName;unit;priceNet;priceGross;vatRate;currency
-CSV-100001;Test Farbe Weiss;Wandfarbe 10L;SUP-001;Test Lieferant;FARBE;Farben;L;39.90;47.48;19;EUR
-CSV-100002;Test Pinsel;Pinsel Set;SUP-002;Test Lieferant;WERKZEUG;Werkzeuge;ST;12.99;15.46;19;EUR
-```
-
-### Antwort
-
-Die Anzahl der erfolgreich importierten Datensätze.
-
-```json
-5
-```
-
----
-
-## Datanorm-Import
-
-Der Endpunkt `POST /catalog/material/import/datanorm` dient zur Übernahme von Materialdaten aus externen Datanorm-Quellen oder zukünftigen Hersteller-APIs.
-
-Existiert bereits dieselbe Artikelnummer für denselben Benutzer, wird der vorhandene Datensatz aktualisiert.
-
-### HTTP-Methode
-
-```http
-POST
-```
-
-### Beispiel
-
-```http
-POST /catalog/material/import/datanorm
-Content-Type: application/json
-```
-
-### Request Body
+Antwort:
 
 ```json
 {
-  "articleNumber": "DN-1001",
-  "name": "Kupferrohr 15mm",
-  "priceNet": 9.99
+  "candidates": [
+    {
+      "id": "uuid",
+      "articleNumber": "MAT-000001",
+      "name": "Bohrmaschine",
+      "description": "Professionelle Schlagbohrmaschine",
+      "manufacturer": "Bosch",
+      "category": "Werkzeug",
+      "unit": "Stück",
+      "price": 149.99,
+      "currency": "EUR",
+      "score": 12.53
+    }
+  ]
 }
 ```
 
-### Antwort
+## CSV importieren
 
-Das importierte oder aktualisierte Materialobjekt.
-
----
-
-## Datenmodell
-
-Jedes Material besitzt folgende Eigenschaften:
-
-```java
-UUID id;
-String ownerId;
-
-String articleNumber;
-String name;
-String description;
-
-String supplierNumber;
-String supplierName;
-
-String categoryCode;
-String categoryName;
-
-String unit;
-
-BigDecimal priceNet;
-BigDecimal priceGross;
-BigDecimal vatRate;
-
-String currency;
-
-String source;
-
-Boolean active;
-
-Instant createdAt;
-Instant updatedAt;
+```http
+POST /catalog/material/import/csv
+Content-Type: multipart/form-data
 ```
 
-### Quellen
-
-Das Feld `source` beschreibt die Herkunft des Datensatzes:
+Form-Data:
 
 ```text
-MANUAL
-CSV
-DATANORM_API (nicht implementiert, Basis vorhanden)
+file=<csv-datei>
 ```
 
----
+CSV-Spalten:
 
-## Benutzerkonzept
-
-Alle Materialien sind benutzergebunden. Aktuell wird während der Entwicklung ein fester Benutzer verwendet:
-
-```java
-return "dev-user";
+```text
+name;manufacturer;description;category;unit;price;currency
 ```
 
-Nach der Keycloak-Integration wird die Benutzer-ID direkt aus dem JWT-Token gelesen:
+Antwort:
 
-```java
-jwt.getSubject();
+```json
+3
 ```
 
-Dadurch erhält jeder Benutzer ausschließlich Zugriff auf seine eigenen Materialien.
+Die Zahl gibt an, wie viele Materialien importiert wurden.
+
+
+## Authentifizierung
+
+Bei aktivierter Keycloak-Integration muss jeder Request ein gültiges Access Token enthalten:
+
+```http
+Authorization: Bearer <access_token>
+```
+
+Die Benutzerzuordnung erfolgt über die `sub`-ID aus dem JWT.

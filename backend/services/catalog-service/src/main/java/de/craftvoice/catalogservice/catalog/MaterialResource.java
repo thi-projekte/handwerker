@@ -79,6 +79,15 @@ public class MaterialResource {
         }
     }
 
+    @GET
+    @Path("/search")
+    public MaterialSearchResultResponse search(
+            @QueryParam("q") String query,
+            @QueryParam("limit") Integer limit
+    ) {
+        return service.search(query, limit, ownerId());
+    }
+
     @POST
     @Path("/import/datanorm")
     public MaterialResponse importFromDatanorm(DatanormMaterialDto dto) {

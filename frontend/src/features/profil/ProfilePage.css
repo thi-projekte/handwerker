@@ -387,3 +387,112 @@
   font-size: 13px;
   font-weight: 800;
 }
+
+/* Mobile Sticky Menü für Profil */
+.mobile-section-menu {
+  display: none;
+}
+
+@media (max-width: 600px) {
+  .desktop-section-tabs {
+    display: none;
+  }
+
+  .mobile-section-menu {
+    display: block;
+    position: sticky;
+    top: 10px;
+    z-index: 20;
+    padding: 10px;
+    background: rgba(26, 26, 28, 0.94);
+    backdrop-filter: blur(14px);
+  }
+
+  [data-theme="light"] .mobile-section-menu {
+    background: rgba(255, 255, 255, 0.94);
+  }
+
+  .mobile-section-menu-button {
+    width: 100%;
+    padding: 14px;
+    border-radius: 16px;
+    border: 1px solid var(--color-divider);
+    background: var(--color-surface);
+    color: var(--color-text-primary);
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .mobile-section-menu-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .mobile-section-menu-list button {
+    width: 100%;
+    padding: 13px;
+    border-radius: 14px;
+    border: 1px solid var(--color-divider);
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-weight: 700;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .mobile-section-menu-list button.active {
+    background: var(--color-accent-gradient);
+    color: #ffffff;
+    border-color: transparent;
+    box-shadow: 0 8px 20px rgba(255, 106, 0, 0.28);
+  }
+}
+
+
+/* User-Service Statusmeldungen */
+.profile-feedback {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 13px 16px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.profile-feedback-success {
+  color: #64c878;
+  border: 1px solid rgba(100, 200, 120, 0.4);
+  background: rgba(100, 200, 120, 0.1);
+}
+
+.profile-feedback-error {
+  color: #ff6b6b;
+  border: 1px solid rgba(255, 107, 107, 0.4);
+  background: rgba(255, 107, 107, 0.1);
+}
+
+.profile-load-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 120px;
+  color: var(--color-text-secondary);
+}
+
+.profile-image-button:disabled,
+.profile-save-button:disabled,
+.profile-password-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.profile-field .input-field:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}

@@ -42,12 +42,12 @@ class Call2SelectorTest {
     @Test
     void ohneKey_nimmtTopKandidatAlsBaseline() {
         when(catalogSearch.search(anyString(), anyInt())).thenReturn(List.of(
-                new CatalogCandidate(1001L, "FLI-1001", "Feinsteinzeug Eiche", "desc", "m2", "Fliesen", 3.0),
-                new CatalogCandidate(1002L, "FLI-1002", "Feinsteinzeug Beton", "desc", "m2", "Fliesen", 2.0)));
+                new CatalogCandidate("1001", "FLI-1001", "Feinsteinzeug Eiche", "desc", "m2", "Fliesen", 3.0),
+                new CatalogCandidate("1002", "FLI-1002", "Feinsteinzeug Beton", "desc", "m2", "Fliesen", 2.0)));
 
         Position result = selector.selectFor(new Position("Feinsteinzeug 60x60", "Bodenfliese", 15.0, "m2"));
 
-        assertEquals(1001L, result.katalogProduktId());
+        assertEquals("1001", result.katalogProduktId());
     }
 
     @Test

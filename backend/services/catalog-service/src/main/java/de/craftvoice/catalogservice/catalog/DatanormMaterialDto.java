@@ -6,19 +6,14 @@ public class DatanormMaterialDto {
 
     public String articleNumber = "";
     public String name = "";
+    public String manufacturer = "";
     public String description = "";
 
-    public String supplierNumber = "";
-    public String supplierName = "";
-
-    public String categoryCode = "";
-    public String categoryName = "";
+    public String category = "";
 
     public String unit = "";
 
-    public BigDecimal priceNet = BigDecimal.ZERO;
-    public BigDecimal priceGross = BigDecimal.ZERO;
-    public BigDecimal vatRate = BigDecimal.ZERO;
+    public BigDecimal price = BigDecimal.ZERO;
 
     public String currency = "EUR";
 }

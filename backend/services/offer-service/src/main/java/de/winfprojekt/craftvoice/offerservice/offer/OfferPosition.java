@@ -1,11 +1,7 @@
 package de.winfprojekt.craftvoice.offerservice.offer;
 
 import de.winfprojekt.craftvoice.offerservice.common.BaseEntity;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import java.math.BigDecimal;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -26,7 +22,10 @@ public class OfferPosition extends BaseEntity {
     public String beschreibung;
     public BigDecimal menge;
     public String einheit;
-    public Long katalogProduktId;   // Referenz auf catalog-service, keine FK
+    public String katalogProduktId;   // Referenz auf catalog-service, keine FK
     public BigDecimal preis;
     public Integer reihenfolge;
+
+    @Enumerated(EnumType.STRING)
+    public OfferPositionType type;
 }

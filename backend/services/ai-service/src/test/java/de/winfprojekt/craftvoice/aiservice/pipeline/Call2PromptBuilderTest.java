@@ -21,7 +21,7 @@ class Call2PromptBuilderTest {
     private final Call2PromptBuilder builder = new Call2PromptBuilder(new ObjectMapper());
 
     private static CatalogCandidate cand(String art, String name) {
-        return new CatalogCandidate(1L, art, name, "Beschreibung " + name, "Stk", "Kategorie", null);
+        return new CatalogCandidate("1", art, name, "Beschreibung " + name, "Stk", "Kategorie", null);
     }
 
     @Test
