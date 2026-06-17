@@ -11,7 +11,7 @@ import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
  * REST-Client zur Kommunikation mit der externen Process Engine:
  * HTTP-Schnittstelle zum Versenden an die Process Engine
  */
-@Path("/engine-rest/message")
+@Path("/message")
 @RegisterRestClient
 public interface ProcessEngineRestClient {
 
