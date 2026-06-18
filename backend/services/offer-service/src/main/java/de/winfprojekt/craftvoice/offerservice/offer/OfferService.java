@@ -250,6 +250,7 @@ public class OfferService {
 
         // Correlation: Prozess wartet an Event_10bgkb0 auf "angebotsentwurf"
         OfferResponse response = OfferResponse.fromEntity(offer);
+        response.korrekturvorschlaege = request.korrekturvorschlaege;
         String angebotsentwurfJson;
         try {
             angebotsentwurfJson = objectMapper.writeValueAsString(response);
@@ -426,5 +427,33 @@ public class OfferService {
         history.zeitpunkt = LocalDateTime.now();
 
         offer.statusHistory.add(history);
+    }
+
+    /**
+     * Setzt den Status eines Angebots auf VERSANDBEREIT.
+     * Wird vom document-service aufgerufen, nachdem das PDF-Angebot erfolgreich erstellt wurde.
+     *
+     * @param businessKey Business-Key des Angebots
+     */
+    @Transactional
+    public void setStatusVersandbereit(String businessKey) {
+        Offer offer = Offer.find("businessKey", businessKey).firstResult();
+        if (offer == null) {
+            throw new WebApplicationException("Angebot mit BusinessKey " + businessKey + " nicht gefunden", 404);
+        }
+
+        if (!Offer.STATUS_KI_BEARBEITUNG_ABGESCHLOSSEN.equals(offer.status)) {
+            throw new WebApplicationException("Angebot befindet sich nicht im Status KI_BEARBEITUNG_ABGESCHLOSSEN", 409);
+        }
+
+        offer.status = Offer.STATUS_VERSANDBEREIT;
+
+        OfferStatusHistory history = new OfferStatusHistory();
+        history.offer = offer;
+        history.status = Offer.STATUS_VERSANDBEREIT;
+        history.zeitpunkt = LocalDateTime.now();
+        offer.statusHistory.add(history);
+
+        offer.persist();
     }
 }
