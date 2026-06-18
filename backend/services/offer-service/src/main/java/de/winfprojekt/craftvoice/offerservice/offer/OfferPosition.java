@@ -23,7 +23,11 @@ public class OfferPosition extends BaseEntity {
     public BigDecimal menge;
     public String einheit;
     public String katalogProduktId;   // Referenz auf catalog-service, keine FK
-    public BigDecimal preis;
+    @Column(precision = 15, scale = 2)
+    public BigDecimal einzelPreis;
+
+    @Column(precision = 15, scale = 2)
+    public BigDecimal positionsPreis;
     public Integer reihenfolge;
 
     @Enumerated(EnumType.STRING)

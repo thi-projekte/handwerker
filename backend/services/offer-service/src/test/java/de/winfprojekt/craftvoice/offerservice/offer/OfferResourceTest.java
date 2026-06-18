@@ -7,7 +7,6 @@ import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.Test;
 
-import static de.winfprojekt.craftvoice.offerservice.offer.Offer.STATUS_ERFASST;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -24,9 +23,7 @@ import de.winfprojekt.craftvoice.offerservice.routing.OsrmClient;
 import de.winfprojekt.craftvoice.offerservice.routing.RoutingException;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import java.math.BigDecimal;
-import java.util.Comparator;
-import java.util.UUID;
-import java.util.List;
+import java.util.*;
 
 import static io.restassured.RestAssured.given;
 import static org.mockito.ArgumentMatchers.any;
@@ -55,16 +52,20 @@ class OfferResourceTest {
         position.bezeichnung = "Musterposition";
         position.menge = new java.math.BigDecimal("5");
         position.einheit = "Stk";
-        position.preis = new java.math.BigDecimal("99.90");
-        position.persist();
+        position.einzelPreis = new java.math.BigDecimal("99.90");
+        position.positionsPreis = position.einzelPreis.multiply(position.menge);
         offer.positions.add(position);
 
         OfferStatusHistory history = new OfferStatusHistory();
         history.offer = offer;
         history.status = Offer.STATUS_VERSENDET;
         history.notiz = "Angebot wurde versendet";
-        history.persist();
         offer.statusHistory.add(history);
+
+        offer.gesamtPreis = offer.positions.stream()
+                .map(p -> p.positionsPreis)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         offer.persist();
     }
@@ -244,7 +245,8 @@ class OfferResourceTest {
             assertEquals(new BigDecimal("2").setScale(0), materialPosition.menge.setScale(0));
             assertEquals("Pauschal", materialPosition.einheit);
             assertEquals("42", materialPosition.katalogProduktId);
-            assertEquals(new BigDecimal("49.99"), materialPosition.preis);
+            assertEquals(new BigDecimal("49.99"), materialPosition.einzelPreis);
+            assertEquals(new BigDecimal("99.98"), materialPosition.positionsPreis);
 
             // Status-Historie prüfen
             List<OfferStatusHistory> history =
@@ -417,7 +419,9 @@ class OfferResourceTest {
                 .body("speechSnippet", org.hamcrest.Matchers.equalTo("Detailansicht Test"))
                 .body("positions", org.hamcrest.Matchers.hasSize(1))
                 .body("positions[0].bezeichnung", org.hamcrest.Matchers.equalTo("Musterposition"))
-                .body("positions[0].preis", org.hamcrest.Matchers.equalTo(99.9f))
+                .body("positions[0].einzelPreis", org.hamcrest.Matchers.equalTo(99.9f))
+                .body("positions[0].positionsPreis", org.hamcrest.Matchers.equalTo(499.5f))
+                .body("gesamtPreis", org.hamcrest.Matchers.equalTo(499.5f))
                 .body("statusHistory", org.hamcrest.Matchers.hasSize(2)) // ERFASST + VERSENDET
                 .body("statusHistory[1].status", org.hamcrest.Matchers.equalTo("VERSENDET"));
     }
@@ -628,7 +632,8 @@ class OfferResourceTest {
                     .findFirst().orElseThrow();
             assertEquals("h", arbeit.einheit);
             assertEquals(new BigDecimal("2").setScale(0), arbeit.menge.setScale(0));
-            assertEquals(new BigDecimal("130.00"), arbeit.preis);
+            assertEquals(new BigDecimal("130.00"), arbeit.positionsPreis);
+            assertEquals(new BigDecimal("65.00"), arbeit.einzelPreis);
         });
     }
 
@@ -716,7 +721,8 @@ class OfferResourceTest {
 
             assertEquals("pauschal", anfahrt.einheit);
             assertEquals(0, BigDecimal.ONE.compareTo(anfahrt.menge));
-            assertEquals(new BigDecimal("50.00"), anfahrt.preis);
+            assertEquals(new BigDecimal("50.00"), anfahrt.positionsPreis);
+            assertNull(anfahrt.einzelPreis);
         });
 
         Mockito.verify(osrmClient, org.mockito.Mockito.never()).getDistanzKm(anyString(), anyString());
@@ -770,7 +776,8 @@ class OfferResourceTest {
                     .orElseThrow(() -> new AssertionError("Anfahrtskosten-Position fehlt"));
 
             assertEquals("km", anfahrt.einheit);
-            assertEquals(new BigDecimal("26.00"), anfahrt.preis);
+            assertEquals(new BigDecimal("26.00"), anfahrt.positionsPreis);
+            assertNull(anfahrt.einzelPreis);
         });
 
         verify(processEngineClient, times(1)).sendAngebotsentwurf(Mockito.eq(businessKey), anyString());
@@ -822,7 +829,8 @@ class OfferResourceTest {
                     .orElseThrow(() -> new AssertionError("Anfahrtskosten-Position fehlt"));
 
             assertEquals("km", anfahrt.einheit);
-            assertEquals(new BigDecimal("4.50"), anfahrt.preis);
+            assertEquals(new BigDecimal("4.50"), anfahrt.positionsPreis);
+            assertNull(anfahrt.einzelPreis);
         });
 
         verify(processEngineClient, times(1)).sendAngebotsentwurf(Mockito.eq(businessKey), anyString());
@@ -1031,7 +1039,8 @@ class OfferResourceTest {
                     .findFirst().orElseThrow();
             // Korrekturwert (3 Stunden) muss gespeichert sein
             assertEquals(new BigDecimal("3").setScale(0), arbeit.menge.setScale(0));
-            assertEquals(new BigDecimal("195.00"), arbeit.preis);
+            assertEquals(new BigDecimal("195.00"), arbeit.positionsPreis);
+            assertEquals(new BigDecimal("65.00"), arbeit.einzelPreis);
         });
     }
 
@@ -1501,4 +1510,28 @@ class OfferResourceTest {
         });
     }
 
+    @Test
+    void shouldCalculateGesamtpreisCorrectly() {
+        Offer offer = new Offer();
+        offer.positions = new ArrayList<>();
+
+        OfferPosition p1 = new OfferPosition();
+        p1.einzelPreis = new BigDecimal("10");
+        p1.menge = new BigDecimal("2");
+        p1.positionsPreis = new BigDecimal("20");
+
+        OfferPosition p2 = new OfferPosition();
+        p2.einzelPreis = new BigDecimal("5");
+        p2.menge = new BigDecimal("3");
+        p2.positionsPreis = new BigDecimal("15");
+
+        offer.positions.add(p1);
+        offer.positions.add(p2);
+
+        offer.gesamtPreis = offer.positions.stream()
+                .map(p -> p.positionsPreis)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        assertEquals(new BigDecimal("35"), offer.gesamtPreis);
+    }
 }

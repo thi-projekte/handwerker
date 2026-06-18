@@ -6,6 +6,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,6 +46,9 @@ public class Offer extends BaseEntity {
 
     @Column(name = "speech_snippet", columnDefinition = "TEXT")
     public String speechSnippet;
+
+    @Column(name = "gesamt_preis", precision = 15, scale = 2)
+    public BigDecimal gesamtPreis;
 
     @OneToMany(mappedBy = "offer", cascade = CascadeType.ALL, orphanRemoval = true)
     public List<OfferPosition> positions = new ArrayList<>();
