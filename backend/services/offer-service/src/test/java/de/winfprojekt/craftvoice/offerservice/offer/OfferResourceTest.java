@@ -272,6 +272,71 @@ class OfferResourceTest {
     }
 
     /**
+     * Prüft, dass das KI-Ergebnis auch dann erfolgreich verarbeitet wird,
+     * wenn die Menge (menge) null ist (Vertragsfall: Handwerker spricht keine Menge aus).
+     */
+    @Test
+    void shouldProcessAiResultSuccessfullyWithNullMenge() {
+        // Setup des Testangebots
+        Offer offer = new Offer();
+        offer.customerId = 1L;
+        offer.handwerkerId = 99L;
+        offer.businessKey = "angebot-" + UUID.randomUUID().toString();
+        offer.status = Offer.STATUS_IN_BEARBEITUNG;
+
+        QuarkusTransaction.requiringNew().run(() -> {
+            offer.persist();
+        });
+
+        final Long offerId = offer.id;
+        final String businessKey = offer.businessKey;
+
+        // Stub des Catalog-Clients
+        CatalogPriceResponse priceResponse = new CatalogPriceResponse();
+        priceResponse.preis = new BigDecimal("49.99");
+        when(catalogServiceClient.getPreis("42")).thenReturn(priceResponse);
+
+        // Stub der Process Engine
+        Mockito.doNothing().when(processEngineClient).sendAngebotsentwurf(any(), any());
+
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+                {
+                  "strukturierteAngebotspositionen": [
+                    {
+                      "bezeichnung": "Badrenovierung",
+                      "hersteller": "Knauf",
+                      "beschreibung": "Komplette Sanierung",
+                      "menge": null,
+                      "einheit": "Pauschal",
+                      "katalogProduktId": 42
+                    }
+                  ],
+                  "korrekturvorschlaege": []
+                }
+                """)
+                .when()
+                .post("/angebote/{businessKey}/ki-ergebnis", businessKey)
+                .then()
+                .statusCode(200);
+
+        // Datenbankprüfung
+        QuarkusTransaction.requiringNew().run(() -> {
+            Offer updatedOffer = Offer.findById(offerId);
+            assertNotNull(updatedOffer);
+            assertEquals(Offer.STATUS_KI_FERTIG, updatedOffer.status);
+
+            // Materialposition muss vorhanden sein und menge/positionsPreis müssen null sein
+            OfferPosition materialPosition = updatedOffer.positions.stream()
+                    .filter(p -> "Badrenovierung".equals(p.bezeichnung))
+                    .findFirst().orElseThrow();
+            assertNull(materialPosition.menge);
+            assertNull(materialPosition.positionsPreis);
+        });
+    }
+
+    /**
      * Prüft, dass bei falschem Status ein HTTP 409 zurückgegeben wird.
      */
     @Test
