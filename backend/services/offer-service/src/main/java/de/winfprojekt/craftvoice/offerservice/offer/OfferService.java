@@ -23,6 +23,7 @@ import jakarta.transaction.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.List;
 import org.jboss.logging.Logger;
@@ -177,7 +178,8 @@ public class OfferService {
             position.menge = posDto.menge;
             position.einheit = posDto.einheit;
             position.katalogProduktId = posDto.katalogProduktId;
-            position.preis = preis;
+            position.einzelPreis = preis;
+            position.positionsPreis = position.einzelPreis.multiply(position.menge);
             position.reihenfolge = reihenfolge++;
 
             offer.positions.add(position);
@@ -220,7 +222,8 @@ public class OfferService {
             anfahrtsPosition.bezeichnung = "Anfahrtskosten";
             anfahrtsPosition.einheit = einheit;
             anfahrtsPosition.menge = menge;
-            anfahrtsPosition.preis = anfahrtspreis;
+            anfahrtsPosition.einzelPreis = null;
+            anfahrtsPosition.positionsPreis = anfahrtspreis;
             anfahrtsPosition.katalogProduktId = null;
             anfahrtsPosition.reihenfolge = reihenfolge;
 
@@ -235,6 +238,8 @@ public class OfferService {
             LOG.warnf("Unerwarteter Fehler bei Anfahrtskostenberechnung, Position wird übersprungen: %s",
                     e.getMessage());
         }
+
+        berechneGesamtpreis(offer);
 
         // =========================
         // 4. STATUS
@@ -302,7 +307,8 @@ public class OfferService {
                 arbeitszeitPosition.bezeichnung = "Arbeitszeit";
                 arbeitszeitPosition.einheit = "h";
                 arbeitszeitPosition.menge = request.arbeitsdauerStunden;
-                arbeitszeitPosition.preis = arbeitspreis;
+                arbeitszeitPosition.einzelPreis = stundensatz;
+                arbeitszeitPosition.positionsPreis = arbeitspreis;
                 arbeitszeitPosition.katalogProduktId = null;
                 arbeitszeitPosition.reihenfolge = naechsteReihenfolge;
 
@@ -316,6 +322,8 @@ public class OfferService {
         } else {
             LOG.debugf("Arbeitsdauer = 0, keine Arbeitszeit-Position angelegt.");
         }
+
+        berechneGesamtpreis(offer);
 
         offer.persist();
 
@@ -455,5 +463,15 @@ public class OfferService {
         offer.statusHistory.add(history);
 
         offer.persist();
+    }
+    /**
+     * Berechnet den Gesamtpreis (Aufsummieren aller Positionen) eines Angebots
+     * @param offer Angebots-Objekt, von welchem der Gesamtpreis berechnet werden soll
+     */
+    private void berechneGesamtpreis(Offer offer) {
+        offer.gesamtPreis = offer.positions.stream()
+                .map(p -> p.positionsPreis)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }

@@ -22,6 +22,4 @@ public class StructuredOfferPositionDTO {
     public String einheit;
 
     public String katalogProduktId;
-
-    public BigDecimal preis;
 }
