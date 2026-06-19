@@ -12,7 +12,7 @@ Der **User Service** ist das zentrale Modul für Identitätsmanagement, Authenti
 - **Sicherheit:** 
   - **OIDC (OpenID Connect):** Token-Validierung gegen Keycloak.
   - **Keycloak Admin Client:** Zur programmatischen Verwaltung von Usern.
-  - **RBAC:** Rollenbasierte Zugriffskontrolle (OWNER, EMPLOYEE, ACCOUNTANT).
+  - **RBAC:** Rollenbasierte Zugriffskontrolle (OWNER, EMPLOYEE, ACCOUNTANT, CUSTOMER).
 - **Deployment:** Docker & Docker Compose (Port 8082)
 
 ---
@@ -21,8 +21,9 @@ Der **User Service** ist das zentrale Modul für Identitätsmanagement, Authenti
 1. [Funktionsumfang](#-funktionsumfang)
 2. [API-Endpunkte](#-api-endpunkte)
 3. [Keycloak Integration](#-keycloak-integration)
-4. [Datenmodell](#-datenmodell)
-5. [Audit-Logging & DSGVO](#-audit-logging--dsgvo)
+4. [Service-zu-Service Kommunikation](#-service-zu-service-kommunikation)
+5. [Datenmodell](#-datenmodell)
+6. [Audit-Logging & DSGVO](#-audit-logging--dsgvo)
 
 ---
 
@@ -36,7 +37,11 @@ Der **User Service** ist das zentrale Modul für Identitätsmanagement, Authenti
 - **Synchronisation:** Beim Aufruf von `/me` werden Keycloak-Daten (Name, E-Mail) automatisch mit der lokalen Datenbank synchronisiert.
 - **Metadaten:** Speicherung von Telefonnummern, Profilbildern und Unternehmensdaten (USt-IdNr, Handelsregister, Anschrift).
 
-### 3. KI-Personalisierung
+### 3. Kundenverwaltung
+- **Kundenprofile:** Handwerker (`OWNER`, `EMPLOYEE`) können Kundenprofile anlegen, um diese in Angeboten zu verlinken.
+- **Rollen:** Diese Nutzer erhalten die Rolle `CUSTOMER`.
+
+### 4. KI-Personalisierung
 - **Tone of Voice:** Einstellungen wie "Du" vs. "Sie" oder Detailgrade.
 - **Textbausteine:** AGB-Hinweise und Zahlungsbedingungen für die KI-Angebotserstellung.
 
@@ -46,11 +51,18 @@ Der **User Service** ist das zentrale Modul für Identitätsmanagement, Authenti
 
 Alle Endpunkte starten mit dem Präfix `/api/users`.
 
-### 🔐 Authentifizierungs-Flow (WICHTIG für Frontend)
-Der User-Service übernimmt **nicht** den Login-Prozess. 
+### 🔐 Authentifizierungs-Flow (WICHTIG für alle Teams)
+
+#### Für das Frontend:
 1. **Login:** Das Frontend nutzt `keycloak-js` (`keycloak.login()`) direkt gegen den Keycloak-Server.
-2. **Autorisierung:** Nach dem Login muss der `Bearer <Token>` im `Authorization`-Header an alle gesicherten Endpunkte des User-Service gesendet werden.
-3. **Initialer Sync:** Das Frontend sollte nach dem Login einmalig `/api/users/me` aufrufen, um das lokale Profil zu initialisieren/synchronisieren.
+2. **Autorisierung:** Nach dem Login muss der `Bearer <Token>` im `Authorization`-Header an alle gesicherten Endpunkte gesendet werden.
+3. **Initialer Sync:** Das Frontend sollte nach dem Login einmalig `/api/users/me` aufrufen.
+
+#### Für andere Backend-Services:
+Wenn ein Service (z.B. `offer-service`) die Identität eines Nutzers prüfen muss:
+1. **Token-Validierung:** Nutzt die Quarkus OIDC Extension (oder entsprechende Bibliotheken), um den JWT gegen Keycloak zu validieren.
+2. **User-Details:** Falls Namen oder Firmendaten benötigt werden, kann der User-Service via ID abgefragt werden (Endpunkt in Planung) oder der Token-Inhalt genutzt werden.
+3. **Rollenprüfung:** Rollen wie `OWNER` oder `CUSTOMER` sind im `realm_access.roles` Claim des JWT enthalten.
 
 ---
 
@@ -95,45 +107,151 @@ Gibt das aktuelle Profil zurück. Falls der User neu ist (z.B. nach externem Log
 
 #### 4. Profil aktualisieren
 Aktualisiert persönliche Stammdaten. Vornamen/Nachnamen werden automatisch zurück zu Keycloak synchronisiert.
+Es werden nur die Felder aktualisiert, die im Request gesendet werden (Teil-Update unterstützt).
 
 - **Methode:** `PUT`
 - **Pfad:** `/api/users/profile`
-- **Body:** (siehe Datenmodell)
+- **Body:**
+```json
+{
+  "firstName": "Max",
+  "lastName": "Mustermann",
+  "phoneNumber": "+49 123 456789",
+  "profilePictureUrl": "https://..."
+}
+```
 
 #### 5. Firmendaten aktualisieren
 Aktualisiert firmenspezifische Metadaten (nur für Nutzer mit Rolle `OWNER`).
+Es werden nur die Felder aktualisiert, die im Request gesendet werden (Teil-Update unterstützt).
 
 - **Methode:** `PUT`
 - **Pfad:** `/api/users/company`
-- **Body:** (siehe Datenmodell)
+- **Body:**
+```json
+{
+  "companyName": "Malerbetrieb Muster",
+  "vatId": "DE123456789",
+  "tradeRegisterNumber": "HRB 12345",
+  "street": "Musterstraße",
+  "houseNumber": "10",
+  "zipCode": "12345",
+  "city": "Musterstadt",
+  "state": "Bayern",
+  "country": "Deutschland",
+  "companyEmail": "info@maler-muster.de",
+  "companyPhoneNumber": "+49 89 12345",
+  "website": "www.maler-muster.de",
+  "industry": "Maler & Lackierer",
+  "iban": "DE12 3456...",
+  "bic": "GENO...",
+  "bankName": "Musterbank",
+  "accountHolder": "Max Mustermann",
+  "taxNumber": "123/456/789",
+  "legalForm": "Einzelunternehmen",
+  "employeeCount": 5,
+  "customerCount": 150,
+  "hourlyRate": 65.50
+}
+```
+
+#### 6. Profilbild hochladen
+Lädt ein Profilbild hoch und speichert es serverseitig.
+
+- **Methode:** `POST`
+- **Pfad:** `/api/users/profile-picture`
+- **Consumes:** `multipart/form-data`
+- **Body:** `file` (Binary)
+- **Response:** `200 OK` mit `{"url": "/api/users/profile-picture/profile_1_... .jpg"}`
+
+#### 7. Kunden anlegen (Neu)
+Erstellt ein Kundenprofil in der Datenbank. Nur für Handwerker erlaubt.
+
+- **Methode:** `POST`
+- **Pfad:** `/api/users/customers`
+- **Roles:** `OWNER`, `EMPLOYEE`
+- **Body:** (User-Objekt ohne `keycloakId`)
+- **Response:** `201 Created`
+
+#### 8. Kunden auflisten
+Gibt eine Liste aller Profile mit der Rolle `CUSTOMER` zurück.
+
+- **Methode:** `GET`
+- **Pfad:** `/api/users/customers`
+- **Roles:** `OWNER`, `EMPLOYEE`
+- **Response:** `200 OK` (Array von User-Objekten)
+
+#### 9. Einzelnen Kunden abrufen
+Gibt die Details eines spezifischen Kunden zurück.
+
+- **Methode:** `GET`
+- **Pfad:** `/api/users/customers/{id}`
+- **Roles:** `OWNER`, `EMPLOYEE`
+- **Response:** `200 OK` (User-Objekt) oder `404 Not Found`
 
 ---
 
 ## 📊 Datenmodell (User-Objekt)
 
-Dieses Objekt wird von `/me` zurückgegeben und sollte bei `PUT` Requests (teilweise) gesendet werden.
+Dieses Objekt wird von `/me` zurückgegeben und bei `PUT` Requests genutzt.
 
+### Vollständiges Modell
 ```json
 {
   "id": 1,
-  "email": "handwerker@example.com",
+  "email": "handwerker@beispiel.de",
   "firstName": "Max",
   "lastName": "Mustermann",
-  "phoneNumber": "+49 123 456789",
-  "profilePictureUrl": "https://...",
-  "status": "ACTIVE", // PENDING, ACTIVE, DELETED
-  "roles": ["OWNER"], // OWNER, EMPLOYEE, ACCOUNTANT
+  "phoneNumber": "+49 170 1234567",
+  "profilePictureUrl": "/api/users/profile-picture/profile_1.jpg",
+  "status": "ACTIVE", 
+  "roles": ["OWNER"],
   
-  // Firmendaten (via /company)
-  "companyName": "Musterbau GmbH",
-  "vatId": "DE123456789",
-  "tradeRegisterNumber": "HRB 12345",
-  "companyAddress": "Musterstraße 1, 12345 Musterstadt",
-  
-  // KI-Präferenzen (Zukunft)
-  "toneOfVoice": "DU", // DU, SIE
-  "termsOfPayment": "Zahlbar innerhalb von 14 Tagen...",
-  "disclaimer": "Angebot freibleibend..."
+  // Firmendaten
+  "companyName": "Malerbetrieb",
+  "vatId": "DE...",
+  "tradeRegisterNumber": "HRB...",
+  "street": "...",
+  "houseNumber": "...",
+  "zipCode": "...",
+  "city": "...",
+  "state": "...",
+  "country": "...",
+  "companyEmail": "...",
+  "companyPhoneNumber": "...",
+  "website": "...",
+  "industry": "...",
+  "iban": "...",
+  "bic": "...",
+  "bankName": "...",
+  "accountHolder": "...",
+  "taxNumber": "...",
+  "legalForm": "...",
+  "employeeCount": 5,
+  "customerCount": 100,
+  "hourlyRate": 60.0,
+  "priceListUrl": null,
+
+  // KI-Präferenzen
+  "toneOfVoice": "Du",
+  "detailLevel": "detailliert"
+}
+```
+
+---
+
+## 🛠 Service-zu-Service Kommunikation
+
+Services sollten den **Authorization Header** bei internen Requests weiterreichen ("Token Propagation").
+
+**Beispiel Quarkus RestClient:**
+```java
+@RegisterRestClient(configKey = "user-service")
+@AccessToken // Trägt das aktuelle User-Token automatisch ein
+public interface UserServiceClient {
+    @GET
+    @Path("/api/users/me")
+    UserEntity getMe();
 }
 ```
 
