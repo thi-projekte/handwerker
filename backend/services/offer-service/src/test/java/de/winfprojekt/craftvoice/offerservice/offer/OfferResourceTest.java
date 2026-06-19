@@ -259,8 +259,16 @@ class OfferResourceTest {
                     "Keine Arbeitszeit-Position bei ki-ergebnis erwartet");
         });
 
-        // sendAngebotsentwurf muss genau einmal verifiziert werden
-        verify(processEngineClient, times(1)).sendAngebotsentwurf(Mockito.eq(businessKey), anyString());
+        // sendAngebotsentwurf muss genau einmal aufgerufen werden
+        ArgumentCaptor<String> jsonCaptor = ArgumentCaptor.forClass(String.class);
+        verify(processEngineClient, times(1)).sendAngebotsentwurf(Mockito.eq(businessKey), jsonCaptor.capture());
+
+        // Korrekturvorschläge müssen im serialisierten JSON enthalten sein
+        String sentJson = jsonCaptor.getValue();
+        assertTrue(sentJson.contains("korrekturvorschlaege"),
+                "JSON muss das Feld korrekturvorschlaege enthalten");
+        assertTrue(sentJson.contains("Materialkosten prüfen"),
+                "JSON muss den Korrekturvorschlag 'Materialkosten prüfen' enthalten");
     }
 
     /**
@@ -1508,6 +1516,81 @@ class OfferResourceTest {
             assertEquals(1, updated.positions.size());
             assertEquals(OfferPositionType.ANFAHRT, updated.positions.get(0).type);
         });
+    }
+
+    // =========================================================================
+    // Versandbereit-Endpunkt Tests
+    // =========================================================================
+
+    /**
+     * Happy Path: Angebot im Status KI_BEARBEITUNG_ABGESCHLOSSEN → VERSANDBEREIT.
+     */
+    @Test
+    void shouldSetStatusToVersandbereit() {
+        Offer offer = QuarkusTransaction.requiringNew().call(() -> {
+            Offer o = new Offer();
+            o.customerId = 1L;
+            o.handwerkerId = 99L;
+            o.businessKey = "angebot-" + UUID.randomUUID();
+            o.annahmeToken = UUID.randomUUID().toString();
+            o.status = Offer.STATUS_KI_BEARBEITUNG_ABGESCHLOSSEN;
+            o.persist();
+            return o;
+        });
+        final Long offerId = offer.id;
+        final String businessKey = offer.businessKey;
+
+        given()
+                .when()
+                .post("/angebote/{businessKey}/versandbereit", businessKey)
+                .then()
+                .statusCode(200);
+
+        QuarkusTransaction.requiringNew().run(() -> {
+            Offer updatedOffer = Offer.findById(offerId);
+            assertNotNull(updatedOffer);
+            assertEquals(Offer.STATUS_VERSANDBEREIT, updatedOffer.status);
+
+            assertTrue(
+                    updatedOffer.statusHistory.stream()
+                            .anyMatch(h -> Offer.STATUS_VERSANDBEREIT.equals(h.status)),
+                    "Statushistorie muss VERSANDBEREIT-Eintrag enthalten");
+        });
+    }
+
+    /**
+     * Fehlerfall: Angebot nicht im Status KI_BEARBEITUNG_ABGESCHLOSSEN → HTTP 409.
+     */
+    @Test
+    void versandbereit_shouldReturn409WhenWrongStatus() {
+        Offer offer = QuarkusTransaction.requiringNew().call(() -> {
+            Offer o = new Offer();
+            o.customerId = 1L;
+            o.handwerkerId = 99L;
+            o.businessKey = "angebot-" + UUID.randomUUID();
+            o.annahmeToken = UUID.randomUUID().toString();
+            o.status = Offer.STATUS_KI_FERTIG;
+            o.persist();
+            return o;
+        });
+
+        given()
+                .when()
+                .post("/angebote/{businessKey}/versandbereit", offer.businessKey)
+                .then()
+                .statusCode(409);
+    }
+
+    /**
+     * Fehlerfall: Angebot nicht gefunden → HTTP 404.
+     */
+    @Test
+    void versandbereit_shouldReturn404WhenNotFound() {
+        given()
+                .when()
+                .post("/angebote/{businessKey}/versandbereit", "unknown-key-" + UUID.randomUUID())
+                .then()
+                .statusCode(404);
     }
 
     @Test

@@ -20,6 +20,7 @@ public class OfferResponse {
     public String speechSnippet;
     public List<OfferPosition> positions;
     public List<OfferStatusHistory> statusHistory;
+    public List<String> korrekturvorschlaege;
     public LocalDateTime createdAt;
     public LocalDateTime updatedAt;
     public BigDecimal gesamtPreis;

@@ -161,4 +161,19 @@ public class OfferResource {
         return Response.noContent().build();
     }
 
+    /**
+     * Setzt den Status eines Angebots auf VERSANDBEREIT.
+     * Wird vom document-service aufgerufen, nachdem das PDF-Angebot erfolgreich erstellt wurde.
+     *
+     * @param businessKey Business-Key des Angebots
+     * @return HTTP-Response mit Statuscode 200 bei Erfolg
+     */
+    @POST
+    @Path("/angebote/{businessKey}/versandbereit")
+    @Consumes(MediaType.WILDCARD)
+    public Response setStatusVersandbereit(@PathParam("businessKey") String businessKey) {
+        offerService.setStatusVersandbereit(businessKey);
+        return Response.ok().build();
+    }
+
 }
