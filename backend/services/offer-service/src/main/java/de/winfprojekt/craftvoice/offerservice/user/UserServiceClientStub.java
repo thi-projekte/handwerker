@@ -38,4 +38,18 @@ public class UserServiceClientStub implements UserServiceClient {
         konfig.adresse = "Maximilianstraße 1, 80538 München";
         return konfig;
     }
+
+    @Override
+    public CustomerDTO getCustomer(Long customerId) {
+        CustomerDTO customer = new CustomerDTO();
+        customer.id = customerId;
+        customer.email = "customer" + customerId + "@example.com";
+        customer.firstName = "Max";
+        customer.lastName = "Mustermann";
+        customer.street = "Marienplatz";
+        customer.houseNumber = "1";
+        customer.zipCode = "80331";
+        customer.city = "München";
+        return customer;
+    }
 }

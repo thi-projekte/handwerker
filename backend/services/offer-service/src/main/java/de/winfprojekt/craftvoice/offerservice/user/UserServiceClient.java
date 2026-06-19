@@ -1,5 +1,9 @@
 package de.winfprojekt.craftvoice.offerservice.user;
 
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+
 /**
  * Client-Interface für den User-Service.
  *
@@ -27,4 +31,14 @@ public interface UserServiceClient {
      * @return Konfigurationsobjekt mit Modell, Beträgen und Handwerkeradresse
      */
     AnfahrtskostenKonfiguration getAnfahrtskostenKonfiguration();
+
+    /**
+     * Ruft das Profil eines Kunden ab.
+     *
+     * @param id ID des Kunden
+     * @return Kundendaten-DTO
+     */
+    @GET
+    @Path("/customers/{id}")
+    CustomerDTO getCustomer(@PathParam("id") Long id);
 }
