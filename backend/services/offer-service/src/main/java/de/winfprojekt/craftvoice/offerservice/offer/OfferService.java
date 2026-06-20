@@ -2,6 +2,7 @@ package de.winfprojekt.craftvoice.offerservice.offer;
 
 import de.winfprojekt.craftvoice.offerservice.processengine.ProcessEngineClient;
 import jakarta.inject.Inject;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.CreateOfferRequest;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.OfferChangesRequest;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.StructuredOfferPositionDTO;
@@ -47,6 +48,7 @@ public class OfferService {
     CatalogServiceClient catalogServiceClient;
 
     @Inject
+    @RestClient
     UserServiceClient userServiceClient;
 
     @Inject

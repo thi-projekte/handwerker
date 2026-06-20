@@ -3,19 +3,15 @@ package de.winfprojekt.craftvoice.offerservice.user;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
+import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
 /**
  * Client-Interface für den User-Service.
  *
  * <p>Stellt Endpunkte für Stundensatz- und Anfahrtskostenkonfiguration bereit.
- * Produktive Implementierung via Quarkus REST Client (sobald user-service live):
- * <pre>
- * {@literal @}RegisterRestClient(configKey = "user-service")
- * {@literal @}Path("/api/users")
- * </pre>
- *
- * <p>Bis dahin: {@link UserServiceClientStub} als Platzhalter.
  */
+@RegisterRestClient(configKey = "user-service")
+@Path("/api/users")
 public interface UserServiceClient {
 
     /**
@@ -23,6 +19,8 @@ public interface UserServiceClient {
      *
      * @return Antwortobjekt mit Stundensatz in Euro
      */
+    @GET
+    @Path("/profile/hourly-rate")
     StundensatzResponse getStundensatz();
 
     /**
@@ -30,6 +28,8 @@ public interface UserServiceClient {
      *
      * @return Konfigurationsobjekt mit Modell, Beträgen und Handwerkeradresse
      */
+    @GET
+    @Path("/profile/travel-config")
     AnfahrtskostenKonfiguration getAnfahrtskostenKonfiguration();
 
     /**

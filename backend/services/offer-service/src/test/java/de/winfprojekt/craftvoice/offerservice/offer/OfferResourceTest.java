@@ -23,6 +23,7 @@ import de.winfprojekt.craftvoice.offerservice.user.CustomerDTO;
 import de.winfprojekt.craftvoice.offerservice.routing.OsrmClient;
 import de.winfprojekt.craftvoice.offerservice.routing.RoutingException;
 import io.quarkus.narayana.jta.QuarkusTransaction;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
 import java.math.BigDecimal;
 import java.util.*;
 
@@ -173,6 +174,7 @@ class OfferResourceTest {
     CatalogServiceClient catalogServiceClient;
 
     @InjectMock
+    @RestClient
     UserServiceClient userServiceClient;
 
     @InjectMock
