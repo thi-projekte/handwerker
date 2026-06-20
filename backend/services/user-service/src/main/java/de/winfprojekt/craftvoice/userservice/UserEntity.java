@@ -69,6 +69,18 @@ public class UserEntity extends BaseEntity {
     public Double hourlyRate;
     public String priceListUrl;
 
+    // Travel / Anfahrtskosten configuration
+    // Allowed values: "PAUSCHALE", "PAUSCHALE_PLUS_KM", "NUR_KM"
+    public String travelModel;
+
+    // Pauschalbetrag for flat-rate travel
+    @Column(precision = 19, scale = 4)
+    public java.math.BigDecimal travelFlatRate;
+
+    // Preis pro km
+    @Column(precision = 19, scale = 4)
+    public java.math.BigDecimal travelKmRate;
+
     // AI Style Preferences
     public String toneOfVoice; // e.g. "Du" vs "Sie"
     public String detailLevel; // e.g. "kurz & prägnant" vs "detailliert"
