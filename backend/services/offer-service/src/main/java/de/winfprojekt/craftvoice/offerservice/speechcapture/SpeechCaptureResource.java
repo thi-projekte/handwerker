@@ -1,5 +1,6 @@
 package de.winfprojekt.craftvoice.offerservice.speechcapture;
 
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
@@ -13,6 +14,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 
 @Path("/speech-capture")
+@RolesAllowed({"OWNER"})
 public class SpeechCaptureResource {
 
     @Inject

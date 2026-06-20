@@ -3,9 +3,11 @@
 
 package de.winfprojekt.craftvoice.offerservice.catalog;
 
+import io.quarkus.oidc.token.propagation.common.AccessToken;
 /**
  * Interface für den Catalog Service Client.
  */
+@AccessToken
 public interface CatalogServiceClient {
 
     /**

@@ -1,8 +1,11 @@
 package de.winfprojekt.craftvoice.offerservice.offer;
 
 import de.winfprojekt.craftvoice.offerservice.offer.dto.*;
+import io.quarkus.security.Authenticated;
+import io.quarkus.security.ForbiddenException;
 import jakarta.annotation.security.PermitAll;
 
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.GET;
@@ -13,6 +16,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.validation.Valid;
+import org.eclipse.microprofile.jwt.JsonWebToken;
 
 /**
  * REST-Ressource zur Verwaltung von Angeboten.
@@ -22,10 +26,14 @@ import jakarta.validation.Valid;
 @Path("/")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
+@Authenticated
 public class OfferResource {
 
     @Inject
     OfferService offerService;
+
+    @Inject
+    JsonWebToken jwt;
 
     /**
      * Erstellt ein neues Angebot auf Basis der übergebenen Daten.
@@ -35,9 +43,10 @@ public class OfferResource {
      */
     @POST
     @Path("/offers")
+    @RolesAllowed({"OWNER"})
     public Response createOffer(@Valid CreateOfferRequest request) {
-
-        OfferResponse response = offerService.createOffer(request);
+        String userID = jwt.getSubject();
+        OfferResponse response = offerService.createOffer(request, userID);
 
         return Response.status(201)
                 .entity(response)
@@ -54,9 +63,12 @@ public class OfferResource {
      */
     @POST
     @Path("/angebote/{businessKey}/ki-ergebnis")
+    @RolesAllowed("OWNER")
     public Response processAiResult(@PathParam("businessKey") String businessKey, @Valid OfferChangesRequest request) {
+        String userId = jwt.getSubject();
+        Offer offer = offerService.findOwnOfferOrThrow(businessKey, userId);
 
-        offerService.initializeOrUpdateOfferFromAiOrFrontend(businessKey, request);
+        offerService.initializeOrUpdateOfferFromAiOrFrontend(offer.businessKey, request);
 
         return Response.status(200).build();
     }
@@ -70,14 +82,12 @@ public class OfferResource {
      * @return HTTP-Response mit Statuscode 200 bei Erfolg
      */
     @POST
-    @Path("/angebote/{businesskey}/positionen")
-    public Response processOfferChanges(@PathParam("businesskey") String businessKey,
-            @Valid OfferChangesRequest request) {
+    @Path("/angebote/{businessKey}/positionen")
+    @RolesAllowed({"OWNER"})
+    public Response processOfferChanges(@PathParam("businessKey") String businessKey, @Valid OfferChangesRequest request) {
+        String userId = jwt.getSubject();
+        Offer offer = offerService.findOwnOfferOrThrow(businessKey, userId);
 
-        Offer offer = Offer.find("businessKey", businessKey).firstResult();
-        if (offer == null) {
-            return Response.status(Response.Status.NOT_FOUND).build();
-        }
         offerService.initializeOrUpdateOfferFromAiOrFrontend(offer.businessKey, request);
 
         return Response.status(200).build();
@@ -92,9 +102,13 @@ public class OfferResource {
      * @return HTTP-Response 200 mit dem aktualisierten Angebot
      */
     @POST
-    @Path("/angebote/{businesskey}/arbeitsstunden")
-    public Response setArbeitsstunden(@PathParam("businesskey") String businesskey, @Valid SetArbeitsstundenRequest request) {
-        OfferResponse response = offerService.setArbeitsstunden(businesskey, request);
+    @Path("/angebote/{businessKey}/arbeitsstunden")
+    @RolesAllowed({"OWNER"})
+    public Response setArbeitsstunden(@PathParam("businessKey") String businessKey, @Valid SetArbeitsstundenRequest request) {
+        String userId = jwt.getSubject();
+        Offer offer = offerService.findOwnOfferOrThrow(businessKey, userId);
+
+        OfferResponse response = offerService.setArbeitsstunden(offer, offer.businessKey, request);
         return Response.ok(response).build();
     }
 
@@ -106,8 +120,10 @@ public class OfferResource {
      */
     @GET
     @Path("/offers")
+    @RolesAllowed({"OWNER"})
     public Response getAllOffers() {
-        return Response.ok(offerService.getAllOffersSorted()).build();
+        String userID = jwt.getSubject();
+        return Response.ok(offerService.getAllOffersSorted(userID)).build();
     }
 
     /**
@@ -119,11 +135,11 @@ public class OfferResource {
      */
     @GET
     @Path("/offers/{businessKey}")
+    @RolesAllowed({"OWNER"})
     public Response getOfferById(@PathParam("businessKey") String businessKey) {
-        Offer offer = Offer.find("businessKey", businessKey).firstResult();
-        if (offer == null) {
-            return Response.status(Response.Status.NOT_FOUND).build();
-        }
+        String userId = jwt.getSubject();
+        Offer offer = offerService.findOwnOfferOrThrow(businessKey, userId);
+
         return Response.ok(OfferResponse.fromEntity(offer)).build();
     }
 
@@ -156,8 +172,10 @@ public class OfferResource {
     @Path("/offers/{businessKey}/review/approve")
     @Consumes(MediaType.WILDCARD)
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed({"OWNER"})
     public Response acceptAiResult(@PathParam("businessKey") String businessKey) {
-        offerService.acceptAiResult(businessKey);
+        String userId = jwt.getSubject();
+        offerService.acceptAiResult(businessKey, userId);
         return Response.noContent().build();
     }
 

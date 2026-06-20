@@ -14,8 +14,8 @@ public class OfferResponse {
     public Long id;
     public String businessKey;
     public String status;
-    public Long customerId;
-    public Long handwerkerId;
+    public String customerId;
+    public String handwerkerId;
     public String speechSnippet;
     public List<OfferPosition> positions;
     public List<OfferStatusHistory> statusHistory;

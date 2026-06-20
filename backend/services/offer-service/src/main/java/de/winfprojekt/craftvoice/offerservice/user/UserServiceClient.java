@@ -1,5 +1,8 @@
 package de.winfprojekt.craftvoice.offerservice.user;
 
+import io.quarkus.oidc.token.propagation.common.AccessToken;
+import jakarta.persistence.Access;
+
 /**
  * Client-Interface für den User-Service.
  *
@@ -12,6 +15,7 @@ package de.winfprojekt.craftvoice.offerservice.user;
  *
  * <p>Bis dahin: {@link UserServiceClientStub} als Platzhalter.
  */
+@AccessToken
 public interface UserServiceClient {
 
     /**

@@ -6,8 +6,12 @@ import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.Test;
+import io.quarkus.test.security.TestSecurity;
+import io.quarkus.test.security.oidc.Claim;
+import io.quarkus.test.security.oidc.OidcSecurity;
 
 import static de.winfprojekt.craftvoice.offerservice.offer.Offer.STATUS_ERFASST;
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -70,9 +74,31 @@ class OfferResourceTest {
     }
 
     /**
+     * Helfermethode, um ein Angebot zu generieren
+     * @param handwerkerId ID des Handwerkers
+     * @param status Status des Angebots, auf den es gesetzt werden soll
+     * @return Angbeot
+     */
+    private Offer createTestOfferForHandwerker(String handwerkerId, String status) {
+        return QuarkusTransaction.requiringNew().call(() -> {
+            Offer offer = new Offer();
+            offer.customerId = "customer-" + UUID.randomUUID();
+            offer.handwerkerId = handwerkerId;
+            offer.businessKey = "angebot-" + UUID.randomUUID();
+            offer.status = status;
+            offer.persist();
+            return offer;
+        });
+    }
+
+    /**
      * Prüft, dass ein Angebot erfolgreich erstellt, persistiert und an die Process Engine übermittelt wird.
      */
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void shouldCreateOffer() {
 
         Mockito.doNothing()
@@ -114,11 +140,11 @@ class OfferResourceTest {
         ArgumentCaptor<String> businessKeyCaptor =
                 ArgumentCaptor.forClass(String.class);
 
-        ArgumentCaptor<Long> customerIdCaptor =
-                ArgumentCaptor.forClass(Long.class);
+        ArgumentCaptor<String> customerIdCaptor =
+                ArgumentCaptor.forClass(String.class);
 
-        ArgumentCaptor<Long> handwerkerIdCaptor =
-                ArgumentCaptor.forClass(Long.class);
+        ArgumentCaptor<String> handwerkerIdCaptor =
+                ArgumentCaptor.forClass(String.class);
 
         ArgumentCaptor<String> speechSnippetCaptor =
                 ArgumentCaptor.forClass(String.class);
@@ -134,8 +160,8 @@ class OfferResourceTest {
                 vorlageCaptor.capture()
         );
 
-        assertEquals(1L, customerIdCaptor.getValue());
-        assertEquals(99L, handwerkerIdCaptor.getValue());
+        assertEquals("1", customerIdCaptor.getValue());
+        assertEquals("99", handwerkerIdCaptor.getValue());
 
         assertEquals(
                 "Kunde möchte Badrenovierung",
@@ -152,6 +178,10 @@ class OfferResourceTest {
      * Prüft, dass bei fehlendem speechSnippet ein HTTP-Statuscode 400 zurückgegeben wird.
      */
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void shouldReturn400WhenSpeechSnippetMissing() {
 
         given()
@@ -180,11 +210,15 @@ class OfferResourceTest {
      * Prüft die erfolgreiche Verarbeitung des KI-Ergebnisses.
      */
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void shouldProcessAiResultSuccessfully() {
         // Setup des Testangebots
         Offer offer = new Offer();
-        offer.customerId = 1L;
-        offer.handwerkerId = 99L;
+        offer.customerId = "1";
+        offer.handwerkerId = "99";
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
         offer.status = Offer.STATUS_IN_BEARBEITUNG;
 
@@ -265,10 +299,14 @@ class OfferResourceTest {
      * Prüft, dass bei falschem Status ein HTTP 409 zurückgegeben wird.
      */
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void shouldReturn409WhenOfferNotInBearbeitung() {
         Offer offer = new Offer();
-        offer.customerId = 1L;
-        offer.handwerkerId = 99L;
+        offer.customerId = "1";
+        offer.handwerkerId = "99";
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
         offer.status = Offer.STATUS_KI_BEARBEITUNG_ABGESCHLOSSEN;
         
@@ -294,6 +332,10 @@ class OfferResourceTest {
      * Prüft, dass bei unbekannter ID bei der KI-Ergebnisverarbeitung ein HTTP 404 zurückgegeben wird.
      */
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void shouldReturn404WhenOfferNotFoundForAiResult() {
         given()
                 .contentType(ContentType.JSON)
@@ -313,6 +355,10 @@ class OfferResourceTest {
      * Prüft das Laden aller Angebote, sortiert nach createdAt DESC.
      */
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void shouldGetAllOffersSortedByCreatedAtDesc() throws Exception {
         Mockito.doNothing()
                 .when(processEngineClient)
@@ -341,8 +387,8 @@ class OfferResourceTest {
                 .contentType(ContentType.JSON)
                 .body("""
                 {
-                  "customerId": 20,
-                  "handwerkerId": 99,
+                  "customerId": "20",
+                  "handwerkerId": "99",
                   "speechSnippet": "Zweites Angebot"
                 }
                 """)
@@ -371,14 +417,18 @@ class OfferResourceTest {
         assertNotNull(firstOffer);
         assertNotNull(secondOffer);
 
-        assertEquals(20, ((Number) firstOffer.get("customerId")).intValue());
-        assertEquals(10, ((Number) secondOffer.get("customerId")).intValue());
+        assertEquals("20", firstOffer.get("customerId"));
+        assertEquals("10", secondOffer.get("customerId"));
     }
 
     /**
      * Prüft das Laden eines einzelnen Angebots über seine ID.
      */
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void shouldGetOfferById() {
         Mockito.doNothing()
                 .when(processEngineClient)
@@ -389,8 +439,8 @@ class OfferResourceTest {
                 .contentType(ContentType.JSON)
                 .body("""
                 {
-                  "customerId": 42,
-                  "handwerkerId": 99,
+                  "customerId": "42",
+                  "handwerkerId": "99",
                   "speechSnippet": "Detailansicht Test"
                 }
                 """)
@@ -412,20 +462,25 @@ class OfferResourceTest {
                 .get("/offers/" + businessKey)
                 .then()
                 .statusCode(200)
-                .body("id", org.hamcrest.Matchers.equalTo(id.intValue()))
-                .body("customerId", org.hamcrest.Matchers.equalTo(42))
-                .body("speechSnippet", org.hamcrest.Matchers.equalTo("Detailansicht Test"))
+                .body("id", equalTo(id.intValue()))
+                .body("customerId", equalTo("42"))
+                .body("handwerkerId", equalTo("99"))
+                .body("speechSnippet", equalTo("Detailansicht Test"))
                 .body("positions", org.hamcrest.Matchers.hasSize(1))
-                .body("positions[0].bezeichnung", org.hamcrest.Matchers.equalTo("Musterposition"))
-                .body("positions[0].preis", org.hamcrest.Matchers.equalTo(99.9f))
+                .body("positions[0].bezeichnung", equalTo("Musterposition"))
+                .body("positions[0].preis", equalTo(99.9f))
                 .body("statusHistory", org.hamcrest.Matchers.hasSize(2)) // ERFASST + VERSENDET
-                .body("statusHistory[1].status", org.hamcrest.Matchers.equalTo("VERSENDET"));
+                .body("statusHistory[1].status", equalTo("VERSENDET"));
     }
 
     /**
      * Prüft, dass bei einer unbekannten ID ein 404 zurückgegeben wird.
      */
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void shouldReturn404WhenOfferNotFound() {
         given()
                 .when()
@@ -437,8 +492,8 @@ class OfferResourceTest {
     @Test
     void shouldAcceptOfferSuccessfully() {
         Offer offer = new Offer();
-        offer.customerId = 1L;
-        offer.handwerkerId = 99L;
+        offer.customerId = "1";
+        offer.handwerkerId = "99";
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
         offer.annahmeToken = UUID.randomUUID().toString();
         offer.status = Offer.STATUS_VERSENDET;
@@ -461,7 +516,7 @@ class OfferResourceTest {
                 .post("/angebote/annahme/{token}", token)
                 .then()
                 .statusCode(200)
-                .body("ergebnis", org.hamcrest.Matchers.equalTo("angenommen"));
+                .body("ergebnis", equalTo("angenommen"));
 
         QuarkusTransaction.requiringNew().run(() -> {
             Offer updatedOffer = Offer.findById(offerId);
@@ -477,8 +532,8 @@ class OfferResourceTest {
     @Test
     void shouldRejectOfferSuccessfully() {
         Offer offer = new Offer();
-        offer.customerId = 1L;
-        offer.handwerkerId = 99L;
+        offer.customerId = "1";
+        offer.handwerkerId = "99";
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
         offer.annahmeToken = UUID.randomUUID().toString();
         offer.status = Offer.STATUS_VERSENDET;
@@ -501,7 +556,7 @@ class OfferResourceTest {
                 .post("/angebote/annahme/{token}", token)
                 .then()
                 .statusCode(200)
-                .body("ergebnis", org.hamcrest.Matchers.equalTo("abgelehnt"));
+                .body("ergebnis", equalTo("abgelehnt"));
 
         QuarkusTransaction.requiringNew().run(() -> {
             Offer updatedOffer = Offer.findById(offerId);
@@ -532,8 +587,8 @@ class OfferResourceTest {
     @Test
     void shouldReturn409WhenOfferNotVersendet() {
         Offer offer = new Offer();
-        offer.customerId = 1L;
-        offer.handwerkerId = 99L;
+        offer.customerId = "1";
+        offer.handwerkerId = "99";
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
         offer.annahmeToken = UUID.randomUUID().toString();
         offer.status = Offer.STATUS_ERFASST;
@@ -558,8 +613,8 @@ class OfferResourceTest {
     @Test
     void shouldReturn400WhenDecisionInvalid() {
         Offer offer = new Offer();
-        offer.customerId = 1L;
-        offer.handwerkerId = 99L;
+        offer.customerId = "1";
+        offer.handwerkerId = "99";
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
         offer.annahmeToken = UUID.randomUUID().toString();
         offer.status = Offer.STATUS_VERSENDET;
@@ -590,10 +645,14 @@ class OfferResourceTest {
      * Stundensatz-Mock: 65,00 €/h × 2 h = 130,00 €.
      */
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void shouldCreateArbeitszeitPositionWhenDauerSet() throws RoutingException {
         Offer offer = new Offer();
-        offer.customerId = 1L;
-        offer.handwerkerId = 99L;
+        offer.customerId = "1";
+        offer.handwerkerId = "99";
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
         offer.status = Offer.STATUS_KI_FERTIG;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
@@ -636,10 +695,14 @@ class OfferResourceTest {
      * Handwerker trägt 0 Stunden ein → keine Arbeitszeit-Position.
      */
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void shouldNotCreateArbeitszeitPositionWhenDauerNull() {
         Offer offer = new Offer();
-        offer.customerId = 1L;
-        offer.handwerkerId = 99L;
+        offer.customerId = "1";
+        offer.handwerkerId = "99";
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
         offer.status = Offer.STATUS_KI_FERTIG;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
@@ -675,10 +738,14 @@ class OfferResourceTest {
      * Routing (OSRM) darf bei PAUSCHALE NICHT aufgerufen werden.
      */
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void shouldCalculateAnfahrtskostenPauschale() throws RoutingException {
         Offer offer = new Offer();
-        offer.customerId = 1L;
-        offer.handwerkerId = 99L;
+        offer.customerId = "1";
+        offer.handwerkerId = "99";
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
         offer.status = Offer.STATUS_IN_BEARBEITUNG;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
@@ -727,10 +794,14 @@ class OfferResourceTest {
      * Modell PAUSCHALE_PLUS_KM: preis = pauschale + (km × kmSatz).
      */
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void shouldCalculateAnfahrtskostenPauschalePlusKm() throws RoutingException {
         Offer offer = new Offer();
-        offer.customerId = 1L;
-        offer.handwerkerId = 99L;
+        offer.customerId = "1";
+        offer.handwerkerId = "99";
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
         offer.status = Offer.STATUS_IN_BEARBEITUNG;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
@@ -780,10 +851,14 @@ class OfferResourceTest {
      * Modell NUR_KM: preis = km × kmSatz.
      */
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void shouldCalculateAnfahrtskostenNurKm() throws RoutingException {
         Offer offer = new Offer();
-        offer.customerId = 1L;
-        offer.handwerkerId = 99L;
+        offer.customerId = "1";
+        offer.handwerkerId = "99";
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
         offer.status = Offer.STATUS_IN_BEARBEITUNG;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
@@ -833,10 +908,14 @@ class OfferResourceTest {
      * Das Angebot wird trotzdem erfolgreich erstellt.
      */
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void shouldSkipAnfahrtskostenWhenOsrmFails() throws RoutingException {
         Offer offer = new Offer();
-        offer.customerId = 1L;
-        offer.handwerkerId = 99L;
+        offer.customerId = "1";
+        offer.handwerkerId = "99";
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
         offer.status = Offer.STATUS_IN_BEARBEITUNG;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
@@ -889,6 +968,10 @@ class OfferResourceTest {
      * Fehlerfall: Angebot nicht gefunden → HTTP 404.
      */
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void arbeitsstunden_shouldReturn404WhenOfferNotFound() {
         given()
                 .contentType(ContentType.JSON)
@@ -907,10 +990,14 @@ class OfferResourceTest {
      * Fehlerfall: Angebot nicht im Status KI_FERTIG → HTTP 409.
      */
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void arbeitsstunden_shouldReturn409WhenOfferNotKiFertig() {
         Offer offer = new Offer();
-        offer.customerId = 1L;
-        offer.handwerkerId = 99L;
+        offer.customerId = "1";
+        offer.handwerkerId = "99";
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
         offer.status = Offer.STATUS_ERFASST;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
@@ -933,10 +1020,14 @@ class OfferResourceTest {
      * Der Handwerker muss explizit einen Wert eintragen.
      */
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void arbeitsstunden_shouldReturn400WhenArbeitsdauerNull() {
         Offer offer = new Offer();
-        offer.customerId = 1L;
-        offer.handwerkerId = 99L;
+        offer.customerId = "1";
+        offer.handwerkerId = "99";
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
         offer.status = Offer.STATUS_KI_FERTIG;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
@@ -954,10 +1045,14 @@ class OfferResourceTest {
      * Fehlerfall: negative Stundenangabe → HTTP 400.
      */
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void arbeitsstunden_shouldReturn400WhenArbeitsdauerNegative() {
         Offer offer = new Offer();
-        offer.customerId = 1L;
-        offer.handwerkerId = 99L;
+        offer.customerId = "1";
+        offer.handwerkerId = "99";
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
         offer.status = Offer.STATUS_KI_FERTIG;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
@@ -979,10 +1074,14 @@ class OfferResourceTest {
      * Idempotenz: zweimaliger Aufruf → nur eine Arbeitszeit-Position in der DB.
      */
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void arbeitsstunden_shouldBeIdempotent() {
         Offer offer = new Offer();
-        offer.customerId = 1L;
-        offer.handwerkerId = 99L;
+        offer.customerId = "1";
+        offer.handwerkerId = "99";
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
         offer.status = Offer.STATUS_KI_FERTIG;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
@@ -1040,10 +1139,14 @@ class OfferResourceTest {
      * aber das Angebot wird trotzdem persistiert.
      */
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void arbeitsstunden_shouldSkipArbeitszeitWhenUserServiceFails() {
         Offer offer = new Offer();
-        offer.customerId = 1L;
-        offer.handwerkerId = 99L;
+        offer.customerId = "1";
+        offer.handwerkerId = "99";
         offer.businessKey = "angebot-" + UUID.randomUUID().toString();
         offer.status = Offer.STATUS_KI_FERTIG;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
@@ -1075,12 +1178,16 @@ class OfferResourceTest {
     }
 
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void acceptAiResult_shouldSetStatusToKI_BEARBEITUNG_ABGESCHLOSSEN() {
 
         Offer offer = QuarkusTransaction.requiringNew().call(() -> {
             Offer o = new Offer();
-            o.customerId = 1L;
-            o.handwerkerId = 99L;
+            o.customerId = "1";
+            o.handwerkerId = "99";
             o.businessKey = "test-" + UUID.randomUUID();
             o.annahmeToken = UUID.randomUUID().toString();
             o.status = Offer.STATUS_KI_FERTIG;
@@ -1108,12 +1215,16 @@ class OfferResourceTest {
     }
 
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void acceptAiResult_shouldReturn409_whenStatusIsNotKiFertig() {
 
         Offer offer = QuarkusTransaction.requiringNew().call(() -> {
             Offer o = new Offer();
-            o.customerId = 1L;
-            o.handwerkerId = 99L;
+            o.customerId = "1";
+            o.handwerkerId = "99";
             o.businessKey = "test-" + UUID.randomUUID();
             o.annahmeToken = UUID.randomUUID().toString();
             o.status = Offer.STATUS_IN_BEARBEITUNG;
@@ -1131,6 +1242,10 @@ class OfferResourceTest {
     }
 
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void acceptAiResult_shouldReturn404_whenOfferDoesNotExist() {
         given()
                 .when()
@@ -1140,6 +1255,10 @@ class OfferResourceTest {
     }
 
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void acceptAiResult_shouldCreateStatusHistoryEntry() {
         Mockito.doNothing().when(processEngineClient).sendAngebotsentwurf(any(), any());
 
@@ -1147,8 +1266,8 @@ class OfferResourceTest {
                 .contentType(ContentType.JSON)
                 .body("""
             {
-              "customerId": 1,
-              "handwerkerId": 99,
+              "customerId": "1",
+              "handwerkerId": "99",
               "speechSnippet": "Test"
             }
             """)
@@ -1203,13 +1322,17 @@ class OfferResourceTest {
     }
 
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void shouldReplaceOnlyMaterialPositionsAndKeepAnfahrt() {
 
         Offer offer = QuarkusTransaction.requiringNew().call(() -> {
             Offer o = new Offer();
             o.businessKey = "offer-" + UUID.randomUUID();
-            o.customerId = 1L;
-            o.handwerkerId = 99L;
+            o.customerId = "1";
+            o.handwerkerId = "99";
             o.status = Offer.STATUS_KI_FERTIG;
 
             OfferPosition material = new OfferPosition();
@@ -1271,13 +1394,17 @@ class OfferResourceTest {
     }
 
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void shouldAlwaysPutAnfahrtAtEnd() {
 
         Offer offer = QuarkusTransaction.requiringNew().call(() -> {
             Offer o = new Offer();
             o.businessKey = "offer-" + UUID.randomUUID();
-            o.customerId = 1L;
-            o.handwerkerId = 99L;
+            o.customerId = "1";
+            o.handwerkerId = "99";
             o.status = Offer.STATUS_IN_BEARBEITUNG;
             o.persist();
             return o;
@@ -1325,13 +1452,17 @@ class OfferResourceTest {
     }
 
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void shouldHandleBothAiAndFrontendRequests() {
 
         Offer offer = QuarkusTransaction.requiringNew().call(() -> {
             Offer o = new Offer();
             o.businessKey = "offer-" + UUID.randomUUID();
-            o.customerId = 1L;
-            o.handwerkerId = 99L;
+            o.customerId = "1";
+            o.handwerkerId = "99";
             o.status = Offer.STATUS_IN_BEARBEITUNG;
 
             o.persist();
@@ -1373,13 +1504,17 @@ class OfferResourceTest {
     }
 
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void shouldNeverDuplicateAnfahrt() {
 
         Offer offer = QuarkusTransaction.requiringNew().call(() -> {
             Offer o = new Offer();
             o.businessKey = "offer-" + UUID.randomUUID();
-            o.customerId = 1L;
-            o.handwerkerId = 99L;
+            o.customerId = "1";
+            o.handwerkerId = "99";
             o.status = Offer.STATUS_IN_BEARBEITUNG;
 
             OfferPosition anfahrt = new OfferPosition();
@@ -1422,13 +1557,17 @@ class OfferResourceTest {
     }
 
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void shouldSetStatusToKiFertig() {
 
         Offer offer = QuarkusTransaction.requiringNew().call(() -> {
             Offer o = new Offer();
             o.businessKey = "offer-" + UUID.randomUUID();
-            o.customerId = 1L;
-            o.handwerkerId = 99L;
+            o.customerId = "1";
+            o.handwerkerId = "99";
             o.status = Offer.STATUS_IN_BEARBEITUNG;
 
             o.persist();
@@ -1458,13 +1597,17 @@ class OfferResourceTest {
     }
 
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void shouldKeepOnlyAnfahrtWhenEmptyRequest() {
 
         Offer offer = QuarkusTransaction.requiringNew().call(() -> {
             Offer o = new Offer();
             o.businessKey = "offer-" + UUID.randomUUID();
-            o.customerId = 1L;
-            o.handwerkerId = 99L;
+            o.customerId = "1";
+            o.handwerkerId = "99";
             o.status = Offer.STATUS_IN_BEARBEITUNG;
 
             OfferPosition anfahrt = new OfferPosition();
@@ -1499,6 +1642,229 @@ class OfferResourceTest {
             assertEquals(1, updated.positions.size());
             assertEquals(OfferPositionType.ANFAHRT, updated.positions.get(0).type);
         });
+    }
+
+    @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "123")
+    })
+    void arbeitsstunden_shouldRejectOwnerOfDifferentOffer() {
+        Offer offer = new Offer();
+        offer.customerId = "1";
+        offer.handwerkerId = "99";
+        offer.businessKey = "angebot-" + UUID.randomUUID().toString();
+        offer.status = Offer.STATUS_KI_FERTIG;
+        QuarkusTransaction.requiringNew().run(() -> offer.persist());
+        final String businessKey = offer.businessKey;
+
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+            {
+              "arbeitsdauerStunden": 2
+            }
+            """)
+                .when()
+                .post("/angebote/{businessKey}/arbeitsstunden", businessKey)
+                .then()
+                .statusCode(403);
+    }
+
+    @Test
+    void arbeitsstunden_shouldRejectUnauthenticatedUser() {
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+            {
+              "arbeitsdauerStunden": 2
+            }
+            """)
+                .when()
+                .post("/angebote/{businessKey}/arbeitsstunden", "irgendein-key")
+                .then()
+                .statusCode(401);
+    }
+
+    @Test
+    void createOffer_shouldRejectUnauthenticatedUser() {
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+            {
+              "customerId": "1"
+            }
+            """)
+                .when()
+                .post("/offers")
+                .then()
+                .statusCode(401);
+    }
+
+    @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "123")
+    })
+    void createOffer_shouldUseAuthenticatedUserAsHandwerker() {
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+            {
+              "customerId": "1",
+              "handwerkerId": "123",
+              "speechSnippet": "Test-Sprachaufnahme"
+            }
+            """)
+                .when()
+                .post("/offers")
+                .then()
+                .statusCode(201)
+                .body("businessKey", notNullValue())
+                .body("handwerkerId", equalTo("123"));
+    }
+
+    @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "123")
+    })
+    void positionen_shouldRejectOwnerOfDifferentOffer() {
+        Offer offer = createTestOfferForHandwerker("99", Offer.STATUS_KI_FERTIG);
+        final String businessKey = offer.businessKey;
+
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+            {
+              "strukturierteAngebotspositionen": [
+                {
+                  "bezeichnung": "Test Material",
+                  "hersteller": "Test",
+                  "beschreibung": "Testbeschreibung",
+                  "menge": 1,
+                  "einheit": "Stk"
+                }
+              ],
+              "korrekturvorschlaege": []
+            }
+            """)
+                .when()
+                .post("/angebote/{businessKey}/positionen", businessKey)
+                .then()
+                .statusCode(403);
+    }
+
+    @Test
+    void positionen_shouldRejectUnauthenticatedUser() {
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+            {
+              "strukturierteAngebotspositionen": [
+                {
+                  "bezeichnung": "Test Material",
+                  "hersteller": "Test",
+                  "beschreibung": "Testbeschreibung",
+                  "menge": 1,
+                  "einheit": "Stk"
+                }
+              ],
+              "korrekturvorschlaege": []
+            }
+            """)
+                .when()
+                .post("/angebote/{businessKey}/positionen", "irgendein-key")
+                .then()
+                .statusCode(401);
+    }
+
+    @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "123")
+    })
+    void getAllOffers_shouldNotReturnOffersOfDifferentOwner() {
+        QuarkusTransaction.requiringNew().run(() -> {
+            OfferStatusHistory.deleteAll();
+            OfferPosition.deleteAll();
+            Offer.deleteAll();
+        });
+
+        QuarkusTransaction.requiringNew().run(() -> {
+            Offer offer = new Offer();
+            offer.customerId = "3";
+            offer.handwerkerId = "99"; // fremder Owner
+            offer.businessKey = "angebot-" + UUID.randomUUID();
+            offer.status = Offer.STATUS_VERSENDET;
+            offer.persist();
+        });
+
+        given()
+                .when()
+                .get("/offers")
+                .then()
+                .statusCode(200)
+                .body("findAll { it.handwerkerId == '99' }", empty());
+    }
+
+    @Test
+    void getAllOffers_shouldRejectUnauthenticatedUser() {
+        given()
+                .when()
+                .get("/offers")
+                .then()
+                .statusCode(401);
+    }
+
+    @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "123")
+    })
+    void getOfferById_shouldRejectOwnerOfDifferentOffer() {
+        Offer offer = createTestOfferForHandwerker("99", Offer.STATUS_KI_FERTIG);
+        final String businessKey = offer.businessKey;
+
+        given()
+                .when()
+                .get("/offers/{businessKey}", businessKey)
+                .then()
+                .statusCode(403);
+    }
+
+    @Test
+    void getOfferById_shouldRejectUnauthenticatedUser() {
+        given()
+                .when()
+                .get("/offers/{businessKey}", "irgendein-key")
+                .then()
+                .statusCode(401);
+    }
+
+    @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "123")
+    })
+    void acceptAiResult_shouldRejectOwnerOfDifferentOffer() {
+        Offer offer = createTestOfferForHandwerker("99", Offer.STATUS_KI_FERTIG);
+        final String businessKey = offer.businessKey;
+
+        given()
+                .when()
+                .post("/offers/{businessKey}/review/approve", businessKey)
+                .then()
+                .statusCode(403);
+    }
+
+    @Test
+    void acceptAiResult_shouldRejectUnauthenticatedUser() {
+        given()
+                .when()
+                .post("/offers/{businessKey}/review/approve", "irgendein-key")
+                .then()
+                .statusCode(401);
     }
 
 }

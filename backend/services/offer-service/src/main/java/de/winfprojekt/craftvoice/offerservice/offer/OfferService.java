@@ -1,6 +1,8 @@
 package de.winfprojekt.craftvoice.offerservice.offer;
 
 import de.winfprojekt.craftvoice.offerservice.processengine.ProcessEngineClient;
+import io.quarkus.panache.common.Sort;
+import io.quarkus.security.ForbiddenException;
 import jakarta.inject.Inject;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.CreateOfferRequest;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.OfferChangesRequest;
@@ -16,6 +18,7 @@ import de.winfprojekt.craftvoice.offerservice.routing.OsrmClient;
 import de.winfprojekt.craftvoice.offerservice.routing.RoutingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.WebApplicationException;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.OfferResponse;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -23,6 +26,7 @@ import jakarta.transaction.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.List;
 import org.jboss.logging.Logger;
@@ -61,12 +65,12 @@ public class OfferService {
      * @return das erzeugte und persistierte Angebot als DTO
      */
     @Transactional
-    public OfferResponse createOffer(CreateOfferRequest request) {
+    public OfferResponse createOffer(CreateOfferRequest request, String jwtToken) {
 
         Offer offer = new Offer();
 
         offer.customerId = request.customerId;
-        offer.handwerkerId = request.handwerkerId;
+        offer.handwerkerId = jwtToken;
         offer.annahmeToken = UUID.randomUUID().toString();
         offer.businessKey = "angebot-" + UUID.randomUUID();
         offer.speechSnippet = request.speechSnippet;
@@ -91,8 +95,12 @@ public class OfferService {
      * @return Liste aller Angebote als DTOs
      */
     @Transactional
-    public List<OfferResponse> getAllOffersSorted() {
-        List<Offer> offers = Offer.listAll(io.quarkus.panache.common.Sort.by("createdAt").descending());
+    public List<OfferResponse> getAllOffersSorted(String handwerkerId) {
+        List<Offer> offers = Offer.find(
+                "handwerkerId = ?1",
+                Sort.by("createdAt").descending(),
+                handwerkerId
+        ).list();
         return offers.stream()
                 .map(OfferResponse::fromEntity)
                 .toList();
@@ -270,12 +278,7 @@ public class OfferService {
      * @return aktualisiertes Angebot als DTO
      */
     @Transactional
-    public OfferResponse setArbeitsstunden(String businessKey, SetArbeitsstundenRequest request) {
-        Offer offer = Offer.find("businessKey", businessKey).firstResult();
-        if (offer == null) {
-            throw new WebApplicationException("Angebot mit businessKey " + businessKey + " nicht gefunden", 404);
-        }
-
+    public OfferResponse setArbeitsstunden(Offer offer, String businessKey, SetArbeitsstundenRequest request) {
         if (!Offer.STATUS_KI_FERTIG.equals(offer.status)) {
             throw new WebApplicationException(
                     "Angebot mit businessKey " + businessKey + " befindet sich nicht im Status KI_FERTIG", 409);
@@ -316,8 +319,6 @@ public class OfferService {
             LOG.debugf("Arbeitsdauer = 0, keine Arbeitszeit-Position angelegt.");
         }
 
-        offer.persist();
-
         return OfferResponse.fromEntity(offer);
     }
 
@@ -331,7 +332,7 @@ public class OfferService {
      * @param customerId ID des Kunden
      * @return Adresse als String für die Geocodierung
      */
-    private String ermittleKundenadresse(Long customerId) {
+    private String ermittleKundenadresse(String customerId) {
         // TODO: Abstimmungspunkt 1 — echten Service-Call implementieren
         return "Marienplatz 1, 80331 München";
     }
@@ -406,13 +407,9 @@ public class OfferService {
      * @param id Angebots-ID des angenommenen Angebots
      */
     @Transactional
-    public void acceptAiResult(String businessKey) {
+    public void acceptAiResult(String businessKey, String userId) {
 
-        Offer offer = Offer.find("businessKey", businessKey).firstResult();
-
-        if (offer == null) {
-            throw new WebApplicationException("not found", 404);
-        }
+        Offer offer = findOwnOfferOrThrow(businessKey, userId);
 
         if (!Offer.STATUS_KI_FERTIG.equals(offer.status)) {
             throw new WebApplicationException("wrong status", 409);
@@ -426,5 +423,25 @@ public class OfferService {
         history.zeitpunkt = LocalDateTime.now();
 
         offer.statusHistory.add(history);
+    }
+
+    /**
+     * Methode die überprüft, ob es das gewünschte Angebot gibt und der Aufrufer hierfür berechtigt ist
+     * @param businessKey Attribut des Angebots zu Identifizierung eines Angebots
+     * @param userId ID des Users aus dem JWT Token zur Überprüfung, ob der Nutzer das Angebot lesen darf
+     * @return Angebot
+     */
+    public Offer findOwnOfferOrThrow(String businessKey, String userId) {
+        Offer offer = Offer.find("businessKey", businessKey).firstResult();
+
+        if (offer == null) {
+            throw new NotFoundException("Angebot mit businessKey " + businessKey + " nicht gefunden.");
+        }
+
+        if (!Objects.equals(offer.handwerkerId, userId)) {
+            throw new ForbiddenException("Du bist nicht berechtigt, das Angebot mit businessKey " + businessKey + " zu bearbeiten.");
+        }
+
+        return offer;
     }
 }
