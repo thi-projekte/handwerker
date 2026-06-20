@@ -49,7 +49,6 @@ public class UserResource {
 
     @GET
     @Path("/profile/hourly-rate")
-    @Authenticated
     @RolesAllowed({"OWNER", "EMPLOYEE"})
     public Response getHourlyRate() {
         UserEntity user = userService.syncUserWithDatabase();
@@ -60,7 +59,6 @@ public class UserResource {
 
     @GET
     @Path("/profile/travel-config")
-    @Authenticated
     @RolesAllowed({"OWNER", "EMPLOYEE"})
     public Response getTravelConfig() {
         UserEntity user = userService.syncUserWithDatabase();
