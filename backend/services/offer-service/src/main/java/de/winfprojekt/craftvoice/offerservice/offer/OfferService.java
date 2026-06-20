@@ -179,7 +179,9 @@ public class OfferService {
             position.einheit = posDto.einheit;
             position.katalogProduktId = posDto.katalogProduktId;
             position.einzelPreis = preis;
-            position.positionsPreis = position.einzelPreis.multiply(position.menge);
+            position.positionsPreis = (position.einzelPreis != null && position.menge != null)
+                    ? position.einzelPreis.multiply(position.menge)
+                    : null;
             position.reihenfolge = reihenfolge++;
 
             offer.positions.add(position);

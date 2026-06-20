@@ -15,7 +15,6 @@ public class StructuredOfferPositionDTO {
 
     public String beschreibung;
 
-    @NotNull
     public BigDecimal menge;
 
     @NotNull
