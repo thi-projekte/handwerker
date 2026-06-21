@@ -29,8 +29,6 @@ services:
     depends_on:
       catalog-db:
         condition: service_healthy
-    ports:
-      - "8080:8080"
 
 volumes:
   postgres_data:
