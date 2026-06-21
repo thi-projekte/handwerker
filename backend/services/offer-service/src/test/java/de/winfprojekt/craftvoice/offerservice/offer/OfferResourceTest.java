@@ -20,9 +20,11 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 import de.winfprojekt.craftvoice.offerservice.user.UserServiceClient;
 import de.winfprojekt.craftvoice.offerservice.user.StundensatzResponse;
 import de.winfprojekt.craftvoice.offerservice.user.AnfahrtskostenKonfiguration;
+import de.winfprojekt.craftvoice.offerservice.user.CustomerDTO;
 import de.winfprojekt.craftvoice.offerservice.routing.OsrmClient;
 import de.winfprojekt.craftvoice.offerservice.routing.RoutingException;
 import io.quarkus.narayana.jta.QuarkusTransaction;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
 import java.math.BigDecimal;
 import java.util.*;
 
@@ -174,10 +176,26 @@ class OfferResourceTest {
     CatalogServiceClient catalogServiceClient;
 
     @InjectMock
+    @RestClient
     UserServiceClient userServiceClient;
 
     @InjectMock
     OsrmClient osrmClient;
+
+    @org.junit.jupiter.api.BeforeEach
+    void setUp() {
+        CustomerDTO customer = new CustomerDTO();
+        customer.id = 1L;
+        customer.email = "customer@example.com";
+        customer.firstName = "Max";
+        customer.lastName = "Mustermann";
+        customer.street = "Marienplatz";
+        customer.houseNumber = "1";
+        customer.zipCode = "80331";
+        customer.city = "München";
+
+        Mockito.lenient().when(userServiceClient.getCustomer(any())).thenReturn(customer);
+    }
 
     /**
      * Prüft die erfolgreiche Verarbeitung des KI-Ergebnisses.
