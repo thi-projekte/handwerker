@@ -29,6 +29,9 @@ services:
       DB_USER: catalog
       DB_PASSWORD: postgres
       QUARKUS_OIDC_TENANT_ENABLED: "false"
+      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_REALM: craftvoice
+      KEYCLOAK_CLIENT_ID: catalog-service
     networks:
       - internal
     depends_on:
