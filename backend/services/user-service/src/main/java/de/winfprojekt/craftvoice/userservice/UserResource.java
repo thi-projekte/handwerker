@@ -47,6 +47,37 @@ public class UserResource {
         return userService.syncUserWithDatabase();
     }
 
+    @GET
+    @Path("/profile/hourly-rate")
+    @RolesAllowed({"OWNER", "EMPLOYEE"})
+    public Response getHourlyRate() {
+        UserEntity user = userService.syncUserWithDatabase();
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        response.put("stundensatz", user.hourlyRate != null ? user.hourlyRate : 0.0);
+        return Response.ok(response).build();
+    }
+
+    @GET
+    @Path("/profile/travel-config")
+    @RolesAllowed({"OWNER", "EMPLOYEE"})
+    public Response getTravelConfig() {
+        UserEntity user = userService.syncUserWithDatabase();
+
+        String formattedAddress = String.format("%s %s, %s %s",
+                user.street != null ? user.street : "",
+                user.houseNumber != null ? user.houseNumber : "",
+                user.zipCode != null ? user.zipCode : "",
+                user.city != null ? user.city : "").trim();
+
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        response.put("modell", user.travelModel != null ? user.travelModel : "PAUSCHALE");
+        response.put("pauschale", user.travelFlatRate);
+        response.put("kmSatz", user.travelKmRate);
+        response.put("adresse", formattedAddress);
+
+        return Response.ok(response).build();
+    }
+
     @POST
     @Path("/profile-picture")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
