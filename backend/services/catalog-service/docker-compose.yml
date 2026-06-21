@@ -1,0 +1,38 @@
+services:
+  catalog-db:
+    image: postgres:15
+    container_name: catalog-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: catalog
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: catalog-db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init:/docker-entrypoint-initdb.d
+    networks:
+      - internal
+
+
+  catalog-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.jvm
+    container_name: catalog-service
+    environment:
+      DB_HOST: catalog-db
+      DB_NAME: catalog-db
+      DB_USER: catalog
+      DB_PASSWORD: postgres
+      QUARKUS_OIDC_TENANT_ENABLED: "false"
+    networks:
+      - internal
+    depends_on:
+      - catalog-db
+
+volumes:
+  postgres_data:
+
+networks:
+  internal:
+    driver: bridge
