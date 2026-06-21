@@ -27,7 +27,7 @@ services:
       DB_NAME: catalog-db
       DB_USER: catalog
       DB_PASSWORD: postgres
-      QUARKUS_OIDC_TENANT_ENABLED: "false"
+      QUARKUS_OIDC_TENANT_ENABLED: "true"
     depends_on:
       catalog-db:
         condition: service_healthy
