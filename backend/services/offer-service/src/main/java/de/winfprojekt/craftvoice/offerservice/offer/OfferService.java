@@ -2,6 +2,7 @@ package de.winfprojekt.craftvoice.offerservice.offer;
 
 import de.winfprojekt.craftvoice.offerservice.processengine.ProcessEngineClient;
 import jakarta.inject.Inject;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.CreateOfferRequest;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.OfferChangesRequest;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.StructuredOfferPositionDTO;
@@ -12,6 +13,7 @@ import de.winfprojekt.craftvoice.offerservice.catalog.CatalogServiceClient;
 import de.winfprojekt.craftvoice.offerservice.catalog.CatalogPriceResponse;
 import de.winfprojekt.craftvoice.offerservice.user.UserServiceClient;
 import de.winfprojekt.craftvoice.offerservice.user.AnfahrtskostenKonfiguration;
+import de.winfprojekt.craftvoice.offerservice.user.CustomerDTO;
 import de.winfprojekt.craftvoice.offerservice.routing.OsrmClient;
 import de.winfprojekt.craftvoice.offerservice.routing.RoutingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -46,6 +48,7 @@ public class OfferService {
     CatalogServiceClient catalogServiceClient;
 
     @Inject
+    @RestClient
     UserServiceClient userServiceClient;
 
     @Inject
@@ -335,16 +338,34 @@ public class OfferService {
     /**
      * Ermittelt die Kundenadresse anhand der customerId.
      *
-     * <p>Vorerst Stub-Implementierung (Abstimmungspunkt 1 — noch ungeklärt,
-     * ob customer-service oder user-service die Adresse liefert).
-     * Wird ersetzt, sobald der zuständige Service-Endpunkt bekannt ist.
-     *
      * @param customerId ID des Kunden
      * @return Adresse als String für die Geocodierung
      */
     private String ermittleKundenadresse(Long customerId) {
-        // TODO: Abstimmungspunkt 1 — echten Service-Call implementieren
-        return "Marienplatz 1, 80331 München";
+        CustomerDTO customer = userServiceClient.getCustomer(customerId);
+        if (customer == null) {
+            throw new IllegalArgumentException("Kunde mit ID " + customerId + " wurde nicht gefunden.");
+        }
+        if (customer.street == null || customer.street.isBlank() || customer.city == null || customer.city.isBlank()) {
+            throw new IllegalArgumentException("Kunde mit ID " + customerId + " besitzt keine vollständige Adresse (Straße/Ort fehlt).");
+        }
+
+        String street = customer.street.trim();
+        String houseNumber = customer.houseNumber != null ? customer.houseNumber.trim() : "";
+        String zipCode = customer.zipCode != null ? customer.zipCode.trim() : "";
+        String city = customer.city.trim();
+
+        StringBuilder addressBuilder = new StringBuilder(street);
+        if (!houseNumber.isEmpty()) {
+            addressBuilder.append(" ").append(houseNumber);
+        }
+        addressBuilder.append(", ");
+        if (!zipCode.isEmpty()) {
+            addressBuilder.append(zipCode).append(" ");
+        }
+        addressBuilder.append(city);
+
+        return addressBuilder.toString();
     }
 
     /**
