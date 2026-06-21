@@ -10,7 +10,7 @@ import de.winfprojekt.craftvoice.offerservice.offer.dto.OfferAcceptanceRequest;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.SetArbeitsstundenRequest;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.OfferAcceptanceResponse;
 import de.winfprojekt.craftvoice.offerservice.catalog.CatalogServiceClient;
-import de.winfprojekt.craftvoice.offerservice.catalog.CatalogPriceResponse;
+import de.winfprojekt.craftvoice.offerservice.catalog.MaterialResponse;
 import de.winfprojekt.craftvoice.offerservice.user.UserServiceClient;
 import de.winfprojekt.craftvoice.offerservice.user.AnfahrtskostenKonfiguration;
 import de.winfprojekt.craftvoice.offerservice.user.CustomerDTO;
@@ -45,6 +45,7 @@ public class OfferService {
     ProcessEngineClient processEngineClient;
 
     @Inject
+    @RestClient
     CatalogServiceClient catalogServiceClient;
 
     @Inject
@@ -121,7 +122,7 @@ public class OfferService {
      *   (IN_BEARBEITUNG oder KI_FERTIG).
      * - Entfernt bei bestehenden KI_FERTIG-Angeboten die bisherigen Materialpositionen
      *   und ersetzt sie durch die neuen KI-/Frontend-Positionen.
-     * - Lädt für jede Materialposition den Preis vom catalog-service (Stub).
+     * - Lädt für jede Materialposition den Preis vom catalog-service (REST-Call auf GET /catalog/material/{id}).
      * - Persistiert alle Angebotspositionen inklusive optionaler Anfahrtskosten.
      * - Setzt beim ersten KI-Durchlauf den Status auf KI_FERTIG und legt einen
      *   OfferStatusHistory-Eintrag an.
@@ -166,9 +167,17 @@ public class OfferService {
         for (StructuredOfferPositionDTO posDto : request.strukturierteAngebotspositionen) {
             BigDecimal preis = BigDecimal.ZERO;
             if (posDto.katalogProduktId != null) {
-                CatalogPriceResponse priceResponse = catalogServiceClient.getPreis(posDto.katalogProduktId);
-                if (priceResponse != null && priceResponse.preis != null) {
-                    preis = priceResponse.preis;
+                try {
+                    MaterialResponse materialResponse = catalogServiceClient.getMaterial(posDto.katalogProduktId);
+                    if (materialResponse != null && materialResponse.price != null) {
+                        preis = materialResponse.price;
+                    } else {
+                        LOG.warnf("catalog-service: Materialpreis für ID %s ist null – Position wird mit Preis 0 angelegt.",
+                                posDto.katalogProduktId);
+                    }
+                } catch (Exception e) {
+                    LOG.warnf("catalog-service nicht erreichbar für ID %s, Preis wird auf 0 gesetzt: %s",
+                            posDto.katalogProduktId, e.getMessage());
                 }
             }
 

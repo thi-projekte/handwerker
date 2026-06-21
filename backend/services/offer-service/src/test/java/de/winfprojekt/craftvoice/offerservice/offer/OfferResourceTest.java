@@ -14,7 +14,7 @@ import org.mockito.ArgumentCaptor;
 
 import org.mockito.Mockito;
 
-import de.winfprojekt.craftvoice.offerservice.catalog.CatalogPriceResponse;
+import de.winfprojekt.craftvoice.offerservice.catalog.MaterialResponse;
 import de.winfprojekt.craftvoice.offerservice.catalog.CatalogServiceClient;
 import de.winfprojekt.craftvoice.offerservice.user.UserServiceClient;
 import de.winfprojekt.craftvoice.offerservice.user.StundensatzResponse;
@@ -171,6 +171,7 @@ class OfferResourceTest {
     }
 
     @InjectMock
+    @RestClient
     CatalogServiceClient catalogServiceClient;
 
     @InjectMock
@@ -215,9 +216,9 @@ class OfferResourceTest {
         final String businessKey = offer.businessKey;
 
         // Stub des Catalog-Clients
-        CatalogPriceResponse priceResponse = new CatalogPriceResponse();
-        priceResponse.preis = new BigDecimal("49.99");
-        when(catalogServiceClient.getPreis("42")).thenReturn(priceResponse);
+        MaterialResponse materialResponse = new MaterialResponse();
+        materialResponse.price = new BigDecimal("49.99");
+        when(catalogServiceClient.getMaterial("42")).thenReturn(materialResponse);
 
         // Stub der Process Engine
         Mockito.doNothing().when(processEngineClient).sendAngebotsentwurf(any(), any());
@@ -310,9 +311,9 @@ class OfferResourceTest {
         final String businessKey = offer.businessKey;
 
         // Stub des Catalog-Clients
-        CatalogPriceResponse priceResponse = new CatalogPriceResponse();
-        priceResponse.preis = new BigDecimal("49.99");
-        when(catalogServiceClient.getPreis("42")).thenReturn(priceResponse);
+        MaterialResponse materialResponse2 = new MaterialResponse();
+        materialResponse2.price = new BigDecimal("49.99");
+        when(catalogServiceClient.getMaterial("42")).thenReturn(materialResponse2);
 
         // Stub der Process Engine
         Mockito.doNothing().when(processEngineClient).sendAngebotsentwurf(any(), any());
@@ -781,7 +782,7 @@ class OfferResourceTest {
         final Long offerId = offer.id;
         final String businessKey = offer.businessKey;
 
-        when(catalogServiceClient.getPreis(any())).thenReturn(null);
+        when(catalogServiceClient.getMaterial(any())).thenReturn(null);
         Mockito.doNothing().when(processEngineClient).sendAngebotsentwurf(any(), any());
 
         AnfahrtskostenKonfiguration konfig = new AnfahrtskostenKonfiguration();
@@ -834,7 +835,7 @@ class OfferResourceTest {
         final Long offerId = offer.id;
         final String businessKey = offer.businessKey;
 
-        when(catalogServiceClient.getPreis(any())).thenReturn(null);
+        when(catalogServiceClient.getMaterial(any())).thenReturn(null);
         Mockito.doNothing().when(processEngineClient).sendAngebotsentwurf(any(), any());
 
         AnfahrtskostenKonfiguration konfig = new AnfahrtskostenKonfiguration();
@@ -888,7 +889,7 @@ class OfferResourceTest {
         final Long offerId = offer.id;
         final String businessKey = offer.businessKey;
 
-        when(catalogServiceClient.getPreis(any())).thenReturn(null);
+        when(catalogServiceClient.getMaterial(any())).thenReturn(null);
         Mockito.doNothing().when(processEngineClient).sendAngebotsentwurf(any(), any());
 
         AnfahrtskostenKonfiguration konfig = new AnfahrtskostenKonfiguration();
@@ -942,7 +943,7 @@ class OfferResourceTest {
         final Long offerId = offer.id;
         final String businessKey = offer.businessKey;
 
-        when(catalogServiceClient.getPreis(any())).thenReturn(null);
+        when(catalogServiceClient.getMaterial(any())).thenReturn(null);
         Mockito.doNothing().when(processEngineClient).sendAngebotsentwurf(any(), any());
 
         AnfahrtskostenKonfiguration konfig = new AnfahrtskostenKonfiguration();
