@@ -10,7 +10,8 @@ import de.winfprojekt.craftvoice.offerservice.offer.dto.OfferAcceptanceRequest;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.SetArbeitsstundenRequest;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.OfferAcceptanceResponse;
 import de.winfprojekt.craftvoice.offerservice.catalog.CatalogServiceClient;
-import de.winfprojekt.craftvoice.offerservice.catalog.CatalogPriceResponse;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
+import de.winfprojekt.craftvoice.offerservice.catalog.MaterialResponse;
 import de.winfprojekt.craftvoice.offerservice.user.UserServiceClient;
 import de.winfprojekt.craftvoice.offerservice.user.AnfahrtskostenKonfiguration;
 import de.winfprojekt.craftvoice.offerservice.user.CustomerDTO;
@@ -45,6 +46,7 @@ public class OfferService {
     ProcessEngineClient processEngineClient;
 
     @Inject
+    @RestClient
     CatalogServiceClient catalogServiceClient;
 
     @Inject
@@ -58,8 +60,10 @@ public class OfferService {
     ObjectMapper objectMapper;
 
     /**
-     * Erstellt ein neues Angebot aus den übergebenen Request-Daten, persistiert diese in die DB
-     * und ruft entsprechende Methoden auf, die alle notwendigen Daten an die Process-Engine senden.
+     * Erstellt ein neues Angebot aus den übergebenen Request-Daten, persistiert
+     * diese in die DB
+     * und ruft entsprechende Methoden auf, die alle notwendigen Daten an die
+     * Process-Engine senden.
      *
      * @param request Anfrageobjekt mit Kunden-ID und Sprachschnipsel
      * @return das erzeugte und persistierte Angebot als DTO
@@ -83,14 +87,16 @@ public class OfferService {
 
         offer.persist();
 
-        processEngineClient.sendAngebotPayload(offer.businessKey, offer.customerId, offer.handwerkerId, request.speechSnippet, null);
+        processEngineClient.sendAngebotPayload(offer.businessKey, offer.customerId, offer.handwerkerId,
+                request.speechSnippet, null);
 
         return OfferResponse.fromEntity(offer);
     }
 
     /**
      * Ruft alle Angebote sortiert nach Erstellungsdatum ab (neueste zuerst).
-     * Wird in einer Transaktion ausgeführt, um LazyInitializationExceptions zu vermeiden.
+     * Wird in einer Transaktion ausgeführt, um LazyInitializationExceptions zu
+     * vermeiden.
      *
      * @return Liste aller Angebote als DTOs
      */
@@ -104,7 +110,8 @@ public class OfferService {
 
     /**
      * Ruft ein bestimmtes Angebot anhand der ID ab.
-     * Wird in einer Transaktion ausgeführt, um LazyInitializationExceptions zu vermeiden.
+     * Wird in einer Transaktion ausgeführt, um LazyInitializationExceptions zu
+     * vermeiden.
      *
      * @param id ID des Angebots
      * @return das Angebot als DTO oder null falls nicht gefunden
@@ -115,22 +122,25 @@ public class OfferService {
         return offer != null ? OfferResponse.fromEntity(offer) : null;
     }
 
-/**
-     * Initialisiert oder aktualisiert ein Angebot auf Basis eines KI-Ergebnisses oder den Änderungen des Handwerkers im Frontend:
+    /**
+     * Initialisiert oder aktualisiert ein Angebot auf Basis eines KI-Ergebnisses
+     * oder den Änderungen des Handwerkers im Frontend:
      * - Prüft, ob das Angebot existiert und sich in einem gültigen Status befindet
-     *   (IN_BEARBEITUNG oder KI_FERTIG).
-     * - Entfernt bei bestehenden KI_FERTIG-Angeboten die bisherigen Materialpositionen
-     *   und ersetzt sie durch die neuen KI-/Frontend-Positionen.
+     * (IN_BEARBEITUNG oder KI_FERTIG).
+     * - Entfernt bei bestehenden KI_FERTIG-Angeboten die bisherigen
+     * Materialpositionen
+     * und ersetzt sie durch die neuen KI-/Frontend-Positionen.
      * - Lädt für jede Materialposition den Preis vom catalog-service (Stub).
      * - Persistiert alle Angebotspositionen inklusive optionaler Anfahrtskosten.
      * - Setzt beim ersten KI-Durchlauf den Status auf KI_FERTIG und legt einen
-     *   OfferStatusHistory-Eintrag an.
+     * OfferStatusHistory-Eintrag an.
      *
-     * <p>Die Process Engine wird hier NICHT mehr informiert. Das geschieht erst,
+     * <p>
+     * Die Process Engine wird hier NICHT mehr informiert. Das geschieht erst,
      * wenn der Handwerker seine Arbeitsstunden eingetragen und bestätigt hat
      * (via {@link #setArbeitsstunden(Long, SetArbeitsstundenRequest)}).
      *
-     * @param id ID des Angebots
+     * @param id      ID des Angebots
      * @param request AI- oder Frontend-Result-Daten für die Angebotspositionen
      */
     @Transactional
@@ -142,7 +152,8 @@ public class OfferService {
         }
 
         if (!Offer.STATUS_IN_BEARBEITUNG.equals(offer.status) && !Offer.STATUS_KI_FERTIG.equals(offer.status)) {
-            throw new WebApplicationException("Angebot mit BusinessKey " + businessKey + " befindet sich nicht im Status IN_BEARBEITUNG oder KI_FERTIG", 409);
+            throw new WebApplicationException("Angebot mit BusinessKey " + businessKey
+                    + " befindet sich nicht im Status IN_BEARBEITUNG oder KI_FERTIG", 409);
         }
 
         if (Offer.STATUS_KI_FERTIG.equals(offer.status)) {
@@ -166,9 +177,21 @@ public class OfferService {
         for (StructuredOfferPositionDTO posDto : request.strukturierteAngebotspositionen) {
             BigDecimal preis = BigDecimal.ZERO;
             if (posDto.katalogProduktId != null) {
-                CatalogPriceResponse priceResponse = catalogServiceClient.getPreis(posDto.katalogProduktId);
-                if (priceResponse != null && priceResponse.preis != null) {
-                    preis = priceResponse.preis;
+                try {
+                    UUID materialId = UUID.fromString(posDto.katalogProduktId);
+                    MaterialResponse material = catalogServiceClient.getMaterial(materialId);
+                    if (material != null && material.price != null) {
+                        preis = material.price;
+                    }
+                } catch (jakarta.ws.rs.NotFoundException e) {
+                    LOG.warnf("Material mit ID %s nicht im Catalog gefunden, Preis wird auf 0 gesetzt",
+                            posDto.katalogProduktId);
+                } catch (IllegalArgumentException e) {
+                    LOG.warnf("Ungültige UUID für katalogProduktId '%s', Preis wird auf 0 gesetzt",
+                            posDto.katalogProduktId);
+                } catch (Exception e) {
+                    LOG.warnf("Catalog-Service nicht erreichbar für ID %s, Preis wird auf 0 gesetzt: %s",
+                            posDto.katalogProduktId, e.getMessage());
                 }
             }
 
@@ -196,7 +219,8 @@ public class OfferService {
         try {
             AnfahrtskostenKonfiguration konfig = userServiceClient.getAnfahrtskostenKonfiguration();
 
-            // Kundenadresse: vorerst Stub-Adresse (Abstimmungspunkt 1 — customer-service/user-service)
+            // Kundenadresse: vorerst Stub-Adresse (Abstimmungspunkt 1 —
+            // customer-service/user-service)
             String kundenadresse = ermittleKundenadresse(offer.customerId);
 
             BigDecimal anfahrtspreis;
@@ -233,7 +257,7 @@ public class OfferService {
             anfahrtsPosition.reihenfolge = reihenfolge;
 
             if (existingAnfahrt == null) {
-                offer.positions.add(anfahrtsPosition );
+                offer.positions.add(anfahrtsPosition);
             }
 
         } catch (RoutingException e) {
@@ -273,8 +297,10 @@ public class OfferService {
     /**
      * Verarbeitet die manuell eingetragene Arbeitsdauer des Handwerkers:
      * - Angebot muss sich im Status KI_FERTIG befinden.
-     * - Löscht eine bereits vorhandene Arbeitszeit-Position (Idempotenz bei Korrekturen).
-     * - Legt – sofern Stunden > 0 – eine neue Arbeitszeit-Position an (Stunden × Stundensatz).
+     * - Löscht eine bereits vorhandene Arbeitszeit-Position (Idempotenz bei
+     * Korrekturen).
+     * - Legt – sofern Stunden > 0 – eine neue Arbeitszeit-Position an (Stunden ×
+     * Stundensatz).
      *
      * @param id      ID des Angebots
      * @param request Arbeitsstunden-Eingabe des Handwerkers
@@ -337,7 +363,6 @@ public class OfferService {
 
     /**
      * Ermittelt die Kundenadresse anhand der customerId.
-     *
      * @param customerId ID des Kunden
      * @return Adresse als String für die Geocodierung
      */
@@ -371,12 +396,13 @@ public class OfferService {
     /**
      * Berechnet den Anfahrtskostenbetrag je nach konfiguriertem Modell.
      *
-     * <p>Für das Modell PAUSCHALE wird {@code distanzKm} nicht benötigt und
+     * <p>
+     * Für das Modell PAUSCHALE wird {@code distanzKm} nicht benötigt und
      * darf {@code null} sein. Bei {@code *_KM}-Modellen muss ein gültiger
      * Wert übergeben werden.
      *
-     * @param konfig     Anfahrtskostenkonfiguration vom user-service
-     * @param distanzKm  ermittelte Fahrdistanz in km (bei PAUSCHALE ignoriert)
+     * @param konfig    Anfahrtskostenkonfiguration vom user-service
+     * @param distanzKm ermittelte Fahrdistanz in km (bei PAUSCHALE ignoriert)
      * @return berechneter Betrag in Euro, gerundet auf 2 Dezimalstellen
      */
     private BigDecimal berechneAnfahrtskosten(AnfahrtskostenKonfiguration konfig, BigDecimal distanzKm) {
@@ -395,7 +421,7 @@ public class OfferService {
     /**
      * Nimmt ein Angebot über den Annahme-Token an oder lehnt es ab.
      *
-     * @param token Der Annahme-Token des Angebots
+     * @param token   Der Annahme-Token des Angebots
      * @param request Die Entscheidung des Kunden ("angenommen" oder "abgelehnt")
      * @return DTO mit dem Ergebnis der Entscheidung
      */
@@ -416,7 +442,8 @@ public class OfferService {
 
         String entscheidung = request.entscheidung;
         if (!"angenommen".equals(entscheidung) && !"abgelehnt".equals(entscheidung)) {
-            throw new WebApplicationException("Ungültige Entscheidung. Erlaubt sind 'angenommen' oder 'abgelehnt'.", 400);
+            throw new WebApplicationException("Ungültige Entscheidung. Erlaubt sind 'angenommen' oder 'abgelehnt'.",
+                    400);
         }
 
         String newStatus = "angenommen".equals(entscheidung) ? Offer.STATUS_ANGENOMMEN : Offer.STATUS_ABGELEHNT;
@@ -434,7 +461,9 @@ public class OfferService {
     }
 
     /**
-     * Methode, die den Status eines angenommenen Angebots durch den Handwerker nach KI-Durchlauf entsprechend ändert und abspeichert
+     * Methode, die den Status eines angenommenen Angebots durch den Handwerker nach
+     * KI-Durchlauf entsprechend ändert und abspeichert
+     * 
      * @param id Angebots-ID des angenommenen Angebots
      */
     @Transactional
@@ -462,7 +491,8 @@ public class OfferService {
 
     /**
      * Setzt den Status eines Angebots auf VERSANDBEREIT.
-     * Wird vom document-service aufgerufen, nachdem das PDF-Angebot erfolgreich erstellt wurde.
+     * Wird vom document-service aufgerufen, nachdem das PDF-Angebot erfolgreich
+     * erstellt wurde.
      *
      * @param businessKey Business-Key des Angebots
      */
@@ -474,7 +504,8 @@ public class OfferService {
         }
 
         if (!Offer.STATUS_KI_BEARBEITUNG_ABGESCHLOSSEN.equals(offer.status)) {
-            throw new WebApplicationException("Angebot befindet sich nicht im Status KI_BEARBEITUNG_ABGESCHLOSSEN", 409);
+            throw new WebApplicationException("Angebot befindet sich nicht im Status KI_BEARBEITUNG_ABGESCHLOSSEN",
+                    409);
         }
 
         offer.status = Offer.STATUS_VERSANDBEREIT;
@@ -487,9 +518,12 @@ public class OfferService {
 
         offer.persist();
     }
+
     /**
      * Berechnet den Gesamtpreis (Aufsummieren aller Positionen) eines Angebots
-     * @param offer Angebots-Objekt, von welchem der Gesamtpreis berechnet werden soll
+     * 
+     * @param offer Angebots-Objekt, von welchem der Gesamtpreis berechnet werden
+     *              soll
      */
     private void berechneGesamtpreis(Offer offer) {
         offer.gesamtPreis = offer.positions.stream()
