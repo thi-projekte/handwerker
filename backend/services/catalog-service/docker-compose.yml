@@ -9,9 +9,6 @@ services:
       POSTGRES_DB: catalog-db
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init:/docker-entrypoint-initdb.d
-    networks:
-      - internal
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U catalog -d catalog-db" ]
       interval: 5s
@@ -32,8 +29,6 @@ services:
       KEYCLOAK_URL: http://keycloak:8080
       KEYCLOAK_REALM: craftvoice
       KEYCLOAK_CLIENT_ID: catalog-service
-    networks:
-      - internal
     depends_on:
       - catalog-db
     healthcheck:
@@ -46,7 +41,3 @@ services:
 
 volumes:
   postgres_data:
-
-networks:
-  internal:
-    driver: bridge
