@@ -4,18 +4,16 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 /**
- * DTO für die Antwort des catalog-service auf {@code GET /catalog/material/{id}}.
- * Enthält nur die für den offer-service relevanten Felder.
+ * Antwortobjekt für die Materialabfrage des Catalog-Service.
+ *
+ * <p>Entspricht dem {@code MaterialResponse} des catalog-service.
  */
 public class MaterialResponse {
-
     public UUID id;
     public String articleNumber;
     public String name;
-    public String manufacturer;
     public String description;
-    public String category;
-    public String unit;
+    public String manufacturer;
     public BigDecimal price;
-    public String currency;
+    public String unit;
 }

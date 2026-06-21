@@ -16,6 +16,7 @@ import org.mockito.Mockito;
 
 import de.winfprojekt.craftvoice.offerservice.catalog.MaterialResponse;
 import de.winfprojekt.craftvoice.offerservice.catalog.CatalogServiceClient;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
 import de.winfprojekt.craftvoice.offerservice.user.UserServiceClient;
 import de.winfprojekt.craftvoice.offerservice.user.StundensatzResponse;
 import de.winfprojekt.craftvoice.offerservice.user.AnfahrtskostenKonfiguration;
@@ -218,7 +219,7 @@ class OfferResourceTest {
         // Stub des Catalog-Clients
         MaterialResponse materialResponse = new MaterialResponse();
         materialResponse.price = new BigDecimal("49.99");
-        when(catalogServiceClient.getMaterial("42")).thenReturn(materialResponse);
+        when(catalogServiceClient.getMaterial(any(UUID.class))).thenReturn(materialResponse);
 
         // Stub der Process Engine
         Mockito.doNothing().when(processEngineClient).sendAngebotsentwurf(any(), any());
@@ -234,10 +235,10 @@ class OfferResourceTest {
                       "beschreibung": "Komplette Sanierung",
                       "menge": 2,
                       "einheit": "Pauschal",
-                      "katalogProduktId": 42
+                      "katalogProduktId": "00000000-0000-0000-0000-000000000042"
                     }
                   ],
-                  "korrekturvorschlaege": ["Materialkosten prüfen"]
+                  "korrekturvorschlaege": ["Materialkosten pr\u00fcfen"]
                 }
                 """)
                 .when()
@@ -245,7 +246,7 @@ class OfferResourceTest {
                 .then()
                 .statusCode(200);
 
-        // Datenbankprüfung
+        // Datenbankpr\u00fcfung
         QuarkusTransaction.requiringNew().run(() -> {
             Offer updatedOffer = Offer.findById(offerId);
             assertNotNull(updatedOffer);
@@ -263,7 +264,7 @@ class OfferResourceTest {
             assertEquals("Komplette Sanierung", materialPosition.beschreibung);
             assertEquals(new BigDecimal("2").setScale(0), materialPosition.menge.setScale(0));
             assertEquals("Pauschal", materialPosition.einheit);
-            assertEquals("42", materialPosition.katalogProduktId);
+            assertEquals("00000000-0000-0000-0000-000000000042", materialPosition.katalogProduktId);
             assertEquals(new BigDecimal("49.99"), materialPosition.einzelPreis);
             assertEquals(new BigDecimal("99.98"), materialPosition.positionsPreis);
 
@@ -311,9 +312,9 @@ class OfferResourceTest {
         final String businessKey = offer.businessKey;
 
         // Stub des Catalog-Clients
-        MaterialResponse materialResponse2 = new MaterialResponse();
-        materialResponse2.price = new BigDecimal("49.99");
-        when(catalogServiceClient.getMaterial("42")).thenReturn(materialResponse2);
+        MaterialResponse materialResponse = new MaterialResponse();
+        materialResponse.price = new BigDecimal("49.99");
+        when(catalogServiceClient.getMaterial(any(UUID.class))).thenReturn(materialResponse);
 
         // Stub der Process Engine
         Mockito.doNothing().when(processEngineClient).sendAngebotsentwurf(any(), any());
@@ -329,7 +330,7 @@ class OfferResourceTest {
                       "beschreibung": "Komplette Sanierung",
                       "menge": null,
                       "einheit": "Pauschal",
-                      "katalogProduktId": 42
+                      "katalogProduktId": "00000000-0000-0000-0000-000000000042"
                     }
                   ],
                   "korrekturvorschlaege": []
@@ -782,7 +783,7 @@ class OfferResourceTest {
         final Long offerId = offer.id;
         final String businessKey = offer.businessKey;
 
-        when(catalogServiceClient.getMaterial(any())).thenReturn(null);
+        when(catalogServiceClient.getMaterial(any(UUID.class))).thenReturn(null);
         Mockito.doNothing().when(processEngineClient).sendAngebotsentwurf(any(), any());
 
         AnfahrtskostenKonfiguration konfig = new AnfahrtskostenKonfiguration();
@@ -835,7 +836,7 @@ class OfferResourceTest {
         final Long offerId = offer.id;
         final String businessKey = offer.businessKey;
 
-        when(catalogServiceClient.getMaterial(any())).thenReturn(null);
+        when(catalogServiceClient.getMaterial(any(UUID.class))).thenReturn(null);
         Mockito.doNothing().when(processEngineClient).sendAngebotsentwurf(any(), any());
 
         AnfahrtskostenKonfiguration konfig = new AnfahrtskostenKonfiguration();
@@ -889,7 +890,7 @@ class OfferResourceTest {
         final Long offerId = offer.id;
         final String businessKey = offer.businessKey;
 
-        when(catalogServiceClient.getMaterial(any())).thenReturn(null);
+        when(catalogServiceClient.getMaterial(any(UUID.class))).thenReturn(null);
         Mockito.doNothing().when(processEngineClient).sendAngebotsentwurf(any(), any());
 
         AnfahrtskostenKonfiguration konfig = new AnfahrtskostenKonfiguration();
@@ -943,7 +944,7 @@ class OfferResourceTest {
         final Long offerId = offer.id;
         final String businessKey = offer.businessKey;
 
-        when(catalogServiceClient.getMaterial(any())).thenReturn(null);
+        when(catalogServiceClient.getMaterial(any(UUID.class))).thenReturn(null);
         Mockito.doNothing().when(processEngineClient).sendAngebotsentwurf(any(), any());
 
         AnfahrtskostenKonfiguration konfig = new AnfahrtskostenKonfiguration();
