@@ -87,8 +87,15 @@ public class OfferService {
 
         offer.persist();
 
-        processEngineClient.sendAngebotPayload(offer.businessKey, offer.customerId, offer.handwerkerId,
-                request.speechSnippet, null);
+        // OS-5: PE-Benachrichtigung darf das bereits persistierte Angebot nicht
+        // zurückrollen. Ein PE-Fehler wird geloggt, aber nicht weitergeworfen.
+        try {
+            processEngineClient.sendAngebotPayload(offer.businessKey, offer.customerId, offer.handwerkerId,
+                    request.speechSnippet, null);
+        } catch (Exception e) {
+            LOG.errorf(e, "Angebot %s wurde gespeichert, aber die PE-Nachricht 'angebotPayload' konnte nicht zugestellt werden.",
+                    offer.businessKey);
+        }
 
         return OfferResponse.fromEntity(offer);
     }
@@ -109,16 +116,18 @@ public class OfferService {
     }
 
     /**
-     * Ruft ein bestimmtes Angebot anhand der ID ab.
-     * Wird in einer Transaktion ausgeführt, um LazyInitializationExceptions zu
-     * vermeiden.
+     * Ruft ein bestimmtes Angebot anhand seines businessKeys ab.
+     * Wird in einer Transaktion ausgeführt, damit das Mapping auf das DTO
+     * (inkl. der Lazy-Collections positions, statusHistory, korrekturvorschlaege)
+     * innerhalb einer aktiven Persistence-Session erfolgt und keine
+     * LazyInitializationException auftritt.
      *
-     * @param id ID des Angebots
+     * @param businessKey businessKey des Angebots
      * @return das Angebot als DTO oder null falls nicht gefunden
      */
     @Transactional
-    public OfferResponse getOfferById(Long id) {
-        Offer offer = Offer.findById(id);
+    public OfferResponse getOfferByBusinessKey(String businessKey) {
+        Offer offer = Offer.find("businessKey", businessKey).firstResult();
         return offer != null ? OfferResponse.fromEntity(offer) : null;
     }
 
@@ -219,22 +228,20 @@ public class OfferService {
         try {
             AnfahrtskostenKonfiguration konfig = userServiceClient.getAnfahrtskostenKonfiguration();
 
-            // Kundenadresse: vorerst Stub-Adresse (Abstimmungspunkt 1 —
-            // customer-service/user-service)
-            String kundenadresse = ermittleKundenadresse(offer.customerId);
-
             BigDecimal anfahrtspreis;
             String einheit;
             BigDecimal menge;
 
             if ("PAUSCHALE".equals(konfig.modell)) {
-                // Pauschale benötigt keine Distanz — Routing wird NICHT aufgerufen
+                // OS-7: Pauschale benötigt keine Distanz/Kundenadresse — Routing und
+                // Adressermittlung werden NICHT aufgerufen.
                 anfahrtspreis = berechneAnfahrtskosten(konfig, null);
                 einheit = "pauschal";
                 menge = BigDecimal.ONE;
                 LOG.debugf("Anfahrtskosten-Position angelegt: Modell=PAUSCHALE, Preis=%s €", anfahrtspreis);
             } else {
-                // NUR_KM und PAUSCHALE_PLUS_KM benötigen die Distanz
+                // NUR_KM und PAUSCHALE_PLUS_KM benötigen die Distanz und damit die Kundenadresse
+                String kundenadresse = ermittleKundenadresse(offer.customerId);
                 BigDecimal distanzKm = osrmClient.getDistanzKm(konfig.adresse, kundenadresse);
                 anfahrtspreis = berechneAnfahrtskosten(konfig, distanzKm);
                 einheit = "km";
@@ -261,11 +268,13 @@ public class OfferService {
             }
 
         } catch (RoutingException e) {
+            // Erwartbarer Fall (Adresse nicht geokodierbar, OSRM nicht erreichbar) → Warnung
             LOG.warnf("Anfahrtskosten konnten nicht berechnet werden, Position wird übersprungen: %s",
                     e.getMessage());
         } catch (Exception e) {
-            LOG.warnf("Unerwarteter Fehler bei Anfahrtskostenberechnung, Position wird übersprungen: %s",
-                    e.getMessage());
+            // OS-6: Unerwartete Fehler (User-Service down, Konfig fehlerhaft, NPE) laut mit
+            // Stacktrace loggen, damit sie im Test nicht stillschweigend untergehen.
+            LOG.errorf(e, "Unerwarteter Fehler bei Anfahrtskostenberechnung, Position wird übersprungen.");
         }
 
         berechneGesamtpreis(offer);
@@ -280,18 +289,30 @@ public class OfferService {
         history.status = Offer.STATUS_KI_FERTIG;
         offer.statusHistory.add(history);
 
+        // OS-11: Korrekturvorschläge am Angebot persistieren, damit sie auch über die
+        // GET-Endpunkte (und nicht nur im PE-Entwurf) verfügbar sind.
+        offer.korrekturvorschlaege = request.korrekturvorschlaege != null
+                ? new java.util.ArrayList<>(request.korrekturvorschlaege)
+                : new java.util.ArrayList<>();
+
         offer.persist();
 
         // Correlation: Prozess wartet an Event_10bgkb0 auf "angebotsentwurf"
         OfferResponse response = OfferResponse.fromEntity(offer);
-        response.korrekturvorschlaege = request.korrekturvorschlaege;
         String angebotsentwurfJson;
         try {
             angebotsentwurfJson = objectMapper.writeValueAsString(response);
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Serialisierung des Angebotsentwurfs fehlgeschlagen", e);
         }
-        processEngineClient.sendAngebotsentwurf(offer.businessKey, angebotsentwurfJson);
+
+        // OS-5: PE-Fehler darf das persistierte Angebot nicht zurückrollen.
+        try {
+            processEngineClient.sendAngebotsentwurf(offer.businessKey, angebotsentwurfJson);
+        } catch (Exception e) {
+            LOG.errorf(e, "Angebot %s wurde gespeichert, aber die PE-Nachricht 'angebotsentwurf' konnte nicht zugestellt werden.",
+                    offer.businessKey);
+        }
     }
 
     /**
@@ -318,8 +339,9 @@ public class OfferService {
                     "Angebot mit businessKey " + businessKey + " befindet sich nicht im Status KI_FERTIG", 409);
         }
 
-        // Idempotenz: bestehende Arbeitszeit-Position entfernen (z. B. bei Korrektur)
-        offer.positions.removeIf(p -> "Arbeitszeit".equals(p.bezeichnung));
+        // Idempotenz: bestehende Arbeitszeit-Position entfernen (z. B. bei Korrektur).
+        // OS-8: Identifikation über den Positionstyp statt über den Bezeichnungs-String.
+        offer.positions.removeIf(p -> p.type == OfferPositionType.ARBEITSZEIT);
 
         if (request.arbeitsdauerStunden.compareTo(BigDecimal.ZERO) > 0) {
             try {
@@ -335,6 +357,7 @@ public class OfferService {
 
                 OfferPosition arbeitszeitPosition = new OfferPosition();
                 arbeitszeitPosition.offer = offer;
+                arbeitszeitPosition.type = OfferPositionType.ARBEITSZEIT;
                 arbeitszeitPosition.bezeichnung = "Arbeitszeit";
                 arbeitszeitPosition.einheit = "h";
                 arbeitszeitPosition.menge = request.arbeitsdauerStunden;
@@ -487,6 +510,13 @@ public class OfferService {
         history.zeitpunkt = LocalDateTime.now();
 
         offer.statusHistory.add(history);
+
+        // OS-3: Statusänderung explizit persistieren (Konsistenz zu den übrigen Methoden).
+        // Die PE wird hier NICHT informiert: Laut BPMN "angebotskorrektur" sendet das
+        // Frontend die Nachricht "genehmigungAngebot" (Message-Flow "Genehmigung" mit
+        // Source = Frontend) direkt an die Process Engine. Der offer-service aktualisiert
+        // an dieser Stelle nur den Angebotsstatus.
+        offer.persist();
     }
 
     /**
