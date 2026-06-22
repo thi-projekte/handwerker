@@ -120,11 +120,13 @@ public class OfferResource {
     @GET
     @Path("/offers/{businessKey}")
     public Response getOfferById(@PathParam("businessKey") String businessKey) {
-        Offer offer = Offer.find("businessKey", businessKey).firstResult();
-        if (offer == null) {
+        // OS-2: Laden + DTO-Mapping laufen in der @Transactional-Service-Methode,
+        // damit die Lazy-Collections innerhalb einer aktiven Session initialisiert werden.
+        OfferResponse response = offerService.getOfferByBusinessKey(businessKey);
+        if (response == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
-        return Response.ok(OfferResponse.fromEntity(offer)).build();
+        return Response.ok(response).build();
     }
 
     /**
@@ -173,6 +175,21 @@ public class OfferResource {
     @Consumes(MediaType.WILDCARD)
     public Response setStatusVersandbereit(@PathParam("businessKey") String businessKey) {
         offerService.setStatusVersandbereit(businessKey);
+        return Response.ok().build();
+    }
+
+    /**
+     * Setzt den Status eines Angebots auf VERSENDET.
+     * Wird vom document-service aufgerufen, nachdem das Angebot erfolgreich versendet wurde.
+     *
+     * @param businessKey Business-Key des Angebots
+     * @return HTTP-Response mit Statuscode 200 bei Erfolg
+     */
+    @POST
+    @Path("/angebote/{businessKey}/versendet")
+    @Consumes(MediaType.WILDCARD)
+    public Response setStatusVersendet(@PathParam("businessKey") String businessKey) {
+        offerService.setStatusVersendet(businessKey);
         return Response.ok().build();
     }
 

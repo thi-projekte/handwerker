@@ -1,6 +1,7 @@
 package de.winfprojekt.craftvoice.offerservice.offer;
 
 import de.winfprojekt.craftvoice.offerservice.common.BaseEntity;
+import de.winfprojekt.craftvoice.offerservice.common.OfferPositionType;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 
