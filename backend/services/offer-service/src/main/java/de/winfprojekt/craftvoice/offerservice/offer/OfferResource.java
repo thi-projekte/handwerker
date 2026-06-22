@@ -106,9 +106,7 @@ public class OfferResource {
     @RolesAllowed({"OWNER"})
     public Response setArbeitsstunden(@PathParam("businessKey") String businessKey, @Valid SetArbeitsstundenRequest request) {
         String userId = jwt.getSubject();
-        Offer offer = offerService.findOwnOfferOrThrow(businessKey, userId);
-
-        OfferResponse response = offerService.setArbeitsstunden(offer, offer.businessKey, request);
+        OfferResponse response = offerService.setArbeitsstunden(businessKey, userId, request);
         return Response.ok(response).build();
     }
 
@@ -138,9 +136,13 @@ public class OfferResource {
     @RolesAllowed({"OWNER"})
     public Response getOfferById(@PathParam("businessKey") String businessKey) {
         String userId = jwt.getSubject();
-        Offer offer = offerService.findOwnOfferOrThrow(businessKey, userId);
-
-        return Response.ok(OfferResponse.fromEntity(offer)).build();
+        // OS-2: Laden + DTO-Mapping laufen in der @Transactional-Service-Methode,
+        // damit die Lazy-Collections innerhalb einer aktiven Session initialisiert werden.
+        OfferResponse response = offerService.getOfferByBusinessKey(businessKey, userId);
+        if (response == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+        return Response.ok(response).build();
     }
 
     /**
@@ -177,6 +179,36 @@ public class OfferResource {
         String userId = jwt.getSubject();
         offerService.acceptAiResult(businessKey, userId);
         return Response.noContent().build();
+    }
+
+    /**
+     * Setzt den Status eines Angebots auf VERSANDBEREIT.
+     * Wird vom document-service aufgerufen, nachdem das PDF-Angebot erfolgreich erstellt wurde.
+     *
+     * @param businessKey Business-Key des Angebots
+     * @return HTTP-Response mit Statuscode 200 bei Erfolg
+     */
+    @POST
+    @Path("/angebote/{businessKey}/versandbereit")
+    @Consumes(MediaType.WILDCARD)
+    public Response setStatusVersandbereit(@PathParam("businessKey") String businessKey) {
+        offerService.setStatusVersandbereit(businessKey);
+        return Response.ok().build();
+    }
+
+    /**
+     * Setzt den Status eines Angebots auf VERSENDET.
+     * Wird vom document-service aufgerufen, nachdem das Angebot erfolgreich versendet wurde.
+     *
+     * @param businessKey Business-Key des Angebots
+     * @return HTTP-Response mit Statuscode 200 bei Erfolg
+     */
+    @POST
+    @Path("/angebote/{businessKey}/versendet")
+    @Consumes(MediaType.WILDCARD)
+    public Response setStatusVersendet(@PathParam("businessKey") String businessKey) {
+        offerService.setStatusVersendet(businessKey);
+        return Response.ok().build();
     }
 
 }

@@ -15,6 +15,4 @@ public class OfferChangesRequest {
 
     @NotNull
     public List<String> korrekturvorschlaege;
-
-    public Long customerId;
 }

@@ -108,4 +108,66 @@ public class ProcessEngineClient {
 
                 sendMessage(payload);
         }
+        /**
+         * Korreliert die Nachricht "angebotAngenommen" zurück an die Process Engine.
+         * Wird aufgerufen, wenn der Kunde das Angebot angenommen hat.
+         * Die PE setzt den Prozess fort und ruft die Rechnungserstellung auf.
+         *
+         * @param businessKey businessKey des Angebots
+         */
+        public void sendAngebotAngenommen(String businessKey) {
+
+                PeMessagePayload payload = new PeMessagePayload(
+                        "angebotAngenommen",
+                        businessKey,
+                        Map.of(),
+                        false
+                );
+
+                sendMessage(payload);
+        }
+
+        /**
+         * Korreliert die Nachricht "angebotAbgelehnt" zurück an die Process Engine.
+         * Wird aufgerufen, wenn der Kunde das Angebot abgelehnt hat.
+         * Die PE beendet den Prozess.
+         *
+         * @param businessKey businessKey des Angebots
+         */
+        public void sendAngebotAbgelehnt(String businessKey) {
+
+                PeMessagePayload payload = new PeMessagePayload(
+                        "angebotAbgelehnt",
+                        businessKey,
+                        Map.of(),
+                        false
+                );
+
+                sendMessage(payload);
+        }
+
+        /**
+         * Sendet den erstellten Rechnungsentwurf zurück an die Process Engine.
+         * Die PE wartet auf diese Nachricht, um anschließend den Document Service
+         * zur endgültigen PDF-Generierung aufzurufen.
+         *
+         * @param businessKey         businessKey des Angebots
+         * @param rechnungsentwurfJson das serialisierte InvoiceResponse-DTO als JSON-String
+         */
+        public void sendRechnungsentwurf(String businessKey, String rechnungsentwurfJson) {
+
+                Map<String, Object> processVariables = Map.of(
+                        "rechnungsentwurf", Map.of(
+                                "value", rechnungsentwurfJson,
+                                "type", "Json"));
+
+                PeMessagePayload payload = new PeMessagePayload(
+                        "rechnungsentwurf",
+                        businessKey,
+                        processVariables,
+                        false
+                );
+
+                sendMessage(payload);
+        }
 }

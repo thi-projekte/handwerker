@@ -15,13 +15,10 @@ public class StructuredOfferPositionDTO {
 
     public String beschreibung;
 
-    @NotNull
     public BigDecimal menge;
 
     @NotNull
     public String einheit;
 
     public String katalogProduktId;
-
-    public BigDecimal preis;
 }

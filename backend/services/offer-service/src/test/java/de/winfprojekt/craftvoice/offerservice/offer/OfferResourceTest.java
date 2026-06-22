@@ -19,18 +19,20 @@ import org.mockito.ArgumentCaptor;
 
 import org.mockito.Mockito;
 
-import de.winfprojekt.craftvoice.offerservice.catalog.CatalogPriceResponse;
+import de.winfprojekt.craftvoice.offerservice.catalog.MaterialResponse;
 import de.winfprojekt.craftvoice.offerservice.catalog.CatalogServiceClient;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
 import de.winfprojekt.craftvoice.offerservice.user.UserServiceClient;
 import de.winfprojekt.craftvoice.offerservice.user.StundensatzResponse;
 import de.winfprojekt.craftvoice.offerservice.user.AnfahrtskostenKonfiguration;
+import de.winfprojekt.craftvoice.offerservice.user.CustomerDTO;
 import de.winfprojekt.craftvoice.offerservice.routing.OsrmClient;
 import de.winfprojekt.craftvoice.offerservice.routing.RoutingException;
+import de.winfprojekt.craftvoice.offerservice.common.OfferPositionType;
 import io.quarkus.narayana.jta.QuarkusTransaction;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
 import java.math.BigDecimal;
-import java.util.Comparator;
-import java.util.UUID;
-import java.util.List;
+import java.util.*;
 
 import static io.restassured.RestAssured.given;
 import static org.mockito.ArgumentMatchers.any;
@@ -59,16 +61,20 @@ class OfferResourceTest {
         position.bezeichnung = "Musterposition";
         position.menge = new java.math.BigDecimal("5");
         position.einheit = "Stk";
-        position.preis = new java.math.BigDecimal("99.90");
-        position.persist();
+        position.einzelPreis = new java.math.BigDecimal("99.90");
+        position.positionsPreis = position.einzelPreis.multiply(position.menge);
         offer.positions.add(position);
 
         OfferStatusHistory history = new OfferStatusHistory();
         history.offer = offer;
         history.status = Offer.STATUS_VERSENDET;
         history.notiz = "Angebot wurde versendet";
-        history.persist();
         offer.statusHistory.add(history);
+
+        offer.gesamtPreis = offer.positions.stream()
+                .map(p -> p.positionsPreis)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         offer.persist();
     }
@@ -198,13 +204,30 @@ class OfferResourceTest {
     }
 
     @InjectMock
+    @RestClient
     CatalogServiceClient catalogServiceClient;
 
     @InjectMock
+    @RestClient
     UserServiceClient userServiceClient;
 
     @InjectMock
     OsrmClient osrmClient;
+
+    @org.junit.jupiter.api.BeforeEach
+    void setUp() {
+        CustomerDTO customer = new CustomerDTO();
+        customer.id = 1L;
+        customer.email = "customer@example.com";
+        customer.firstName = "Max";
+        customer.lastName = "Mustermann";
+        customer.street = "Marienplatz";
+        customer.houseNumber = "1";
+        customer.zipCode = "80331";
+        customer.city = "München";
+
+        Mockito.lenient().when(userServiceClient.getCustomer(any())).thenReturn(customer);
+    }
 
     /**
      * Prüft die erfolgreiche Verarbeitung des KI-Ergebnisses.
@@ -230,9 +253,9 @@ class OfferResourceTest {
         final String businessKey = offer.businessKey;
 
         // Stub des Catalog-Clients
-        CatalogPriceResponse priceResponse = new CatalogPriceResponse();
-        priceResponse.preis = new BigDecimal("49.99");
-        when(catalogServiceClient.getPreis("42")).thenReturn(priceResponse);
+        MaterialResponse materialResponse = new MaterialResponse();
+        materialResponse.price = new BigDecimal("49.99");
+        when(catalogServiceClient.getMaterial(any(UUID.class))).thenReturn(materialResponse);
 
         // Stub der Process Engine
         Mockito.doNothing().when(processEngineClient).sendAngebotsentwurf(any(), any());
@@ -248,10 +271,10 @@ class OfferResourceTest {
                       "beschreibung": "Komplette Sanierung",
                       "menge": 2,
                       "einheit": "Pauschal",
-                      "katalogProduktId": 42
+                      "katalogProduktId": "00000000-0000-0000-0000-000000000042"
                     }
                   ],
-                  "korrekturvorschlaege": ["Materialkosten prüfen"]
+                  "korrekturvorschlaege": ["Materialkosten pr\u00fcfen"]
                 }
                 """)
                 .when()
@@ -259,7 +282,7 @@ class OfferResourceTest {
                 .then()
                 .statusCode(200);
 
-        // Datenbankprüfung
+        // Datenbankpr\u00fcfung
         QuarkusTransaction.requiringNew().run(() -> {
             Offer updatedOffer = Offer.findById(offerId);
             assertNotNull(updatedOffer);
@@ -277,8 +300,9 @@ class OfferResourceTest {
             assertEquals("Komplette Sanierung", materialPosition.beschreibung);
             assertEquals(new BigDecimal("2").setScale(0), materialPosition.menge.setScale(0));
             assertEquals("Pauschal", materialPosition.einheit);
-            assertEquals("42", materialPosition.katalogProduktId);
-            assertEquals(new BigDecimal("49.99"), materialPosition.preis);
+            assertEquals("00000000-0000-0000-0000-000000000042", materialPosition.katalogProduktId);
+            assertEquals(new BigDecimal("49.99"), materialPosition.einzelPreis);
+            assertEquals(new BigDecimal("99.98"), materialPosition.positionsPreis);
 
             // Status-Historie prüfen
             List<OfferStatusHistory> history =
@@ -291,8 +315,85 @@ class OfferResourceTest {
                     "Keine Arbeitszeit-Position bei ki-ergebnis erwartet");
         });
 
-        // sendAngebotsentwurf muss genau einmal verifiziert werden
-        verify(processEngineClient, times(1)).sendAngebotsentwurf(Mockito.eq(businessKey), anyString());
+        // sendAngebotsentwurf muss genau einmal aufgerufen werden
+        ArgumentCaptor<String> jsonCaptor = ArgumentCaptor.forClass(String.class);
+        verify(processEngineClient, times(1)).sendAngebotsentwurf(Mockito.eq(businessKey), jsonCaptor.capture());
+
+        // Korrekturvorschläge müssen im serialisierten JSON enthalten sein
+        String sentJson = jsonCaptor.getValue();
+        assertTrue(sentJson.contains("korrekturvorschlaege"),
+                "JSON muss das Feld korrekturvorschlaege enthalten");
+        assertTrue(sentJson.contains("Materialkosten prüfen"),
+                "JSON muss den Korrekturvorschlag 'Materialkosten prüfen' enthalten");
+    }
+
+    /**
+     * Prüft, dass das KI-Ergebnis auch dann erfolgreich verarbeitet wird,
+     * wenn die Menge (menge) null ist (Vertragsfall: Handwerker spricht keine Menge aus).
+     */
+    @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
+    void shouldProcessAiResultSuccessfullyWithNullMenge() {
+        // Setup des Testangebots
+        Offer offer = new Offer();
+        offer.customerId = "1";
+        offer.handwerkerId = "99";
+        offer.businessKey = "angebot-" + UUID.randomUUID().toString();
+        offer.status = Offer.STATUS_IN_BEARBEITUNG;
+
+        QuarkusTransaction.requiringNew().run(() -> {
+            offer.persist();
+        });
+
+        final Long offerId = offer.id;
+        final String businessKey = offer.businessKey;
+
+        // Stub des Catalog-Clients
+        MaterialResponse materialResponse = new MaterialResponse();
+        materialResponse.price = new BigDecimal("49.99");
+        when(catalogServiceClient.getMaterial(any(UUID.class))).thenReturn(materialResponse);
+
+        // Stub der Process Engine
+        Mockito.doNothing().when(processEngineClient).sendAngebotsentwurf(any(), any());
+
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+                {
+                  "strukturierteAngebotspositionen": [
+                    {
+                      "bezeichnung": "Badrenovierung",
+                      "hersteller": "Knauf",
+                      "beschreibung": "Komplette Sanierung",
+                      "menge": null,
+                      "einheit": "Pauschal",
+                      "katalogProduktId": "00000000-0000-0000-0000-000000000042"
+                    }
+                  ],
+                  "korrekturvorschlaege": []
+                }
+                """)
+                .when()
+                .post("/angebote/{businessKey}/ki-ergebnis", businessKey)
+                .then()
+                .statusCode(200);
+
+        // Datenbankprüfung
+        QuarkusTransaction.requiringNew().run(() -> {
+            Offer updatedOffer = Offer.findById(offerId);
+            assertNotNull(updatedOffer);
+            assertEquals(Offer.STATUS_KI_FERTIG, updatedOffer.status);
+
+            // Materialposition muss vorhanden sein und menge/positionsPreis müssen null sein
+            OfferPosition materialPosition = updatedOffer.positions.stream()
+                    .filter(p -> "Badrenovierung".equals(p.bezeichnung))
+                    .findFirst().orElseThrow();
+            assertNull(materialPosition.menge);
+            assertNull(materialPosition.positionsPreis);
+        });
     }
 
     /**
@@ -468,7 +569,9 @@ class OfferResourceTest {
                 .body("speechSnippet", equalTo("Detailansicht Test"))
                 .body("positions", org.hamcrest.Matchers.hasSize(1))
                 .body("positions[0].bezeichnung", equalTo("Musterposition"))
-                .body("positions[0].preis", equalTo(99.9f))
+                .body("positions[0].einzelPreis", equalTo(99.9f))
+                .body("positions[0].positionsPreis", equalTo(499.5f))
+                .body("gesamtPreis", equalTo(499.5f))
                 .body("statusHistory", org.hamcrest.Matchers.hasSize(2)) // ERFASST + VERSENDET
                 .body("statusHistory[1].status", equalTo("VERSENDET"));
     }
@@ -687,7 +790,8 @@ class OfferResourceTest {
                     .findFirst().orElseThrow();
             assertEquals("h", arbeit.einheit);
             assertEquals(new BigDecimal("2").setScale(0), arbeit.menge.setScale(0));
-            assertEquals(new BigDecimal("130.00"), arbeit.preis);
+            assertEquals(new BigDecimal("130.00"), arbeit.positionsPreis);
+            assertEquals(new BigDecimal("65.00"), arbeit.einzelPreis);
         });
     }
 
@@ -752,7 +856,7 @@ class OfferResourceTest {
         final Long offerId = offer.id;
         final String businessKey = offer.businessKey;
 
-        when(catalogServiceClient.getPreis(any())).thenReturn(null);
+        when(catalogServiceClient.getMaterial(any(UUID.class))).thenReturn(null);
         Mockito.doNothing().when(processEngineClient).sendAngebotsentwurf(any(), any());
 
         AnfahrtskostenKonfiguration konfig = new AnfahrtskostenKonfiguration();
@@ -783,7 +887,8 @@ class OfferResourceTest {
 
             assertEquals("pauschal", anfahrt.einheit);
             assertEquals(0, BigDecimal.ONE.compareTo(anfahrt.menge));
-            assertEquals(new BigDecimal("50.00"), anfahrt.preis);
+            assertEquals(new BigDecimal("50.00"), anfahrt.positionsPreis);
+            assertNull(anfahrt.einzelPreis);
         });
 
         Mockito.verify(osrmClient, org.mockito.Mockito.never()).getDistanzKm(anyString(), anyString());
@@ -808,7 +913,7 @@ class OfferResourceTest {
         final Long offerId = offer.id;
         final String businessKey = offer.businessKey;
 
-        when(catalogServiceClient.getPreis(any())).thenReturn(null);
+        when(catalogServiceClient.getMaterial(any(UUID.class))).thenReturn(null);
         Mockito.doNothing().when(processEngineClient).sendAngebotsentwurf(any(), any());
 
         AnfahrtskostenKonfiguration konfig = new AnfahrtskostenKonfiguration();
@@ -841,7 +946,8 @@ class OfferResourceTest {
                     .orElseThrow(() -> new AssertionError("Anfahrtskosten-Position fehlt"));
 
             assertEquals("km", anfahrt.einheit);
-            assertEquals(new BigDecimal("26.00"), anfahrt.preis);
+            assertEquals(new BigDecimal("26.00"), anfahrt.positionsPreis);
+            assertNull(anfahrt.einzelPreis);
         });
 
         verify(processEngineClient, times(1)).sendAngebotsentwurf(Mockito.eq(businessKey), anyString());
@@ -865,7 +971,7 @@ class OfferResourceTest {
         final Long offerId = offer.id;
         final String businessKey = offer.businessKey;
 
-        when(catalogServiceClient.getPreis(any())).thenReturn(null);
+        when(catalogServiceClient.getMaterial(any(UUID.class))).thenReturn(null);
         Mockito.doNothing().when(processEngineClient).sendAngebotsentwurf(any(), any());
 
         AnfahrtskostenKonfiguration konfig = new AnfahrtskostenKonfiguration();
@@ -897,7 +1003,8 @@ class OfferResourceTest {
                     .orElseThrow(() -> new AssertionError("Anfahrtskosten-Position fehlt"));
 
             assertEquals("km", anfahrt.einheit);
-            assertEquals(new BigDecimal("4.50"), anfahrt.preis);
+            assertEquals(new BigDecimal("4.50"), anfahrt.positionsPreis);
+            assertNull(anfahrt.einzelPreis);
         });
 
         verify(processEngineClient, times(1)).sendAngebotsentwurf(Mockito.eq(businessKey), anyString());
@@ -922,7 +1029,7 @@ class OfferResourceTest {
         final Long offerId = offer.id;
         final String businessKey = offer.businessKey;
 
-        when(catalogServiceClient.getPreis(any())).thenReturn(null);
+        when(catalogServiceClient.getMaterial(any(UUID.class))).thenReturn(null);
         Mockito.doNothing().when(processEngineClient).sendAngebotsentwurf(any(), any());
 
         AnfahrtskostenKonfiguration konfig = new AnfahrtskostenKonfiguration();
@@ -1130,7 +1237,8 @@ class OfferResourceTest {
                     .findFirst().orElseThrow();
             // Korrekturwert (3 Stunden) muss gespeichert sein
             assertEquals(new BigDecimal("3").setScale(0), arbeit.menge.setScale(0));
-            assertEquals(new BigDecimal("195.00"), arbeit.preis);
+            assertEquals(new BigDecimal("195.00"), arbeit.positionsPreis);
+            assertEquals(new BigDecimal("65.00"), arbeit.einzelPreis);
         });
     }
 
@@ -1867,4 +1975,115 @@ class OfferResourceTest {
                 .statusCode(401);
     }
 
+    // =========================================================================
+    // Versandbereit-Endpunkt Tests
+    // =========================================================================
+
+    /**
+     * Happy Path: Angebot im Status KI_BEARBEITUNG_ABGESCHLOSSEN → VERSANDBEREIT.
+     */
+    @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
+    void shouldSetStatusToVersandbereit() {
+        Offer offer = QuarkusTransaction.requiringNew().call(() -> {
+            Offer o = new Offer();
+            o.customerId = "1";
+            o.handwerkerId = "99";
+            o.businessKey = "angebot-" + UUID.randomUUID();
+            o.annahmeToken = UUID.randomUUID().toString();
+            o.status = Offer.STATUS_KI_BEARBEITUNG_ABGESCHLOSSEN;
+            o.persist();
+            return o;
+        });
+        final Long offerId = offer.id;
+        final String businessKey = offer.businessKey;
+
+        given()
+                .when()
+                .post("/angebote/{businessKey}/versandbereit", businessKey)
+                .then()
+                .statusCode(200);
+
+        QuarkusTransaction.requiringNew().run(() -> {
+            Offer updatedOffer = Offer.findById(offerId);
+            assertNotNull(updatedOffer);
+            assertEquals(Offer.STATUS_VERSANDBEREIT, updatedOffer.status);
+
+            assertTrue(
+                    updatedOffer.statusHistory.stream()
+                            .anyMatch(h -> Offer.STATUS_VERSANDBEREIT.equals(h.status)),
+                    "Statushistorie muss VERSANDBEREIT-Eintrag enthalten");
+        });
+    }
+
+    /**
+     * Fehlerfall: Angebot nicht im Status KI_BEARBEITUNG_ABGESCHLOSSEN → HTTP 409.
+     */
+    @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
+    void versandbereit_shouldReturn409WhenWrongStatus() {
+        Offer offer = QuarkusTransaction.requiringNew().call(() -> {
+            Offer o = new Offer();
+            o.customerId = "1";
+            o.handwerkerId = "99";
+            o.businessKey = "angebot-" + UUID.randomUUID();
+            o.annahmeToken = UUID.randomUUID().toString();
+            o.status = Offer.STATUS_KI_FERTIG;
+            o.persist();
+            return o;
+        });
+
+        given()
+                .when()
+                .post("/angebote/{businessKey}/versandbereit", offer.businessKey)
+                .then()
+                .statusCode(409);
+    }
+
+    /**
+     * Fehlerfall: Angebot nicht gefunden → HTTP 404.
+     */
+    @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
+    void versandbereit_shouldReturn404WhenNotFound() {
+        given()
+                .when()
+                .post("/angebote/{businessKey}/versandbereit", "unknown-key-" + UUID.randomUUID())
+                .then()
+                .statusCode(404);
+    }
+
+    @Test
+    void shouldCalculateGesamtpreisCorrectly() {
+        Offer offer = new Offer();
+        offer.positions = new ArrayList<>();
+
+        OfferPosition p1 = new OfferPosition();
+        p1.einzelPreis = new BigDecimal("10");
+        p1.menge = new BigDecimal("2");
+        p1.positionsPreis = new BigDecimal("20");
+
+        OfferPosition p2 = new OfferPosition();
+        p2.einzelPreis = new BigDecimal("5");
+        p2.menge = new BigDecimal("3");
+        p2.positionsPreis = new BigDecimal("15");
+
+        offer.positions.add(p1);
+        offer.positions.add(p2);
+
+        offer.gesamtPreis = offer.positions.stream()
+                .map(p -> p.positionsPreis)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        assertEquals(new BigDecimal("35"), offer.gesamtPreis);
+    }
 }

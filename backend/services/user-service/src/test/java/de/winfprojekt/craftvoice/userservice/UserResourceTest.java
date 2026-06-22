@@ -52,4 +52,33 @@ public class UserResourceTest {
                 .statusCode(200)
                 .body("email", is("test@example.com"));
     }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = {"OWNER"})
+    public void testCreateCustomer() {
+        UserEntity customer = new UserEntity();
+        customer.email = "customer@example.com";
+        customer.firstName = "Kunde";
+        
+        Mockito.when(userService.createCustomer(Mockito.any())).thenReturn(customer);
+
+        given()
+                .contentType("application/json")
+                .body(customer)
+                .when().post("/api/users/customers")
+                .then()
+                .statusCode(201)
+                .body("email", is("customer@example.com"));
+    }
+
+    @Test
+    @TestSecurity(user = "testUser", roles = {"CUSTOMER"})
+    public void testCreateCustomerForbiddenForCustomerRole() {
+        given()
+                .contentType("application/json")
+                .body(new UserEntity())
+                .when().post("/api/users/customers")
+                .then()
+                .statusCode(403);
+    }
 }

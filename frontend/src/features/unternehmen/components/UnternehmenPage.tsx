@@ -285,7 +285,7 @@ export const UnternehmenPage = () => {
 
   const loadMaterials = async () => {
   try {
-    const response = await fetch("/catalog/material", {
+    const response = await fetch("http://craftvoice-catalog.winfprojekt.de/catalog/material", {
       headers: getAuthHeaders(),
     });
 
@@ -504,7 +504,7 @@ export const UnternehmenPage = () => {
     try {
       const response =
         await fetch(
-          "/catalog/material/import/csv",
+          "http://craftvoice-catalog.winfprojekt.de/catalog/material/import/csv",
           {
             method: "POST",
             headers: {
@@ -1813,7 +1813,7 @@ const importedCount = Number(text);
     try {
       const response =
         await fetch(
-          `/catalog/material/${material.id}`,
+          `http://craftvoice-catalog.winfprojekt.de/catalog/material/${material.id}`,
           {
             method: "DELETE",
             headers:
@@ -1957,8 +1957,8 @@ const importedCount = Number(text);
 
       const url =
         materialData.id
-          ? `/catalog/material/${materialData.id}`
-          : "/catalog/material";
+          ? `http://craftvoice-catalog.winfprojekt.de/catalog/material/${materialData.id}`
+          : "http://craftvoice-catalog.winfprojekt.de/catalog/material";
 
       const response =
         await fetch(url, {

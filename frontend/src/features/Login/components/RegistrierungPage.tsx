@@ -4,6 +4,31 @@ import { useState, useEffect } from "react";
 import logo from "/src/assets/logos/CraftVoice_Logo_white_text.png";
 import { registerUser } from "@/services/userService";
 
+const getErrorMessage = (error: unknown): string => {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  return "Ein unbekannter Fehler ist aufgetreten.";
+};
+
+const getRegisterErrorMessage = (error: unknown): string => {
+  const message = getErrorMessage(error).toLowerCase();
+
+  if (
+    message.includes("already") ||
+    message.includes("exists") ||
+    message.includes("duplicate") ||
+    message.includes("409") ||
+    message.includes("bereits") ||
+    message.includes("existiert")
+  ) {
+    return "Diese E-Mail-Adresse ist bereits registriert. Bitte melde dich an oder nutze „Passwort vergessen“.";
+  }
+
+  return "Registrierung fehlgeschlagen. Bitte prüfe deine Eingaben und versuche es erneut.";
+};
+
 export const RegistrierungPage = () => {
   const navigate = useNavigate();
 
@@ -16,79 +41,137 @@ export const RegistrierungPage = () => {
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const validateEmail = (emailValue: string): boolean => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue);
   };
 
   const handleRegister = async () => {
+    if (isLoading) {
+      return;
+    }
+
     setError("");
     setSuccessMessage("");
 
-    if (!firstName.trim()) return setError("Vorname ist erforderlich.");
-    if (!lastName.trim()) return setError("Nachname ist erforderlich.");
-    if (!email.trim()) return setError("E-Mail ist erforderlich.");
-    if (!password) return setError("Passwort ist erforderlich.");
-    if (!repeatPassword) return setError("Bitte wiederhole dein Passwort.");
-    if (!validateEmail(email.trim())) {
-      return setError("Bitte gib eine gültige E-Mail-Adresse ein.");
+    const trimmedFirstName = firstName.trim();
+    const trimmedLastName = lastName.trim();
+    const trimmedEmail = email.trim().toLowerCase();
+
+    if (!trimmedFirstName) {
+      setError("Vorname ist erforderlich.");
+      return;
     }
+
+    if (!trimmedLastName) {
+      setError("Nachname ist erforderlich.");
+      return;
+    }
+
+    if (!trimmedEmail) {
+      setError("E-Mail ist erforderlich.");
+      return;
+    }
+
+    if (!validateEmail(trimmedEmail)) {
+      setError("Bitte gib eine gültige E-Mail-Adresse ein.");
+      return;
+    }
+
+    if (!password) {
+      setError("Passwort ist erforderlich.");
+      return;
+    }
+
     if (password.length < 8) {
-      return setError("Das Passwort muss mindestens 8 Zeichen haben.");
-    }
+  return setError(
+    "Das Passwort muss mindestens 8 Zeichen lang sein."
+  );
+  
+}
+
+const hasNumber = /\d/.test(password);
+const hasSpecialCharacter = /[!@#$%^&*(),.?":{}|<>_\-+=/\\[\]]/.test(password);
+
+if (!acceptedPrivacy) {
+  return setError(
+    "Bitte stimme den Datenschutzbedingungen zu."
+  );
+}
+if (!hasNumber) {
+  return setError(
+    "Das Passwort muss mindestens eine Zahl enthalten."
+  );
+}
+
+if (!hasSpecialCharacter) {
+  return setError(
+    "Das Passwort muss mindestens ein Sonderzeichen enthalten."
+  );
+}
     if (password !== repeatPassword) {
-      return setError("Die Passwörter stimmen nicht überein.");
+      setError("Die Passwörter stimmen nicht überein.");
+      return;
     }
 
     try {
       setIsLoading(true);
 
       await registerUser({
-        email: email.trim(),
+        email: trimmedEmail,
         password,
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
+        firstName: trimmedFirstName,
+        lastName: trimmedLastName,
       });
 
       setSuccessMessage(
         "Registrierung erfolgreich. Bitte prüfe deine E-Mails und bestätige deinen Account.",
       );
-    } catch {
-      setError("Registrierung fehlgeschlagen. Bitte versuche es erneut.");
+
+      setPassword("");
+      setRepeatPassword("");
+    } catch (registerError) {
+      setError(getRegisterErrorMessage(registerError));
     } finally {
       setIsLoading(false);
     }
-    navigate("/home");
   };
 
   useEffect(() => {
-    if (error) {
-      const timer = setTimeout(() => setError(""), 5000);
-      return () => clearTimeout(timer);
+    if (!error) {
+      return;
     }
+
+    const timer = window.setTimeout(() => {
+      setError("");
+    }, 8000);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
   }, [error]);
 
   return (
     <div className="app">
       <div className="card register-card">
         <div className="logo-container">
-          <img src={logo} alt="Logo" className="logo" />
+          <img src={logo} alt="CraftVoice Logo" className="logo" />
         </div>
 
         <h1>Registrieren</h1>
         <p className="text-secondary">Erstelle deinen CraftVoice Account</p>
 
-        <div className="divider"></div>
+        <div className="divider" />
 
         {error && (
-          <div className="error-banner">
+          <div className="error-banner" role="alert">
             <span className="error-icon">⚠️</span>
             <span>{error}</span>
           </div>
         )}
 
         {successMessage && (
-          <div className="success-banner">
+          <div className="success-banner" role="status">
             <span>✅</span>
             <span>{successMessage}</span>
           </div>
@@ -100,6 +183,7 @@ export const RegistrierungPage = () => {
           placeholder="Vorname"
           value={firstName}
           onChange={(event) => setFirstName(event.target.value)}
+          disabled={isLoading}
         />
 
         <input
@@ -108,6 +192,7 @@ export const RegistrierungPage = () => {
           placeholder="Nachname"
           value={lastName}
           onChange={(event) => setLastName(event.target.value)}
+          disabled={isLoading}
         />
 
         <input
@@ -116,6 +201,7 @@ export const RegistrierungPage = () => {
           placeholder="E-Mail-Adresse"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
+          disabled={isLoading}
         />
 
         <input
@@ -124,6 +210,7 @@ export const RegistrierungPage = () => {
           placeholder="Passwort"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
+          disabled={isLoading}
         />
 
         <input
@@ -132,12 +219,33 @@ export const RegistrierungPage = () => {
           placeholder="Passwort wiederholen"
           value={repeatPassword}
           onChange={(event) => setRepeatPassword(event.target.value)}
+          disabled={isLoading}
         />
+        <div className="privacy-consent">
+  <input
+    type="checkbox"
+    id="privacyConsent"
+    checked={acceptedPrivacy}
+    onChange={(e) => setAcceptedPrivacy(e.target.checked)}
+  />
+
+  <label htmlFor="privacyConsent">
+    Ich stimme den{" "}
+    <span
+      className="privacy-link"
+      onClick={() => navigate("/datenschutz")}
+    >
+      Datenschutzbedingungen
+    </span>{" "}
+    zu.
+  </label>
+</div>
 
         <button
           className="button-primary register-btn"
+          type="button"
           onClick={handleRegister}
-          disabled={isLoading}
+          disabled={isLoading || Boolean(successMessage)}
         >
           {isLoading ? "Registrierung läuft..." : "Registrieren"}
         </button>
@@ -147,6 +255,7 @@ export const RegistrierungPage = () => {
             className="button-secondary"
             type="button"
             onClick={() => navigate("/login")}
+            disabled={isLoading}
           >
             Bereits ein Konto? Einloggen
           </button>
@@ -155,7 +264,6 @@ export const RegistrierungPage = () => {
           <div className="footer-center">
           <a onClick={() => navigate("/kontakt")}>Kontakt</a>
                         <a onClick={() => navigate("/impressum")}>Impressum</a>
-                        <a onClick={() => navigate("/datenschutz")}>Datenschutz</a>
           
         </div>
 

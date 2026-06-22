@@ -4,6 +4,7 @@ import de.winfprojekt.craftvoice.offerservice.processengine.ProcessEngineClient;
 import io.quarkus.panache.common.Sort;
 import io.quarkus.security.ForbiddenException;
 import jakarta.inject.Inject;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.CreateOfferRequest;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.OfferChangesRequest;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.StructuredOfferPositionDTO;
@@ -11,9 +12,11 @@ import de.winfprojekt.craftvoice.offerservice.offer.dto.OfferAcceptanceRequest;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.SetArbeitsstundenRequest;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.OfferAcceptanceResponse;
 import de.winfprojekt.craftvoice.offerservice.catalog.CatalogServiceClient;
-import de.winfprojekt.craftvoice.offerservice.catalog.CatalogPriceResponse;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
+import de.winfprojekt.craftvoice.offerservice.catalog.MaterialResponse;
 import de.winfprojekt.craftvoice.offerservice.user.UserServiceClient;
 import de.winfprojekt.craftvoice.offerservice.user.AnfahrtskostenKonfiguration;
+import de.winfprojekt.craftvoice.offerservice.user.CustomerDTO;
 import de.winfprojekt.craftvoice.offerservice.routing.OsrmClient;
 import de.winfprojekt.craftvoice.offerservice.routing.RoutingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -21,6 +24,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.WebApplicationException;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.OfferResponse;
+import de.winfprojekt.craftvoice.offerservice.common.OfferPositionType;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import java.math.BigDecimal;
@@ -46,9 +50,11 @@ public class OfferService {
     ProcessEngineClient processEngineClient;
 
     @Inject
+    @RestClient
     CatalogServiceClient catalogServiceClient;
 
     @Inject
+    @RestClient
     UserServiceClient userServiceClient;
 
     @Inject
@@ -58,8 +64,10 @@ public class OfferService {
     ObjectMapper objectMapper;
 
     /**
-     * Erstellt ein neues Angebot aus den übergebenen Request-Daten, persistiert diese in die DB
-     * und ruft entsprechende Methoden auf, die alle notwendigen Daten an die Process-Engine senden.
+     * Erstellt ein neues Angebot aus den übergebenen Request-Daten, persistiert
+     * diese in die DB
+     * und ruft entsprechende Methoden auf, die alle notwendigen Daten an die
+     * Process-Engine senden.
      *
      * @param request Anfrageobjekt mit Kunden-ID und Sprachschnipsel
      * @return das erzeugte und persistierte Angebot als DTO
@@ -83,14 +91,23 @@ public class OfferService {
 
         offer.persist();
 
-        processEngineClient.sendAngebotPayload(offer.businessKey, offer.customerId, offer.handwerkerId, request.speechSnippet, null);
+        // OS-5: PE-Benachrichtigung darf das bereits persistierte Angebot nicht
+        // zurückrollen. Ein PE-Fehler wird geloggt, aber nicht weitergeworfen.
+        try {
+            processEngineClient.sendAngebotPayload(offer.businessKey, offer.customerId, offer.handwerkerId,
+                    request.speechSnippet, null);
+        } catch (Exception e) {
+            LOG.errorf(e, "Angebot %s wurde gespeichert, aber die PE-Nachricht 'angebotPayload' konnte nicht zugestellt werden.",
+                    offer.businessKey);
+        }
 
         return OfferResponse.fromEntity(offer);
     }
 
     /**
      * Ruft alle Angebote sortiert nach Erstellungsdatum ab (neueste zuerst).
-     * Wird in einer Transaktion ausgeführt, um LazyInitializationExceptions zu vermeiden.
+     * Wird in einer Transaktion ausgeführt, um LazyInitializationExceptions zu
+     * vermeiden.
      *
      * @return Liste aller Angebote als DTOs
      */
@@ -107,34 +124,40 @@ public class OfferService {
     }
 
     /**
-     * Ruft ein bestimmtes Angebot anhand der ID ab.
-     * Wird in einer Transaktion ausgeführt, um LazyInitializationExceptions zu vermeiden.
+     * Ruft ein bestimmtes Angebot anhand seines businessKeys ab.
+     * Wird in einer Transaktion ausgeführt, damit das Mapping auf das DTO
+     * (inkl. der Lazy-Collections positions, statusHistory, korrekturvorschlaege)
+     * innerhalb einer aktiven Persistence-Session erfolgt und keine
+     * LazyInitializationException auftritt.
      *
-     * @param id ID des Angebots
+     * @param businessKey businessKey des Angebots
      * @return das Angebot als DTO oder null falls nicht gefunden
      */
     @Transactional
-    public OfferResponse getOfferById(Long id) {
-        Offer offer = Offer.findById(id);
-        return offer != null ? OfferResponse.fromEntity(offer) : null;
+    public OfferResponse getOfferByBusinessKey(String businessKey, String userId) {
+        Offer offer = findOwnOfferOrThrow(businessKey, userId);
+        return OfferResponse.fromEntity(offer);
     }
 
-/**
-     * Initialisiert oder aktualisiert ein Angebot auf Basis eines KI-Ergebnisses oder den Änderungen des Handwerkers im Frontend:
+    /**
+     * Initialisiert oder aktualisiert ein Angebot auf Basis eines KI-Ergebnisses
+     * oder den Änderungen des Handwerkers im Frontend:
      * - Prüft, ob das Angebot existiert und sich in einem gültigen Status befindet
-     *   (IN_BEARBEITUNG oder KI_FERTIG).
-     * - Entfernt bei bestehenden KI_FERTIG-Angeboten die bisherigen Materialpositionen
-     *   und ersetzt sie durch die neuen KI-/Frontend-Positionen.
+     * (IN_BEARBEITUNG oder KI_FERTIG).
+     * - Entfernt bei bestehenden KI_FERTIG-Angeboten die bisherigen
+     * Materialpositionen
+     * und ersetzt sie durch die neuen KI-/Frontend-Positionen.
      * - Lädt für jede Materialposition den Preis vom catalog-service (Stub).
      * - Persistiert alle Angebotspositionen inklusive optionaler Anfahrtskosten.
      * - Setzt beim ersten KI-Durchlauf den Status auf KI_FERTIG und legt einen
-     *   OfferStatusHistory-Eintrag an.
+     * OfferStatusHistory-Eintrag an.
      *
-     * <p>Die Process Engine wird hier NICHT mehr informiert. Das geschieht erst,
+     * <p>
+     * Die Process Engine wird hier NICHT mehr informiert. Das geschieht erst,
      * wenn der Handwerker seine Arbeitsstunden eingetragen und bestätigt hat
      * (via {@link #setArbeitsstunden(Long, SetArbeitsstundenRequest)}).
      *
-     * @param id ID des Angebots
+     * @param id      ID des Angebots
      * @param request AI- oder Frontend-Result-Daten für die Angebotspositionen
      */
     @Transactional
@@ -146,7 +169,8 @@ public class OfferService {
         }
 
         if (!Offer.STATUS_IN_BEARBEITUNG.equals(offer.status) && !Offer.STATUS_KI_FERTIG.equals(offer.status)) {
-            throw new WebApplicationException("Angebot mit BusinessKey " + businessKey + " befindet sich nicht im Status IN_BEARBEITUNG oder KI_FERTIG", 409);
+            throw new WebApplicationException("Angebot mit BusinessKey " + businessKey
+                    + " befindet sich nicht im Status IN_BEARBEITUNG oder KI_FERTIG", 409);
         }
 
         if (Offer.STATUS_KI_FERTIG.equals(offer.status)) {
@@ -170,9 +194,21 @@ public class OfferService {
         for (StructuredOfferPositionDTO posDto : request.strukturierteAngebotspositionen) {
             BigDecimal preis = BigDecimal.ZERO;
             if (posDto.katalogProduktId != null) {
-                CatalogPriceResponse priceResponse = catalogServiceClient.getPreis(posDto.katalogProduktId);
-                if (priceResponse != null && priceResponse.preis != null) {
-                    preis = priceResponse.preis;
+                try {
+                    UUID materialId = UUID.fromString(posDto.katalogProduktId);
+                    MaterialResponse material = catalogServiceClient.getMaterial(materialId);
+                    if (material != null && material.price != null) {
+                        preis = material.price;
+                    }
+                } catch (jakarta.ws.rs.NotFoundException e) {
+                    LOG.warnf("Material mit ID %s nicht im Catalog gefunden, Preis wird auf 0 gesetzt",
+                            posDto.katalogProduktId);
+                } catch (IllegalArgumentException e) {
+                    LOG.warnf("Ungültige UUID für katalogProduktId '%s', Preis wird auf 0 gesetzt",
+                            posDto.katalogProduktId);
+                } catch (Exception e) {
+                    LOG.warnf("Catalog-Service nicht erreichbar für ID %s, Preis wird auf 0 gesetzt: %s",
+                            posDto.katalogProduktId, e.getMessage());
                 }
             }
 
@@ -185,7 +221,10 @@ public class OfferService {
             position.menge = posDto.menge;
             position.einheit = posDto.einheit;
             position.katalogProduktId = posDto.katalogProduktId;
-            position.preis = preis;
+            position.einzelPreis = preis;
+            position.positionsPreis = (position.einzelPreis != null && position.menge != null)
+                    ? position.einzelPreis.multiply(position.menge)
+                    : null;
             position.reihenfolge = reihenfolge++;
 
             offer.positions.add(position);
@@ -197,21 +236,20 @@ public class OfferService {
         try {
             AnfahrtskostenKonfiguration konfig = userServiceClient.getAnfahrtskostenKonfiguration();
 
-            // Kundenadresse: vorerst Stub-Adresse (Abstimmungspunkt 1 — customer-service/user-service)
-            String kundenadresse = ermittleKundenadresse(offer.customerId);
-
             BigDecimal anfahrtspreis;
             String einheit;
             BigDecimal menge;
 
             if ("PAUSCHALE".equals(konfig.modell)) {
-                // Pauschale benötigt keine Distanz — Routing wird NICHT aufgerufen
+                // OS-7: Pauschale benötigt keine Distanz/Kundenadresse — Routing und
+                // Adressermittlung werden NICHT aufgerufen.
                 anfahrtspreis = berechneAnfahrtskosten(konfig, null);
                 einheit = "pauschal";
                 menge = BigDecimal.ONE;
                 LOG.debugf("Anfahrtskosten-Position angelegt: Modell=PAUSCHALE, Preis=%s €", anfahrtspreis);
             } else {
-                // NUR_KM und PAUSCHALE_PLUS_KM benötigen die Distanz
+                // NUR_KM und PAUSCHALE_PLUS_KM benötigen die Distanz und damit die Kundenadresse
+                String kundenadresse = ermittleKundenadresse(offer.customerId);
                 BigDecimal distanzKm = osrmClient.getDistanzKm(konfig.adresse, kundenadresse);
                 anfahrtspreis = berechneAnfahrtskosten(konfig, distanzKm);
                 einheit = "km";
@@ -228,21 +266,26 @@ public class OfferService {
             anfahrtsPosition.bezeichnung = "Anfahrtskosten";
             anfahrtsPosition.einheit = einheit;
             anfahrtsPosition.menge = menge;
-            anfahrtsPosition.preis = anfahrtspreis;
+            anfahrtsPosition.einzelPreis = null;
+            anfahrtsPosition.positionsPreis = anfahrtspreis;
             anfahrtsPosition.katalogProduktId = null;
             anfahrtsPosition.reihenfolge = reihenfolge;
 
             if (existingAnfahrt == null) {
-                offer.positions.add(anfahrtsPosition );
+                offer.positions.add(anfahrtsPosition);
             }
 
         } catch (RoutingException e) {
+            // Erwartbarer Fall (Adresse nicht geokodierbar, OSRM nicht erreichbar) → Warnung
             LOG.warnf("Anfahrtskosten konnten nicht berechnet werden, Position wird übersprungen: %s",
                     e.getMessage());
         } catch (Exception e) {
-            LOG.warnf("Unerwarteter Fehler bei Anfahrtskostenberechnung, Position wird übersprungen: %s",
-                    e.getMessage());
+            // OS-6: Unerwartete Fehler (User-Service down, Konfig fehlerhaft, NPE) laut mit
+            // Stacktrace loggen, damit sie im Test nicht stillschweigend untergehen.
+            LOG.errorf(e, "Unerwarteter Fehler bei Anfahrtskostenberechnung, Position wird übersprungen.");
         }
+
+        berechneGesamtpreis(offer);
 
         // =========================
         // 4. STATUS
@@ -254,6 +297,12 @@ public class OfferService {
         history.status = Offer.STATUS_KI_FERTIG;
         offer.statusHistory.add(history);
 
+        // OS-11: Korrekturvorschläge am Angebot persistieren, damit sie auch über die
+        // GET-Endpunkte (und nicht nur im PE-Entwurf) verfügbar sind.
+        offer.korrekturvorschlaege = request.korrekturvorschlaege != null
+                ? new java.util.ArrayList<>(request.korrekturvorschlaege)
+                : new java.util.ArrayList<>();
+
         offer.persist();
 
         // Correlation: Prozess wartet an Event_10bgkb0 auf "angebotsentwurf"
@@ -264,28 +313,40 @@ public class OfferService {
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Serialisierung des Angebotsentwurfs fehlgeschlagen", e);
         }
-        processEngineClient.sendAngebotsentwurf(offer.businessKey, angebotsentwurfJson);
+
+        // OS-5: PE-Fehler darf das persistierte Angebot nicht zurückrollen.
+        try {
+            processEngineClient.sendAngebotsentwurf(offer.businessKey, angebotsentwurfJson);
+        } catch (Exception e) {
+            LOG.errorf(e, "Angebot %s wurde gespeichert, aber die PE-Nachricht 'angebotsentwurf' konnte nicht zugestellt werden.",
+                    offer.businessKey);
+        }
     }
 
     /**
      * Verarbeitet die manuell eingetragene Arbeitsdauer des Handwerkers:
      * - Angebot muss sich im Status KI_FERTIG befinden.
-     * - Löscht eine bereits vorhandene Arbeitszeit-Position (Idempotenz bei Korrekturen).
-     * - Legt – sofern Stunden > 0 – eine neue Arbeitszeit-Position an (Stunden × Stundensatz).
+     * - Löscht eine bereits vorhandene Arbeitszeit-Position (Idempotenz bei
+     * Korrekturen).
+     * - Legt – sofern Stunden > 0 – eine neue Arbeitszeit-Position an (Stunden ×
+     * Stundensatz).
      *
      * @param id      ID des Angebots
      * @param request Arbeitsstunden-Eingabe des Handwerkers
      * @return aktualisiertes Angebot als DTO
      */
     @Transactional
-    public OfferResponse setArbeitsstunden(Offer offer, String businessKey, SetArbeitsstundenRequest request) {
+    public OfferResponse setArbeitsstunden(String businessKey, String userId, SetArbeitsstundenRequest request) {
+        Offer offer = findOwnOfferOrThrow(businessKey, userId);
+        
         if (!Offer.STATUS_KI_FERTIG.equals(offer.status)) {
             throw new WebApplicationException(
                     "Angebot mit businessKey " + businessKey + " befindet sich nicht im Status KI_FERTIG", 409);
         }
 
-        // Idempotenz: bestehende Arbeitszeit-Position entfernen (z. B. bei Korrektur)
-        offer.positions.removeIf(p -> "Arbeitszeit".equals(p.bezeichnung));
+        // Idempotenz: bestehende Arbeitszeit-Position entfernen (z. B. bei Korrektur).
+        // OS-8: Identifikation über den Positionstyp statt über den Bezeichnungs-String.
+        offer.positions.removeIf(p -> p.type == OfferPositionType.ARBEITSZEIT);
 
         if (request.arbeitsdauerStunden.compareTo(BigDecimal.ZERO) > 0) {
             try {
@@ -301,10 +362,12 @@ public class OfferService {
 
                 OfferPosition arbeitszeitPosition = new OfferPosition();
                 arbeitszeitPosition.offer = offer;
+                arbeitszeitPosition.type = OfferPositionType.ARBEITSZEIT;
                 arbeitszeitPosition.bezeichnung = "Arbeitszeit";
                 arbeitszeitPosition.einheit = "h";
                 arbeitszeitPosition.menge = request.arbeitsdauerStunden;
-                arbeitszeitPosition.preis = arbeitspreis;
+                arbeitszeitPosition.einzelPreis = stundensatz;
+                arbeitszeitPosition.positionsPreis = arbeitspreis;
                 arbeitszeitPosition.katalogProduktId = null;
                 arbeitszeitPosition.reihenfolge = naechsteReihenfolge;
 
@@ -319,33 +382,54 @@ public class OfferService {
             LOG.debugf("Arbeitsdauer = 0, keine Arbeitszeit-Position angelegt.");
         }
 
+        berechneGesamtpreis(offer);
+
+        offer.persist();
         return OfferResponse.fromEntity(offer);
     }
 
     /**
      * Ermittelt die Kundenadresse anhand der customerId.
-     *
-     * <p>Vorerst Stub-Implementierung (Abstimmungspunkt 1 — noch ungeklärt,
-     * ob customer-service oder user-service die Adresse liefert).
-     * Wird ersetzt, sobald der zuständige Service-Endpunkt bekannt ist.
-     *
      * @param customerId ID des Kunden
      * @return Adresse als String für die Geocodierung
      */
     private String ermittleKundenadresse(String customerId) {
-        // TODO: Abstimmungspunkt 1 — echten Service-Call implementieren
-        return "Marienplatz 1, 80331 München";
+        CustomerDTO customer = userServiceClient.getCustomer(Long.parseLong(customerId));
+        if (customer == null) {
+            throw new IllegalArgumentException("Kunde mit ID " + customerId + " wurde nicht gefunden.");
+        }
+        if (customer.street == null || customer.street.isBlank() || customer.city == null || customer.city.isBlank()) {
+            throw new IllegalArgumentException("Kunde mit ID " + customerId + " besitzt keine vollständige Adresse (Straße/Ort fehlt).");
+        }
+
+        String street = customer.street.trim();
+        String houseNumber = customer.houseNumber != null ? customer.houseNumber.trim() : "";
+        String zipCode = customer.zipCode != null ? customer.zipCode.trim() : "";
+        String city = customer.city.trim();
+
+        StringBuilder addressBuilder = new StringBuilder(street);
+        if (!houseNumber.isEmpty()) {
+            addressBuilder.append(" ").append(houseNumber);
+        }
+        addressBuilder.append(", ");
+        if (!zipCode.isEmpty()) {
+            addressBuilder.append(zipCode).append(" ");
+        }
+        addressBuilder.append(city);
+
+        return addressBuilder.toString();
     }
 
     /**
      * Berechnet den Anfahrtskostenbetrag je nach konfiguriertem Modell.
      *
-     * <p>Für das Modell PAUSCHALE wird {@code distanzKm} nicht benötigt und
+     * <p>
+     * Für das Modell PAUSCHALE wird {@code distanzKm} nicht benötigt und
      * darf {@code null} sein. Bei {@code *_KM}-Modellen muss ein gültiger
      * Wert übergeben werden.
      *
-     * @param konfig     Anfahrtskostenkonfiguration vom user-service
-     * @param distanzKm  ermittelte Fahrdistanz in km (bei PAUSCHALE ignoriert)
+     * @param konfig    Anfahrtskostenkonfiguration vom user-service
+     * @param distanzKm ermittelte Fahrdistanz in km (bei PAUSCHALE ignoriert)
      * @return berechneter Betrag in Euro, gerundet auf 2 Dezimalstellen
      */
     private BigDecimal berechneAnfahrtskosten(AnfahrtskostenKonfiguration konfig, BigDecimal distanzKm) {
@@ -364,7 +448,7 @@ public class OfferService {
     /**
      * Nimmt ein Angebot über den Annahme-Token an oder lehnt es ab.
      *
-     * @param token Der Annahme-Token des Angebots
+     * @param token   Der Annahme-Token des Angebots
      * @param request Die Entscheidung des Kunden ("angenommen" oder "abgelehnt")
      * @return DTO mit dem Ergebnis der Entscheidung
      */
@@ -385,7 +469,8 @@ public class OfferService {
 
         String entscheidung = request.entscheidung;
         if (!"angenommen".equals(entscheidung) && !"abgelehnt".equals(entscheidung)) {
-            throw new WebApplicationException("Ungültige Entscheidung. Erlaubt sind 'angenommen' oder 'abgelehnt'.", 400);
+            throw new WebApplicationException("Ungültige Entscheidung. Erlaubt sind 'angenommen' oder 'abgelehnt'.",
+                    400);
         }
 
         String newStatus = "angenommen".equals(entscheidung) ? Offer.STATUS_ANGENOMMEN : Offer.STATUS_ABGELEHNT;
@@ -399,11 +484,20 @@ public class OfferService {
 
         offer.persist();
 
+        // PE benachrichtigen: Angebot angenommen oder abgelehnt
+        if (Offer.STATUS_ANGENOMMEN.equals(newStatus)) {
+            processEngineClient.sendAngebotAngenommen(offer.businessKey);
+        } else {
+            processEngineClient.sendAngebotAbgelehnt(offer.businessKey);
+        }
+
         return new OfferAcceptanceResponse(entscheidung);
     }
 
     /**
-     * Methode, die den Status eines angenommenen Angebots durch den Handwerker nach KI-Durchlauf entsprechend ändert und abspeichert
+     * Methode, die den Status eines angenommenen Angebots durch den Handwerker nach
+     * KI-Durchlauf entsprechend ändert und abspeichert
+     * 
      * @param id Angebots-ID des angenommenen Angebots
      */
     @Transactional
@@ -423,6 +517,84 @@ public class OfferService {
         history.zeitpunkt = LocalDateTime.now();
 
         offer.statusHistory.add(history);
+
+        // OS-3: Statusänderung explizit persistieren (Konsistenz zu den übrigen Methoden).
+        // Die PE wird hier NICHT informiert: Laut BPMN "angebotskorrektur" sendet das
+        // Frontend die Nachricht "genehmigungAngebot" (Message-Flow "Genehmigung" mit
+        // Source = Frontend) direkt an die Process Engine. Der offer-service aktualisiert
+        // an dieser Stelle nur den Angebotsstatus.
+        offer.persist();
+    }
+
+    /**
+     * Setzt den Status eines Angebots auf VERSANDBEREIT.
+     * Wird vom document-service aufgerufen, nachdem das PDF-Angebot erfolgreich
+     * erstellt wurde.
+     *
+     * @param businessKey Business-Key des Angebots
+     */
+    @Transactional
+    public void setStatusVersandbereit(String businessKey) {
+        Offer offer = Offer.find("businessKey", businessKey).firstResult();
+        if (offer == null) {
+            throw new WebApplicationException("Angebot mit BusinessKey " + businessKey + " nicht gefunden", 404);
+        }
+
+        if (!Offer.STATUS_KI_BEARBEITUNG_ABGESCHLOSSEN.equals(offer.status)) {
+            throw new WebApplicationException("Angebot befindet sich nicht im Status KI_BEARBEITUNG_ABGESCHLOSSEN",
+                    409);
+        }
+
+        offer.status = Offer.STATUS_VERSANDBEREIT;
+
+        OfferStatusHistory history = new OfferStatusHistory();
+        history.offer = offer;
+        history.status = Offer.STATUS_VERSANDBEREIT;
+        history.zeitpunkt = LocalDateTime.now();
+        offer.statusHistory.add(history);
+
+        offer.persist();
+    }
+
+    /**
+     * Setzt den Status eines Angebots auf VERSENDET.
+     * Wird vom document-service aufgerufen, nachdem das Angebot erfolgreich versendet wurde.
+     *
+     * @param businessKey Business-Key des Angebots
+     */
+    @Transactional
+    public void setStatusVersendet(String businessKey) {
+        Offer offer = Offer.find("businessKey", businessKey).firstResult();
+        if (offer == null) {
+            throw new WebApplicationException("Angebot mit BusinessKey " + businessKey + " nicht gefunden", 404);
+        }
+
+        if (!Offer.STATUS_VERSANDBEREIT.equals(offer.status)) {
+            throw new WebApplicationException("Angebot befindet sich nicht im Status VERSANDBEREIT", 409);
+        }
+
+        offer.status = Offer.STATUS_VERSENDET;
+
+        OfferStatusHistory history = new OfferStatusHistory();
+        history.offer = offer;
+        history.status = Offer.STATUS_VERSENDET;
+        history.zeitpunkt = LocalDateTime.now();
+        offer.statusHistory.add(history);
+
+        offer.persist();
+    }
+  
+    /**
+     * Berechnet den Gesamtpreis (Aufsummieren aller Positionen) eines Angebots
+     * 
+     * @param offer Angebots-Objekt, von welchem der Gesamtpreis berechnet werden
+     *              soll
+     */
+    private void berechneGesamtpreis(Offer offer) {
+        offer.gesamtPreis = offer.positions.stream()
+                .map(p -> p.positionsPreis)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     /**

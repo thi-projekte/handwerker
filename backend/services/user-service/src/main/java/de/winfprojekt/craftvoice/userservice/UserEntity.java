@@ -38,7 +38,48 @@ public class UserEntity extends BaseEntity {
     public String companyName;
     public String vatId;
     public String tradeRegisterNumber;
-    public String companyAddress;
+    
+    // Detailed Address
+    public String street;
+    public String houseNumber;
+    public String zipCode;
+    public String city;
+    public String state;
+    public String country;
+
+    // Company Contact
+    public String companyEmail;
+    public String companyPhoneNumber;
+    public String website;
+    public String industry;
+
+    // Banking Info
+    public String iban;
+    public String bic;
+    public String bankName;
+    public String accountHolder;
+
+    // Tax Info
+    public String taxNumber;
+    public String legalForm;
+
+    // Business Details
+    public Integer employeeCount;
+    public Integer customerCount;
+    public Double hourlyRate;
+    public String priceListUrl;
+
+    // Travel / Anfahrtskosten configuration
+    // Allowed values: "PAUSCHALE", "PAUSCHALE_PLUS_KM", "NUR_KM"
+    public String travelModel;
+
+    // Pauschalbetrag for flat-rate travel
+    @Column(precision = 19, scale = 4)
+    public java.math.BigDecimal travelFlatRate;
+
+    // Preis pro km
+    @Column(precision = 19, scale = 4)
+    public java.math.BigDecimal travelKmRate;
 
     // AI Style Preferences
     public String toneOfVoice; // e.g. "Du" vs "Sie"
@@ -64,5 +105,5 @@ enum UserStatus {
 }
 
 enum UserRole {
-    OWNER, EMPLOYEE, ACCOUNTANT
+    OWNER, EMPLOYEE, ACCOUNTANT, CUSTOMER
 }
