@@ -12,7 +12,10 @@ import org.eclipse.microprofile.jwt.JsonWebToken;
 import java.util.List;
 import java.util.UUID;
 
+import io.quarkus.security.Authenticated;
+
 @Path("/catalog/material")
+@Authenticated
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class MaterialResource {
@@ -95,6 +98,14 @@ public class MaterialResource {
     }
 
     private String ownerId() {
-        return "dev-user";
+
+
+        String subject = jwt.getSubject();
+
+        if (subject == null || subject.isBlank()) {
+            throw new NotAuthorizedException("Missing JWT subject");
+        }
+
+        return subject;
     }
 }

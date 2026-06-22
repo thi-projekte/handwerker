@@ -9,7 +9,7 @@ import {
 } from "@/services/userService";
 import "../ProfilePage.css";
 
-type Tab = "profil" | "darstellung" | "benachrichtigungen";
+type Tab = "profil" | "darstellung";
 
 type ProfileFormData = {
   vorname: string;
@@ -177,11 +177,7 @@ export const ProfilPage = () => {
       return "Profil";
     }
 
-    if (activeTab === "darstellung") {
-      return "Darstellung";
-    }
-
-    return "Benachrichtigungen";
+    return "Darstellung";
   };
 
   const handleInputChange = (
@@ -309,14 +305,6 @@ export const ProfilPage = () => {
             >
               Darstellung
             </button>
-
-            <button
-              className={activeTab === "benachrichtigungen" ? "active" : ""}
-              type="button"
-              onClick={() => handleTabChange("benachrichtigungen")}
-            >
-              Benachrichtigungen
-            </button>
           </div>
         )}
       </section>
@@ -338,16 +326,6 @@ export const ProfilPage = () => {
           onClick={() => handleTabChange("darstellung")}
         >
           Darstellung
-        </button>
-
-        <button
-          className={`profile-tab ${
-            activeTab === "benachrichtigungen" ? "active" : ""
-          }`}
-          type="button"
-          onClick={() => handleTabChange("benachrichtigungen")}
-        >
-          Benachrichtigungen
         </button>
       </section>
 
@@ -518,29 +496,6 @@ export const ProfilPage = () => {
                 className={isLightMode ? "switch-dot light" : "switch-dot"}
               />
             </button>
-          </div>
-        </section>
-      )}
-
-      {activeTab === "benachrichtigungen" && (
-        <section className="card profile-content-card">
-          <h2>Benachrichtigungen</h2>
-
-          <div className="notification-list">
-            <label className="notification-item">
-              <input type="checkbox" defaultChecked />
-              <span>E-Mail bei neuem Angebot</span>
-            </label>
-
-            <label className="notification-item">
-              <input type="checkbox" defaultChecked />
-              <span>E-Mail bei fehlenden Pflichtdaten</span>
-            </label>
-
-            <label className="notification-item">
-              <input type="checkbox" />
-              <span>Wöchentliche Zusammenfassung</span>
-            </label>
           </div>
         </section>
       )}
