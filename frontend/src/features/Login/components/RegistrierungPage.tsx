@@ -4,31 +4,6 @@ import { useState, useEffect } from "react";
 import logo from "/src/assets/logos/CraftVoice_Logo_white_text.png";
 import keycloak from "@/services/authService";
 
-const getErrorMessage = (error: unknown): string => {
-  if (error instanceof Error && error.message) {
-    return error.message;
-  }
-
-  return "Ein unbekannter Fehler ist aufgetreten.";
-};
-
-const getRegisterErrorMessage = (error: unknown): string => {
-  const message = getErrorMessage(error).toLowerCase();
-
-  if (
-    message.includes("already") ||
-    message.includes("exists") ||
-    message.includes("duplicate") ||
-    message.includes("409") ||
-    message.includes("bereits") ||
-    message.includes("existiert")
-  ) {
-    return "Diese E-Mail-Adresse ist bereits registriert. Bitte melde dich an oder nutze „Passwort vergessen“.";
-  }
-
-  return "Registrierung fehlgeschlagen. Bitte prüfe deine Eingaben und versuche es erneut.";
-};
-
 export const RegistrierungPage = () => {
   const navigate = useNavigate();
 
