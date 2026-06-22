@@ -14,6 +14,8 @@ export const RegistrierungPage = () => {
 
 
   const handleRegister = async () => {
+    if (isLoading) return;
+
     if (!acceptedPrivacy) {
       setError("Bitte stimme den Datenschutzbedingungen zu.");
       return;
@@ -22,11 +24,11 @@ export const RegistrierungPage = () => {
     try {
       setIsLoading(true);
 
-      const registerUrl = await keycloak.createRegisterUrl({
+      await initKeycloak();
+
+      await keycloak.register({
         redirectUri: `${window.location.origin}/login`,
       });
-
-      window.location.href = registerUrl;
     } catch (error) {
       console.error(error);
       setError("Registrierung konnte nicht gestartet werden.");
