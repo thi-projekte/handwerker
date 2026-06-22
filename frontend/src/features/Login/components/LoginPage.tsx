@@ -4,10 +4,7 @@ import logo from "/src/assets/logos/CraftVoice_Logo_white_text.png";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import {
-  initKeycloak,
-  loginWithKeycloak,
-} from "@/services/authService";
+import { initKeycloak, loginWithKeycloak } from "@/services/authService";
 import { getCurrentUser } from "@/services/userService";
 
 const getErrorMessage = (error: unknown): string => {
@@ -24,10 +21,6 @@ export const LoginPage = () => {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
-  /*
-   * Wird sowohl beim normalen Öffnen der Login-Seite als auch nach der
-   * Rückleitung von Keycloak ausgeführt.
-   */
   useEffect(() => {
     let isMounted = true;
 
@@ -37,9 +30,8 @@ export const LoginPage = () => {
         setError("");
 
         /*
-         * Wichtig:
-         * Zuerst Keycloak initialisieren. Erst danach ist bekannt,
-         * ob eine gültige Anmeldung besteht.
+         * Keycloak muss zuerst initialisiert werden.
+         * Erst danach weiß das Frontend, ob bereits eine gültige Anmeldung besteht.
          */
         const authenticated = await initKeycloak();
 
@@ -53,8 +45,8 @@ export const LoginPage = () => {
         }
 
         /*
-         * Der User-Service erhält dabei automatisch das aktuelle
-         * Keycloak-Zugriffstoken im Authorization-Header.
+         * Nach erfolgreicher Anmeldung wird der User-Service synchronisiert.
+         * Dabei wird das aktuelle Keycloak-Zugriffstoken automatisch mitgeschickt.
          */
         await getCurrentUser();
 
@@ -70,10 +62,7 @@ export const LoginPage = () => {
           return;
         }
 
-        console.error(
-          "Fehler beim Abschließen der Anmeldung:",
-          loginError,
-        );
+        console.error("Fehler beim Abschließen der Anmeldung:", loginError);
 
         setError(
           `Die Anmeldung war erfolgreich, aber das Benutzerprofil konnte nicht synchronisiert werden: ${getErrorMessage(
@@ -99,14 +88,11 @@ export const LoginPage = () => {
 
       /*
        * Keycloak übernimmt die Weiterleitung.
-       * Hier darf kein navigate("/home") stehen.
+       * Danach kommt der Nutzer wieder auf /login zurück.
        */
       await loginWithKeycloak();
     } catch (loginError) {
-      console.error(
-        "Keycloak-Anmeldung konnte nicht gestartet werden:",
-        loginError,
-      );
+      console.error("Keycloak-Anmeldung konnte nicht gestartet werden:", loginError);
 
       setError(
         `Keycloak-Anmeldung konnte nicht gestartet werden: ${getErrorMessage(
