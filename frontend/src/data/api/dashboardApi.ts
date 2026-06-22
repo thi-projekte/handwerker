@@ -33,15 +33,14 @@ export interface DashboardStatsResponse {
   angebotsuebersicht: ChartDataDTO[];
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "https://mein-service.winfprojekt.de";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://offerservice-craftvoice.winfprojekt.de";
 
 export const getDashboardStats = async (): Promise<DashboardStatsResponse> => {
   const token = await getToken();
   
-  const response = await fetch(`${API_BASE_URL}/dashboard`, {
+  const response = await fetch(`${API_BASE_URL}/offers`, {
     method: "GET",
     headers: {
-      "Content-Type": "application/json",
       ...(token && { Authorization: `Bearer ${token}` }),
     },
   });
