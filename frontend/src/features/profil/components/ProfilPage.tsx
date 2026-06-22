@@ -448,8 +448,17 @@ export const ProfilPage = () => {
                   nicht geändert werden.
                 </p>
               </label>
+              <label className="profile-field">
+                <span>Mitgliedschaft verwalten</span>
+                <button
+                  className="profile-password-button"
+                  type="button"
+                  onClick={() => navigate("/abo")}
+                >
+                  Abo verwalten
+                </button>
+              </label>
             </div>
-
             <div className="profile-actions">
               <button
                 className="button-primary profile-save-button"
@@ -467,7 +476,9 @@ export const ProfilPage = () => {
               >
                 Passwort ändern
               </button>
+              
             </div>
+            
           </section>
         </>
       )}

@@ -124,7 +124,7 @@ export const AboPage = () => {
                 e.stopPropagation();
 
                 if (abo.name === "ENTERPRISE") {
-                  alert("Bitte kontaktieren Sie uns für ein Enterprise-Angebot.");
+                  alert("Bitte kontaktieren Sie uns für ein Enterprise-Angebot: kontakt@craftvoice.de");
                 } else {
                   setSelectedAbo(abo.id);
                 }
