@@ -589,7 +589,10 @@ export const ReviewPage = () => {
   }, [businessKey]);
 
   useEffect(() => {
-    ladeDaten();
+    const load = async () => {
+      await ladeDaten();
+    };
+    load();
   }, [ladeDaten]);
 
   // ─── Hilfsfunktionen ─────────────────────────────────────────────────────

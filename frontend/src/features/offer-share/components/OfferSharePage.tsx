@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "@/assets/stylesheets/stylesheet.css";
 import "./OfferSharePage.css";
@@ -37,7 +37,7 @@ export const OfferSharePage = () => {
   // ─── State ───
   const [offerData, setOfferData] = useState<OfferResponse | null>(null);
   const [document, setDocument] = useState<DocumentMetadata | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!!(offerId || businessKey));
   const [pdfLoading, setPdfLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -45,43 +45,13 @@ export const OfferSharePage = () => {
   const [sentVia, setSentVia] = useState<string | null>(null);
   const [sendError, setSendError] = useState<string | null>(null);
 
-  // ─── Daten laden ─────────────────────────────────────────────────────────
-
-  useEffect(() => {
-    if (!offerId && !businessKey) {
-      setIsLoading(false);
-      return;
-    }
-
-    const laden = async () => {
-      setIsLoading(true);
-      try {
-        // Angebotsdaten laden
-        if (businessKey) {
-          const offer = await getOfferByBusinessKey(businessKey);
-          setOfferData(offer);
-        }
-
-        // PDF-Dokument laden (mit kurzem Retry, falls PE noch am Generieren ist)
-        if (offerId) {
-          await ladePdf(offerId);
-        }
-      } catch (err) {
-        console.error("[OfferSharePage] Laden fehlgeschlagen:", err);
-        setLoadError("Angebotsdaten konnten nicht geladen werden.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    laden();
-  }, [businessKey, offerId]);
+  // ─── ladePdf (vor useEffect deklariert) ──────────────────────────────────
 
   /**
    * Lädt das PDF-Dokument mit bis zu 5 Versuchen (30s Gesamtwartezeit).
    * Die PE triggert die PDF-Erstellung asynchron — kurze Wartezeit nötig.
    */
-  const ladePdf = async (id: number, maxVersuche = 5) => {
+  const ladePdf = useCallback(async (id: number, maxVersuche = 5) => {
     setPdfLoading(true);
     for (let i = 0; i < maxVersuche; i++) {
       try {
@@ -98,7 +68,33 @@ export const OfferSharePage = () => {
     }
     setPdfLoading(false);
     // Kein Fehler — PDF fehlt evtl. noch, User kann manuell neu laden
-  };
+  }, []);
+
+  // ─── Daten laden ─────────────────────────────────────────────────────────
+
+  useEffect(() => {
+    if (!offerId && !businessKey) return;
+
+    const laden = async () => {
+      setIsLoading(true);
+      try {
+        if (businessKey) {
+          const offer = await getOfferByBusinessKey(businessKey);
+          setOfferData(offer);
+        }
+        if (offerId) {
+          await ladePdf(offerId);
+        }
+      } catch (err) {
+        console.error("[OfferSharePage] Laden fehlgeschlagen:", err);
+        setLoadError("Angebotsdaten konnten nicht geladen werden.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    laden();
+  }, [businessKey, offerId, ladePdf]);
 
   // ─── Share-Aktionen ──────────────────────────────────────────────────────
 
@@ -109,9 +105,7 @@ export const OfferSharePage = () => {
     setIsSending(true);
     setSendError(null);
     try {
-      // PE informieren: Auftrag versenden
       await sendAuftragVersenden(businessKey);
-      // WhatsApp mit PDF-Link öffnen
       const nachricht = encodeURIComponent(
         `Guten Tag, anbei finden Sie Ihr Angebot:\n${pdfUrl}`,
       );
@@ -132,14 +126,11 @@ export const OfferSharePage = () => {
     setIsSending(true);
     setSendError(null);
     try {
-      // E-Mail via document-service versenden
       await shareOfferByEmail(offerId);
-      // PE informieren
       await sendAuftragVersenden(businessKey);
       setSentVia("E-Mail");
     } catch (err) {
       console.error("[OfferSharePage] E-Mail-Versand fehlgeschlagen:", err);
-      // Fallback: mailto öffnen
       const subject = encodeURIComponent("Ihr Angebot von CraftVoice");
       const body = encodeURIComponent(
         `Guten Tag,\n\nanbei finden Sie Ihr Angebot:\n${pdfUrl ?? "—"}\n\nMit freundlichen Grüßen`,
@@ -165,7 +156,6 @@ export const OfferSharePage = () => {
         await sendAuftragVersenden(businessKey);
         setSentVia("Sonstiges");
       } else {
-        // Fallback: URL in Zwischenablage kopieren
         await navigator.clipboard.writeText(pdfUrl);
         setSentVia("Link kopiert");
         await sendAuftragVersenden(businessKey);
@@ -292,7 +282,6 @@ export const OfferSharePage = () => {
         <div className="offer-preview-customer">
           <span>Kunden-ID</span>
           <strong>{offerData?.customerId ?? "—"}</strong>
-          {/* TODO: vollständige Kundendaten über customer-service */}
           <p className="text-secondary">
             Adresse wird nach customer-service-Anbindung angezeigt.
           </p>
