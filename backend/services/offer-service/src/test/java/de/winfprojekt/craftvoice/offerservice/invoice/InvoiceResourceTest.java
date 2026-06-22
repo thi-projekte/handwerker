@@ -15,6 +15,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import io.quarkus.test.security.TestSecurity;
+import io.quarkus.test.security.oidc.Claim;
+import io.quarkus.test.security.oidc.OidcSecurity;
+
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +33,10 @@ import static org.mockito.ArgumentMatchers.any;
  * Integrationstests für {@link InvoiceResource}: INV-2 (POST /rechnungen) und INV-3 (GET /rechnungen).
  */
 @QuarkusTest
+@TestSecurity(user = "test-user", roles = {"OWNER"})
+@OidcSecurity(claims = {
+        @Claim(key = "sub", value = "99")
+})
 class InvoiceResourceTest {
 
     @InjectMock

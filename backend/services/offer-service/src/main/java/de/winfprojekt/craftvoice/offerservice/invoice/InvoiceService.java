@@ -136,9 +136,11 @@ public class InvoiceService {
      * @return Liste aller Rechnungen als DTOs
      */
     @Transactional
-    public List<InvoiceResponse> getAllInvoicesSorted() {
-        List<Invoice> invoices = Invoice.listAll(
-                io.quarkus.panache.common.Sort.by("createdAt").descending());
+    public List<InvoiceResponse> getAllInvoicesSorted(String handwerkerId) {
+        List<Invoice> invoices = Invoice.find(
+                "offerBusinessKey IN (SELECT businessKey FROM Offer WHERE handwerkerId = ?1)",
+                io.quarkus.panache.common.Sort.by("createdAt").descending(),
+                handwerkerId).list();
         return invoices.stream()
                 .map(InvoiceResponse::fromEntity)
                 .toList();
