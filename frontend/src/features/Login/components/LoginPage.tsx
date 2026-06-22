@@ -159,7 +159,6 @@ export const LoginPage = () => {
         >
           Registrieren
         </button>
-
         <div className="login-footer">
           <button
             className="text-secondary login-link-button"
