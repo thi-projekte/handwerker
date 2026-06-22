@@ -2,6 +2,9 @@ package de.winfprojekt.craftvoice.offerservice.invoice;
 
 import de.winfprojekt.craftvoice.offerservice.invoice.dto.CreateInvoiceRequest;
 import de.winfprojekt.craftvoice.offerservice.invoice.dto.InvoiceResponse;
+import de.winfprojekt.craftvoice.offerservice.offer.OfferService;
+import io.quarkus.security.Authenticated;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
@@ -12,6 +15,7 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.eclipse.microprofile.jwt.JsonWebToken;
 
 import java.util.List;
 
@@ -24,10 +28,17 @@ import java.util.List;
 @Path("/rechnungen")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
+@Authenticated
 public class InvoiceResource {
 
     @Inject
     InvoiceService invoiceService;
+
+    @Inject
+    OfferService offerService;
+
+    @Inject
+    JsonWebToken jwt;
 
     /**
      * Erstellt eine neue Rechnung aus einem Angebot mit Status ANGENOMMEN.
@@ -36,7 +47,11 @@ public class InvoiceResource {
      * @return HTTP 201 mit der erzeugten Rechnung, oder 404/409 bei Fehlern
      */
     @POST
+    @RolesAllowed({"OWNER"})
     public Response createInvoice(@Valid CreateInvoiceRequest request) {
+        String userId = jwt.getSubject();
+        offerService.findOwnOfferOrThrow(request.businessKey, userId);
+
         InvoiceResponse response = invoiceService.createInvoice(request);
         return Response.status(Response.Status.CREATED)
                 .entity(response)
@@ -49,8 +64,10 @@ public class InvoiceResource {
      * @return HTTP 200 mit der Liste aller Rechnungen
      */
     @GET
+    @RolesAllowed({"OWNER"})
     public Response getAllInvoices() {
-        List<InvoiceResponse> invoices = invoiceService.getAllInvoicesSorted();
+        String userId = jwt.getSubject();
+        List<InvoiceResponse> invoices = invoiceService.getAllInvoicesSorted(userId);
         return Response.ok(invoices).build();
     }
 
@@ -65,8 +82,11 @@ public class InvoiceResource {
      */
     @GET
     @Path("/{id}")
+    @RolesAllowed({"OWNER"})
     public Response getInvoiceById(@PathParam("id") Long id) {
+        String userId = jwt.getSubject();
         InvoiceResponse response = invoiceService.getInvoiceById(id);
+        offerService.findOwnOfferOrThrow(response.offerBusinessKey, userId);
         return Response.ok(response).build();
     }
 
@@ -81,7 +101,10 @@ public class InvoiceResource {
      */
     @GET
     @Path("/angebot/{businessKey}")
+    @RolesAllowed({"OWNER"})
     public Response getInvoiceByOfferBusinessKey(@PathParam("businessKey") String businessKey) {
+        String userId = jwt.getSubject();
+        offerService.findOwnOfferOrThrow(businessKey, userId);
         InvoiceResponse response = invoiceService.getInvoiceByOfferBusinessKey(businessKey);
         return Response.ok(response).build();
     }

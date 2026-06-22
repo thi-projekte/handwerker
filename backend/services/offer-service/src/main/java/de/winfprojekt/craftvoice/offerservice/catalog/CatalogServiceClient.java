@@ -1,5 +1,6 @@
 package de.winfprojekt.craftvoice.offerservice.catalog;
 
+import io.quarkus.oidc.token.propagation.common.AccessToken;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -14,6 +15,7 @@ import java.util.UUID;
  *
  * <p>Ruft Materialinformationen (inkl. Preis) direkt vom catalog-service ab.
  */
+@AccessToken
 @Path("/catalog/material")
 @RegisterRestClient(configKey = "catalog-service")
 public interface CatalogServiceClient {

@@ -17,7 +17,7 @@ public class AktivitaetDTO {
     public String businessKey;
 
     /** Kunden-ID des Angebots. */
-    public Long customerId;
+    public String customerId;
 
     /** Neuer Status des Angebots zum Zeitpunkt des Statuswechsels. */
     public String status;

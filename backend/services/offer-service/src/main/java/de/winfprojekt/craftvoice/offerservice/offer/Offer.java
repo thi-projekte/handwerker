@@ -39,10 +39,10 @@ public class Offer extends BaseEntity {
     public String status = STATUS_ERFASST;           // Enum-Werte als String: ERFASST, IN_BEARBEITUNG, KI_BEARBEITUNG_ABGESCHLOSSEN, VERSANDBEREIT, VERSENDET, ANGENOMMEN, ABGELEHNT, ABGEBROCHEN, STORNIERT
 
     @Column(name = "customer_id", nullable = false)
-    public Long customerId;
+    public String customerId;
 
     @Column(name = "handwerker_id", nullable = false)
-    public Long handwerkerId;
+    public String handwerkerId;
 
     @Column(unique = true)
     public String annahmeToken;     // UUID für öffentlichen Annahme-Link

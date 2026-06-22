@@ -51,7 +51,7 @@ public class ProcessEngineClient {
          * @param sprachschnipsel erfasster Sprachschnipsel zur Anfrage
          * @param vorlage         optionale Angebotsvorlage
          */
-        public void sendAngebotPayload(String businessKey, Long customerId, Long handwerkerId, String sprachschnipsel, Object vorlage) {
+        public void sendAngebotPayload(String businessKey, String customerId, String handwerkerId, String sprachschnipsel, Object vorlage) {
 
                 Map<String, Object> customerIdMap = Map.of(
                                 "value", customerId,

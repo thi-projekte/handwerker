@@ -3,6 +3,7 @@ package de.winfprojekt.craftvoice.offerservice.processengine;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import de.winfprojekt.craftvoice.offerservice.processengine.dto.PeMessagePayload;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.security.TestSecurity;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.rest.client.RestClientBuilder;
@@ -41,6 +42,7 @@ class ProcessEngineRestClientWireMockTest {
     }
 
     @Test
+    @TestSecurity(user = "process-engine", roles = {"process-engine"})
     void shouldCallCorrectEngineMessageEndpoint() {
 
         wireMockServer.stubFor(

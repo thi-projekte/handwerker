@@ -7,6 +7,8 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.annotation.security.RolesAllowed;
+import org.eclipse.microprofile.jwt.JsonWebToken;
 
 /**
  * REST-Ressource für Dashboard-Aggregationsdaten.
@@ -16,10 +18,14 @@ import jakarta.ws.rs.core.Response;
  */
 @Path("/dashboard")
 @Produces(MediaType.APPLICATION_JSON)
+@RolesAllowed("OWNER")
 public class DashboardResource {
 
     @Inject
     DashboardService dashboardService;
+
+    @Inject
+    JsonWebToken jwt;
 
     /**
      * Gibt alle aggregierten Dashboard-Kennzahlen zurück.
@@ -28,7 +34,9 @@ public class DashboardResource {
      */
     @GET
     public Response getDashboard() {
-        DashboardStats stats = dashboardService.getDashboardStats();
+        String handwerkerId = jwt.getSubject();
+
+        DashboardStats stats = dashboardService.getDashboardStats(handwerkerId);
         return Response.ok(stats).build();
     }
 }

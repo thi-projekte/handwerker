@@ -1,5 +1,7 @@
 package de.winfprojekt.craftvoice.offerservice.user;
 
+import io.quarkus.oidc.token.propagation.common.AccessToken;
+import jakarta.persistence.Access;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -8,8 +10,10 @@ import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 /**
  * Client-Interface für den User-Service.
  *
- * <p>Stellt Endpunkte für Stundensatz- und Anfahrtskostenkonfiguration bereit.
+ * <p>
+ * Stellt Endpunkte für Stundensatz- und Anfahrtskostenkonfiguration bereit.
  */
+@AccessToken
 @RegisterRestClient(configKey = "user-service")
 @Path("/api/users")
 public interface UserServiceClient {
