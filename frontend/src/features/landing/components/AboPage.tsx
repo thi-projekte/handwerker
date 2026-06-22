@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import "./AboPage.css";
+import logo from "/src/assets/logos/CraftVoice_Logo_white_text.png";
+
 
 export const AboPage = () => {
   const abonnements = [
@@ -50,15 +52,36 @@ export const AboPage = () => {
   ];
 
   const [selectedAbo, setSelectedAbo] = useState<number>(2);
+  const [showMessage, setShowMessage] = useState(false);
+
+  const handleSaveAndExit = () => {
+    setShowMessage(true);
+    
+    setTimeout(() => {
+
+      window.history.back();
+    }, 1500);
+  };
 
   return (
+
     <div className="abo-page">
       {/* HEADER */}
+      <div className="logo-container">
+          <img src={logo} alt="Logo" className="logo" />
+        </div>
       <div className="abo-header">
         <span className="abo-eyebrow">ABONNEMENT VERWALTUNG</span>
         <h1>Abo-Modelle</h1>
         <p>Wähle das passende Paket für dein Unternehmen</p>
       </div>
+
+      {/* Erfolgsmeldung */}
+      {showMessage && (
+        <div className="save-notification">
+          ✓ Änderung gespeichert
+        </div>
+      )}
 
       {/* GRID */}
       <div className="abo-grid">
@@ -68,7 +91,14 @@ export const AboPage = () => {
             className={`abo-card ${abo.color} ${
               selectedAbo === abo.id ? "active" : ""
             }`}
-            onClick={() => setSelectedAbo(abo.id)}
+            onClick={() => {
+  if (abo.name === "ENTERPRISE") {
+    alert("Bitte kontaktieren Sie uns für ein Enterprise-Angebot: kontakt@craftvoice.de");
+    return;
+  }
+
+  setSelectedAbo(abo.id);
+}}
           >
             {/* TOP */}
             <div className="abo-top">
@@ -88,8 +118,23 @@ export const AboPage = () => {
             </div>
 
             {/* BUTTON */}
-            <button className="abo-button">
-              {selectedAbo === abo.id ? "Aktiv" : "Auswählen"}
+            <button
+              className="abo-button"
+              onClick={(e) => {
+                e.stopPropagation();
+
+                if (abo.name === "ENTERPRISE") {
+                  alert("Bitte kontaktieren Sie uns für ein Enterprise-Angebot.");
+                } else {
+                  setSelectedAbo(abo.id);
+                }
+              }}
+            >
+              {abo.name === "ENTERPRISE"
+                ? "Anfragen"
+                : selectedAbo === abo.id
+                ? "Aktiv"
+                : "Auswählen"}
             </button>
 
             {/* FOOTER */}
@@ -100,6 +145,18 @@ export const AboPage = () => {
           </div>
         ))}
       </div>
+
+      {/* SPEICHERN BUTTON */}
+      <div className="abo-actions">
+        <button
+          className="save-button"
+          onClick={handleSaveAndExit}
+        >
+          Speichern & Beenden
+        </button>
+      </div>
     </div>
+    
   );
+  
 };

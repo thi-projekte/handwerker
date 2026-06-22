@@ -16,7 +16,7 @@ export const RegistrierungPage = () => {
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const validateEmail = (emailValue: string): boolean => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue);
   };
@@ -34,8 +34,31 @@ export const RegistrierungPage = () => {
       return setError("Bitte gib eine gültige E-Mail-Adresse ein.");
     }
     if (password.length < 8) {
-      return setError("Das Passwort muss mindestens 8 Zeichen haben.");
-    }
+  return setError(
+    "Das Passwort muss mindestens 8 Zeichen lang sein."
+  );
+  
+}
+
+const hasNumber = /\d/.test(password);
+const hasSpecialCharacter = /[!@#$%^&*(),.?":{}|<>_\-+=/\\[\]]/.test(password);
+
+if (!acceptedPrivacy) {
+  return setError(
+    "Bitte stimme den Datenschutzbedingungen zu."
+  );
+}
+if (!hasNumber) {
+  return setError(
+    "Das Passwort muss mindestens eine Zahl enthalten."
+  );
+}
+
+if (!hasSpecialCharacter) {
+  return setError(
+    "Das Passwort muss mindestens ein Sonderzeichen enthalten."
+  );
+}
     if (password !== repeatPassword) {
       return setError("Die Passwörter stimmen nicht überein.");
     }
@@ -133,6 +156,25 @@ export const RegistrierungPage = () => {
           value={repeatPassword}
           onChange={(event) => setRepeatPassword(event.target.value)}
         />
+        <div className="privacy-consent">
+  <input
+    type="checkbox"
+    id="privacyConsent"
+    checked={acceptedPrivacy}
+    onChange={(e) => setAcceptedPrivacy(e.target.checked)}
+  />
+
+  <label htmlFor="privacyConsent">
+    Ich stimme den{" "}
+    <span
+      className="privacy-link"
+      onClick={() => navigate("/datenschutz")}
+    >
+      Datenschutzbedingungen
+    </span>{" "}
+    zu.
+  </label>
+</div>
 
         <button
           className="button-primary register-btn"
@@ -155,7 +197,6 @@ export const RegistrierungPage = () => {
           <div className="footer-center">
           <a onClick={() => navigate("/kontakt")}>Kontakt</a>
                         <a onClick={() => navigate("/impressum")}>Impressum</a>
-                        <a onClick={() => navigate("/datenschutz")}>Datenschutz</a>
           
         </div>
 
