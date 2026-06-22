@@ -120,11 +120,13 @@ public class OfferResource {
     @GET
     @Path("/offers/{businessKey}")
     public Response getOfferById(@PathParam("businessKey") String businessKey) {
-        Offer offer = Offer.find("businessKey", businessKey).firstResult();
-        if (offer == null) {
+        // OS-2: Laden + DTO-Mapping laufen in der @Transactional-Service-Methode,
+        // damit die Lazy-Collections innerhalb einer aktiven Session initialisiert werden.
+        OfferResponse response = offerService.getOfferByBusinessKey(businessKey);
+        if (response == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
-        return Response.ok(OfferResponse.fromEntity(offer)).build();
+        return Response.ok(response).build();
     }
 
     /**

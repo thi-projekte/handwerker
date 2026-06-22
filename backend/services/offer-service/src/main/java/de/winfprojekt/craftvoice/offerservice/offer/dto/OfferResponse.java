@@ -38,6 +38,7 @@ public class OfferResponse {
         response.speechSnippet = offer.speechSnippet;
         response.positions = offer.positions != null ? new java.util.ArrayList<>(offer.positions) : null;
         response.statusHistory = offer.statusHistory != null ? new java.util.ArrayList<>(offer.statusHistory) : null;
+        response.korrekturvorschlaege = offer.korrekturvorschlaege != null ? new java.util.ArrayList<>(offer.korrekturvorschlaege) : null;
         response.createdAt = offer.createdAt;
         response.updatedAt = offer.updatedAt;
         response.gesamtPreis = offer.gesamtPreis;
