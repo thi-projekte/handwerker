@@ -17,7 +17,7 @@ public class InvoiceResponse {
 
     public Long id;
     public String rechnungsnummer;
-    public Long offerId;
+    public String offerBusinessKey;
     public String status;
     public BigDecimal gesamtPreis;
     public LocalDateTime createdAt;
@@ -54,7 +54,7 @@ public class InvoiceResponse {
         InvoiceResponse response = new InvoiceResponse();
         response.id = invoice.id;
         response.rechnungsnummer = invoice.rechnungsnummer;
-        response.offerId = invoice.offerId;
+        response.offerBusinessKey = invoice.offerBusinessKey;
         response.status = invoice.status;
         response.gesamtPreis = invoice.gesamtPreis;
         response.createdAt = invoice.createdAt;

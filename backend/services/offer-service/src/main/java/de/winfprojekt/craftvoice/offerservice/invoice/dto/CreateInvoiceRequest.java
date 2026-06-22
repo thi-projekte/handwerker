@@ -1,12 +1,12 @@
 package de.winfprojekt.craftvoice.offerservice.invoice.dto;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 
 /**
  * Request-Body für POST /rechnungen.
  */
 public class CreateInvoiceRequest {
 
-    @NotNull(message = "angebotId darf nicht null sein")
-    public Long angebotId;
+    @NotBlank(message = "businessKey darf nicht leer sein")
+    public String businessKey;
 }

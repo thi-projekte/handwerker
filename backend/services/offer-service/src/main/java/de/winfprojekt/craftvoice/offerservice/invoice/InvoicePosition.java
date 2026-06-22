@@ -33,7 +33,6 @@ public class InvoicePosition extends BaseEntity {
 
     public String hersteller;
     public String bezeichnung;
-    public String beschreibung;
     public BigDecimal menge;
     public String einheit;
 

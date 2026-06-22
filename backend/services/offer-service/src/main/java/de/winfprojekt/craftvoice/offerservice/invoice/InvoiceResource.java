@@ -32,7 +32,7 @@ public class InvoiceResource {
     /**
      * Erstellt eine neue Rechnung aus einem Angebot mit Status ANGENOMMEN.
      *
-     * @param request Anfrageobjekt mit angebotId
+     * @param request Anfrageobjekt mit businessKey
      * @return HTTP 201 mit der erzeugten Rechnung, oder 404/409 bei Fehlern
      */
     @POST
@@ -55,15 +55,34 @@ public class InvoiceResource {
     }
 
     /**
-     * Gibt die Rechnung mit der angegebenen ID zurück.
+     * Gibt die Rechnung mit der angegebenen internen ID zurück.
      *
-     * @param id ID der gesuchten Rechnung
+     * Für den normalen Frontend-Einsatz wird {@code GET /angebot/{businessKey}}
+     * bevorzugt, da das Frontend in der Regel keinen Zugriff auf interne DB-IDs hat.
+     *
+     * @param id interne DB-ID der gesuchten Rechnung
      * @return HTTP 200 mit der Rechnung inkl. Positionen, oder 404 wenn nicht gefunden
      */
     @GET
     @Path("/{id}")
     public Response getInvoiceById(@PathParam("id") Long id) {
         InvoiceResponse response = invoiceService.getInvoiceById(id);
+        return Response.ok(response).build();
+    }
+
+    /**
+     * Gibt die Rechnung zum zugehörigen Angebot anhand des businessKeys zurück.
+     *
+     * Dies ist der bevorzugte Endpunkt für das Frontend, da das Frontend
+     * ausschließlich mit dem businessKey des Angebots arbeitet.
+     *
+     * @param businessKey businessKey des Angebots
+     * @return HTTP 200 mit der Rechnung, oder 404 wenn keine Rechnung für dieses Angebot existiert
+     */
+    @GET
+    @Path("/angebot/{businessKey}")
+    public Response getInvoiceByOfferBusinessKey(@PathParam("businessKey") String businessKey) {
+        InvoiceResponse response = invoiceService.getInvoiceByOfferBusinessKey(businessKey);
         return Response.ok(response).build();
     }
 }

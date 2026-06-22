@@ -110,19 +110,19 @@ class InvoiceResourceTest {
     @Test
     void shouldCreateInvoiceFromAngenommenenAngebot() {
         Offer offer = createOffer(Offer.STATUS_ANGENOMMEN, true);
-        final Long offerId = offer.id;
+        final String businessKey = offer.businessKey;
         final int positionCount = offer.positions.size();
 
         Number invoiceId = given()
                 .contentType(ContentType.JSON)
-                .body("{\"angebotId\": " + offerId + "}")
+                .body("{\"businessKey\": \"" + businessKey + "\"}")
                 .when()
                 .post("/rechnungen")
                 .then()
                 .statusCode(201)
                 .body("id", notNullValue())
                 .body("rechnungsnummer", notNullValue())
-                .body("offerId", equalTo(offerId.intValue()))
+                .body("offerBusinessKey", equalTo(businessKey))
                 .body("status", equalTo("ERSTELLT"))
                 .body("kundendaten", notNullValue())
                 .body("kundendaten.vorname", equalTo("Max"))
@@ -139,7 +139,7 @@ class InvoiceResourceTest {
             Invoice invoice = Invoice.findById(invoiceId.longValue());
             assertNotNull(invoice);
             assertEquals(Invoice.STATUS_ERSTELLT, invoice.status);
-            assertEquals(offerId, invoice.offerId);
+            assertEquals(businessKey, invoice.offerBusinessKey);
             assertEquals(positionCount, invoice.positions.size());
             assertNotNull(invoice.rechnungsnummer);
             assertTrue(invoice.rechnungsnummer.matches("RE-\\d{4}-\\d{3}"),
@@ -156,7 +156,7 @@ class InvoiceResourceTest {
 
         String rechnungsnummer = given()
                 .contentType(ContentType.JSON)
-                .body("{\"angebotId\": " + offer.id + "}")
+                .body("{\"businessKey\": \"" + offer.businessKey + "\"}")
                 .when()
                 .post("/rechnungen")
                 .then()
@@ -183,7 +183,7 @@ class InvoiceResourceTest {
 
         String nr1 = given()
                 .contentType(ContentType.JSON)
-                .body("{\"angebotId\": " + offer1.id + "}")
+                .body("{\"businessKey\": \"" + offer1.businessKey + "\"}")
                 .when()
                 .post("/rechnungen")
                 .then()
@@ -193,7 +193,7 @@ class InvoiceResourceTest {
 
         String nr2 = given()
                 .contentType(ContentType.JSON)
-                .body("{\"angebotId\": " + offer2.id + "}")
+                .body("{\"businessKey\": \"" + offer2.businessKey + "\"}")
                 .when()
                 .post("/rechnungen")
                 .then()
@@ -213,7 +213,7 @@ class InvoiceResourceTest {
 
         Number invoiceId = given()
                 .contentType(ContentType.JSON)
-                .body("{\"angebotId\": " + offer.id + "}")
+                .body("{\"businessKey\": \"" + offer.businessKey + "\"}")
                 .when()
                 .post("/rechnungen")
                 .then()
@@ -253,7 +253,7 @@ class InvoiceResourceTest {
 
         given()
                 .contentType(ContentType.JSON)
-                .body("{\"angebotId\": " + offer.id + "}")
+                .body("{\"businessKey\": \"" + offer.businessKey + "\"}")
                 .when()
                 .post("/rechnungen")
                 .then()
@@ -269,7 +269,7 @@ class InvoiceResourceTest {
 
         given()
                 .contentType(ContentType.JSON)
-                .body("{\"angebotId\": " + offer.id + "}")
+                .body("{\"businessKey\": \"" + offer.businessKey + "\"}")
                 .when()
                 .post("/rechnungen")
                 .then()
@@ -277,13 +277,13 @@ class InvoiceResourceTest {
     }
 
     /**
-     * Unbekannte angebotId → HTTP 404.
+     * Unbekannter businessKey → HTTP 404.
      */
     @Test
     void shouldReturn404WhenOfferUnknown() {
         given()
                 .contentType(ContentType.JSON)
-                .body("{\"angebotId\": 999999}")
+                .body("{\"businessKey\": \"angebot-00000000-0000-0000-0000-000000000000\"}")
                 .when()
                 .post("/rechnungen")
                 .then()
@@ -291,10 +291,10 @@ class InvoiceResourceTest {
     }
 
     /**
-     * Fehlender angebotId-Body → HTTP 400 (Bean Validation).
+     * Fehlender businessKey im Body → HTTP 400 (Bean Validation).
      */
     @Test
-    void shouldReturn400WhenAngebotIdMissing() {
+    void shouldReturn400WhenBusinessKeyMissing() {
         given()
                 .contentType(ContentType.JSON)
                 .body("{}")
@@ -318,7 +318,7 @@ class InvoiceResourceTest {
 
         given()
                 .contentType(ContentType.JSON)
-                .body("{\"angebotId\": " + offer1.id + "}")
+                .body("{\"businessKey\": \"" + offer1.businessKey + "\"}")
                 .when()
                 .post("/rechnungen")
                 .then()
@@ -328,7 +328,7 @@ class InvoiceResourceTest {
 
         given()
                 .contentType(ContentType.JSON)
-                .body("{\"angebotId\": " + offer2.id + "}")
+                .body("{\"businessKey\": \"" + offer2.businessKey + "\"}")
                 .when()
                 .post("/rechnungen")
                 .then()
@@ -368,7 +368,7 @@ class InvoiceResourceTest {
 
         Number invoiceId = given()
                 .contentType(ContentType.JSON)
-                .body("{\"angebotId\": " + offer.id + "}")
+                .body("{\"businessKey\": \"" + offer.businessKey + "\"}")
                 .when()
                 .post("/rechnungen")
                 .then()
@@ -384,6 +384,7 @@ class InvoiceResourceTest {
                 .body("id", equalTo(invoiceId.intValue()))
                 .body("status", equalTo("ERSTELLT"))
                 .body("rechnungsnummer", notNullValue())
+                .body("offerBusinessKey", equalTo(offer.businessKey))
                 // kundendaten muss ein Objekt sein, kein roher String
                 .body("kundendaten", notNullValue())
                 .body("kundendaten.vorname", equalTo("Max"))
@@ -404,6 +405,51 @@ class InvoiceResourceTest {
         given()
                 .when()
                 .get("/rechnungen/999999")
+                .then()
+                .statusCode(404);
+    }
+
+    // =========================================================================
+    // INV-4: GET /rechnungen/angebot/{businessKey}
+    // =========================================================================
+
+    /**
+     * Happy Path: GET /rechnungen/angebot/{businessKey} liefert die zugehörige Rechnung.
+     */
+    @Test
+    void shouldGetInvoiceByOfferBusinessKey() {
+        Offer offer = createOffer(Offer.STATUS_ANGENOMMEN, true);
+
+        // Rechnung anlegen
+        given()
+                .contentType(ContentType.JSON)
+                .body("{\"businessKey\": \"" + offer.businessKey + "\"}")
+                .when()
+                .post("/rechnungen")
+                .then()
+                .statusCode(201);
+
+        // Rechnung per businessKey abrufen
+        given()
+                .when()
+                .get("/rechnungen/angebot/" + offer.businessKey)
+                .then()
+                .statusCode(200)
+                .body("offerBusinessKey", equalTo(offer.businessKey))
+                .body("status", equalTo("ERSTELLT"))
+                .body("rechnungsnummer", notNullValue())
+                .body("kundendaten.vorname", equalTo("Max"))
+                .body("positions", hasSize(2));
+    }
+
+    /**
+     * GET /rechnungen/angebot/{businessKey} für ein Angebot ohne Rechnung → HTTP 404.
+     */
+    @Test
+    void shouldReturn404WhenNoInvoiceForBusinessKey() {
+        given()
+                .when()
+                .get("/rechnungen/angebot/angebot-00000000-0000-0000-0000-000000000000")
                 .then()
                 .statusCode(404);
     }

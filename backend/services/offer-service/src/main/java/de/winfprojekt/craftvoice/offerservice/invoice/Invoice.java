@@ -35,11 +35,11 @@ public class Invoice extends BaseEntity {
     public String rechnungsnummer;
 
     /**
-     * Logische Referenz auf das zugehörige Angebot.
+     * Logische Referenz auf das zugehörige Angebot über den Business-Key.
      * Keine Datenbank-Fremdschlüsselbeziehung (keine FK über Service-Grenzen).
      */
-    @Column(name = "offer_id", nullable = false)
-    public Long offerId;
+    @Column(name = "offer_business_key", nullable = false)
+    public String offerBusinessKey;
 
     @Column(nullable = false)
     public String status = STATUS_ERSTELLT;

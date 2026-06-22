@@ -47,23 +47,23 @@ public class InvoiceService {
      *   <li>Persistieren, HTTP 201</li>
      * </ol>
      *
-     * @param request Anfrageobjekt mit angebotId
+     * @param request Anfrageobjekt mit businessKey
      * @return die erzeugte Rechnung als DTO
      */
     @Transactional
     public InvoiceResponse createInvoice(CreateInvoiceRequest request) {
 
         // 1. Angebot laden
-        Offer offer = Offer.findById(request.angebotId);
+        Offer offer = Offer.find("businessKey", request.businessKey).firstResult();
         if (offer == null) {
             throw new WebApplicationException(
-                    "Angebot mit ID " + request.angebotId + " nicht gefunden", 404);
+                    "Angebot mit businessKey " + request.businessKey + " nicht gefunden", 404);
         }
 
         // 2. Status-Prüfung
         if (!Offer.STATUS_ANGENOMMEN.equals(offer.status)) {
             throw new WebApplicationException(
-                    "Angebot mit ID " + request.angebotId
+                    "Angebot mit businessKey " + request.businessKey
                     + " befindet sich nicht im Status ANGENOMMEN (aktuell: " + offer.status + ")",
                     409);
         }
@@ -81,7 +81,7 @@ public class InvoiceService {
         // 5. Invoice anlegen
         Invoice invoice = new Invoice();
         invoice.rechnungsnummer = rechnungsnummer;
-        invoice.offerId = offer.id;
+        invoice.offerBusinessKey = offer.businessKey;
         invoice.status = Invoice.STATUS_ERSTELLT;
 
         // Kundendaten-Snapshot
@@ -99,7 +99,6 @@ public class InvoiceService {
             invoicePos.invoice = invoice;
             invoicePos.hersteller = offerPos.hersteller;
             invoicePos.bezeichnung = offerPos.bezeichnung;
-            invoicePos.beschreibung = offerPos.beschreibung;
             invoicePos.menge = offerPos.menge;
             invoicePos.einheit = offerPos.einheit;
             invoicePos.katalogProduktId = offerPos.katalogProduktId;
@@ -118,7 +117,7 @@ public class InvoiceService {
 
         invoice.persist();
 
-        LOG.infof("Rechnung %s für Angebot %d erstellt.", rechnungsnummer, offer.id);
+        LOG.infof("Rechnung %s für Angebot %s erstellt.", rechnungsnummer, offer.businessKey);
 
         return InvoiceResponse.fromEntity(invoice);
     }
@@ -138,9 +137,9 @@ public class InvoiceService {
     }
 
     /**
-     * Gibt eine einzelne Rechnung anhand ihrer ID zurück.
+     * Gibt eine einzelne Rechnung anhand ihrer internen DB-ID zurück.
      *
-     * @param id ID der Rechnung
+     * @param id interne ID der Rechnung
      * @return Rechnung als DTO oder wirft 404
      */
     @Transactional
@@ -148,6 +147,25 @@ public class InvoiceService {
         Invoice invoice = Invoice.findById(id);
         if (invoice == null) {
             throw new WebApplicationException("Rechnung mit ID " + id + " nicht gefunden", 404);
+        }
+        return InvoiceResponse.fromEntity(invoice);
+    }
+
+    /**
+     * Gibt die Rechnung zum zugehörigen Angebot anhand des businessKeys zurück.
+     *
+     * <p>Dies ist der für das Frontend bevorzugte Endpunkt, da das Frontend
+     * ausschließlich mit dem businessKey arbeitet und die interne DB-ID nicht kennt.
+     *
+     * @param offerBusinessKey businessKey des Angebots
+     * @return Rechnung als DTO oder wirft 404
+     */
+    @Transactional
+    public InvoiceResponse getInvoiceByOfferBusinessKey(String offerBusinessKey) {
+        Invoice invoice = Invoice.find("offerBusinessKey", offerBusinessKey).firstResult();
+        if (invoice == null) {
+            throw new WebApplicationException(
+                    "Keine Rechnung für Angebot mit businessKey " + offerBusinessKey + " gefunden", 404);
         }
         return InvoiceResponse.fromEntity(invoice);
     }
