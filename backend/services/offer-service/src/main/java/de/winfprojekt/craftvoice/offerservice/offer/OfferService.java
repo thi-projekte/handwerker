@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.ws.rs.WebApplicationException;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.OfferResponse;
+import de.winfprojekt.craftvoice.offerservice.common.OfferPositionType;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import java.math.BigDecimal;
@@ -457,6 +458,13 @@ public class OfferService {
 
         offer.persist();
 
+        // PE benachrichtigen: Angebot angenommen oder abgelehnt
+        if (Offer.STATUS_ANGENOMMEN.equals(newStatus)) {
+            processEngineClient.sendAngebotAngenommen(offer.businessKey);
+        } else {
+            processEngineClient.sendAngebotAbgelehnt(offer.businessKey);
+        }
+
         return new OfferAcceptanceResponse(entscheidung);
     }
 
@@ -519,6 +527,34 @@ public class OfferService {
         offer.persist();
     }
 
+    /**
+     * Setzt den Status eines Angebots auf VERSENDET.
+     * Wird vom document-service aufgerufen, nachdem das Angebot erfolgreich versendet wurde.
+     *
+     * @param businessKey Business-Key des Angebots
+     */
+    @Transactional
+    public void setStatusVersendet(String businessKey) {
+        Offer offer = Offer.find("businessKey", businessKey).firstResult();
+        if (offer == null) {
+            throw new WebApplicationException("Angebot mit BusinessKey " + businessKey + " nicht gefunden", 404);
+        }
+
+        if (!Offer.STATUS_VERSANDBEREIT.equals(offer.status)) {
+            throw new WebApplicationException("Angebot befindet sich nicht im Status VERSANDBEREIT", 409);
+        }
+
+        offer.status = Offer.STATUS_VERSENDET;
+
+        OfferStatusHistory history = new OfferStatusHistory();
+        history.offer = offer;
+        history.status = Offer.STATUS_VERSENDET;
+        history.zeitpunkt = LocalDateTime.now();
+        offer.statusHistory.add(history);
+
+        offer.persist();
+    }
+  
     /**
      * Berechnet den Gesamtpreis (Aufsummieren aller Positionen) eines Angebots
      * 

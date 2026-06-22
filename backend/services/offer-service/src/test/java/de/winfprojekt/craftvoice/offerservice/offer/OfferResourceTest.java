@@ -23,6 +23,7 @@ import de.winfprojekt.craftvoice.offerservice.user.AnfahrtskostenKonfiguration;
 import de.winfprojekt.craftvoice.offerservice.user.CustomerDTO;
 import de.winfprojekt.craftvoice.offerservice.routing.OsrmClient;
 import de.winfprojekt.craftvoice.offerservice.routing.RoutingException;
+import de.winfprojekt.craftvoice.offerservice.common.OfferPositionType;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import java.math.BigDecimal;
