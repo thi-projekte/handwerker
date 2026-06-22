@@ -2,7 +2,8 @@ import "../Login.css";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import logo from "/src/assets/logos/CraftVoice_Logo_white_text.png";
-import keycloak from "@/services/authService";
+import { initKeycloak } from "@/services/authService";
+import keycloak from "@/core/keycloak";
 
 export const RegistrierungPage = () => {
   const navigate = useNavigate();
@@ -21,10 +22,13 @@ export const RegistrierungPage = () => {
     try {
       setIsLoading(true);
 
-      await keycloak.register({
+      const registerUrl = await keycloak.createRegisterUrl({
         redirectUri: `${window.location.origin}/login`,
       });
-    } catch {
+
+      window.location.href = registerUrl;
+    } catch (error) {
+      console.error(error);
       setError("Registrierung konnte nicht gestartet werden.");
     } finally {
       setIsLoading(false);
