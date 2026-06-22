@@ -123,7 +123,6 @@ class InvoiceResourceTest {
                 .body("id", notNullValue())
                 .body("rechnungsnummer", notNullValue())
                 .body("offerBusinessKey", equalTo(businessKey))
-                .body("status", equalTo("ERSTELLT"))
                 .body("kundendaten", notNullValue())
                 .body("kundendaten.vorname", equalTo("Max"))
                 .body("kundendaten.nachname", equalTo("Mustermann"))
@@ -138,7 +137,6 @@ class InvoiceResourceTest {
         QuarkusTransaction.requiringNew().run(() -> {
             Invoice invoice = Invoice.findById(invoiceId.longValue());
             assertNotNull(invoice);
-            assertEquals(Invoice.STATUS_ERSTELLT, invoice.status);
             assertEquals(businessKey, invoice.offerBusinessKey);
             assertEquals(positionCount, invoice.positions.size());
             assertNotNull(invoice.rechnungsnummer);
@@ -382,7 +380,6 @@ class InvoiceResourceTest {
                 .then()
                 .statusCode(200)
                 .body("id", equalTo(invoiceId.intValue()))
-                .body("status", equalTo("ERSTELLT"))
                 .body("rechnungsnummer", notNullValue())
                 .body("offerBusinessKey", equalTo(offer.businessKey))
                 // kundendaten muss ein Objekt sein, kein roher String
@@ -436,7 +433,6 @@ class InvoiceResourceTest {
                 .then()
                 .statusCode(200)
                 .body("offerBusinessKey", equalTo(offer.businessKey))
-                .body("status", equalTo("ERSTELLT"))
                 .body("rechnungsnummer", notNullValue())
                 .body("kundendaten.vorname", equalTo("Max"))
                 .body("positions", hasSize(2));

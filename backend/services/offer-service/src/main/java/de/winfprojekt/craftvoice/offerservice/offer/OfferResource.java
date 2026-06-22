@@ -176,4 +176,19 @@ public class OfferResource {
         return Response.ok().build();
     }
 
+    /**
+     * Setzt den Status eines Angebots auf VERSENDET.
+     * Wird vom document-service aufgerufen, nachdem das Angebot erfolgreich versendet wurde.
+     *
+     * @param businessKey Business-Key des Angebots
+     * @return HTTP-Response mit Statuscode 200 bei Erfolg
+     */
+    @POST
+    @Path("/angebote/{businessKey}/versendet")
+    @Consumes(MediaType.WILDCARD)
+    public Response setStatusVersendet(@PathParam("businessKey") String businessKey) {
+        offerService.setStatusVersendet(businessKey);
+        return Response.ok().build();
+    }
+
 }

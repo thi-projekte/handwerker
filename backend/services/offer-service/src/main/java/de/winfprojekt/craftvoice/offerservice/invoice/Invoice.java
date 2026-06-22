@@ -24,9 +24,6 @@ import java.util.List;
 @Table(name = "invoice")
 public class Invoice extends BaseEntity {
 
-    // Status-Konstanten
-    public static final String STATUS_ERSTELLT = "ERSTELLT";
-
     /**
      * Eindeutige Rechnungsnummer im Format RE-{Jahr}-{NNN}.
      * UNIQUE-Constraint auf Datenbankebene sichert Einzigartigkeit ab.
@@ -34,15 +31,8 @@ public class Invoice extends BaseEntity {
     @Column(name = "rechnungsnummer", unique = true, nullable = false)
     public String rechnungsnummer;
 
-    /**
-     * Logische Referenz auf das zugehörige Angebot über den Business-Key.
-     * Keine Datenbank-Fremdschlüsselbeziehung (keine FK über Service-Grenzen).
-     */
     @Column(name = "offer_business_key", nullable = false)
     public String offerBusinessKey;
-
-    @Column(nullable = false)
-    public String status = STATUS_ERSTELLT;
 
     // -----------------------------------------------------------------------
     // Kundendaten-Snapshot (Kopie zum Zeitpunkt der Rechnungserstellung)

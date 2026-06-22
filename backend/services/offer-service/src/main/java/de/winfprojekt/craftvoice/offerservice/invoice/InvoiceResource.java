@@ -85,4 +85,24 @@ public class InvoiceResource {
         InvoiceResponse response = invoiceService.getInvoiceByOfferBusinessKey(businessKey);
         return Response.ok(response).build();
     }
+
+    /**
+     * Erstellt den Rechnungsentwurf für ein angenommenes Angebot und sendet ihn
+     * direkt an die Process Engine zurück.
+     *
+     * <p>Dieser Endpunkt wird ausschließlich von der Process Engine aufgerufen,
+     * nachdem sie die Nachricht "angebotAngenommen" empfangen hat.
+     * Nach der Erstellung korreliert der Service die Nachricht "rechnungsentwurf"
+     * zurück an die PE, die dann den Document Service zur PDF-Generierung aufruft.
+     *
+     * @param businessKey businessKey des Angebots
+     * @return HTTP 204 No Content bei Erfolg
+     */
+    @POST
+    @Path("/{businessKey}/erstellen")
+    @Consumes(MediaType.WILDCARD)
+    public Response createInvoiceForPe(@PathParam("businessKey") String businessKey) {
+        invoiceService.createInvoiceAndNotifyPe(businessKey);
+        return Response.noContent().build();
+    }
 }

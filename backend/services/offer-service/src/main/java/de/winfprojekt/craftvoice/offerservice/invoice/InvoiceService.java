@@ -4,8 +4,11 @@ import de.winfprojekt.craftvoice.offerservice.invoice.dto.CreateInvoiceRequest;
 import de.winfprojekt.craftvoice.offerservice.invoice.dto.InvoiceResponse;
 import de.winfprojekt.craftvoice.offerservice.offer.Offer;
 import de.winfprojekt.craftvoice.offerservice.offer.OfferPosition;
+import de.winfprojekt.craftvoice.offerservice.processengine.ProcessEngineClient;
 import de.winfprojekt.craftvoice.offerservice.user.CustomerDTO;
 import de.winfprojekt.craftvoice.offerservice.user.UserServiceClient;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.WebApplicationException;
@@ -33,6 +36,12 @@ public class InvoiceService {
     @Inject
     @RestClient
     UserServiceClient userServiceClient;
+
+    @Inject
+    ProcessEngineClient processEngineClient;
+
+    @Inject
+    ObjectMapper objectMapper;
 
     /**
      * Erstellt eine neue Rechnung aus einem Angebot mit Status ANGENOMMEN.
@@ -82,7 +91,6 @@ public class InvoiceService {
         Invoice invoice = new Invoice();
         invoice.rechnungsnummer = rechnungsnummer;
         invoice.offerBusinessKey = offer.businessKey;
-        invoice.status = Invoice.STATUS_ERSTELLT;
 
         // Kundendaten-Snapshot
         invoice.kundeVorname = customer.firstName;
@@ -187,5 +195,34 @@ public class InvoiceService {
                 "createdAt >= ?1 and createdAt < ?2", startOfYear, startOfNextYear);
         long naechsteNummer = count + 1;
         return String.format("RE-%d-%03d", jahr, naechsteNummer);
+    }
+
+    /**
+     * Erstellt einen Rechnungsentwurf für ein angenommenes Angebot und sendet ihn
+     * direkt an die Process Engine zurück.
+     *
+     * <p>Wird von der PE nach dem Empfang von "angebotAngenommen" aufgerufen.
+     * Die PE wartet anschließend auf die Nachricht "rechnungsentwurf", um dann
+     * den Document Service zur PDF-Generierung anzusteuern.
+     *
+     * @param businessKey businessKey des Angebots
+     */
+    @Transactional
+    public void createInvoiceAndNotifyPe(String businessKey) {
+        CreateInvoiceRequest request = new CreateInvoiceRequest();
+        request.businessKey = businessKey;
+
+        InvoiceResponse invoice = createInvoice(request);
+
+        String rechnungsentwurfJson;
+        try {
+            rechnungsentwurfJson = objectMapper.writeValueAsString(invoice);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Serialisierung des Rechnungsentwurfs fehlgeschlagen", e);
+        }
+
+        processEngineClient.sendRechnungsentwurf(businessKey, rechnungsentwurfJson);
+
+        LOG.infof("Rechnungsentwurf für businessKey %s an PE übermittelt.", businessKey);
     }
 }
