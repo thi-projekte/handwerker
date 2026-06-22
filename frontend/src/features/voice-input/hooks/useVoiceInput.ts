@@ -6,6 +6,7 @@ export const useVoiceInput = () => {
   const [volume, setVolume] = useState(0);
   const [transcript, setTranscript] = useState("");
   const [audioBlobUrl, setAudioBlobUrl] = useState<string | null>(null);
+  const [audioSegments, setAudioSegments] = useState<string[]>([]);
   const [state, setState] = useState<
     "idle" | "recording" | "review" | "finished"
   >("idle");
@@ -35,6 +36,7 @@ export const useVoiceInput = () => {
     const dataArray = new Uint8Array(analyser.frequencyBinCount);
 
     const update = () => {
+      if (!analyserRef.current) return;
       analyser.getByteFrequencyData(dataArray);
       const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
 
@@ -62,8 +64,6 @@ export const useVoiceInput = () => {
 
       const url = URL.createObjectURL(blob);
       setAudioBlobUrl(url);
-
-      // 👉 optional: hier später Backend Upload möglich
       console.log("Audio Blob ready:", blob);
     };
 
@@ -77,8 +77,21 @@ export const useVoiceInput = () => {
       cancelAnimationFrame(animationRef.current);
     }
 
-    if (mediaRecorderRef.current?.state === "recording") {
-      mediaRecorderRef.current.pause();
+    if (!mediaRecorderRef.current) return;
+
+    // 🔥 WICHTIG: Den Handler ZUERST definieren, BEVOR .stop() aufgerufen wird!
+    mediaRecorderRef.current.onstop = () => {
+      const url = createSegment();
+      setAudioSegments((prev) => [...prev, url]);
+    };
+
+    if (mediaRecorderRef.current.state === "recording") {
+      mediaRecorderRef.current.stop();
+    }
+
+    // AudioContext aufräumen / pausieren
+    if (audioContextRef.current && audioContextRef.current.state !== "closed") {
+      audioContextRef.current.close();
     }
 
     setIsRecording(false);
@@ -87,74 +100,62 @@ export const useVoiceInput = () => {
   };
 
   // Aufnahme fortsetzen
-  const resume = () => {
-    if (mediaRecorderRef.current?.state === "paused") {
-      mediaRecorderRef.current.resume();
-    }
+  const resume = async () => {
+    const stream = await startMicrophone();
 
-    // Visualizer neu starten
-    if (analyserRef.current) {
-      const analyser = analyserRef.current;
+    const mediaRecorder = new MediaRecorder(stream);
+    mediaRecorderRef.current = mediaRecorder;
+    chunksRef.current = [];
 
-      const dataArray = new Uint8Array(
-        analyser.frequencyBinCount
-      );
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data.size > 0) chunksRef.current.push(e.data);
+    };
 
-      const update = () => {
-        analyser.getByteFrequencyData(dataArray);
+    // Auch hier: Erst definieren, dann starten
+    mediaRecorder.onstop = () => {
+      const url = createSegment();
+      setAudioSegments((prev) => [...prev, url]);
+    };
 
-        const avg =
-          dataArray.reduce((a, b) => a + b, 0) /
-          dataArray.length;
+    // Visualisierung für die Fortsetzung neu starten
+    const audioContext = new AudioContext();
+    const analyser = audioContext.createAnalyser();
+    const source = audioContext.createMediaStreamSource(stream);
+    source.connect(analyser);
+    analyser.fftSize = 256;
+    audioContextRef.current = audioContext;
+    analyserRef.current = analyser;
+    const dataArray = new Uint8Array(analyser.frequencyBinCount);
 
-        setVolume(avg);
+    const update = () => {
+      analyser.getByteFrequencyData(dataArray);
+      const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+      setVolume(avg);
+      animationRef.current = requestAnimationFrame(update);
+    };
+    update();
 
-        animationRef.current =
-          requestAnimationFrame(update);
-      };
-
-      update();
-    }
-
+    mediaRecorder.start();
     setIsRecording(true);
     setState("recording");
   };
 
-  // Aufnahme endgültig beenden und Blob erstellen
+  // Aufnahme endgültig beenden
   const finalizeRecording = () => {
-    if (animationRef.current) {
-      cancelAnimationFrame(animationRef.current);
+    if (mediaRecorderRef.current?.state === "recording") {
+      // Falls finalize direkt aus der Aufnahme aufgerufen wird,
+      // wollen wir das Haupt-onstop-Verhalten aus 'start' nutzen
+      mediaRecorderRef.current.stop();
     }
-
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-    }
-
-    if (!mediaRecorderRef.current) return;
-
-    mediaRecorderRef.current.onstop = () => {
-      const blob = new Blob(chunksRef.current, {
-        type: "audio/webm",
-      });
-
-      const url = URL.createObjectURL(blob);
-
-      setAudioBlobUrl(url);
-
-      setState("finished");
-    };
-
-    mediaRecorderRef.current.stop();
-
-    mediaRecorderRef.current.stream
-      .getTracks()
-      .forEach((track) => track.stop());
-
-    setIsRecording(false);
-    setVolume(0);
+    setState("review");
   };
 
-  // 🔀 Schaltet zwischen Start und Stop um
+  const createSegment = () => {
+    const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+    const url = URL.createObjectURL(blob);
+    return url;
+  };
+
   const toggle = () => {
     if (state === "idle") {
       start();
@@ -168,7 +169,10 @@ export const useVoiceInput = () => {
   const reset = () => {
     setState("idle");
     setTranscript("");
+    setAudioSegments([]);
     setAudioBlobUrl(null);
+    if (animationRef.current) cancelAnimationFrame(animationRef.current);
+    if (audioContextRef.current) audioContextRef.current.close();
   };
 
   return {
@@ -177,7 +181,8 @@ export const useVoiceInput = () => {
     toggle,
     transcript,
     setTranscript,
-    audioBlobUrl,
+    audioSegments,
+    audioBlobUrl, // Jetzt auch im Return verfügbar, falls benötigt!
     state,
     reset,
     resume,

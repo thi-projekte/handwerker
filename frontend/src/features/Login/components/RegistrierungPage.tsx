@@ -224,8 +224,18 @@ export const RegistrierungPage = () => {
           >
             Bereits ein Konto? Einloggen
           </button>
+          <footer className="landing-footer sticky-footer">
+
+          <div className="footer-center">
+          <a onClick={() => navigate("/kontakt")}>Kontakt</a>
+                        <a onClick={() => navigate("/impressum")}>Impressum</a>
+                        <a onClick={() => navigate("/datenschutz")}>Datenschutz</a>
+          
         </div>
+
+</footer>
       </div>
+    </div>
     </div>
   );
 };

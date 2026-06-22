@@ -1,0 +1,44 @@
+services:
+  catalog-db:
+    image: postgres:15
+    container_name: catalog-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: catalog
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: catalog-db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U catalog -d catalog-db" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - catalog-internal
+
+  catalog-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.jvm
+    container_name: catalog-service
+    environment:
+      DB_HOST: catalog-db
+      DB_NAME: catalog-db
+      DB_USER: catalog
+      DB_PASSWORD: postgres
+      QUARKUS_OIDC_TENANT_ENABLED: "true"
+    depends_on:
+      catalog-db:
+        condition: service_healthy
+    networks:
+      - catalog-internal
+      - nginx-proxy-manager
+
+volumes:
+  postgres_data:
+
+networks:
+  catalog-internal:
+  nginx-proxy-manager:
+    external: true

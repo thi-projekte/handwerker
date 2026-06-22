@@ -9,6 +9,9 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.jwt.JsonWebToken;
+import org.jboss.resteasy.reactive.RestForm;
+import org.jboss.resteasy.reactive.multipart.FileUpload;
+import java.util.List;
 import java.util.Map;
 
 @Path("/api/users")
@@ -44,6 +47,46 @@ public class UserResource {
         return userService.syncUserWithDatabase();
     }
 
+    @GET
+    @Path("/profile/hourly-rate")
+    @RolesAllowed({"OWNER", "EMPLOYEE"})
+    public Response getHourlyRate() {
+        UserEntity user = userService.syncUserWithDatabase();
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        response.put("stundensatz", user.hourlyRate != null ? user.hourlyRate : 0.0);
+        return Response.ok(response).build();
+    }
+
+    @GET
+    @Path("/profile/travel-config")
+    @RolesAllowed({"OWNER", "EMPLOYEE"})
+    public Response getTravelConfig() {
+        UserEntity user = userService.syncUserWithDatabase();
+
+        String formattedAddress = String.format("%s %s, %s %s",
+                user.street != null ? user.street : "",
+                user.houseNumber != null ? user.houseNumber : "",
+                user.zipCode != null ? user.zipCode : "",
+                user.city != null ? user.city : "").trim();
+
+        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        response.put("modell", user.travelModel != null ? user.travelModel : "PAUSCHALE");
+        response.put("pauschale", user.travelFlatRate);
+        response.put("kmSatz", user.travelKmRate);
+        response.put("adresse", formattedAddress);
+
+        return Response.ok(response).build();
+    }
+
+    @POST
+    @Path("/profile-picture")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Authenticated
+    public Response uploadProfilePicture(@RestForm("file") FileUpload file) {
+        String url = userService.uploadProfilePicture(getUserId(), file);
+        return Response.ok(Map.of("url", url)).build();
+    }
+
     @PUT
     @Path("/profile")
     @Authenticated
@@ -72,6 +115,28 @@ public class UserResource {
     public Response deleteAccount() {
         userService.deleteAccount(getUserId());
         return Response.ok("Account deleted in Keycloak and anonymized locally").build();
+    }
+
+    @POST
+    @Path("/customers")
+    @RolesAllowed({"OWNER", "EMPLOYEE"})
+    public Response createCustomer(UserEntity customer) {
+        UserEntity created = userService.createCustomer(customer);
+        return Response.status(Response.Status.CREATED).entity(created).build();
+    }
+
+    @GET
+    @Path("/customers")
+    @RolesAllowed({"OWNER", "EMPLOYEE"})
+    public List<UserEntity> listCustomers() {
+        return userService.listCustomers();
+    }
+
+    @GET
+    @Path("/customers/{id}")
+    @RolesAllowed({"OWNER", "EMPLOYEE"})
+    public UserEntity getCustomer(@PathParam("id") Long id) {
+        return userService.getCustomerById(id);
     }
 
     private Long getUserId() {
