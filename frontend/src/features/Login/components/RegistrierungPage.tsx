@@ -2,136 +2,30 @@ import "../Login.css";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import logo from "/src/assets/logos/CraftVoice_Logo_white_text.png";
-import { registerUser } from "@/services/userService";
-
-const getErrorMessage = (error: unknown): string => {
-  if (error instanceof Error && error.message) {
-    return error.message;
-  }
-
-  return "Ein unbekannter Fehler ist aufgetreten.";
-};
-
-const getRegisterErrorMessage = (error: unknown): string => {
-  const message = getErrorMessage(error).toLowerCase();
-
-  if (
-    message.includes("already") ||
-    message.includes("exists") ||
-    message.includes("duplicate") ||
-    message.includes("409") ||
-    message.includes("bereits") ||
-    message.includes("existiert")
-  ) {
-    return "Diese E-Mail-Adresse ist bereits registriert. Bitte melde dich an oder nutze „Passwort vergessen“.";
-  }
-
-  return "Registrierung fehlgeschlagen. Bitte prüfe deine Eingaben und versuche es erneut.";
-};
+import keycloak from "@/services/authService";
 
 export const RegistrierungPage = () => {
   const navigate = useNavigate();
 
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [repeatPassword, setRepeatPassword] = useState("");
-
   const [error, setError] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
-  const validateEmail = (emailValue: string): boolean => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue);
-  };
+
 
   const handleRegister = async () => {
-    if (isLoading) {
-      return;
-    }
-
-    setError("");
-    setSuccessMessage("");
-
-    const trimmedFirstName = firstName.trim();
-    const trimmedLastName = lastName.trim();
-    const trimmedEmail = email.trim().toLowerCase();
-
-    if (!trimmedFirstName) {
-      setError("Vorname ist erforderlich.");
-      return;
-    }
-
-    if (!trimmedLastName) {
-      setError("Nachname ist erforderlich.");
-      return;
-    }
-
-    if (!trimmedEmail) {
-      setError("E-Mail ist erforderlich.");
-      return;
-    }
-
-    if (!validateEmail(trimmedEmail)) {
-      setError("Bitte gib eine gültige E-Mail-Adresse ein.");
-      return;
-    }
-
-    if (!password) {
-      setError("Passwort ist erforderlich.");
-      return;
-    }
-
-    if (password.length < 8) {
-  return setError(
-    "Das Passwort muss mindestens 8 Zeichen lang sein."
-  );
-  
-}
-
-const hasNumber = /\d/.test(password);
-const hasSpecialCharacter = /[!@#$%^&*(),.?":{}|<>_\-+=/\\[\]]/.test(password);
-
-if (!acceptedPrivacy) {
-  return setError(
-    "Bitte stimme den Datenschutzbedingungen zu."
-  );
-}
-if (!hasNumber) {
-  return setError(
-    "Das Passwort muss mindestens eine Zahl enthalten."
-  );
-}
-
-if (!hasSpecialCharacter) {
-  return setError(
-    "Das Passwort muss mindestens ein Sonderzeichen enthalten."
-  );
-}
-    if (password !== repeatPassword) {
-      setError("Die Passwörter stimmen nicht überein.");
+    if (!acceptedPrivacy) {
+      setError("Bitte stimme den Datenschutzbedingungen zu.");
       return;
     }
 
     try {
       setIsLoading(true);
 
-      await registerUser({
-        email: trimmedEmail,
-        password,
-        firstName: trimmedFirstName,
-        lastName: trimmedLastName,
+      await keycloak.register({
+        redirectUri: `${window.location.origin}/login`,
       });
-
-      setSuccessMessage(
-        "Registrierung erfolgreich. Bitte prüfe deine E-Mails und bestätige deinen Account.",
-      );
-
-      setPassword("");
-      setRepeatPassword("");
-    } catch (registerError) {
-      setError(getRegisterErrorMessage(registerError));
+    } catch {
+      setError("Registrierung konnte nicht gestartet werden.");
     } finally {
       setIsLoading(false);
     }
@@ -159,95 +53,31 @@ if (!hasSpecialCharacter) {
         </div>
 
         <h1>Registrieren</h1>
-        <p className="text-secondary">Erstelle deinen CraftVoice Account</p>
 
-        <div className="divider" />
+        <p className="text-secondary">
+          Erstelle deinen CraftVoice Account
+        </p>
 
-        {error && (
-          <div className="error-banner" role="alert">
-            <span className="error-icon">⚠️</span>
-            <span>{error}</span>
-          </div>
-        )}
-
-        {successMessage && (
-          <div className="success-banner" role="status">
-            <span>✅</span>
-            <span>{successMessage}</span>
-          </div>
-        )}
-
-        <input
-          className="input-field"
-          type="text"
-          placeholder="Vorname"
-          value={firstName}
-          onChange={(event) => setFirstName(event.target.value)}
-          disabled={isLoading}
-        />
-
-        <input
-          className="input-field"
-          type="text"
-          placeholder="Nachname"
-          value={lastName}
-          onChange={(event) => setLastName(event.target.value)}
-          disabled={isLoading}
-        />
-
-        <input
-          className="input-field"
-          type="email"
-          placeholder="E-Mail-Adresse"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          disabled={isLoading}
-        />
-
-        <input
-          className="input-field"
-          type="password"
-          placeholder="Passwort"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          disabled={isLoading}
-        />
-
-        <input
-          className="input-field"
-          type="password"
-          placeholder="Passwort wiederholen"
-          value={repeatPassword}
-          onChange={(event) => setRepeatPassword(event.target.value)}
-          disabled={isLoading}
-        />
         <div className="privacy-consent">
-  <input
-    type="checkbox"
-    id="privacyConsent"
-    checked={acceptedPrivacy}
-    onChange={(e) => setAcceptedPrivacy(e.target.checked)}
-  />
+          <input
+            type="checkbox"
+            id="privacyConsent"
+            checked={acceptedPrivacy}
+            onChange={(e) => setAcceptedPrivacy(e.target.checked)}
+          />
 
-  <label htmlFor="privacyConsent">
-    Ich stimme den{" "}
-    <span
-      className="privacy-link"
-      onClick={() => navigate("/datenschutz")}
-    >
-      Datenschutzbedingungen
-    </span>{" "}
-    zu.
-  </label>
-</div>
+          <label htmlFor="privacyConsent">
+            Ich stimme den Datenschutzbedingungen zu.
+          </label>
+        </div>
 
         <button
           className="button-primary register-btn"
           type="button"
           onClick={handleRegister}
-          disabled={isLoading || Boolean(successMessage)}
+          disabled={isLoading}
         >
-          {isLoading ? "Registrierung läuft..." : "Registrieren"}
+          Registrieren
         </button>
 
         <div className="register-footer">
@@ -261,15 +91,15 @@ if (!hasSpecialCharacter) {
           </button>
           <footer className="landing-footer sticky-footer">
 
-          <div className="footer-center">
-          <a onClick={() => navigate("/kontakt")}>Kontakt</a>
-                        <a onClick={() => navigate("/impressum")}>Impressum</a>
-          
-        </div>
+            <div className="footer-center">
+              <a onClick={() => navigate("/kontakt")}>Kontakt</a>
+              <a onClick={() => navigate("/impressum")}>Impressum</a>
 
-</footer>
+            </div>
+
+          </footer>
+        </div>
       </div>
-    </div>
     </div>
   );
 };
