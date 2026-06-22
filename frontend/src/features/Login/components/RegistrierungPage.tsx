@@ -24,7 +24,7 @@ export const RegistrierungPage = () => {
       await keycloak.register({
         redirectUri: `${window.location.origin}/login`,
       });
-    } catch (error) {
+    } catch {
       setError("Registrierung konnte nicht gestartet werden.");
     } finally {
       setIsLoading(false);
