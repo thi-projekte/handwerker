@@ -1,12 +1,17 @@
 import { useRef, useState } from "react";
 import { startMicrophone } from "../services/microphoneService";
 
+const OFFER_SERVICE_URL =
+  import.meta.env.VITE_API_URL ||
+  "https://offerservice-craftvoice.winfprojekt.de";
+
 export const useVoiceInput = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [volume, setVolume] = useState(0);
   const [transcript, setTranscript] = useState("");
   const [audioBlobUrl, setAudioBlobUrl] = useState<string | null>(null);
   const [audioSegments, setAudioSegments] = useState<string[]>([]);
+  const [audioBlobs, setAudioBlobs] = useState<Blob[]>([]);
   const [state, setState] = useState<
     "idle" | "recording" | "review" | "finished"
   >("idle");
@@ -152,8 +157,54 @@ export const useVoiceInput = () => {
 
   const createSegment = () => {
     const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+    // Blob für spätere Transkription speichern
+    setAudioBlobs((prev) => [...prev, blob]);
     const url = URL.createObjectURL(blob);
     return url;
+  };
+
+  /**
+   * Merged alle aufgenommenen Segmente zu einem einzigen Blob,
+   * schickt ihn an /speech-capture/transcribe und gibt das Transkript zurück.
+   */
+  const transcribeAudio = async (): Promise<string> => {
+    // Aktuellen (noch nicht gestoppten) Chunk ebenfalls einbeziehen
+    const currentBlob =
+      chunksRef.current.length > 0
+        ? new Blob(chunksRef.current, { type: "audio/webm" })
+        : null;
+
+    const allBlobs = currentBlob
+      ? [...audioBlobs, currentBlob]
+      : [...audioBlobs];
+
+    if (allBlobs.length === 0) {
+      throw new Error("Keine Audioaufnahme vorhanden.");
+    }
+
+    // Alle Segmente zu einem Blob zusammenführen
+    const mergedBlob = new Blob(allBlobs, { type: "audio/webm" });
+
+    const formData = new FormData();
+    formData.append("audio", mergedBlob, "aufnahme.webm");
+
+    const response = await fetch(
+      `${OFFER_SERVICE_URL}/speech-capture/transcribe`,
+      {
+        method: "POST",
+        body: formData,
+      },
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `Transkription fehlgeschlagen (${response.status}): ${errorText}`,
+      );
+    }
+
+    const data = await response.json();
+    return data.transkript as string;
   };
 
   const toggle = () => {
@@ -170,6 +221,7 @@ export const useVoiceInput = () => {
     setState("idle");
     setTranscript("");
     setAudioSegments([]);
+    setAudioBlobs([]);
     setAudioBlobUrl(null);
     if (animationRef.current) cancelAnimationFrame(animationRef.current);
     if (audioContextRef.current) audioContextRef.current.close();
@@ -182,11 +234,12 @@ export const useVoiceInput = () => {
     transcript,
     setTranscript,
     audioSegments,
-    audioBlobUrl, // Jetzt auch im Return verfügbar, falls benötigt!
+    audioBlobUrl,
     state,
     reset,
     resume,
     pause,
     finalizeRecording,
+    transcribeAudio,
   };
 };
