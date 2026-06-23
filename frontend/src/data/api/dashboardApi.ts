@@ -33,7 +33,10 @@ export interface DashboardStatsResponse {
   angebotsuebersicht: ChartDataDTO[];
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://offerservice-craftvoice.winfprojekt.de";
+const API_BASE_URL =
+  import.meta.env.VITE_OFFER_SERVICE_URL?.trim() ||
+  import.meta.env.VITE_API_URL?.trim() ||
+  "https://offerservice-craftvoice.winfprojekt.de";
 
 export const getDashboardStats = async (): Promise<DashboardStatsResponse> => {
   const token = await getToken();
