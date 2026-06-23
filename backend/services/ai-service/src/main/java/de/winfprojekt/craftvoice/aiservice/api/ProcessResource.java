@@ -14,6 +14,7 @@ import de.winfprojekt.craftvoice.aiservice.pipeline.LlmCall1Generator;
 import de.winfprojekt.craftvoice.aiservice.pipeline.ProcessTypeDetector;
 
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -78,7 +79,8 @@ public class ProcessResource {
     @Path("/process")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response process(ProcessRequest request) {
+    public Response process(ProcessRequest request,
+                            @HeaderParam("X-Handwerker-Id") String handwerkerId) {
         String businessKey = request != null ? request.businessKey() : null;
         LOG.infof("POST /ai/process empfangen, businessKey=%s", businessKey);
 
@@ -99,7 +101,7 @@ public class ProcessResource {
         // intern den ReceiveTask und legt die ergebnisKI-Subscription an. Synchrones
         // Verarbeiten wuerde (a) die Message u.U. vor der Subscription senden -> HTTP 400
         // und (b) den HTTP-Connector sekundenlang blockieren.
-        CompletableFuture.runAsync(() -> verarbeiteUndKorreliere(type, request, businessKey))
+        CompletableFuture.runAsync(() -> verarbeiteUndKorreliere(type, request, businessKey, handwerkerId))
                 .exceptionally(throwable -> {
                     LOG.errorf(throwable,
                             "Asynchrone KI-Verarbeitung fehlgeschlagen (businessKey=%s)",
@@ -116,14 +118,17 @@ public class ProcessResource {
      * darf also blockieren und antwortet dem Aufrufer nicht mehr per HTTP — Fehler werden
      * nur geloggt.
      */
-    private void verarbeiteUndKorreliere(ProcessType type, ProcessRequest request, String businessKey) {
+    private void verarbeiteUndKorreliere(ProcessType type, ProcessRequest request, String businessKey,
+                                         String handwerkerId) {
         ErgebnisKi ergebnis = switch (type) {
             case ERSTANGEBOT -> llmGenerator.forErstangebot(request);
             case KORREKTUR   -> llmGenerator.forKorrektur(request);
         };
 
         // LLM-Call 2 (#541): Materialpositionen um Katalog-IDs anreichern (parallel).
-        ergebnis = call2Selector.enrich(ergebnis);
+        // handwerkerId (von der PE als X-Handwerker-Id-Header) bestimmt, wessen Katalog
+        // durchsucht wird (#540) — im Mock-Betrieb irrelevant.
+        ergebnis = call2Selector.enrich(ergebnis, handwerkerId);
 
         String ergebnisJson;
         try {

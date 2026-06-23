@@ -24,7 +24,7 @@ class CatalogSearchServiceTest {
 
     @Test
     void findetPassendeKandidaten_undRanktRelevanteOben() {
-        List<CatalogCandidate> result = service.search("Feinsteinzeug Eiche Bodenfliese", 5);
+        List<CatalogCandidate> result = service.search("Feinsteinzeug Eiche Bodenfliese", 5, null);
 
         assertFalse(result.isEmpty(), "Es sollten Kandidaten gefunden werden.");
         // Der spezifischste Treffer (Eiche-natur) sollte ganz oben stehen.
@@ -35,25 +35,25 @@ class CatalogSearchServiceTest {
 
     @Test
     void findetElektroKandidaten() {
-        List<CatalogCandidate> result = service.search("Doppelsteckdose Unterputz", 10);
+        List<CatalogCandidate> result = service.search("Doppelsteckdose Unterputz", 10, null);
         assertTrue(result.stream().anyMatch(c -> "ELE-3001".equals(c.articleNumber())),
                 "Doppelsteckdose UP sollte gefunden werden.");
     }
 
     @Test
     void respektiertLimit() {
-        List<CatalogCandidate> result = service.search("Fliese Boden weiss grau", 2);
+        List<CatalogCandidate> result = service.search("Fliese Boden weiss grau", 2, null);
         assertTrue(result.size() <= 2);
     }
 
     @Test
     void keinTreffer_liefertLeereListe() {
-        List<CatalogCandidate> result = service.search("Quantencomputer Raumschiff", 5);
+        List<CatalogCandidate> result = service.search("Quantencomputer Raumschiff", 5, null);
         assertTrue(result.isEmpty(), "Voellig fachfremde Query darf nichts liefern.");
     }
 
     @Test
     void leereQuery_liefertLeereListe() {
-        assertTrue(service.search("   ", 5).isEmpty());
+        assertTrue(service.search("   ", 5, null).isEmpty());
     }
 }

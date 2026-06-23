@@ -15,6 +15,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -41,21 +42,22 @@ class Call2SelectorTest {
 
     @Test
     void ohneKey_nimmtTopKandidatAlsBaseline() {
-        when(catalogSearch.search(anyString(), anyInt())).thenReturn(List.of(
+        when(catalogSearch.search(anyString(), anyInt(), any())).thenReturn(List.of(
                 new CatalogCandidate("1001", "FLI-1001", "Feinsteinzeug Eiche", "desc", "m2", "Fliesen", 3.0),
                 new CatalogCandidate("1002", "FLI-1002", "Feinsteinzeug Beton", "desc", "m2", "Fliesen", 2.0)));
 
-        Position result = selector.selectFor(new Position("Feinsteinzeug 60x60", "Bodenfliese", 15.0, "m2"));
+        Position result = selector.selectFor(
+                new Position("Feinsteinzeug 60x60", "Bodenfliese", 15.0, "m2"), "owner-1");
 
         assertEquals("1001", result.katalogProduktId());
     }
 
     @Test
     void keineKandidaten_lassenPositionUnveraendert() {
-        when(catalogSearch.search(anyString(), anyInt())).thenReturn(List.of());
+        when(catalogSearch.search(anyString(), anyInt(), any())).thenReturn(List.of());
 
         Position input = new Position("Exotenartikel", "gibt es nicht", 1.0, "Stk");
-        Position result = selector.selectFor(input);
+        Position result = selector.selectFor(input, "owner-1");
 
         assertNull(result.katalogProduktId());
         assertEquals("Exotenartikel", result.bezeichnung());
