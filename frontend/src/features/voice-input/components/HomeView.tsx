@@ -20,14 +20,11 @@ export const HomeView = () => {
     },
   ];
   const [mode, setMode] = useState<"voice" | "text">("voice");
-  const [customerCollapsed, setCustomerCollapsed] =
-    useState(false);
-  const [selectedCustomer, setSelectedCustomer] =
-    useState<number | null>(null);
-  const selectedCustomerData =
-    recentCustomers.find(
-      (c) => c.id === selectedCustomer
-    );
+  const [customerCollapsed, setCustomerCollapsed] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<number | null>(null);
+  const selectedCustomerData = recentCustomers.find(
+    (c) => c.id === selectedCustomer,
+  );
   const [search, setSearch] = useState("");
   const {
     isRecording,
@@ -38,13 +35,11 @@ export const HomeView = () => {
     setTranscript,
     state,
     reset,
-    finalizeRecording
+    finalizeRecording,
   } = useVoiceInput();
   const navigate = useNavigate();
-  const [customerError, setCustomerError] =
-    useState(false);
-  const [textError, setTextError] =
-    useState(false);
+  const [customerError, setCustomerError] = useState(false);
+  const [textError, setTextError] = useState(false);
   return (
     <div className="voice-container">
       <h1>Angebot erstellen</h1>
@@ -110,9 +105,7 @@ export const HomeView = () => {
               <div className="audio-actions">
                 <button onClick={reset}>⭰ Neu aufnehmen</button>
 
-                <button onClick={toggle}>
-                  ▶ Aufnahme fortsetzen
-                </button>
+                <button onClick={toggle}>▶ Aufnahme fortsetzen</button>
                 <button
                   onClick={() => {
                     finalizeRecording();
@@ -148,9 +141,7 @@ export const HomeView = () => {
             />
 
             <div className="text-footer">
-              <span>
-                {transcript.length} Zeichen
-              </span>
+              <span>{transcript.length} Zeichen</span>
 
               <button
                 className="continue-button"
@@ -173,14 +164,13 @@ export const HomeView = () => {
             Beschreibe dein Angebot möglichst genau
           </p>
           {textError && (
-            <div className="text-error">
-              Bitte gib zuerst einen Text ein.
-            </div>
+            <div className="text-error">Bitte gib zuerst einen Text ein.</div>
           )}
         </div>
       )}
-      <div className={`customer-card ${customerCollapsed ? "collapsed" : ""} ${customerError ? "error" : ""}`}>
-
+      <div
+        className={`customer-card ${customerCollapsed ? "collapsed" : ""} ${customerError ? "error" : ""}`}
+      >
         {/* COLLAPSED VIEW */}
 
         {customerCollapsed && selectedCustomerData ? (
@@ -196,18 +186,12 @@ export const HomeView = () => {
             </div>
 
             <div className="customer-info">
-              <strong>
-                {selectedCustomerData.name}
-              </strong>
+              <strong>{selectedCustomerData.name}</strong>
 
-              <span>
-                {selectedCustomerData.company}
-              </span>
+              <span>{selectedCustomerData.company}</span>
             </div>
 
-            <div className="customer-selected-badge">
-              Ausgewählt
-            </div>
+            <div className="customer-selected-badge">Ausgewählt</div>
           </button>
         ) : (
           <>
@@ -218,11 +202,9 @@ export const HomeView = () => {
 
               <button
                 className="new-customer-btn"
-                onClick={() =>
-                  navigate("/unternehmen?tab=kunde")
-                }
+                onClick={() => navigate("/unternehmen?tab=kunde")}
               >
-                ➜  Neuer Kunde
+                ➜ Neuer Kunde
               </button>
             </div>
 
@@ -233,16 +215,13 @@ export const HomeView = () => {
                 type="text"
                 placeholder="Kunde oder Firma suchen..."
                 value={search}
-                onChange={(e) =>
-                  setSearch(e.target.value)
-                }
+                onChange={(e) => setSearch(e.target.value)}
               />
             </div>
 
             {/* RECENT */}
 
             <div className="recent-customers">
-
               <div className="recent-header">
                 <span>Zuletzt verwendet</span>
               </div>
@@ -251,10 +230,9 @@ export const HomeView = () => {
                 {recentCustomers.map((customer) => (
                   <button
                     key={customer.id}
-                    className={`customer-item ${selectedCustomer === customer.id
-                      ? "selected"
-                      : ""
-                      }`}
+                    className={`customer-item ${
+                      selectedCustomer === customer.id ? "selected" : ""
+                    }`}
                     onClick={() => {
                       setSelectedCustomer(customer.id);
                       setCustomerCollapsed(true);
@@ -266,18 +244,13 @@ export const HomeView = () => {
                     </div>
 
                     <div className="customer-info">
-                      <strong>
-                        {customer.name}
-                      </strong>
+                      <strong>{customer.name}</strong>
 
-                      <span>
-                        {customer.company}
-                      </span>
+                      <span>{customer.company}</span>
                     </div>
                   </button>
                 ))}
               </div>
-
             </div>
           </>
         )}

@@ -222,3 +222,133 @@
 .offer-share-secondary-button:hover {
   border-color: var(--color-accent);
 }
+
+/* =========================
+   OfferSharePage – Ergänzungen für document-service Integration
+   ========================= */
+
+/* ── PDF-Vorschau ── */
+.offer-pdf-preview {
+  margin: 16px 0;
+  border-radius: 14px;
+  border: 1px solid var(--color-divider);
+  overflow: hidden;
+}
+
+.offer-pdf-link {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  text-decoration: none;
+  color: var(--color-text-primary);
+  transition: background 0.15s;
+}
+
+.offer-pdf-link:hover {
+  background: rgba(255, 106, 0, 0.04);
+}
+
+.offer-pdf-icon {
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.offer-pdf-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+}
+
+.offer-pdf-info strong {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.offer-pdf-info span {
+  font-size: 12px;
+}
+
+.offer-pdf-open {
+  color: var(--color-accent);
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.offer-pdf-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 24px;
+}
+
+.offer-pdf-missing {
+  padding: 16px;
+  text-align: center;
+}
+
+.offer-pdf-retry {
+  background: none;
+  border: none;
+  color: var(--color-accent);
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  font-size: inherit;
+  text-decoration: underline;
+}
+
+/* ── Versand-Erfolg ── */
+.share-success {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(37, 211, 102, 0.1);
+  border: 1px solid rgba(37, 211, 102, 0.3);
+}
+
+.share-success-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.share-success p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-text-primary);
+}
+
+/* ── Loader (inline) ── */
+.loader {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.loader span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  animation: bounce 0.6s infinite alternate;
+}
+
+.loader span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.loader span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes bounce {
+  to {
+    transform: translateY(-8px);
+    opacity: 0.6;
+  }
+}

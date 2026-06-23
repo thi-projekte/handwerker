@@ -1,7 +1,22 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import "@/assets/stylesheets/stylesheet.css";
 import "@/features/review/components/ReviewPage.css";
+import {
+  getOfferByBusinessKey,
+  approveOffer,
+  updateOfferPositions,
+  sendKorrektur,
+  type OfferResponse,
+  type OfferPosition,
+} from "@/data/api/offerService";
+import {
+  sendGenehmigung,
+  sendAngebotsentwurf,
+  sendKorrekturschnipsel,
+} from "@/data/api/processEngineService";
+
+// ─── Typen ───────────────────────────────────────────────────────────────────
 
 interface Position {
   id: string;
@@ -10,6 +25,8 @@ interface Position {
   menge: number;
   einheit: string;
   preis: number;
+  katalogProduktId: string | null;
+  typ: "LEISTUNG" | "MATERIAL";
   alternativen: {
     bezeichnung: string;
     beschreibung: string;
@@ -39,12 +56,12 @@ interface MitarbeiterZeile {
   manuellGeaendert: boolean;
 }
 
-const MOCK_KUNDENDATEN = {
-  name: "Max Mustermann",
-  adresse: "Musterstraße 1",
-  ort: "85049 Ingolstadt",
-};
+// ─── Mock-Daten (Fallback & Mitarbeiter) ─────────────────────────────────────
 
+/**
+ * Mitarbeiter-Liste: Noch nicht vom user-service geliefert.
+ * TODO: Aus user-service laden wenn verfügbar.
+ */
 const MOCK_MITARBEITER: Mitarbeiter[] = [
   { id: "ma1", name: "Thomas Huber", stundensatz: 85.0 },
   { id: "ma2", name: "Stefan Maier", stundensatz: 75.0 },
@@ -52,123 +69,52 @@ const MOCK_MITARBEITER: Mitarbeiter[] = [
   { id: "ma4", name: "Markus Wolf", stundensatz: 70.0 },
 ];
 
-const MOCK_KI_MITARBEITER_VORSCHLAG: MitarbeiterZeile[] = [
-  {
-    zeilenId: "mz1",
-    mitarbeiterId: "ma1",
-    stunden: 6,
-    manuellGeaendert: false,
-  },
-  {
-    zeilenId: "mz2",
-    mitarbeiterId: "ma4",
-    stunden: 8,
-    manuellGeaendert: false,
-  },
-];
+/**
+ * Kundendaten: Kommen noch nicht als echte Daten aus dem offer-service.
+ * TODO: customerId → customer-service → Kundendaten laden.
+ */
+const FALLBACK_KUNDENDATEN = {
+  name: "Kunde (wird geladen…)",
+  adresse: "—",
+  ort: "—",
+};
 
-const MOCK_LEISTUNGEN: Position[] = [
-  {
-    id: "l1",
-    bezeichnung: "Badezimmer renovieren",
-    beschreibung: "Renovierung des Badezimmers inkl. Vorbereitung",
-    menge: 1,
-    einheit: "Stück",
-    preis: 49.99,
-    alternativen: [
-      {
-        bezeichnung: "Badezimmer Komplettsanierung",
-        beschreibung: "Vollständige Sanierung inkl. Abriss",
-        menge: 1,
-        einheit: "Stück",
-        preis: 89.99,
-      },
-      {
-        bezeichnung: "Badezimmer Teilrenovierung",
-        beschreibung: "Nur Fliesen und Sanitär",
-        menge: 1,
-        einheit: "Stück",
-        preis: 35.0,
-      },
-    ],
-    gewaehlteAlternativeIndex: null,
-    manuellGeaendert: false,
-  },
-];
+// ─── Hilfsfunktionen ─────────────────────────────────────────────────────────
 
-const MOCK_MATERIALIEN: Position[] = [
-  {
-    id: "m1",
-    bezeichnung: "Bodenfliesen Marmor Villeroy & Boch 60×60 cm",
-    beschreibung: "Wand- und Bodenfliesen für Badezimmer",
-    menge: 15,
-    einheit: "m²",
-    preis: 29.99,
-    alternativen: [
-      {
-        bezeichnung: "Bodenfliesen Marmor Villeroy & Boch 80×80 cm",
-        beschreibung: "Größeres Format, gleiche Qualität",
-        menge: 15,
-        einheit: "m²",
-        preis: 39.99,
-      },
-      {
-        bezeichnung: "Bodenfliesen Marmor Marazzi 60×60 cm",
-        beschreibung: "Italienisches Markenprodukt",
-        menge: 15,
-        einheit: "m²",
-        preis: 34.5,
-      },
-      {
-        bezeichnung: "Bodenfliesen Keramik günstig 60×60 cm",
-        beschreibung: "Einstiegsvariante ohne Markenname",
-        menge: 15,
-        einheit: "m²",
-        preis: 18.9,
-      },
-    ],
-    gewaehlteAlternativeIndex: null,
-    manuellGeaendert: false,
-  },
-  {
-    id: "m2",
-    bezeichnung: "Toilette Duravit Starck 3",
-    beschreibung: "Toilette für Badezimmer",
-    menge: 1,
-    einheit: "Stück",
-    preis: 199.99,
-    alternativen: [
-      {
-        bezeichnung: "Toilette Geberit Renova",
-        beschreibung: "Schweizer Qualität, kompakte Bauweise",
-        menge: 1,
-        einheit: "Stück",
-        preis: 159.0,
-      },
-      {
-        bezeichnung: "Toilette Villeroy & Boch O.Novo",
-        beschreibung: "Klassisches Design, zeitlos",
-        menge: 1,
-        einheit: "Stück",
-        preis: 229.0,
-      },
-    ],
-    gewaehlteAlternativeIndex: null,
-    manuellGeaendert: false,
-  },
-];
+let _idCounter = 0;
+const newId = () => `pos_${Date.now()}_${_idCounter++}`;
 
-const MOCK_KI_ANMERKUNGEN = [
-  "Materialkosten sollten vor Angebotserstellung beim Lieferanten verifiziert werden.",
-  "Kundendaten vor endgültiger Angebotserstellung prüfen.",
-  "Bitte Lieferzeiten für Villeroy & Boch Fliesen vorab anfragen – aktuell 3–4 Wochen.",
-];
-
-let _idCounter = 1000;
-const newId = () => `neu-${++_idCounter}`;
 const findMa = (id: string) => MOCK_MITARBEITER.find((m) => m.id === id);
 
-// ─── Stichpunkt-Liste ───
+/**
+ * Konvertiert eine OfferPosition (Backend-Format) in das Frontend-Position-Format.
+ * KI liefert keine Alternativen direkt — Alternativen-Array bleibt leer.
+ * TODO: Alternativen über catalog-service nachschlagen (katalogProduktId → Kandidaten).
+ */
+function offerPositionToFrontend(
+  p: OfferPosition,
+  typ: "LEISTUNG" | "MATERIAL",
+): Position {
+  return {
+    id: String(p.id),
+    bezeichnung: p.bezeichnung,
+    beschreibung: p.beschreibung,
+    menge: p.menge ?? 1,
+    einheit: p.einheit,
+    preis: p.einzelPreis ?? 0,
+    katalogProduktId: p.katalogProduktId,
+    typ,
+    alternativen: [],
+    // TODO: Alternativen via GET /catalog/material/search befüllen
+    // (katalogProduktId als Ausgangspunkt für Suche)
+    gewaehlteAlternativeIndex: null,
+    manuellGeaendert: false,
+  };
+}
+
+// ─── Sub-Komponenten ──────────────────────────────────────────────────────────
+
+// ── Stichpunkt-Liste ──
 interface StichpunktListeProps {
   stichpunkte: Stichpunkt[];
   editingId: string | null;
@@ -187,58 +133,49 @@ const StichpunktListe = ({
   onUpdate,
   onSetEditing,
 }: StichpunktListeProps) => (
-  <div className="review-stichpunkte-block">
-    {stichpunkte.length > 0 && (
-      <ul className="review-list">
-        {stichpunkte.map((sp) => (
-          <li key={sp.id} className="review-item review-item-manuell">
-            <span className="review-drag-handle">⠿</span>
-            {editingId === sp.id ? (
-              <textarea
-                className="review-textarea"
-                value={sp.text}
-                autoFocus
-                onChange={(e) => onUpdate(sp.id, e.target.value)}
-                onBlur={() => onSetEditing(null)}
-                rows={2}
-              />
-            ) : (
-              <span className="review-text" onClick={() => onSetEditing(sp.id)}>
-                {sp.text || (
-                  <span className="review-placeholder">
-                    Tippen zum Eingeben …
-                  </span>
-                )}
-              </span>
-            )}
-            <span className="review-pos-badge manual review-sp-badge">
-              Manuelle Änderung
-            </span>
-            <button
-              className="review-delete-btn"
-              onClick={() => onDelete(sp.id)}
-              title="Löschen"
-            >
-              ✕
-            </button>
-          </li>
-        ))}
-      </ul>
-    )}
+  <div className="review-stichpunkte">
+    {stichpunkte.map((s) => (
+      <div key={s.id} className="review-stichpunkt-row">
+        {editingId === s.id ? (
+          <input
+            className="review-stichpunkt-input"
+            autoFocus
+            value={s.text}
+            onChange={(e) => onUpdate(s.id, e.target.value)}
+            onBlur={() => onSetEditing(null)}
+            onKeyDown={(e) => e.key === "Enter" && onSetEditing(null)}
+          />
+        ) : (
+          <span
+            className="review-stichpunkt-text editable"
+            onClick={() => onSetEditing(s.id)}
+          >
+            {s.text || "Stichpunkt eingeben…"}
+          </span>
+        )}
+        <button
+          className="review-delete-btn"
+          onClick={() => onDelete(s.id)}
+          title="Löschen"
+        >
+          ✕
+        </button>
+      </div>
+    ))}
     <button className="review-add-btn" onClick={onAdd}>
       + Stichpunkt hinzufügen
     </button>
   </div>
 );
 
-// ─── Positionskarte ───
+// ── Positions-Karte ──
 interface PositionsKarteProps {
   position: Position;
   index: number;
   total: number;
   onMoveUp: () => void;
   onMoveDown: () => void;
-  onAlternativeWaehlen: (altIndex: number | null) => void;
+  onAlternativeWaehlen: (index: number | null) => void;
   onPreisAendern: (preis: number) => void;
   onBezeichnungAendern: (bez: string) => void;
   onMengeAendern: (menge: number) => void;
@@ -257,178 +194,204 @@ const PositionsKarte = ({
   onMengeAendern,
   onLoeschen,
 }: PositionsKarteProps) => {
-  const [editPreis, setEditPreis] = useState(false);
   const [editBez, setEditBez] = useState(false);
   const [editMenge, setEditMenge] = useState(false);
-  const [preisWert, setPreisWert] = useState(String(position.preis.toFixed(2)));
+  const [editPreis, setEditPreis] = useState(false);
   const [bezWert, setBezWert] = useState(position.bezeichnung);
   const [mengeWert, setMengeWert] = useState(String(position.menge));
+  const [preisWert, setPreisWert] = useState(String(position.preis));
 
-  const aktuellePos =
+  const ap =
     position.gewaehlteAlternativeIndex !== null
       ? position.alternativen[position.gewaehlteAlternativeIndex]
       : position;
-  const angezeigterName = position.manuellGeaendert
-    ? bezWert
-    : aktuellePos.bezeichnung;
+
+  const istAlternativ = position.gewaehlteAlternativeIndex !== null;
+  const rowClass = [
+    "review-position-row",
+    position.manuellGeaendert ? "manuell" : "",
+    istAlternativ ? "alternativ" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
-    <div
-      className={`review-position-row ${position.manuellGeaendert ? "manuell" : ""} ${position.gewaehlteAlternativeIndex !== null ? "alternativ" : ""}`}
-    >
-      <div className="review-pos-order">
+    <div className={rowClass}>
+      <div className="review-pos-reorder">
         <button
-          className="review-order-btn"
+          className="review-reorder-btn"
           onClick={onMoveUp}
           disabled={index === 0}
           title="Nach oben"
         >
-          ▲
+          ↑
         </button>
-        <span className="review-pos-num">{index + 1}</span>
+        <span className="review-pos-index">{index + 1}</span>
         <button
-          className="review-order-btn"
+          className="review-reorder-btn"
           onClick={onMoveDown}
           disabled={index === total - 1}
           title="Nach unten"
         >
-          ▼
-        </button>
-        <button
-          className="review-order-btn review-order-del-btn"
-          onClick={onLoeschen}
-          title="Position löschen"
-        >
-          ✕
+          ↓
         </button>
       </div>
 
-      <div className="review-pos-name-box">
+      <div className="review-pos-content">
+        <div className="review-pos-badges">
+          {position.manuellGeaendert && (
+            <span className="review-pos-badge manual">Manuelle Änderung</span>
+          )}
+          {istAlternativ && (
+            <span className="review-pos-badge alt">Alternative gewählt</span>
+          )}
+          {position.menge === null && (
+            <span className="review-pos-badge warn">Menge fehlt</span>
+          )}
+        </div>
+
         {editBez ? (
-          <textarea
-            className="review-pos-name-input"
-            value={bezWert}
+          <input
+            className="review-pos-bezeichnung-input"
             autoFocus
-            rows={2}
+            value={bezWert}
             onChange={(e) => setBezWert(e.target.value)}
             onBlur={() => {
               setEditBez(false);
               if (bezWert !== position.bezeichnung)
                 onBezeichnungAendern(bezWert);
             }}
+            onKeyDown={(e) => e.key === "Enter" && setEditBez(false)}
           />
         ) : (
           <span
-            className="review-pos-name"
+            className="review-pos-bezeichnung editable"
             onClick={() => {
-              setBezWert(angezeigterName);
+              setBezWert(
+                position.manuellGeaendert
+                  ? position.bezeichnung
+                  : ap.bezeichnung,
+              );
               setEditBez(true);
             }}
-            title="Klicken zum Bearbeiten"
+            title="Bezeichnung anpassen"
           >
-            {angezeigterName}
-            {position.manuellGeaendert && (
-              <span className="review-pos-badge manual">Manuelle Änderung</span>
-            )}
-            {position.gewaehlteAlternativeIndex !== null &&
-              !position.manuellGeaendert && (
-                <span className="review-pos-badge alt">Alternative</span>
-              )}
+            {position.manuellGeaendert ? position.bezeichnung : ap.bezeichnung}
           </span>
         )}
-        <span className="review-pos-menge">
+
+        <span className="review-pos-beschreibung">{ap.beschreibung}</span>
+      </div>
+
+      <div className="review-pos-meta">
+        <div className="review-pos-menge-wrap">
           {editMenge ? (
             <input
               className="review-pos-menge-input"
               type="number"
-              step="1"
+              step="0.01"
               min="0"
               autoFocus
               value={mengeWert}
               onChange={(e) => setMengeWert(e.target.value)}
               onBlur={() => {
                 setEditMenge(false);
-                const m = parseFloat(mengeWert.replace(",", "."));
-                if (!isNaN(m) && m !== aktuellePos.menge) onMengeAendern(m);
+                const v = parseFloat(mengeWert);
+                if (!isNaN(v) && v !== position.menge) onMengeAendern(v);
               }}
-              style={{ width: 52, marginRight: 4 }}
             />
           ) : (
             <span
-              style={{ cursor: "text" }}
+              className="review-pos-menge editable"
               onClick={() => {
-                setMengeWert(String(aktuellePos.menge));
+                setMengeWert(
+                  String(position.manuellGeaendert ? position.menge : ap.menge),
+                );
                 setEditMenge(true);
               }}
               title="Menge anpassen"
             >
-              {aktuellePos.menge}
+              {position.manuellGeaendert ? position.menge : ap.menge}{" "}
+              {ap.einheit}
             </span>
-          )}{" "}
-          {aktuellePos.einheit}
-        </span>
-      </div>
-
-      <div className="review-pos-preis-box">
-        {editPreis ? (
-          <input
-            className="review-pos-preis-input"
-            type="number"
-            step="0.01"
-            value={preisWert}
-            autoFocus
-            onChange={(e) => setPreisWert(e.target.value)}
-            onBlur={() => {
-              setEditPreis(false);
-              const p = parseFloat(preisWert.replace(",", "."));
-              if (!isNaN(p) && p !== position.preis) onPreisAendern(p);
-            }}
-          />
-        ) : (
-          <span
-            className="review-pos-preis"
-            onClick={() => {
-              setPreisWert(String(aktuellePos.preis.toFixed(2)));
-              setEditPreis(true);
-            }}
-            title="Klicken zum Bearbeiten"
-          >
-            {aktuellePos.preis.toFixed(2).replace(".", ",")} €
-          </span>
-        )}
-        <span className="review-pos-preis-label">Preis</span>
-      </div>
-
-      {position.alternativen.length > 0 && (
-        <div className="review-pos-alt-box">
-          <select
-            className="review-pos-alt-select"
-            value={
-              position.gewaehlteAlternativeIndex === null
-                ? ""
-                : String(position.gewaehlteAlternativeIndex)
-            }
-            onChange={(e) => {
-              const v = e.target.value;
-              onAlternativeWaehlen(v === "" ? null : parseInt(v));
-            }}
-          >
-            <option value="" disabled>
-              Alternativen
-            </option>
-            {position.alternativen.map((alt, i) => (
-              <option key={i} value={String(i)}>
-                {alt.bezeichnung}
-              </option>
-            ))}
-          </select>
+          )}
         </div>
-      )}
+
+        <div className="review-pos-preis-wrap">
+          {editPreis ? (
+            <input
+              className="review-pos-preis-input"
+              type="number"
+              step="0.01"
+              min="0"
+              autoFocus
+              value={preisWert}
+              onChange={(e) => setPreisWert(e.target.value)}
+              onBlur={() => {
+                setEditPreis(false);
+                const v = parseFloat(preisWert);
+                if (!isNaN(v) && v !== position.preis) onPreisAendern(v);
+              }}
+            />
+          ) : (
+            <span
+              className="review-pos-preis editable"
+              onClick={() => {
+                setPreisWert(
+                  String(position.manuellGeaendert ? position.preis : ap.preis),
+                );
+                setEditPreis(true);
+              }}
+              title="Preis anpassen"
+            >
+              {(position.manuellGeaendert ? position.preis : ap.preis)
+                .toFixed(2)
+                .replace(".", ",")}{" "}
+              €
+            </span>
+          )}
+          <span className="review-pos-preis-label">Preis</span>
+        </div>
+
+        {position.alternativen.length > 0 && (
+          <div className="review-pos-alt-box">
+            <select
+              className="review-pos-alt-select"
+              value={
+                position.gewaehlteAlternativeIndex === null
+                  ? ""
+                  : String(position.gewaehlteAlternativeIndex)
+              }
+              onChange={(e) => {
+                const v = e.target.value;
+                onAlternativeWaehlen(v === "" ? null : parseInt(v));
+              }}
+            >
+              <option value="" disabled>
+                Alternativen
+              </option>
+              {position.alternativen.map((alt, i) => (
+                <option key={i} value={String(i)}>
+                  {alt.bezeichnung}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        <button
+          className="review-delete-btn"
+          onClick={onLoeschen}
+          title="Position löschen"
+        >
+          ✕
+        </button>
+      </div>
     </div>
   );
 };
 
-// ─── Mitarbeiter-Zeile ───
+// ── Mitarbeiter-Zeile ──
 interface MitarbeiterZeileCardProps {
   zeile: MitarbeiterZeile;
   index: number;
@@ -530,28 +493,109 @@ const MitarbeiterZeileCard = ({
   );
 };
 
-// ─── Hauptkomponente ───
+// ─── Hauptkomponente ──────────────────────────────────────────────────────────
+
+interface ReviewLocationState {
+  businessKey?: string;
+  offerId?: number;
+}
+
 export const ReviewPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const routeState = (location.state ?? {}) as ReviewLocationState;
 
-  const [leistungen, setLeistungen] = useState<Position[]>(MOCK_LEISTUNGEN);
-  const [materialien, setMaterialien] = useState<Position[]>(MOCK_MATERIALIEN);
+  // businessKey aus Router-State (von LadenPage weitergereicht)
+  // Fallback auf Hardcode für lokale Entwicklung ohne LadenPage-Flow
+  const businessKey = routeState.businessKey ?? "angebot-001";
+  const offerId = routeState.offerId ?? null;
 
+  // ─── Lade-State ───
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [offerData, setOfferData] = useState<OfferResponse | null>(null);
+
+  // ─── Positions-State ───
+  const [leistungen, setLeistungen] = useState<Position[]>([]);
+  const [materialien, setMaterialien] = useState<Position[]>([]);
+  const [kiHinweise, setKiHinweise] = useState<string[]>([]);
+
+  // ─── Stichpunkte ───
   const [spLeistungen, setSpLeistungen] = useState<Stichpunkt[]>([]);
   const [spMaterialien, setSpMaterialien] = useState<Stichpunkt[]>([]);
   const [spArbeitszeit, setSpArbeitszeit] = useState<Stichpunkt[]>([]);
   const [editingSpId, setEditingSpId] = useState<string | null>(null);
 
-  const [maZeilen, setMaZeilen] = useState<MitarbeiterZeile[]>(
-    MOCK_KI_MITARBEITER_VORSCHLAG,
-  );
+  // ─── Arbeitszeit ───
+  const [maZeilen, setMaZeilen] = useState<MitarbeiterZeile[]>([]);
   const [anfahrt, setAnfahrt] = useState(45.0);
   const [editAnfahrt, setEditAnfahrt] = useState(false);
 
+  // ─── UI-State ───
   const [kiHinweis, setKiHinweis] = useState("");
   const [notiz, setNotiz] = useState("");
   const [bestaetigt, setBestaetigt] = useState(false);
   const [reihenfolgeGeaendert, setReihenfolgeGeaendert] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // ─── Daten laden ─────────────────────────────────────────────────────────
+
+  const ladeDaten = useCallback(async () => {
+    setIsLoading(true);
+    setLoadError(null);
+    try {
+      const offer = await getOfferByBusinessKey(businessKey);
+      setOfferData(offer);
+
+      // Positionen aufteilen in Leistungen und Materialien
+      const leistungPositionen = offer.positions
+        .filter((p) => p.typ === "LEISTUNG")
+        .map((p) => offerPositionToFrontend(p, "LEISTUNG"));
+
+      const materialPositionen = offer.positions
+        .filter((p) => p.typ === "MATERIAL")
+        .map((p) => offerPositionToFrontend(p, "MATERIAL"));
+
+      setLeistungen(leistungPositionen);
+      setMaterialien(materialPositionen);
+
+      // KI-Hinweise (korrekturvorschlaege)
+      setKiHinweise(offer.korrekturvorschlaege ?? []);
+
+      // Arbeitszeit-Vorschlag aus KI
+      if (
+        offer.geschaetzteArbeitsdauerStunden &&
+        offer.geschaetzteArbeitsdauerStunden > 0
+      ) {
+        const defaultMa = MOCK_MITARBEITER[0];
+        setMaZeilen([
+          {
+            zeilenId: newId(),
+            mitarbeiterId: defaultMa.id,
+            stunden: offer.geschaetzteArbeitsdauerStunden,
+            manuellGeaendert: false,
+          },
+        ]);
+      }
+    } catch (err) {
+      console.error("[ReviewPage] Daten laden fehlgeschlagen:", err);
+      setLoadError(
+        "Angebotsdaten konnten nicht geladen werden. Bitte Seite neu laden.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }, [businessKey]);
+
+  useEffect(() => {
+    const load = async () => {
+      await ladeDaten();
+    };
+    load();
+  }, [ladeDaten]);
+
+  // ─── Hilfsfunktionen ─────────────────────────────────────────────────────
 
   const makeSpHelpers = (
     setter: React.Dispatch<React.SetStateAction<Stichpunkt[]>>,
@@ -676,16 +720,33 @@ export const ReviewPage = () => {
     id: string,
   ) => setter((prev) => prev.filter((p) => p.id !== id));
 
-  const hatStichpunkte = () =>
-    spLeistungen.length > 0 ||
-    spMaterialien.length > 0 ||
-    spArbeitszeit.length > 0;
+  const addPosition = (
+    setter: React.Dispatch<React.SetStateAction<Position[]>>,
+    typ: "LEISTUNG" | "MATERIAL",
+  ) => {
+    setter((prev) => [
+      ...prev,
+      {
+        id: newId(),
+        bezeichnung: "Neue Position",
+        beschreibung: "",
+        menge: 1,
+        einheit: "Stück",
+        preis: 0,
+        katalogProduktId: null,
+        typ,
+        alternativen: [],
+        gewaehlteAlternativeIndex: null,
+        manuellGeaendert: true,
+      },
+    ]);
+  };
+
+  // ─── Änderungs-Checks ────────────────────────────────────────────────────
 
   const hatManuelleAenderung = () =>
     [...leistungen, ...materialien].some((p) => p.manuellGeaendert) ||
-    maZeilen.some((z) => z.manuellGeaendert) ||
-    hatStichpunkte() ||
-    kiHinweis.trim().length > 0;
+    maZeilen.some((z) => z.manuellGeaendert);
 
   const hatReihenfolgeOderAlternative = () =>
     reihenfolgeGeaendert ||
@@ -693,7 +754,9 @@ export const ReviewPage = () => {
       (p) => p.gewaehlteAlternativeIndex !== null,
     );
 
-  const buildAngebotsentwurfPayload = () => {
+  // ─── Payload-Builder ─────────────────────────────────────────────────────
+
+  const buildAngebotsentwurf = () => {
     const allPositionen = [...leistungen, ...materialien].map((p) => {
       const ap =
         p.gewaehlteAlternativeIndex !== null
@@ -707,76 +770,103 @@ export const ReviewPage = () => {
         preis: p.manuellGeaendert ? p.preis : ap.preis,
       };
     });
+
+    const kundendaten = offerData
+      ? { name: String(offerData.customerId), adresse: "—", ort: "—" }
+      : FALLBACK_KUNDENDATEN;
+
     return {
-      messageName: "angebotsentwurf",
-      businessKey: "angebot-001",
-      processVariables: {
-        angebotsentwurf: {
-          value: JSON.stringify({
-            kundendaten: MOCK_KUNDENDATEN,
-            strukturierteAngebotspositionMitPreis: {
-              positionen: allPositionen,
-            },
-            arbeitszeit: {
-              mitarbeiter: maZeilen.map((z) => ({
-                mitarbeiterId: z.mitarbeiterId,
-                mitarbeiterName: findMa(z.mitarbeiterId)?.name,
-                stundensatz: findMa(z.mitarbeiterId)?.stundensatz,
-                stunden: z.stunden,
-              })),
-              anfahrtspauschale: anfahrt,
-            },
-            stichpunkte: {
-              leistungen: spLeistungen.map((s) => s.text),
-              materialien: spMaterialien.map((s) => s.text),
-              arbeitszeit: spArbeitszeit.map((s) => s.text),
-            },
-            notiz,
-          }),
-          type: "Json",
-        },
+      kundendaten,
+      strukturierteAngebotspositionMitPreis: { positionen: allPositionen },
+      arbeitszeit: {
+        mitarbeiter: maZeilen.map((z) => ({
+          mitarbeiterId: z.mitarbeiterId,
+          mitarbeiterName: findMa(z.mitarbeiterId)?.name,
+          stundensatz: findMa(z.mitarbeiterId)?.stundensatz,
+          stunden: z.stunden,
+        })),
+        anfahrtspauschale: anfahrt,
       },
-      resultEnabled: false,
+      stichpunkte: {
+        leistungen: spLeistungen.map((s) => s.text),
+        materialien: spMaterialien.map((s) => s.text),
+        arbeitszeit: spArbeitszeit.map((s) => s.text),
+      },
+      notiz,
     };
   };
 
-  const buildKorrekturPayload = () => ({
-    messageName: "korrekturschnipsel",
-    businessKey: "angebot-001",
-    processVariables: {
-      korrekturschnipsel: {
-        value: kiHinweis || "Manuelle Änderung durch Handwerker",
-        type: "String",
-      },
-    },
-    resultEnabled: false,
-  });
+  // ─── Bestätigen-Handler ──────────────────────────────────────────────────
 
-  const buildGenehmigungPayload = () => ({
-    messageName: "genehmigungAngebot",
-    businessKey: "angebot-001",
-    resultEnabled: false,
-  });
-
-  const handleBestaetigen = () => {
+  const handleBestaetigen = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    setSubmitError(null);
     setBestaetigt(true);
+
     const istManuell = hatManuelleAenderung();
     const istReihenfolge = hatReihenfolgeOderAlternative();
-    console.log("=== PE-Payload ===");
-    if (istManuell) {
-      console.log("Fall 3:", buildKorrekturPayload());
-      setTimeout(() => navigate("/laden"), 800);
-      setTimeout(() => navigate("/review"), 3000);
-    } else if (istReihenfolge) {
-      console.log("Fall 2:", buildAngebotsentwurfPayload());
-      setTimeout(() => navigate("/laden"), 800);
-      setTimeout(() => navigate("/angebotTeilen"), 3000);
-    } else {
-      console.log("Fall 1:", buildGenehmigungPayload());
-      setTimeout(() => navigate("/laden"), 800);
-      setTimeout(() => navigate("/angebotTeilen"), 3000);
+
+    try {
+      if (istManuell) {
+        // ── Fall 3: Manuelle Änderung ──
+        // offer-service informieren (Vorbereitung, Endpunkt noch nicht da)
+        await sendKorrektur(
+          businessKey,
+          kiHinweis || "Manuelle Änderung durch Handwerker",
+        );
+        // PE-Nachricht: korrekturschnipsel
+        await sendKorrekturschnipsel(
+          businessKey,
+          kiHinweis || "Manuelle Änderung durch Handwerker",
+        );
+        // Zurück zur LadenPage — wartet erneut auf KI_FERTIG
+        navigate("/laden", {
+          state: { businessKey, offerId, mode: "ki-warten" },
+        });
+      } else if (istReihenfolge) {
+        // ── Fall 2: Reihenfolge / Alternative ──
+        // offer-service Positionen aktualisieren
+        await updateOfferPositions(businessKey, {
+          positionen: [...leistungen, ...materialien].map((p) => ({
+            bezeichnung: p.bezeichnung,
+            beschreibung: p.beschreibung,
+            menge: p.menge,
+            einheit: p.einheit,
+            einzelPreis: p.preis,
+            typ: p.typ,
+            katalogProduktId: p.katalogProduktId,
+          })),
+        });
+        // PE-Nachricht: angebotsentwurf
+        await sendAngebotsentwurf(businessKey, buildAngebotsentwurf());
+        // Zur LadenPage → wartet auf Versand-Prozess → /angebotTeilen
+        navigate("/laden", {
+          state: { businessKey, offerId, mode: "versand-warten" },
+        });
+      } else {
+        // ── Fall 1: Genehmigung ──
+        // offer-service Status setzen
+        await approveOffer(businessKey);
+        // PE-Nachricht: genehmigungAngebot
+        await sendGenehmigung(businessKey);
+        // Zur LadenPage → wartet auf PDF-Erstellung → /angebotTeilen
+        navigate("/laden", {
+          state: { businessKey, offerId, mode: "versand-warten" },
+        });
+      }
+    } catch (err) {
+      console.error("[ReviewPage] Bestätigen fehlgeschlagen:", err);
+      setSubmitError(
+        "Aktion konnte nicht abgeschlossen werden. Bitte erneut versuchen.",
+      );
+      setBestaetigt(false);
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  // ─── Berechnungen ────────────────────────────────────────────────────────
 
   const arbeitskosten =
     maZeilen.reduce(
@@ -795,8 +885,49 @@ export const ReviewPage = () => {
       return sum + preis * menge;
     }, 0) + arbeitskosten;
 
+  // ─── Lade-Zustand ────────────────────────────────────────────────────────
+
+  if (isLoading) {
+    return (
+      <div className="card review-header">
+        <div className="review-header-top">
+          <div>
+            <span className="review-eyebrow">Angebotsentwurf</span>
+            <h1>Daten werden geladen…</h1>
+          </div>
+        </div>
+        <div className="loader" style={{ marginTop: 24 }}>
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="card review-header">
+        <span className="review-eyebrow">Fehler</span>
+        <p style={{ color: "var(--color-accent)", marginTop: 8 }}>
+          {loadError}
+        </p>
+        <button
+          className="button-primary"
+          style={{ marginTop: 16 }}
+          onClick={ladeDaten}
+        >
+          Erneut versuchen
+        </button>
+      </div>
+    );
+  }
+
+  // ─── Render ──────────────────────────────────────────────────────────────
+
   return (
     <>
+      {/* ── Header ── */}
       <div className="card review-header">
         <div className="review-header-top">
           <div>
@@ -807,6 +938,7 @@ export const ReviewPage = () => {
         </div>
       </div>
 
+      {/* ── Kundendaten ── */}
       <div className="card review-section">
         <div className="review-section-header">
           <h2>Kunde</h2>
@@ -816,28 +948,55 @@ export const ReviewPage = () => {
         </div>
         <div className="review-kunde-info">
           <div className="review-kunde-row">
-            <span className="review-kunde-label">Name</span>
-            <span className="review-kunde-value">{MOCK_KUNDENDATEN.name}</span>
-          </div>
-          <div className="review-kunde-row">
-            <span className="review-kunde-label">Adresse</span>
+            <span className="review-kunde-label">Kunden-ID</span>
             <span className="review-kunde-value">
-              {MOCK_KUNDENDATEN.adresse}
+              {offerData?.customerId ?? "—"}
             </span>
           </div>
-          <div className="review-kunde-row">
-            <span className="review-kunde-label">Ort</span>
-            <span className="review-kunde-value">{MOCK_KUNDENDATEN.ort}</span>
-          </div>
+          {/* TODO: Kundendaten über customer-service nachladen */}
+          <p className="text-secondary" style={{ fontSize: 12, marginTop: 4 }}>
+            Vollständige Kundendaten werden nach customer-service-Anbindung hier
+            angezeigt.
+          </p>
         </div>
       </div>
 
+      {/* ── KI-Hinweise ── */}
+      {kiHinweise.length > 0 && (
+        <div className="card review-section">
+          <div className="review-section-header">
+            <h2>KI-Hinweise</h2>
+            <span
+              className="review-count review-count-warn"
+              title="Hinweise der KI"
+            >
+              {kiHinweise.length}
+            </span>
+          </div>
+          <div className="review-ki-hinweise">
+            {kiHinweise.map((h, i) => (
+              <div key={i} className="review-ki-hinweis-item">
+                <span className="review-ki-hinweis-icon">💡</span>
+                <span>{h}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Leistungen ── */}
       <div className="card review-section">
         <div className="review-section-header">
           <h2>Leistungen</h2>
           <span className="review-count">{leistungen.length}</span>
         </div>
         <div className="review-positions-list">
+          {leistungen.length === 0 && (
+            <p className="text-secondary" style={{ fontSize: 13 }}>
+              Keine Leistungen vom AI-Service erhalten.
+              {/* Mögliche Ursachen: Sprachschnipsel war zu vage, oder KI hat nur Material erkannt */}
+            </p>
+          )}
           {leistungen.map((pos, i) => (
             <PositionsKarte
               key={pos.id}
@@ -873,14 +1032,26 @@ export const ReviewPage = () => {
           onUpdate={spHelpersLeistungen.update}
           onSetEditing={setEditingSpId}
         />
+        <button
+          className="review-add-position-btn"
+          onClick={() => addPosition(setLeistungen, "LEISTUNG")}
+        >
+          + Leistung hinzufügen
+        </button>
       </div>
 
+      {/* ── Materialien ── */}
       <div className="card review-section">
         <div className="review-section-header">
           <h2>Materialien</h2>
           <span className="review-count">{materialien.length}</span>
         </div>
         <div className="review-positions-list">
+          {materialien.length === 0 && (
+            <p className="text-secondary" style={{ fontSize: 13 }}>
+              Keine Materialien vom AI-Service erhalten.
+            </p>
+          )}
           {materialien.map((pos, i) => (
             <PositionsKarte
               key={pos.id}
@@ -918,70 +1089,45 @@ export const ReviewPage = () => {
           onUpdate={spHelpersMaterialien.update}
           onSetEditing={setEditingSpId}
         />
+        <button
+          className="review-add-position-btn"
+          onClick={() => addPosition(setMaterialien, "MATERIAL")}
+        >
+          + Material hinzufügen
+        </button>
       </div>
 
+      {/* ── Arbeitszeit ── */}
       <div className="card review-section">
         <div className="review-section-header">
-          <h2>Arbeitszeit & Anfahrt</h2>
+          <h2>Arbeitszeit</h2>
+          <span className="review-count">{maZeilen.length}</span>
         </div>
-        <div className="review-ma-liste">
-          <div className="review-ma-header">
-            <span></span>
-            <span>Mitarbeiter</span>
-            <span>Stunden</span>
-            <span>Kosten</span>
-            <span></span>
-          </div>
-          {maZeilen.map((zeile, i) => (
+        {offerData?.geschaetzteArbeitsdauerStunden == null && (
+          <p
+            className="text-secondary"
+            style={{ fontSize: 12, marginBottom: 8 }}
+          >
+            Die KI hat keine Arbeitszeit im Sprachschnipsel erkannt — bitte
+            manuell eintragen.
+          </p>
+        )}
+        <div className="review-ma-list">
+          {maZeilen.map((z, i) => (
             <MitarbeiterZeileCard
-              key={zeile.zeilenId}
-              zeile={zeile}
+              key={z.zeilenId}
+              zeile={z}
               index={i}
               onMitarbeiterWechsel={(id) =>
-                updateMaZeile(zeile.zeilenId, { mitarbeiterId: id })
+                updateMaZeile(z.zeilenId, { mitarbeiterId: id })
               }
-              onStundenAendern={(s) =>
-                updateMaZeile(zeile.zeilenId, { stunden: s })
+              onStundenAendern={(stunden) =>
+                updateMaZeile(z.zeilenId, { stunden })
               }
-              onEntfernen={() => removeMaZeile(zeile.zeilenId)}
+              onEntfernen={() => removeMaZeile(z.zeilenId)}
               kannEntfernen={maZeilen.length > 1}
             />
           ))}
-        </div>
-        <button
-          className="review-add-btn review-ma-add-btn"
-          onClick={addMaZeile}
-        >
-          + Mitarbeiter hinzufügen
-        </button>
-        <div className="review-stundenkosten" style={{ marginTop: 14 }}>
-          <div className="review-stunden-row">
-            <span className="review-stunden-label">Anfahrtspauschale</span>
-            {editAnfahrt ? (
-              <input
-                className="review-stunden-input"
-                type="number"
-                step="0.01"
-                autoFocus
-                value={anfahrt}
-                onChange={(e) => setAnfahrt(parseFloat(e.target.value) || 0)}
-                onBlur={() => setEditAnfahrt(false)}
-              />
-            ) : (
-              <span
-                className="review-stunden-value editable"
-                onClick={() => setEditAnfahrt(true)}
-              >
-                {anfahrt.toFixed(2).replace(".", ",")} €
-              </span>
-            )}
-          </div>
-          <div className="review-stunden-row review-stunden-summe">
-            <span className="review-stunden-label">Arbeitskosten gesamt</span>
-            <span className="review-stunden-value accent">
-              {arbeitskosten.toFixed(2).replace(".", ",")} €
-            </span>
-          </div>
         </div>
         <StichpunktListe
           stichpunkte={spArbeitszeit}
@@ -992,76 +1138,110 @@ export const ReviewPage = () => {
           onUpdate={spHelpersArbeitszeit.update}
           onSetEditing={setEditingSpId}
         />
-      </div>
-
-      <div className="card review-section review-gesamtpreis-card">
-        <div className="review-gesamtpreis">
-          <span>Gesamtpreis (netto)</span>
-          <strong>{gesamtpreis.toFixed(2).replace(".", ",")} €</strong>
+        <button className="review-add-btn" onClick={addMaZeile}>
+          + Mitarbeiter hinzufügen
+        </button>
+        <div className="review-anfahrt-row">
+          <span className="review-anfahrt-label">Anfahrtspauschale</span>
+          {editAnfahrt ? (
+            <input
+              className="review-anfahrt-input"
+              type="number"
+              step="0.01"
+              min="0"
+              autoFocus
+              value={anfahrt}
+              onChange={(e) => setAnfahrt(parseFloat(e.target.value) || 0)}
+              onBlur={() => setEditAnfahrt(false)}
+            />
+          ) : (
+            <span
+              className="review-anfahrt-value editable"
+              onClick={() => setEditAnfahrt(true)}
+              title="Anpassen"
+            >
+              {anfahrt.toFixed(2).replace(".", ",")} €
+            </span>
+          )}
         </div>
       </div>
 
-      <div className="card review-section review-anmerkungen-card">
-        <div className="review-section-header">
-          <h2>KI-Hinweise</h2>
-          <span className="review-count review-count-warn">
-            {MOCK_KI_ANMERKUNGEN.length}
-          </span>
-        </div>
-        <ul className="review-anmerkungen-list">
-          {MOCK_KI_ANMERKUNGEN.map((a, i) => (
-            <li key={i} className="review-anmerkung-item">
-              <span className="review-anmerkung-icon">⚠</span>
-              <span>{a}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-
+      {/* ── Notizen ── */}
       <div className="card review-section">
         <div className="review-section-header">
-          <h2>Informationen & Notiz</h2>
+          <h2>Notiz ans Backend</h2>
         </div>
-        <label className="review-freitext-label">Hinweis an die KI</label>
         <textarea
-          className="review-freitext-input"
-          rows={3}
-          value={kiHinweis}
-          placeholder="Hier kannst du der KI zusätzliche Informationen mitgeben, z.B. 'Bitte Klopreis auf 150 € anpassen'…"
-          onChange={(e) => setKiHinweis(e.target.value)}
-        />
-        <label className="review-freitext-label" style={{ marginTop: 16 }}>
-          Notiz auf dem Angebot
-        </label>
-        <textarea
-          className="review-freitext-input"
-          rows={3}
+          className="review-notiz-input"
+          placeholder="Interne Notiz zum Angebot (wird nicht ans Backend der KI weitergegeben)…"
           value={notiz}
-          placeholder="Diese Notiz erscheint auf dem Angebot, z.B. 'Angebot gültig bis 30.06.2026'…"
           onChange={(e) => setNotiz(e.target.value)}
+          rows={3}
         />
       </div>
 
-      <div className="card review-confirm-card">
-        {bestaetigt ? (
-          <div className="review-success">
-            <span className="review-success-icon">✓</span>
-            <p>Wird weitergeleitet …</p>
-          </div>
-        ) : (
-          <>
-            <p className="text-secondary review-confirm-hint">
-              Alles geprüft? Bei Änderungen wird das Angebot überarbeitet, sonst
-              wird das Angebot erstellt!
-            </p>
-            <button
-              className="button-primary review-confirm-btn"
-              onClick={handleBestaetigen}
-            >
-              Bestätigen & weiterleiten
-            </button>
-          </>
-        )}
+      {/* ── Hinweis an die KI (Fall 3) ── */}
+      <div className="card review-section">
+        <div className="review-section-header">
+          <h2>Hinweis an die KI</h2>
+        </div>
+        <p
+          className="text-secondary"
+          style={{ fontSize: 13, marginBottom: 10 }}
+        >
+          Nur relevant bei manuellen Änderungen (Fall 3). Beschreibe, was
+          angepasst werden soll.
+        </p>
+        <textarea
+          className="review-notiz-input"
+          placeholder="z.B. Bitte statt Marmorfliesen günstigere Keramik verwenden…"
+          value={kiHinweis}
+          onChange={(e) => setKiHinweis(e.target.value)}
+          rows={3}
+        />
+      </div>
+
+      {/* ── Gesamtpreis ── */}
+      <div className="card review-gesamtpreis">
+        <span className="review-gesamtpreis-label">
+          Gesamtpreis (geschätzt)
+        </span>
+        <span className="review-gesamtpreis-value">
+          {gesamtpreis.toFixed(2).replace(".", ",")} €
+        </span>
+      </div>
+
+      {/* ── Fehler ── */}
+      {submitError && (
+        <div
+          className="card"
+          style={{
+            borderColor: "var(--color-accent)",
+            color: "var(--color-accent)",
+            fontSize: 14,
+          }}
+        >
+          {submitError}
+        </div>
+      )}
+
+      {/* ── Aktionen ── */}
+      <div className="card review-actions">
+        <button
+          className="button-primary"
+          disabled={bestaetigt || isSubmitting}
+          onClick={handleBestaetigen}
+        >
+          {isSubmitting ? "Wird übermittelt…" : "Angebot bestätigen"}
+        </button>
+        <button
+          className="review-secondary-btn"
+          type="button"
+          disabled={isSubmitting}
+          onClick={() => navigate("/home")}
+        >
+          Abbrechen
+        </button>
       </div>
     </>
   );
