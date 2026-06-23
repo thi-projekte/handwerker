@@ -26,6 +26,9 @@ export const HomeView = () => {
     (c) => c.id === selectedCustomer,
   );
   const [search, setSearch] = useState("");
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [transcribeError, setTranscribeError] = useState<string | null>(null);
+
   const {
     isRecording,
     volume,
@@ -36,10 +39,39 @@ export const HomeView = () => {
     state,
     reset,
     finalizeRecording,
+    transcribeAudio,
   } = useVoiceInput();
+
   const navigate = useNavigate();
   const [customerError, setCustomerError] = useState(false);
   const [textError, setTextError] = useState(false);
+
+  const handleVoiceWeiter = async () => {
+    finalizeRecording();
+
+    const hasCustomer = !!selectedCustomer;
+    setCustomerError(!hasCustomer);
+    if (!hasCustomer) return;
+
+    setTranscribeError(null);
+    setIsTranscribing(true);
+
+    try {
+      const speechSnippet = await transcribeAudio();
+      navigate("/review", {
+        state: {
+          speechSnippet,
+          customerId: selectedCustomer,
+        },
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unbekannter Fehler";
+      setTranscribeError(`Transkription fehlgeschlagen: ${message}`);
+    } finally {
+      setIsTranscribing(false);
+    }
+  };
+
   return (
     <div className="voice-container">
       <h1>Angebot erstellen</h1>
@@ -102,22 +134,21 @@ export const HomeView = () => {
                 </div>
               ))}
 
-              <div className="audio-actions">
-                <button onClick={reset}>⭰ Neu aufnehmen</button>
+              {transcribeError && (
+                <div className="text-error">{transcribeError}</div>
+              )}
 
-                <button onClick={toggle}>▶ Aufnahme fortsetzen</button>
-                <button
-                  onClick={() => {
-                    finalizeRecording();
-                    const hasCustomer = !!selectedCustomer;
-                    setCustomerError(!hasCustomer);
-                    if (!hasCustomer) {
-                      return;
-                    }
-                    navigate("/review");
-                  }}
-                >
-                  ➜ Weiter
+              <div className="audio-actions">
+                <button onClick={reset} disabled={isTranscribing}>
+                  ⭰ Neu aufnehmen
+                </button>
+
+                <button onClick={toggle} disabled={isTranscribing}>
+                  ▶ Aufnahme fortsetzen
+                </button>
+
+                <button onClick={handleVoiceWeiter} disabled={isTranscribing}>
+                  {isTranscribing ? "⏳ Wird transkribiert…" : "➜ Weiter"}
                 </button>
               </div>
             </div>
@@ -150,10 +181,13 @@ export const HomeView = () => {
                   const hasText = !!transcript.trim();
                   setCustomerError(!hasCustomer);
                   setTextError(!hasText);
-                  if (!hasCustomer || !hasText) {
-                    return;
-                  }
-                  navigate("/review");
+                  if (!hasCustomer || !hasText) return;
+                  navigate("/review", {
+                    state: {
+                      speechSnippet: transcript,
+                      customerId: selectedCustomer,
+                    },
+                  });
                 }}
               >
                 ➜ Weiter
@@ -168,6 +202,7 @@ export const HomeView = () => {
           )}
         </div>
       )}
+
       <div
         className={`customer-card ${customerCollapsed ? "collapsed" : ""} ${customerError ? "error" : ""}`}
       >
@@ -187,7 +222,6 @@ export const HomeView = () => {
 
             <div className="customer-info">
               <strong>{selectedCustomerData.name}</strong>
-
               <span>{selectedCustomerData.company}</span>
             </div>
 
@@ -196,10 +230,8 @@ export const HomeView = () => {
         ) : (
           <>
             {/* HEADER */}
-
             <div className="customer-card-header">
               <h3>Kunde auswählen</h3>
-
               <button
                 className="new-customer-btn"
                 onClick={() => navigate("/unternehmen?tab=kunde")}
@@ -209,7 +241,6 @@ export const HomeView = () => {
             </div>
 
             {/* SEARCH */}
-
             <div className="customer-search">
               <input
                 type="text"
@@ -220,7 +251,6 @@ export const HomeView = () => {
             </div>
 
             {/* RECENT */}
-
             <div className="recent-customers">
               <div className="recent-header">
                 <span>Zuletzt verwendet</span>
@@ -242,10 +272,8 @@ export const HomeView = () => {
                     <div className="customer-avatar">
                       {customer.name.charAt(0)}
                     </div>
-
                     <div className="customer-info">
                       <strong>{customer.name}</strong>
-
                       <span>{customer.company}</span>
                     </div>
                   </button>
@@ -254,12 +282,11 @@ export const HomeView = () => {
             </div>
           </>
         )}
+
+        {customerError && (
+          <div className="customer-error">Bitte wähle zuerst einen Kunden.</div>
+        )}
       </div>
-      {customerError && (
-        <div className="customer-error">
-          Bitte wähle zuerst einen Kunden aus.
-        </div>
-      )}
     </div>
   );
 };
