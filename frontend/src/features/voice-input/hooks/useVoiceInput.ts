@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { startMicrophone } from "../services/microphoneService";
+import { getToken } from "@/services/authService";
 
 const OFFER_SERVICE_URL =
   import.meta.env.VITE_API_URL ||
@@ -159,8 +160,7 @@ export const useVoiceInput = () => {
     const blob = new Blob(chunksRef.current, { type: "audio/webm" });
     // Blob für spätere Transkription speichern
     setAudioBlobs((prev) => [...prev, blob]);
-    const url = URL.createObjectURL(blob);
-    return url;
+    return URL.createObjectURL(blob);
   };
 
   /**
@@ -188,10 +188,16 @@ export const useVoiceInput = () => {
     const formData = new FormData();
     formData.append("audio", mergedBlob, "aufnahme.webm");
 
+    // Auth-Token mitschicken — der Endpunkt ist geschützt (sonst 401).
+    // WICHTIG: Content-Type NICHT setzen, damit der Browser die multipart-
+    // Boundary selbst ergänzt.
+    const token = await getToken();
+
     const response = await fetch(
       `${OFFER_SERVICE_URL}/speech-capture/transcribe`,
       {
         method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: formData,
       },
     );
@@ -224,7 +230,12 @@ export const useVoiceInput = () => {
     setAudioBlobs([]);
     setAudioBlobUrl(null);
     if (animationRef.current) cancelAnimationFrame(animationRef.current);
-    if (audioContextRef.current) audioContextRef.current.close();
+    // Nur schließen, wenn noch nicht geschlossen — sonst wirft der Browser
+    // "Can't close an AudioContext twice" (z.B. wenn stop() ihn bereits schloss).
+    if (audioContextRef.current && audioContextRef.current.state !== "closed") {
+      audioContextRef.current.close();
+    }
+    audioContextRef.current = null;
   };
 
   return {
