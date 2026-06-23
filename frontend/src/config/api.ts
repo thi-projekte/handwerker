@@ -18,6 +18,10 @@ export const API_CONFIG = {
   PE_URL:
     import.meta.env.VITE_PE_URL ??
     "http://pe-craftvoice.winfprojekt.de/engine-rest",
+
+  CATALOG_SERVICE_URL:
+    import.meta.env.VITE_CATALOG_SERVICE_URL ??
+    "https://craftvoice-catalog.winfprojekt.de",
 } as const;
 
 /** Offer-Service Status-Konstanten (spiegeln das Backend wider) */
