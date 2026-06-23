@@ -1,3 +1,4 @@
+import { useDocuments } from "@/features/documents/hooks/useDocuments";
 import { useState, useMemo, useEffect } from "react";
 import {
   MapPin,
@@ -47,136 +48,6 @@ interface Rechnung {
   status: RechnungStatus;
   betrag: number;
 }
-
-// ── Mock Data ──────────────────────────────────────────────────────────────
-
-const INITIAL_ANGEBOTE: Angebot[] = [
-  {
-    id: "1",
-    angebotsnummer: "ANG-2025-001",
-    vorname: "Thomas",
-    nachname: "Müller",
-    strasse: "Hauptstraße",
-    hausnummer: "12",
-    plz: "80331",
-    ort: "München",
-    datum: "2025-04-02",
-    status: "Versendet",
-    betrag: 3480.0,
-  },
-  {
-    id: "2",
-    angebotsnummer: "ANG-2025-002",
-    vorname: "Sabine",
-    nachname: "Hoffmann",
-    strasse: "Gartenweg",
-    hausnummer: "5",
-    plz: "70174",
-    ort: "Stuttgart",
-    datum: "2025-03-28",
-    status: "Erstellt",
-    betrag: 1250.5,
-  },
-  {
-    id: "3",
-    angebotsnummer: "ANG-2025-003",
-    vorname: "Klaus",
-    nachname: "Becker",
-    strasse: "Kirchplatz",
-    hausnummer: "3",
-    plz: "50667",
-    ort: "Köln",
-    datum: "2025-03-14",
-    status: "Angenommen",
-    betrag: 8920.0,
-  },
-  {
-    id: "4",
-    angebotsnummer: "ANG-2025-004",
-    vorname: "Maria",
-    nachname: "Schmidt",
-    strasse: "Rosenstraße",
-    hausnummer: "8",
-    plz: "60311",
-    ort: "Frankfurt",
-    datum: "2025-04-10",
-    status: "Erstellt",
-    betrag: 540.0,
-  },
-  {
-    id: "5",
-    angebotsnummer: "ANG-2025-005",
-    vorname: "Peter",
-    nachname: "Wagner",
-    strasse: "Bahnhofstraße",
-    hausnummer: "21",
-    plz: "90402",
-    ort: "Nürnberg",
-    datum: "2025-02-19",
-    status: "Abgelehnt",
-    betrag: 2100.0,
-  },
-];
-
-const INITIAL_RECHNUNGEN: Rechnung[] = [
-  {
-    id: "r1",
-    rechnungsnummer: "REC-2025-001",
-    vorname: "Klaus",
-    nachname: "Becker",
-    strasse: "Kirchplatz",
-    hausnummer: "3",
-    plz: "50667",
-    ort: "Köln",
-    erstelldatum: "2025-03-20",
-    faelligkeitsdatum: "2025-04-20",
-    status: "Bezahlt",
-    betrag: 8920.0,
-  },
-  {
-    id: "r2",
-    rechnungsnummer: "REC-2025-002",
-    vorname: "Thomas",
-    nachname: "Müller",
-    strasse: "Hauptstraße",
-    hausnummer: "12",
-    plz: "80331",
-    ort: "München",
-    erstelldatum: "2025-04-05",
-    faelligkeitsdatum: "2025-05-05",
-    status: "Im Zahlungsverzug",
-    betrag: 3480.0,
-  },
-  {
-    id: "r3",
-    rechnungsnummer: "REC-2025-003",
-    vorname: "Anna",
-    nachname: "Krause",
-    strasse: "Lindenallee",
-    hausnummer: "7",
-    plz: "10115",
-    ort: "Berlin",
-    erstelldatum: "2025-04-12",
-    faelligkeitsdatum: "2025-05-12",
-    status: "Versendet",
-    betrag: 1870.0,
-  },
-  {
-    id: "r4",
-    rechnungsnummer: "REC-2025-004",
-    vorname: "Markus",
-    nachname: "Fischer",
-    strasse: "Marktplatz",
-    hausnummer: "1",
-    plz: "70173",
-    ort: "Stuttgart",
-    erstelldatum: "2025-04-18",
-    faelligkeitsdatum: "2025-05-18",
-    status: "Erstellt",
-    betrag: 4250.0,
-  },
-];
-
 // ── Style Maps ─────────────────────────────────────────────────────────────
 
 const ANGEBOT_STATUS_STYLES: Record<AngebotStatus, string> = {
@@ -296,8 +167,21 @@ export const DocumentPage = () => {
   const [sortKey, setSortKey] = useState<SortKey>("datum");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
 
-  const [angebote, setAngebote] = useState<Angebot[]>(INITIAL_ANGEBOTE);
-  const [rechnungen, setRechnungen] = useState<Rechnung[]>(INITIAL_RECHNUNGEN);
+  const {
+    angebote: apiAngebote,
+    rechnungen: apiRechnungen,
+    loading,
+    error,
+  } = useDocuments();
+  const [angebote, setAngebote] = useState<Angebot[]>([]);
+  const [rechnungen, setRechnungen] = useState<Rechnung[]>([]);
+  useEffect(() => {
+    setAngebote(apiAngebote);
+  }, [apiAngebote]);
+
+  useEffect(() => {
+    setRechnungen(apiRechnungen);
+  }, [apiRechnungen]);
 
   const [filterAngebotStatus, setFilterAngebotStatus] =
     useState<AngebotStatus | null>(null);
@@ -464,6 +348,25 @@ export const DocumentPage = () => {
       : (v: string | null) =>
           setFilterRechnungStatus(v as RechnungStatus | null);
 
+  if (loading) {
+    return (
+        <div className="doc-page">
+          <div className="card doc-empty">
+            <p>Dokumente werden geladen...</p>
+          </div>
+        </div>
+    );
+  }
+  if (error) {
+    return (
+        <div className="doc-page">
+          <div className="card doc-empty">
+            <p>Fehler beim Laden der Dokumente</p>
+            <p>{error.message}</p>
+          </div>
+        </div>
+    );
+  }
   return (
     <div className="doc-page">
       {/* ── Sticky Header ── */}
