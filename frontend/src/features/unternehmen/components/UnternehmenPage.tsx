@@ -15,22 +15,15 @@ import {
   createCustomer,
   type UserProfile,
 } from "@/services/userService";
+import {
+  getMaterials,
+  createMaterial,
+  updateMaterial,
+  deleteMaterial,
+  importMaterialsCsv,
+} from "@/data/api/catalogService";
 import "./UnternehmenPage.css";
 import "./UnternehmenPage-additions.css";
-
-const getAuthHeaders = () => {
-  const token = localStorage.getItem("authToken");
-
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-  };
-
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-
-  return headers;
-};
 
 type Tab = "allgemein" | "kunde" | "stundensatz" | "preisliste";
 
@@ -285,23 +278,14 @@ export const UnternehmenPage = () => {
   const handleMaterialChange = handleChange(setMaterialData);
 
   const loadMaterials = async () => {
-  try {
-    const response = await fetch("http://craftvoice-catalog.winfprojekt.de/catalog/material", {
-      headers: getAuthHeaders(),
-    });
-
-    
-    if (!response.ok) {
-      throw new Error("Fehler beim Laden");
+    try {
+      const data = await getMaterials();
+      setMaterials(data.filter((m) => m.active !== false));
+    } catch (error) {
+      console.error(error);
+      setCompanyErrorMessage("Materialien konnten nicht geladen werden.");
     }
-
-    const data = await response.json();
-    setMaterials(data.filter((m: Material) => m.active !== false));
-  } catch (error) {
-    console.error(error);
-    setCompanyErrorMessage("Materialien konnten nicht geladen werden.");
-  }
-};
+  };
 
   const applyUserProfileToCompanyData = useCallback((user: UserProfile) => {
     const roles = user.roles ?? [];
@@ -483,53 +467,17 @@ export const UnternehmenPage = () => {
     setCustomerImage(URL.createObjectURL(file));
   };
 
-  const handleMaterialCsvUpload =
-  async (
+  const handleMaterialCsvUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
-    const file =
-      event.target.files?.[0];
+    const file = event.target.files?.[0];
 
     if (!file) {
       return;
     }
 
-    const formData =
-      new FormData();
-
-    formData.append(
-      "file",
-      file,
-    );
-
     try {
-      const response =
-        await fetch(
-          "http://craftvoice-catalog.winfprojekt.de/catalog/material/import/csv",
-          {
-            method: "POST",
-            headers: {
-              Authorization:
-                localStorage.getItem(
-                  "authToken",
-                )
-                  ? `Bearer ${localStorage.getItem(
-                      "authToken",
-                    )}`
-                  : "",
-            },
-            body: formData,
-          },
-        );
-
-      if (!response.ok) {
-        throw new Error(
-          "CSV Import fehlgeschlagen",
-        );
-      }
-
-      const text = await response.text();
-const importedCount = Number(text);
+      const importedCount = await importMaterialsCsv(file);
 
       setCompanySuccessMessage(
         `✅ ${importedCount} Materialien importiert`,
@@ -537,14 +485,11 @@ const importedCount = Number(text);
 
       await loadMaterials();
 
-      event.target.value =
-        "";
+      event.target.value = "";
     } catch (error) {
       console.error(error);
 
-      setCompanyErrorMessage(
-        "❌ CSV-Import fehlgeschlagen",
-      );
+      setCompanyErrorMessage("❌ CSV-Import fehlgeschlagen");
     }
   };
 
@@ -1840,21 +1785,7 @@ const importedCount = Number(text);
     }
 
     try {
-      const response =
-        await fetch(
-          `http://craftvoice-catalog.winfprojekt.de/catalog/material/${material.id}`,
-          {
-            method: "DELETE",
-            headers:
-              getAuthHeaders(),
-          },
-        );
-
-      if (!response.ok) {
-        throw new Error(
-          "Löschen fehlgeschlagen",
-        );
-      }
+      await deleteMaterial(material.id!);
        setMaterials((prev) =>
       prev.filter((m) => m.id !== material.id)
     );
@@ -1978,31 +1909,10 @@ const importedCount = Number(text);
           materialData.currency,
       };
 
-      // UPDATE oder CREATE
-      const method =
-        materialData.id
-          ? "PUT"
-          : "POST";
-
-      const url =
-        materialData.id
-          ? `http://craftvoice-catalog.winfprojekt.de/catalog/material/${materialData.id}`
-          : "http://craftvoice-catalog.winfprojekt.de/catalog/material";
-
-      const response =
-        await fetch(url, {
-          method,
-          headers:
-            getAuthHeaders(),
-          body: JSON.stringify(
-            payload,
-          ),
-        });
-
-      if (!response.ok) {
-        throw new Error(
-          "Speichern fehlgeschlagen",
-        );
+      if (materialData.id) {
+        await updateMaterial(materialData.id, payload);
+      } else {
+        await createMaterial(payload);
       }
 
       // Neu laden vom Backend

@@ -15,6 +15,7 @@ import {
   sendAngebotsentwurf,
   sendKorrekturschnipsel,
 } from "@/data/api/processEngineService";
+import { searchMaterials } from "@/data/api/catalogService";
 
 // ─── Typen ───────────────────────────────────────────────────────────────────
 
@@ -539,6 +540,45 @@ export const ReviewPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  // ─── Alternativen aus dem Katalog ──────────────────────────────────────────
+
+  /**
+   * Reichert Materialpositionen um Alternativen aus dem catalog-service an.
+   * Die KI liefert pro Position nur den besten Treffer (katalogProduktId) — die
+   * Alternativen kommen aus der Katalog-Suche nach dem Positions-Namen.
+   * Der bereits gewählte Treffer wird ausgeblendet. Fehler pro Position werden
+   * geschluckt (Position bleibt ohne Alternativen).
+   */
+  const enrichMaterialAlternativen = useCallback(
+    async (positionen: Position[]) => {
+      const enriched = await Promise.all(
+        positionen.map(async (pos) => {
+          try {
+            const kandidaten = await searchMaterials(pos.bezeichnung, 5);
+            const alternativen = kandidaten
+              .filter((c) => c.id !== pos.katalogProduktId)
+              .map((c) => ({
+                bezeichnung: c.name,
+                beschreibung: c.description,
+                menge: pos.menge,
+                einheit: c.unit,
+                preis: c.price,
+              }));
+            return { ...pos, alternativen };
+          } catch (e) {
+            console.error(
+              "[ReviewPage] Alternativen-Suche fehlgeschlagen:",
+              e,
+            );
+            return pos;
+          }
+        }),
+      );
+      setMaterialien(enriched);
+    },
+    [],
+  );
+
   // ─── Daten laden ─────────────────────────────────────────────────────────
 
   const ladeDaten = useCallback(async () => {
@@ -559,6 +599,10 @@ export const ReviewPage = () => {
 
       setLeistungen(leistungPositionen);
       setMaterialien(materialPositionen);
+
+      // Alternativen pro Materialposition aus dem Katalog nachladen (#7).
+      // Fire-and-forget: Seite rendert sofort, Alternativen erscheinen sobald da.
+      void enrichMaterialAlternativen(materialPositionen);
 
       // KI-Hinweise (korrekturvorschlaege)
       setKiHinweise(offer.korrekturvorschlaege ?? []);
@@ -586,7 +630,7 @@ export const ReviewPage = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [businessKey]);
+  }, [businessKey, enrichMaterialAlternativen]);
 
   useEffect(() => {
     const load = async () => {
