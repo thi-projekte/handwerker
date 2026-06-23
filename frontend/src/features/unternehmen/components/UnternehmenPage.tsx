@@ -12,6 +12,7 @@ import { useLocation } from "react-router-dom";
 import {
   getCurrentUser,
   updateCompany,
+  createCustomer,
   type UserProfile,
 } from "@/services/userService";
 import "./UnternehmenPage.css";
@@ -1478,27 +1479,55 @@ const importedCount = Number(text);
 
                     setEditingIndex(null);
                   } else {
-                    setCustomers((previousCustomers) => [
-                      ...previousCustomers,
-                      {
-                        ...customerData,
-                        image: customerImage,
-                      },
-                    ]);
+                    // Persist to backend
+                    (async () => {
+                      try {
+                        const created = await createCustomer({
+                          email: customerData.email,
+                          firstName: customerData.vorname,
+                          lastName: customerData.nachname,
+                          phoneNumber: customerData.telefon,
+                          companyName: null,
+                          // address fields are not part of backend entity directly here;
+                          // frontend still keeps local representation
+                        });
+
+                        setCustomers((previousCustomers) => [
+                          ...previousCustomers,
+                          {
+                            ...customerData,
+                            image: customerImage,
+                            // reflect backend assigned id/email/status if needed
+                            email: created.email || customerData.email,
+                          },
+                        ]);
+
+                        setCompanySuccessMessage("Kunde wurde angelegt.");
+                        window.setTimeout(() => setCompanySuccessMessage(""), 3000);
+                      } catch (error) {
+                        setCompanyErrorMessage(`Kunde konnte nicht angelegt werden: ${getErrorMessage(error)}`);
+                        return;
+                      }
+
+                      // clear form on success
+                      setCustomerData({
+                        vorname: "",
+                        nachname: "",
+                        email: "",
+                        telefon: "",
+                        adresse: "",
+                        plz: "",
+                        ort: "",
+                      });
+
+                      setCustomerImage(null);
+                      setShowCustomerForm(false);
+                    })();
                   }
 
-                  setCustomerData({
-                    vorname: "",
-                    nachname: "",
-                    email: "",
-                    telefon: "",
-                    adresse: "",
-                    plz: "",
-                    ort: "",
-                  });
-
-                  setCustomerImage(null);
-                  setShowCustomerForm(false);
+                  if (editingIndex === null) {
+                    // no-op (handled in async flow)
+                  }
                 }}
               >
                 {editingIndex !== null

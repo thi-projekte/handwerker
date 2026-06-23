@@ -93,6 +93,17 @@ public class UserService {
 
         // Trigger verification email via Keycloak
         keycloak.realm(REALM).users().get(keycloakId).sendVerifyEmail();
+
+        // Assign default realm role in Keycloak (ensure role exists in the realm)
+        try {
+            org.keycloak.representations.idm.RoleRepresentation ownerRole = keycloak.realm(REALM).roles().get("OWNER").toRepresentation();
+            if (ownerRole != null) {
+                keycloak.realm(REALM).users().get(keycloakId).roles().realmLevel().add(java.util.Collections.singletonList(ownerRole));
+            }
+        } catch (Exception e) {
+            // Log but don't fail registration if role assignment fails
+            AuditLogEntity.log(userData.id, "ROLE_ASSIGNMENT_FAILED", "Assigning OWNER role in Keycloak failed: " + e.getMessage());
+        }
         
         AuditLogEntity.log(userData.id, "REGISTRATION", "User registered via Keycloak");
     }
