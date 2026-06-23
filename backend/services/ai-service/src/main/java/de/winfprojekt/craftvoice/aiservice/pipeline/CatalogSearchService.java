@@ -61,19 +61,23 @@ public class CatalogSearchService {
     /**
      * Liefert bis zu {@code limit} Kandidaten zur Freitext-Query, absteigend nach Relevanz.
      * Bei keinem Treffer (oder Fehler im Real-Betrieb) eine leere Liste.
+     *
+     * @param handwerkerId Keycloak-ID des Handwerkers, dessen Katalog durchsucht wird (Real-Betrieb,
+     *                     wird als {@code X-Handwerker-Id}-Header an den catalog-service gegeben).
+     *                     Im Mock-Betrieb irrelevant (ein gemeinsamer Mini-Katalog).
      */
-    public List<CatalogCandidate> search(String query, int limit) {
+    public List<CatalogCandidate> search(String query, int limit, String handwerkerId) {
         if (query == null || query.isBlank()) {
             return List.of();
         }
-        return mockEnabled ? sucheImMock(query, limit) : sucheRemote(query, limit);
+        return mockEnabled ? sucheImMock(query, limit) : sucheRemote(query, limit, handwerkerId);
     }
 
     // ---------- Real-Betrieb ----------
 
-    private List<CatalogCandidate> sucheRemote(String query, int limit) {
+    private List<CatalogCandidate> sucheRemote(String query, int limit, String handwerkerId) {
         try {
-            CatalogSearchResponse response = client.search(query, limit);
+            CatalogSearchResponse response = client.search(query, limit, handwerkerId);
             List<CatalogCandidate> candidates = response != null ? response.candidates() : null;
             return candidates != null ? candidates : List.of();
         } catch (RuntimeException e) {

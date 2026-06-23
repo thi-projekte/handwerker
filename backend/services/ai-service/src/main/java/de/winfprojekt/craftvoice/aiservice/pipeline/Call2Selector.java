@@ -61,8 +61,12 @@ public class Call2Selector {
     /**
      * Reichert die Materialpositionen eines {@link ErgebnisKi} um Katalog-IDs an (parallel).
      * Leistungen, Notizen und Korrekturvorschlaege bleiben unveraendert.
+     *
+     * @param handwerkerId Keycloak-ID des Handwerkers (Mandant), dessen Katalog durchsucht wird.
+     *                     Kommt von der PE als Prozessvariable (Header {@code X-Handwerker-Id}).
+     *                     Im Mock-Betrieb irrelevant.
      */
-    public ErgebnisKi enrich(ErgebnisKi ergebnis) {
+    public ErgebnisKi enrich(ErgebnisKi ergebnis, String handwerkerId) {
         if (ergebnis == null || ergebnis.strukturierteAngebotspositionen() == null) {
             return ergebnis;
         }
@@ -74,7 +78,7 @@ public class Call2Selector {
 
         List<CompletableFuture<Position>> futures = new ArrayList<>(material.size());
         for (Position p : material) {
-            futures.add(executor.supplyAsync(() -> selectFor(p)));
+            futures.add(executor.supplyAsync(() -> selectFor(p, handwerkerId)));
         }
         List<Position> enriched = new ArrayList<>(material.size());
         for (CompletableFuture<Position> f : futures) {
@@ -87,11 +91,11 @@ public class Call2Selector {
     }
 
     /** Waehlt fuer eine einzelne Materialposition das Katalogprodukt. */
-    Position selectFor(Position position) {
+    Position selectFor(Position position, String handwerkerId) {
         String query = ((position.bezeichnung() == null ? "" : position.bezeichnung()) + " "
                 + (position.beschreibung() == null ? "" : position.beschreibung())).trim();
 
-        List<CatalogCandidate> candidates = catalogSearch.search(query, CANDIDATE_LIMIT);
+        List<CatalogCandidate> candidates = catalogSearch.search(query, CANDIDATE_LIMIT, handwerkerId);
         if (candidates.isEmpty()) {
             LOG.debugf("Call 2: keine Kandidaten fuer '%s' -> kein Katalogprodukt.", position.bezeichnung());
             return position;
