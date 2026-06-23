@@ -320,13 +320,12 @@ export const createCustomer = async (
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      email: data.email,
+      // spread provided data first, then ensure certain fields have defaults / normalized values
+      ...data,
       firstName: data.firstName || "",
       lastName: data.lastName || "",
       phoneNumber: data.phoneNumber || null,
       companyName: data.companyName || null,
-      // allow additional fields to be filled by backend/entity mapping
-      ...data,
     }),
   });
 
