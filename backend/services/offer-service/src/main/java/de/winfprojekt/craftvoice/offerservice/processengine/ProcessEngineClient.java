@@ -55,11 +55,11 @@ public class ProcessEngineClient {
 
                 Map<String, Object> customerIdMap = Map.of(
                                 "value", customerId,
-                                "type", "Long");
+                                "type", "String");
 
                 Map<String, Object> handwerkerdaten = Map.of(
                                 "value", handwerkerId,
-                                "type", "Long");
+                                "type", "String");
 
                 Map<String, Object> sprachschnipselMap = Map.of(
                                 "value", sprachschnipsel,
