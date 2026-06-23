@@ -13,6 +13,8 @@ import de.winfprojekt.craftvoice.documentservice.client.user.UserClient;
 import de.winfprojekt.craftvoice.documentservice.client.user.UserDto;
 import jakarta.enterprise.context.ApplicationScoped;
 
+import org.eclipse.microprofile.rest.client.inject.RestClient;
+
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
@@ -28,9 +30,9 @@ public class PdfGenerator {
     private final UserClient userClient;
 
     public PdfGenerator(
-            OfferClient offerClient,
-            InvoiceClient invoiceClient,
-            UserClient userClient
+            @RestClient OfferClient offerClient,
+            @RestClient InvoiceClient invoiceClient,
+            @RestClient UserClient userClient
     ) {
         this.offerClient = offerClient;
         this.invoiceClient = invoiceClient;

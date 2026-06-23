@@ -24,4 +24,8 @@ public record CustomerSnapshotDto(
     private static String safe(String value) {
         return value == null ? "" : value;
     }
+
+    public String displayEmail() {
+        return safe(email);
+    }
 }

@@ -11,10 +11,10 @@ import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 public interface InvoiceClient {
 
     @GET
-    @Path("/{id}")
-    InvoiceDto getInvoiceById(
-            @PathParam("id") Long id,
-            @HeaderParam("Authorization") String authorizationHeader
+    @Path("/{invoiceId}")
+    InvoiceDto getInvoice(
+            @HeaderParam("Authorization") String authorization,
+            @PathParam("invoiceId") String invoiceId
     );
 
     @GET

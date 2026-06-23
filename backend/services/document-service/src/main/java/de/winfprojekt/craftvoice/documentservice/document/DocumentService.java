@@ -5,6 +5,7 @@ import de.winfprojekt.craftvoice.documentservice.mail.MailService;
 import de.winfprojekt.craftvoice.documentservice.pdf.PdfGenerator;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import java.util.List;
 
@@ -32,9 +33,9 @@ public class DocumentService {
             DocumentRepository documentRepository,
             PdfGenerator pdfGenerator,
             MailService mailService,
-            OfferClient offerClient,
-            InvoiceClient invoiceClient,
-            UserClient userClient
+            @RestClient OfferClient offerClient,
+            @RestClient InvoiceClient invoiceClient,
+            @RestClient UserClient userClient
     ) {
         this.documentRepository = documentRepository;
         this.pdfGenerator = pdfGenerator;
