@@ -342,3 +342,39 @@ export const getCustomers = async (): Promise<CustomerProfile[]> => {
 
   return handleResponse<CustomerProfile[]>(response);
 };
+export const updateCustomer = async (
+  id: number,
+  data: Partial<CustomerProfile>,
+): Promise<CustomerProfile> => {
+  const authHeaders = await getAuthorizationHeader();
+
+  const response = await fetch(
+    `${USER_SERVICE_URL}/customers/${id}`,
+    {
+      method: "PUT",
+      headers: {
+        ...authHeaders,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    },
+  );
+
+  return handleResponse<CustomerProfile>(response);
+};
+export const deleteCustomer = async (id: number): Promise<void> => {
+  const authHeaders = await getAuthorizationHeader();
+
+  const response = await fetch(
+    `${USER_SERVICE_URL}/customers/${id}`,
+    {
+      method: "DELETE",
+      headers: authHeaders,
+    },
+  );
+
+  if (!response.ok) {
+    const message = await extractErrorMessage(response);
+    throw new Error(message);
+  }
+};
