@@ -152,6 +152,21 @@ public class UserResource {
         return userService.getCustomerById(id);
     }
 
+    @PUT
+    @Path("/customers/{id}")
+    @RolesAllowed({"OWNER", "EMPLOYEE"})
+    public UserEntity updateCustomer(@PathParam("id") Long id, UserEntity data) {
+        return userService.updateCustomer(id, data);
+    }
+
+    @DELETE
+    @Path("/customers/{id}")
+    @RolesAllowed({"OWNER", "EMPLOYEE"})
+    public Response deleteCustomer(@PathParam("id") Long id) {
+        userService.deleteCustomer(id);
+        return Response.ok().build();
+    }
+
     private Long getUserId() {
         UserEntity user = userService.syncUserWithDatabase();
 

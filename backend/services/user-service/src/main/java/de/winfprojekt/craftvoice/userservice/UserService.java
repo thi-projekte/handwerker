@@ -338,6 +338,60 @@ public class UserService {
         return customerData;
     }
 
+    @Transactional
+    public UserEntity updateCustomer(Long id, UserEntity data) {
+        UserEntity customer = UserEntity.findById(id);
+
+        if (customer == null || !customer.roles.contains(UserRole.CUSTOMER)) {
+            throw new NotFoundException("Customer not found");
+        }
+
+        // Allow updating common fields if provided
+        if (data.firstName != null) customer.firstName = data.firstName;
+        if (data.lastName != null) customer.lastName = data.lastName;
+        if (data.phoneNumber != null) customer.phoneNumber = data.phoneNumber;
+        if (data.email != null) {
+            // Prevent email collision with existing users
+            UserEntity existing = UserEntity.findByEmail(data.email);
+            if (existing != null && !existing.id.equals(id)) {
+                throw new BadRequestException("Email already in use");
+            }
+            customer.email = data.email;
+        }
+
+        AuditLogEntity.log(
+                customer.id,
+                "CUSTOMER_UPDATED",
+                "Customer data updated by craftsman"
+        );
+
+        return customer;
+    }
+
+    @Transactional
+    public void deleteCustomer(Long id) {
+        UserEntity customer = UserEntity.findById(id);
+
+        if (customer == null || !customer.roles.contains(UserRole.CUSTOMER)) {
+            throw new NotFoundException("Customer not found");
+        }
+
+        // Anonymize customer data similarly to deleting accounts
+        customer.status = UserStatus.DELETED;
+        customer.email = "deleted_customer_" + customer.id + "@handwerker.de";
+        customer.keycloakId = null;
+        customer.firstName = null;
+        customer.lastName = null;
+        customer.phoneNumber = null;
+        customer.profilePictureUrl = null;
+
+        AuditLogEntity.log(
+                customer.id,
+                "CUSTOMER_DELETED",
+                "Customer deleted/anonymized by craftsman"
+        );
+    }
+
     public List<UserEntity> listCustomers() {
         return UserEntity.list(
                 "from UserEntity u join u.roles r where r = ?1",
