@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import "@/assets/stylesheets/stylesheet.css";
 import "@/features/review/components/ReviewPage.css";
 import {
-  getOfferByBusinessKey,
+  getAngebotsentwurf,
   approveOffer,
   updateOfferPositions,
   setArbeitsstunden,
@@ -40,132 +40,56 @@ interface Position {
   manuellGeaendert: boolean;
 }
 
-interface Stichpunkt {
-  id: string;
-  text: string;
-}
-
-interface Mitarbeiter {
-  id: string;
-  name: string;
-  stundensatz: number;
-}
-
-interface MitarbeiterZeile {
+/**
+ * Eine Arbeitszeit-Zeile. Mitarbeiter-Stammdaten (Name/Stundensatz) liefert der
+ * user-service noch nicht — daher werden Name und Stundensatz hier frei erfasst.
+ * Der Name darf leer bleiben; der Stundensatz ist Pflicht zum Bestätigen.
+ */
+interface ArbeitszeitZeile {
   zeilenId: string;
-  mitarbeiterId: string;
+  name: string;
+  stundensatz: number | null;
   stunden: number;
   manuellGeaendert: boolean;
 }
-
-// ─── Mock-Daten (Fallback & Mitarbeiter) ─────────────────────────────────────
-
-/**
- * Mitarbeiter-Liste: Noch nicht vom user-service geliefert.
- * TODO: Aus user-service laden wenn verfügbar.
- */
-const MOCK_MITARBEITER: Mitarbeiter[] = [
-  { id: "ma1", name: "Thomas Huber", stundensatz: 85.0 },
-  { id: "ma2", name: "Stefan Maier", stundensatz: 75.0 },
-  { id: "ma3", name: "Julia Schneider", stundensatz: 90.0 },
-  { id: "ma4", name: "Markus Wolf", stundensatz: 70.0 },
-];
-
-/**
- * Kundendaten: Kommen noch nicht als echte Daten aus dem offer-service.
- * TODO: customerId → customer-service → Kundendaten laden.
- */
-const FALLBACK_KUNDENDATEN = {
-  name: "Kunde (wird geladen…)",
-  adresse: "—",
-  ort: "—",
-};
 
 // ─── Hilfsfunktionen ─────────────────────────────────────────────────────────
 
 let _idCounter = 0;
 const newId = () => `pos_${Date.now()}_${_idCounter++}`;
 
-const findMa = (id: string) => MOCK_MITARBEITER.find((m) => m.id === id);
+const formatEuro = (v: number) => v.toFixed(2).replace(".", ",");
 
 /**
  * Konvertiert eine OfferPosition (Backend-Format) in das Frontend-Position-Format.
- * KI liefert keine Alternativen direkt — Alternativen-Array bleibt leer.
- * TODO: Alternativen über catalog-service nachschlagen (katalogProduktId → Kandidaten).
+ * Alternativen werden – sofern die PE sie im angebotsentwurf mitliefert – direkt
+ * übernommen; andernfalls bleibt das Array leer und wird später aus dem
+ * catalog-service ergänzt (siehe enrichMaterialAlternativen).
  */
 function offerPositionToFrontend(p: OfferPosition): Position {
+  const menge = p.menge ?? 1;
   return {
     id: String(p.id),
     bezeichnung: p.bezeichnung,
     beschreibung: p.beschreibung,
-    menge: p.menge ?? 1,
+    menge,
     einheit: p.einheit,
     preis: p.einzelPreis ?? 0,
     katalogProduktId: p.katalogProduktId,
     typ: "MATERIAL",
-    alternativen: [],
-    // TODO: Alternativen via GET /catalog/material/search befüllen
-    // (katalogProduktId als Ausgangspunkt für Suche)
+    alternativen: (p.alternativen ?? []).map((a) => ({
+      bezeichnung: a.bezeichnung,
+      beschreibung: a.beschreibung,
+      menge: a.menge ?? menge,
+      einheit: a.einheit,
+      preis: a.einzelPreis ?? 0,
+    })),
     gewaehlteAlternativeIndex: null,
     manuellGeaendert: false,
   };
 }
 
 // ─── Sub-Komponenten ──────────────────────────────────────────────────────────
-
-// ── Stichpunkt-Liste ──
-interface StichpunktListeProps {
-  stichpunkte: Stichpunkt[];
-  editingId: string | null;
-  hatManuell: boolean;
-  onAdd: () => void;
-  onDelete: (id: string) => void;
-  onUpdate: (id: string, text: string) => void;
-  onSetEditing: (id: string | null) => void;
-}
-
-const StichpunktListe = ({
-  stichpunkte,
-  editingId,
-  onAdd,
-  onDelete,
-  onUpdate,
-  onSetEditing,
-}: StichpunktListeProps) => (
-  <div className="review-stichpunkte">
-    {stichpunkte.map((s) => (
-      <div key={s.id} className="review-stichpunkt-row">
-        {editingId === s.id ? (
-          <input
-            className="review-stichpunkt-input"
-            autoFocus
-            value={s.text}
-            onChange={(e) => onUpdate(s.id, e.target.value)}
-            onBlur={() => onSetEditing(null)}
-            onKeyDown={(e) => e.key === "Enter" && onSetEditing(null)}
-          />
-        ) : (
-          <span
-            className="review-stichpunkt-text editable"
-            onClick={() => onSetEditing(s.id)}
-          >
-            {s.text || "Stichpunkt eingeben…"}
-          </span>
-        )}
-        <button
-          className="review-delete-btn"
-          onClick={() => onDelete(s.id)}
-          title="Löschen"
-        >
-          ✕
-        </button>
-      </div>
-    ))}
-    <button className="review-add-btn" onClick={onAdd}>
-      + Stichpunkt hinzufügen
-    </button>
-  </div>
-);
 
 // ── Positions-Karte ──
 interface PositionsKarteProps {
@@ -206,6 +130,10 @@ const PositionsKarte = ({
       : position;
 
   const istAlternativ = position.gewaehlteAlternativeIndex !== null;
+  const anzeigeBez = position.manuellGeaendert ? position.bezeichnung : ap.bezeichnung;
+  const anzeigeMenge = position.manuellGeaendert ? position.menge : ap.menge;
+  const anzeigePreis = position.manuellGeaendert ? position.preis : ap.preis;
+
   const rowClass = [
     "review-position-row",
     position.manuellGeaendert ? "manuell" : "",
@@ -216,74 +144,71 @@ const PositionsKarte = ({
 
   return (
     <div className={rowClass}>
-      <div className="review-pos-reorder">
+      <div className="review-pos-order">
         <button
-          className="review-reorder-btn"
+          className="review-order-btn"
           onClick={onMoveUp}
           disabled={index === 0}
           title="Nach oben"
         >
           ↑
         </button>
-        <span className="review-pos-index">{index + 1}</span>
+        <span className="review-pos-num">{index + 1}</span>
         <button
-          className="review-reorder-btn"
+          className="review-order-btn"
           onClick={onMoveDown}
           disabled={index === total - 1}
           title="Nach unten"
         >
           ↓
         </button>
+        <button
+          className="review-delete-btn review-order-del-btn"
+          onClick={onLoeschen}
+          title="Position löschen"
+        >
+          ✕
+        </button>
       </div>
 
-      <div className="review-pos-content">
-        <div className="review-pos-badges">
-          {position.manuellGeaendert && (
-            <span className="review-pos-badge manual">Manuelle Änderung</span>
-          )}
-          {istAlternativ && (
-            <span className="review-pos-badge alt">Alternative gewählt</span>
-          )}
-          {position.menge === null && (
-            <span className="review-pos-badge warn">Menge fehlt</span>
-          )}
-        </div>
+      <div className="review-pos-name-box">
+        {(position.manuellGeaendert || istAlternativ) && (
+          <div>
+            {position.manuellGeaendert && (
+              <span className="review-pos-badge manual">Manuelle Änderung</span>
+            )}
+            {istAlternativ && (
+              <span className="review-pos-badge alt">Alternative gewählt</span>
+            )}
+          </div>
+        )}
 
         {editBez ? (
           <input
-            className="review-pos-bezeichnung-input"
+            className="review-pos-name-input"
             autoFocus
             value={bezWert}
             onChange={(e) => setBezWert(e.target.value)}
             onBlur={() => {
               setEditBez(false);
-              if (bezWert !== position.bezeichnung)
-                onBezeichnungAendern(bezWert);
+              if (bezWert !== position.bezeichnung) onBezeichnungAendern(bezWert);
             }}
             onKeyDown={(e) => e.key === "Enter" && setEditBez(false)}
           />
         ) : (
           <span
-            className="review-pos-bezeichnung editable"
+            className="review-pos-name"
             onClick={() => {
-              setBezWert(
-                position.manuellGeaendert
-                  ? position.bezeichnung
-                  : ap.bezeichnung,
-              );
+              setBezWert(anzeigeBez);
               setEditBez(true);
             }}
             title="Bezeichnung anpassen"
           >
-            {position.manuellGeaendert ? position.bezeichnung : ap.bezeichnung}
+            {anzeigeBez}
           </span>
         )}
 
-        <span className="review-pos-beschreibung">{ap.beschreibung}</span>
-      </div>
-
-      <div className="review-pos-meta">
-        <div className="review-pos-menge-wrap">
+        <span className="review-pos-menge">
           {editMenge ? (
             <input
               className="review-pos-menge-input"
@@ -301,138 +226,139 @@ const PositionsKarte = ({
             />
           ) : (
             <span
-              className="review-pos-menge editable"
+              className="review-stunden-value editable"
               onClick={() => {
-                setMengeWert(
-                  String(position.manuellGeaendert ? position.menge : ap.menge),
-                );
+                setMengeWert(String(anzeigeMenge));
                 setEditMenge(true);
               }}
-              title="Menge anpassen"
+              title="Stückzahl anpassen"
             >
-              {position.manuellGeaendert ? position.menge : ap.menge}{" "}
-              {ap.einheit}
+              {anzeigeMenge} {ap.einheit}
             </span>
           )}
-        </div>
 
-        <div className="review-pos-preis-wrap">
-          {editPreis ? (
-            <input
-              className="review-pos-preis-input"
-              type="number"
-              step="0.01"
-              min="0"
-              autoFocus
-              value={preisWert}
-              onChange={(e) => setPreisWert(e.target.value)}
-              onBlur={() => {
-                setEditPreis(false);
-                const v = parseFloat(preisWert);
-                if (!isNaN(v) && v !== position.preis) onPreisAendern(v);
-              }}
-            />
-          ) : (
-            <span
-              className="review-pos-preis editable"
-              onClick={() => {
-                setPreisWert(
-                  String(position.manuellGeaendert ? position.preis : ap.preis),
-                );
-                setEditPreis(true);
-              }}
-              title="Preis anpassen"
-            >
-              {(position.manuellGeaendert ? position.preis : ap.preis)
-                .toFixed(2)
-                .replace(".", ",")}{" "}
-              €
+          {position.alternativen.length > 0 && (
+            <span className="review-pos-alt-box">
+              <select
+                className="review-pos-alt-select"
+                value={
+                  position.gewaehlteAlternativeIndex === null
+                    ? ""
+                    : String(position.gewaehlteAlternativeIndex)
+                }
+                onChange={(e) => {
+                  const v = e.target.value;
+                  onAlternativeWaehlen(v === "" ? null : parseInt(v));
+                }}
+              >
+                <option value="">Original</option>
+                {position.alternativen.map((alt, i) => (
+                  <option key={i} value={String(i)}>
+                    {alt.bezeichnung}
+                  </option>
+                ))}
+              </select>
             </span>
           )}
-          <span className="review-pos-preis-label">Preis</span>
-        </div>
+        </span>
+      </div>
 
-        {position.alternativen.length > 0 && (
-          <div className="review-pos-alt-box">
-            <select
-              className="review-pos-alt-select"
-              value={
-                position.gewaehlteAlternativeIndex === null
-                  ? ""
-                  : String(position.gewaehlteAlternativeIndex)
-              }
-              onChange={(e) => {
-                const v = e.target.value;
-                onAlternativeWaehlen(v === "" ? null : parseInt(v));
-              }}
-            >
-              <option value="" disabled>
-                Alternativen
-              </option>
-              {position.alternativen.map((alt, i) => (
-                <option key={i} value={String(i)}>
-                  {alt.bezeichnung}
-                </option>
-              ))}
-            </select>
-          </div>
+      <div className="review-pos-preis-box">
+        {editPreis ? (
+          <input
+            className="review-pos-preis-input"
+            type="number"
+            step="0.01"
+            min="0"
+            autoFocus
+            value={preisWert}
+            onChange={(e) => setPreisWert(e.target.value)}
+            onBlur={() => {
+              setEditPreis(false);
+              const v = parseFloat(preisWert);
+              if (!isNaN(v) && v !== position.preis) onPreisAendern(v);
+            }}
+          />
+        ) : (
+          <span
+            className="review-pos-preis"
+            onClick={() => {
+              setPreisWert(String(anzeigePreis));
+              setEditPreis(true);
+            }}
+            title="Preis anpassen"
+          >
+            {formatEuro(anzeigePreis)} €
+          </span>
         )}
-
-        <button
-          className="review-delete-btn"
-          onClick={onLoeschen}
-          title="Position löschen"
-        >
-          ✕
-        </button>
+        <span className="review-pos-preis-label">Einzelpreis</span>
       </div>
     </div>
   );
 };
 
-// ── Mitarbeiter-Zeile ──
-interface MitarbeiterZeileCardProps {
-  zeile: MitarbeiterZeile;
+// ── Arbeitszeit-Zeile ──
+interface ArbeitszeitZeileCardProps {
+  zeile: ArbeitszeitZeile;
   index: number;
-  onMitarbeiterWechsel: (id: string) => void;
+  onNameAendern: (name: string) => void;
+  onStundensatzAendern: (stundensatz: number | null) => void;
   onStundenAendern: (stunden: number) => void;
   onEntfernen: () => void;
   kannEntfernen: boolean;
 }
 
-const MitarbeiterZeileCard = ({
+const ArbeitszeitZeileCard = ({
   zeile,
   index,
-  onMitarbeiterWechsel,
+  onNameAendern,
+  onStundensatzAendern,
   onStundenAendern,
   onEntfernen,
   kannEntfernen,
-}: MitarbeiterZeileCardProps) => {
+}: ArbeitszeitZeileCardProps) => {
   const [editStunden, setEditStunden] = useState(false);
   const [stundenWert, setStundenWert] = useState(String(zeile.stunden));
-  const ma = findMa(zeile.mitarbeiterId);
+  const [satzWert, setSatzWert] = useState(
+    zeile.stundensatz != null ? String(zeile.stundensatz) : "",
+  );
+
+  const kosten = (zeile.stundensatz ?? 0) * zeile.stunden;
+  const satzFehlt = zeile.stundensatz == null || zeile.stundensatz <= 0;
 
   return (
-    <div
-      className={`review-ma-zeile ${zeile.manuellGeaendert ? "manuell" : ""}`}
-    >
+    <div className={`review-ma-zeile ${zeile.manuellGeaendert ? "manuell" : ""}`}>
       <span className="review-ma-index">{index + 1}</span>
 
       <div className="review-ma-select-wrap">
-        <select
-          className="review-mitarbeiter-select"
-          value={zeile.mitarbeiterId}
-          onChange={(e) => onMitarbeiterWechsel(e.target.value)}
-        >
-          {MOCK_MITARBEITER.map((m) => (
-            <option key={m.id} value={m.id}>
-              {m.name}
-            </option>
-          ))}
-        </select>
-        {ma && (
-          <span className="review-mitarbeiter-satz">
-            {ma.stundensatz.toFixed(2).replace(".", ",")} €/Std.
+        <input
+          className="review-stunden-input"
+          style={{ width: "100%", textAlign: "left", fontWeight: 600 }}
+          type="text"
+          placeholder="Mitarbeiter (optional)"
+          value={zeile.name}
+          onChange={(e) => onNameAendern(e.target.value)}
+        />
+        <input
+          className="review-stunden-input"
+          style={{ width: "100%", textAlign: "left", marginTop: 4 }}
+          type="number"
+          step="0.01"
+          min="0"
+          placeholder="Stundensatz in €"
+          value={satzWert}
+          onChange={(e) => setSatzWert(e.target.value)}
+          onBlur={() => {
+            const v = parseFloat(satzWert);
+            onStundensatzAendern(isNaN(v) ? null : v);
+          }}
+        />
+        {satzFehlt && (
+          <span
+            className="review-pos-badge review-ma-badge-inline"
+            style={{ background: "rgba(255,80,80,0.15)", color: "#ff6a6a" }}
+          >
+            Stundensatz fehlt
           </span>
         )}
         {zeile.manuellGeaendert && (
@@ -472,10 +398,7 @@ const MitarbeiterZeileCard = ({
         )}
       </div>
 
-      <span className="review-ma-kosten">
-        {((ma?.stundensatz ?? 0) * zeile.stunden).toFixed(2).replace(".", ",")}{" "}
-        €
-      </span>
+      <span className="review-ma-kosten">{formatEuro(kosten)} €</span>
 
       <div className="review-ma-actions">
         {kannEntfernen && (
@@ -504,9 +427,10 @@ export const ReviewPage = () => {
   const location = useLocation();
   const routeState = (location.state ?? {}) as ReviewLocationState;
 
-  // businessKey aus Router-State (von LadenPage weitergereicht)
-  // Fallback auf Hardcode für lokale Entwicklung ohne LadenPage-Flow
-  const businessKey = routeState.businessKey ?? "angebot-001";
+  // businessKey kommt ausschließlich aus dem Router-State (von der LadenPage
+  // nach dem PE-/KI-Durchlauf weitergereicht). Kein Hardcode-Fallback mehr —
+  // ohne businessKey gibt es keinen PE-Kontext und die Seite zeigt einen Fehler.
+  const businessKey = routeState.businessKey ?? null;
   const offerId = routeState.offerId ?? null;
 
   // ─── Lade-State ───
@@ -518,37 +442,31 @@ export const ReviewPage = () => {
   const [materialien, setMaterialien] = useState<Position[]>([]);
   const [kiHinweise, setKiHinweise] = useState<string[]>([]);
 
-  // ─── Stichpunkte ───
-  const [spMaterialien, setSpMaterialien] = useState<Stichpunkt[]>([]);
-  const [spArbeitszeit, setSpArbeitszeit] = useState<Stichpunkt[]>([]);
-  const [editingSpId, setEditingSpId] = useState<string | null>(null);
-
   // ─── Arbeitszeit ───
-  const [maZeilen, setMaZeilen] = useState<MitarbeiterZeile[]>([]);
-  const [anfahrt, setAnfahrt] = useState(45.0);
+  const [maZeilen, setMaZeilen] = useState<ArbeitszeitZeile[]>([]);
+  const [anfahrt, setAnfahrt] = useState(0);
   const [editAnfahrt, setEditAnfahrt] = useState(false);
 
   // ─── UI-State ───
   const [kiHinweis, setKiHinweis] = useState("");
-  const [notiz, setNotiz] = useState("");
   const [bestaetigt, setBestaetigt] = useState(false);
   const [reihenfolgeGeaendert, setReihenfolgeGeaendert] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // ─── Alternativen aus dem Katalog ──────────────────────────────────────────
+  // ─── Alternativen aus dem Katalog (Fallback) ───────────────────────────────
 
   /**
    * Reichert Materialpositionen um Alternativen aus dem catalog-service an.
-   * Die KI liefert pro Position nur den besten Treffer (katalogProduktId) — die
-   * Alternativen kommen aus der Katalog-Suche nach dem Positions-Namen.
-   * Der bereits gewählte Treffer wird ausgeblendet. Fehler pro Position werden
-   * geschluckt (Position bleibt ohne Alternativen).
+   * Wird nur für Positionen aufgerufen, die noch KEINE Alternativen von der PE
+   * mitgebracht haben — PE-gelieferte Alternativen haben Vorrang. Fehler pro
+   * Position werden geschluckt (Position bleibt ohne Alternativen).
    */
   const enrichMaterialAlternativen = useCallback(
     async (positionen: Position[]) => {
       const enriched = await Promise.all(
         positionen.map(async (pos) => {
+          if (pos.alternativen.length > 0) return pos; // von der PE geliefert
           try {
             const kandidaten = await searchMaterials(pos.bezeichnung, 5);
             const alternativen = kandidaten
@@ -562,10 +480,7 @@ export const ReviewPage = () => {
               }));
             return { ...pos, alternativen };
           } catch (e) {
-            console.error(
-              "[ReviewPage] Alternativen-Suche fehlgeschlagen:",
-              e,
-            );
+            console.error("[ReviewPage] Alternativen-Suche fehlgeschlagen:", e);
             return pos;
           }
         }),
@@ -578,39 +493,63 @@ export const ReviewPage = () => {
   // ─── Daten laden ─────────────────────────────────────────────────────────
 
   const ladeDaten = useCallback(async () => {
+    if (!businessKey) {
+      setIsLoading(false);
+      setLoadError(
+        "Kein Angebot ausgewählt. Bitte starte den Prozess über die Aufnahme erneut.",
+      );
+      return;
+    }
+
     setIsLoading(true);
     setLoadError(null);
     try {
-      const offer = await getOfferByBusinessKey(businessKey);
+      // Inhalt der Review = der von der PE gelieferte angebotsentwurf.
+      const offer = await getAngebotsentwurf(businessKey);
       setOfferData(offer);
 
-      // Backend kennt nur MATERIAL/ARBEITSZEIT/ANFAHRT — kein "LEISTUNG".
-      // Die Positionsliste zeigt die Material-Positionen aus dem KI-Durchlauf.
+      // Material-Positionen (Backend kennt nur MATERIAL/ARBEITSZEIT/ANFAHRT).
       const materialPositionen = offer.positions
         .filter((p) => p.type === "MATERIAL")
         .map((p) => offerPositionToFrontend(p));
-
       setMaterialien(materialPositionen);
 
-      // Alternativen pro Materialposition aus dem Katalog nachladen (#7).
-      // Fire-and-forget: Seite rendert sofort, Alternativen erscheinen sobald da.
+      // Alternativen ergänzen, soweit die PE keine mitgeliefert hat.
       void enrichMaterialAlternativen(materialPositionen);
 
       // KI-Hinweise (korrekturvorschlaege)
       setKiHinweise(offer.korrekturvorschlaege ?? []);
 
-      // Arbeitszeit: Hat die KI im Sprachschnipsel eine Dauer erkannt, wird sie
-      // als erste Mitarbeiterzeile vorbelegt. Andernfalls (null) bleibt die Liste
-      // leer und der Handwerker muss die Stunden selbst eintragen (Pflichtfeld).
-      if (
+      // Anfahrt aus der ANFAHRT-Position der PE (sonst 0 → manuell eintragen).
+      const anfahrtPos = offer.positions.find((p) => p.type === "ANFAHRT");
+      setAnfahrt(anfahrtPos?.einzelPreis ?? anfahrtPos?.positionsPreis ?? 0);
+
+      // Arbeitszeit: ARBEITSZEIT-Positionen der PE bevorzugen — sie liefern
+      // Stundensatz (einzelPreis) und Stunden (menge). Liefert die PE keine,
+      // aber die KI hat eine Dauer erkannt, wird diese als eine Zeile ohne
+      // Stundensatz vorbelegt (Stundensatz = Pflichteingabe). Sonst leer.
+      const arbeitszeitPos = offer.positions.filter(
+        (p) => p.type === "ARBEITSZEIT",
+      );
+      if (arbeitszeitPos.length > 0) {
+        setMaZeilen(
+          arbeitszeitPos.map((p) => ({
+            zeilenId: newId(),
+            name: p.bezeichnung ?? "",
+            stundensatz: p.einzelPreis,
+            stunden: p.menge ?? 0,
+            manuellGeaendert: false,
+          })),
+        );
+      } else if (
         offer.geschaetzteArbeitsdauerStunden != null &&
         offer.geschaetzteArbeitsdauerStunden > 0
       ) {
-        const defaultMa = MOCK_MITARBEITER[0];
         setMaZeilen([
           {
             zeilenId: newId(),
-            mitarbeiterId: defaultMa.id,
+            name: "",
+            stundensatz: null,
             stunden: offer.geschaetzteArbeitsdauerStunden,
             manuellGeaendert: false,
           },
@@ -632,137 +571,96 @@ export const ReviewPage = () => {
     const load = async () => {
       await ladeDaten();
     };
-    load();
+    void load();
   }, [ladeDaten]);
 
-  // ─── Hilfsfunktionen ─────────────────────────────────────────────────────
+  // ─── Arbeitszeit-Helfer ──────────────────────────────────────────────────
 
-  const makeSpHelpers = (
-    setter: React.Dispatch<React.SetStateAction<Stichpunkt[]>>,
-  ) => ({
-    add: () => {
-      const id = newId();
-      setter((p) => [...p, { id, text: "" }]);
-      setTimeout(() => setEditingSpId(id), 50);
-    },
-    remove: (id: string) => setter((p) => p.filter((s) => s.id !== id)),
-    update: (id: string, text: string) =>
-      setter((p) => p.map((s) => (s.id === id ? { ...s, text } : s))),
-  });
-
-  const spHelpersMaterialien = makeSpHelpers(setSpMaterialien);
-  const spHelpersArbeitszeit = makeSpHelpers(setSpArbeitszeit);
-
-  const updateMaZeile = (
-    zeilenId: string,
-    changes: Partial<Omit<MitarbeiterZeile, "zeilenId">>,
-  ) =>
+  // Stunden zählen als inhaltliche (manuelle) Änderung → Fall 3.
+  const updateMaStunden = (zeilenId: string, stunden: number) =>
     setMaZeilen((prev) =>
       prev.map((z) =>
         z.zeilenId === zeilenId
-          ? { ...z, ...changes, manuellGeaendert: true }
+          ? { ...z, stunden, manuellGeaendert: true }
           : z,
       ),
     );
 
-  const addMaZeile = () => {
-    const verwendeteIds = maZeilen.map((z) => z.mitarbeiterId);
-    const defaultMa =
-      MOCK_MITARBEITER.find((m) => !verwendeteIds.includes(m.id)) ??
-      MOCK_MITARBEITER[0];
+  // Name/Stundensatz sind fehlende Stammdaten (user-service), KEINE inhaltliche
+  // Korrektur → markieren NICHT als manuelle Änderung (kein KI-Re-Run nötig).
+  const updateMaFeld = (
+    zeilenId: string,
+    changes: Partial<Pick<ArbeitszeitZeile, "name" | "stundensatz">>,
+  ) =>
+    setMaZeilen((prev) =>
+      prev.map((z) => (z.zeilenId === zeilenId ? { ...z, ...changes } : z)),
+    );
+
+  const addMaZeile = () =>
     setMaZeilen((prev) => [
       ...prev,
       {
         zeilenId: newId(),
-        mitarbeiterId: defaultMa.id,
+        name: "",
+        stundensatz: null,
         stunden: 8,
         manuellGeaendert: true,
       },
     ]);
-  };
 
   const removeMaZeile = (zeilenId: string) =>
     setMaZeilen((prev) => prev.filter((z) => z.zeilenId !== zeilenId));
 
-  const movePosition = (
-    setter: React.Dispatch<React.SetStateAction<Position[]>>,
-    list: Position[],
-    index: number,
-    direction: "up" | "down",
-  ) => {
-    const newList = [...list];
-    const t = direction === "up" ? index - 1 : index + 1;
-    if (t < 0 || t >= newList.length) return;
-    [newList[index], newList[t]] = [newList[t], newList[index]];
-    setter(newList);
+  // ─── Positions-Helfer ────────────────────────────────────────────────────
+
+  const movePosition = (index: number, direction: "up" | "down") => {
+    setMaterialien((list) => {
+      const newList = [...list];
+      const t = direction === "up" ? index - 1 : index + 1;
+      if (t < 0 || t >= newList.length) return list;
+      [newList[index], newList[t]] = [newList[t], newList[index]];
+      return newList;
+    });
     setReihenfolgeGeaendert(true);
   };
 
-  const setAlternative = (
-    setter: React.Dispatch<React.SetStateAction<Position[]>>,
-    list: Position[],
-    id: string,
-    altIndex: number | null,
-  ) => {
-    setter(
+  const setAlternative = (id: string, altIndex: number | null) => {
+    setMaterialien((list) =>
       list.map((p) =>
         p.id === id
-          ? {
-              ...p,
-              gewaehlteAlternativeIndex: altIndex,
-              manuellGeaendert: false,
-            }
+          ? { ...p, gewaehlteAlternativeIndex: altIndex, manuellGeaendert: false }
           : p,
       ),
     );
     setReihenfolgeGeaendert(true);
   };
 
-  const setPreis = (
-    setter: React.Dispatch<React.SetStateAction<Position[]>>,
-    list: Position[],
-    id: string,
-    preis: number,
-  ) =>
-    setter(
+  const setPreis = (id: string, preis: number) =>
+    setMaterialien((list) =>
       list.map((p) =>
         p.id === id ? { ...p, preis, manuellGeaendert: true } : p,
       ),
     );
 
-  const setBez = (
-    setter: React.Dispatch<React.SetStateAction<Position[]>>,
-    list: Position[],
-    id: string,
-    bez: string,
-  ) =>
-    setter(
+  const setBez = (id: string, bez: string) =>
+    setMaterialien((list) =>
       list.map((p) =>
         p.id === id ? { ...p, bezeichnung: bez, manuellGeaendert: true } : p,
       ),
     );
 
-  const setMenge = (
-    setter: React.Dispatch<React.SetStateAction<Position[]>>,
-    list: Position[],
-    id: string,
-    menge: number,
-  ) =>
-    setter(
+  const setMenge = (id: string, menge: number) =>
+    setMaterialien((list) =>
       list.map((p) =>
         p.id === id ? { ...p, menge, manuellGeaendert: true } : p,
       ),
     );
 
-  const removePosition = (
-    setter: React.Dispatch<React.SetStateAction<Position[]>>,
-    id: string,
-  ) => setter((prev) => prev.filter((p) => p.id !== id));
+  const removePosition = (id: string) =>
+    setMaterialien((prev) => prev.filter((p) => p.id !== id));
 
-  const addPosition = (
-    setter: React.Dispatch<React.SetStateAction<Position[]>>,
-  ) => {
-    setter((prev) => [
+  const addPosition = () =>
+    setMaterialien((prev) => [
       ...prev,
       {
         id: newId(),
@@ -778,7 +676,6 @@ export const ReviewPage = () => {
         manuellGeaendert: true,
       },
     ]);
-  };
 
   // ─── Änderungs-Checks ────────────────────────────────────────────────────
 
@@ -807,37 +704,39 @@ export const ReviewPage = () => {
       };
     });
 
-    const kundendaten = offerData
-      ? { name: String(offerData.customerId), adresse: "—", ort: "—" }
-      : FALLBACK_KUNDENDATEN;
-
     return {
-      kundendaten,
+      // Kundendaten kommen noch nicht aus dem customer-service — wir reichen die
+      // vom offer-service gelieferte customerId weiter, Adresse/Ort als Platzhalter.
+      kundendaten: {
+        name: offerData ? String(offerData.customerId) : "",
+        adresse: "—",
+        ort: "—",
+      },
       strukturierteAngebotspositionMitPreis: { positionen: allPositionen },
       arbeitszeit: {
         mitarbeiter: maZeilen.map((z) => ({
-          mitarbeiterId: z.mitarbeiterId,
-          mitarbeiterName: findMa(z.mitarbeiterId)?.name,
-          stundensatz: findMa(z.mitarbeiterId)?.stundensatz,
+          mitarbeiterId: "",
+          mitarbeiterName: z.name || undefined,
+          stundensatz: z.stundensatz ?? undefined,
           stunden: z.stunden,
         })),
         anfahrtspauschale: anfahrt,
       },
+      // Freitext-Stichpunkte gibt es in der entschlackten UI nicht mehr — die
+      // Felder bleiben im PE-Vertrag erhalten, werden aber leer gesendet.
       stichpunkte: {
-        // "leistungen" bleibt im PE-Payload erhalten (Vertrag zum Dokument-
-        // Service), wird aber nicht mehr aus einer eigenen UI-Sektion gefüllt.
         leistungen: [] as string[],
-        materialien: spMaterialien.map((s) => s.text),
-        arbeitszeit: spArbeitszeit.map((s) => s.text),
+        materialien: [] as string[],
+        arbeitszeit: [] as string[],
       },
-      notiz,
+      notiz: "",
     };
   };
 
   // ─── Bestätigen-Handler ──────────────────────────────────────────────────
 
   const handleBestaetigen = async () => {
-    if (isSubmitting) return;
+    if (isSubmitting || !businessKey) return;
     setIsSubmitting(true);
     setSubmitError(null);
     setBestaetigt(true);
@@ -845,9 +744,8 @@ export const ReviewPage = () => {
     const istManuell = hatManuelleAenderung();
     const istReihenfolge = hatReihenfolgeOderAlternative();
 
-    // Die vom Handwerker manuell eingetragene Arbeitsdauer (Summe aller
-    // Mitarbeiter-Stunden) an den offer-service übermitteln. Daraus berechnet
-    // dieser die ARBEITSZEIT-Position neu.
+    // Die eingetragene Gesamt-Arbeitsdauer an den offer-service melden; daraus
+    // berechnet dieser die ARBEITSZEIT-Position neu.
     const gesamtStunden = maZeilen.reduce((sum, z) => sum + z.stunden, 0);
 
     try {
@@ -856,23 +754,19 @@ export const ReviewPage = () => {
       });
 
       if (istManuell) {
-        // ── Fall 3: Manuelle Änderung ──
-        // Hinweis: Der offer-service-Endpunkt für die Korrektur existiert noch
-        // nicht (siehe sendKorrektur, wirft bewusst). Der Flow läuft aktuell
-        // ausschließlich über die PE-Nachricht. Sobald der Endpunkt da ist,
-        // hier wieder sendKorrektur(...) ergänzen.
-        // PE-Nachricht: korrekturschnipsel
+        // ── Fall 3: Manuelle Änderung → neuer KI-Durchlauf ──
+        // Hinweis: der offer-service-Korrektur-Endpunkt existiert noch nicht
+        // (offerService.sendKorrektur wirft bewusst) — der Flow läuft aktuell
+        // ausschließlich über die PE-Nachricht.
         await sendKorrekturschnipsel(
           businessKey,
           kiHinweis || "Manuelle Änderung durch Handwerker",
         );
-        // Zurück zur LadenPage — wartet erneut auf KI_FERTIG
         navigate("/laden", {
           state: { businessKey, offerId, mode: "ki-warten" },
         });
       } else if (istReihenfolge) {
         // ── Fall 2: Reihenfolge / Alternative ──
-        // offer-service Positionen aktualisieren
         await updateOfferPositions(businessKey, {
           strukturierteAngebotspositionen: {
             leistungen: [],
@@ -887,19 +781,14 @@ export const ReviewPage = () => {
           },
           korrekturvorschlaege: [],
         });
-        // PE-Nachricht: angebotsentwurf
         await sendAngebotsentwurf(businessKey, buildAngebotsentwurf());
-        // Zur LadenPage → wartet auf Versand-Prozess → /angebotTeilen
         navigate("/laden", {
           state: { businessKey, offerId, mode: "versand-warten" },
         });
       } else {
-        // ── Fall 1: Genehmigung ──
-        // offer-service Status setzen
+        // ── Fall 1: Genehmigung (keine Änderungen) ──
         await approveOffer(businessKey);
-        // PE-Nachricht: genehmigungAngebot
         await sendGenehmigung(businessKey);
-        // Zur LadenPage → wartet auf PDF-Erstellung → /angebotTeilen
         navigate("/laden", {
           state: { businessKey, offerId, mode: "versand-warten" },
         });
@@ -917,19 +806,17 @@ export const ReviewPage = () => {
 
   // ─── Berechnungen ────────────────────────────────────────────────────────
 
-  // Summe der eingetragenen Arbeitsstunden. Solange hier nichts steht, darf das
-  // Angebot nicht bestätigt werden (KI-Wert ist dann ggf. schon vorbelegt).
-  const eingetrageneArbeitsstunden = maZeilen.reduce(
-    (sum, z) => sum + z.stunden,
-    0,
-  );
-  const arbeitszeitErfasst = eingetrageneArbeitsstunden > 0;
+  // Bestätigen ist erst erlaubt, wenn jede Arbeitszeit-Zeile sowohl Stunden als
+  // auch einen Stundensatz hat (Stundensatz = Pflichtfeld).
+  const arbeitszeitVollstaendig =
+    maZeilen.length > 0 &&
+    maZeilen.every(
+      (z) => z.stunden > 0 && z.stundensatz != null && z.stundensatz > 0,
+    );
 
   const arbeitskosten =
-    maZeilen.reduce(
-      (sum, z) => sum + (findMa(z.mitarbeiterId)?.stundensatz ?? 0) * z.stunden,
-      0,
-    ) + anfahrt;
+    maZeilen.reduce((sum, z) => sum + (z.stundensatz ?? 0) * z.stunden, 0) +
+    anfahrt;
 
   const gesamtpreis =
     materialien.reduce((sum, p) => {
@@ -942,7 +829,7 @@ export const ReviewPage = () => {
       return sum + preis * menge;
     }, 0) + arbeitskosten;
 
-  // ─── Lade-Zustand ────────────────────────────────────────────────────────
+  // ─── Lade-/Fehlerzustand ───────────────────────────────────────────────────
 
   if (isLoading) {
     return (
@@ -966,13 +853,11 @@ export const ReviewPage = () => {
     return (
       <div className="card review-header">
         <span className="review-eyebrow">Fehler</span>
-        <p style={{ color: "var(--color-accent)", marginTop: 8 }}>
-          {loadError}
-        </p>
+        <p style={{ color: "var(--color-accent)", marginTop: 8 }}>{loadError}</p>
         <button
           className="button-primary"
           style={{ marginTop: 16 }}
-          onClick={ladeDaten}
+          onClick={() => void ladeDaten()}
         >
           Erneut versuchen
         </button>
@@ -989,36 +874,13 @@ export const ReviewPage = () => {
         <div className="review-header-top">
           <div>
             <span className="review-eyebrow">Angebotsentwurf</span>
-            <h1>Überprüfe und bearbeite alle Angebotspositionen</h1>
+            <h1>Überprüfe Material, Arbeitszeit und Anfahrt</h1>
           </div>
           <span className="review-badge">Entwurf</span>
         </div>
       </div>
 
-      {/* ── Kundendaten ── */}
-      <div className="card review-section">
-        <div className="review-section-header">
-          <h2>Kunde</h2>
-          <span className="review-lock-icon" title="Gesperrt">
-            🔒
-          </span>
-        </div>
-        <div className="review-kunde-info">
-          <div className="review-kunde-row">
-            <span className="review-kunde-label">Kunden-ID</span>
-            <span className="review-kunde-value">
-              {offerData?.customerId ?? "—"}
-            </span>
-          </div>
-          {/* TODO: Kundendaten über customer-service nachladen */}
-          <p className="text-secondary" style={{ fontSize: 12, marginTop: 4 }}>
-            Vollständige Kundendaten werden nach customer-service-Anbindung hier
-            angezeigt.
-          </p>
-        </div>
-      </div>
-
-      {/* ── KI-Hinweise ── */}
+      {/* ── KI-Hinweise (read-only) ── */}
       {kiHinweise.length > 0 && (
         <div className="card review-section">
           <div className="review-section-header">
@@ -1041,16 +903,16 @@ export const ReviewPage = () => {
         </div>
       )}
 
-      {/* ── Materialien ── */}
+      {/* ── Material ── */}
       <div className="card review-section">
         <div className="review-section-header">
-          <h2>Materialien</h2>
+          <h2>Material</h2>
           <span className="review-count">{materialien.length}</span>
         </div>
         <div className="review-positions-list">
           {materialien.length === 0 && (
             <p className="text-secondary" style={{ fontSize: 13 }}>
-              Keine Materialien vom AI-Service erhalten.
+              Keine Materialpositionen vom KI-Service erhalten.
             </p>
           )}
           {materialien.map((pos, i) => (
@@ -1059,41 +921,17 @@ export const ReviewPage = () => {
               position={pos}
               index={i}
               total={materialien.length}
-              onMoveUp={() =>
-                movePosition(setMaterialien, materialien, i, "up")
-              }
-              onMoveDown={() =>
-                movePosition(setMaterialien, materialien, i, "down")
-              }
-              onAlternativeWaehlen={(a) =>
-                setAlternative(setMaterialien, materialien, pos.id, a)
-              }
-              onPreisAendern={(p) =>
-                setPreis(setMaterialien, materialien, pos.id, p)
-              }
-              onBezeichnungAendern={(b) =>
-                setBez(setMaterialien, materialien, pos.id, b)
-              }
-              onMengeAendern={(m) =>
-                setMenge(setMaterialien, materialien, pos.id, m)
-              }
-              onLoeschen={() => removePosition(setMaterialien, pos.id)}
+              onMoveUp={() => movePosition(i, "up")}
+              onMoveDown={() => movePosition(i, "down")}
+              onAlternativeWaehlen={(a) => setAlternative(pos.id, a)}
+              onPreisAendern={(p) => setPreis(pos.id, p)}
+              onBezeichnungAendern={(b) => setBez(pos.id, b)}
+              onMengeAendern={(m) => setMenge(pos.id, m)}
+              onLoeschen={() => removePosition(pos.id)}
             />
           ))}
         </div>
-        <StichpunktListe
-          stichpunkte={spMaterialien}
-          editingId={editingSpId}
-          hatManuell={spMaterialien.length > 0}
-          onAdd={spHelpersMaterialien.add}
-          onDelete={spHelpersMaterialien.remove}
-          onUpdate={spHelpersMaterialien.update}
-          onSetEditing={setEditingSpId}
-        />
-        <button
-          className="review-add-position-btn"
-          onClick={() => addPosition(setMaterialien)}
-        >
+        <button className="review-add-position-btn" onClick={addPosition}>
           + Material hinzufügen
         </button>
       </div>
@@ -1104,48 +942,37 @@ export const ReviewPage = () => {
           <h2>Arbeitszeit</h2>
           <span className="review-count">{maZeilen.length}</span>
         </div>
-        <p
-          className="text-secondary"
-          style={{ fontSize: 12, marginBottom: 8 }}
-        >
+        <p className="text-secondary" style={{ fontSize: 12, marginBottom: 8 }}>
           {offerData?.geschaetzteArbeitsdauerStunden != null
-            ? "Die KI hat eine Arbeitszeit aus dem Sprachschnipsel übernommen — bitte prüfen und ggf. anpassen."
-            : "Die KI hat keine Arbeitszeit erkannt — bitte Mitarbeiter und Stunden manuell eintragen."}
+            ? "Die KI hat eine Arbeitsdauer übernommen — bitte prüfen und den Stundensatz ergänzen."
+            : "Bitte trage Stunden und Stundensatz ein."}
         </p>
-        <div className="review-ma-list">
+        <div className="review-ma-liste">
           {maZeilen.map((z, i) => (
-            <MitarbeiterZeileCard
+            <ArbeitszeitZeileCard
               key={z.zeilenId}
               zeile={z}
               index={i}
-              onMitarbeiterWechsel={(id) =>
-                updateMaZeile(z.zeilenId, { mitarbeiterId: id })
+              onNameAendern={(name) => updateMaFeld(z.zeilenId, { name })}
+              onStundensatzAendern={(stundensatz) =>
+                updateMaFeld(z.zeilenId, { stundensatz })
               }
-              onStundenAendern={(stunden) =>
-                updateMaZeile(z.zeilenId, { stunden })
-              }
+              onStundenAendern={(stunden) => updateMaStunden(z.zeilenId, stunden)}
               onEntfernen={() => removeMaZeile(z.zeilenId)}
               kannEntfernen={maZeilen.length > 1}
             />
           ))}
         </div>
-        <StichpunktListe
-          stichpunkte={spArbeitszeit}
-          editingId={editingSpId}
-          hatManuell={spArbeitszeit.length > 0}
-          onAdd={spHelpersArbeitszeit.add}
-          onDelete={spHelpersArbeitszeit.remove}
-          onUpdate={spHelpersArbeitszeit.update}
-          onSetEditing={setEditingSpId}
-        />
         <button className="review-add-btn" onClick={addMaZeile}>
           + Mitarbeiter hinzufügen
         </button>
-        <div className="review-anfahrt-row">
-          <span className="review-anfahrt-label">Anfahrtspauschale</span>
+
+        {/* Anfahrtspauschale */}
+        <div className="review-stunden-row" style={{ marginTop: 12 }}>
+          <span className="review-stunden-label">Anfahrtspauschale</span>
           {editAnfahrt ? (
             <input
-              className="review-anfahrt-input"
+              className="review-stunden-input"
               type="number"
               step="0.01"
               min="0"
@@ -1156,28 +983,14 @@ export const ReviewPage = () => {
             />
           ) : (
             <span
-              className="review-anfahrt-value editable"
+              className="review-stunden-value editable"
               onClick={() => setEditAnfahrt(true)}
               title="Anpassen"
             >
-              {anfahrt.toFixed(2).replace(".", ",")} €
+              {formatEuro(anfahrt)} €
             </span>
           )}
         </div>
-      </div>
-
-      {/* ── Notizen ── */}
-      <div className="card review-section">
-        <div className="review-section-header">
-          <h2>Notiz ans Backend</h2>
-        </div>
-        <textarea
-          className="review-notiz-input"
-          placeholder="Interne Notiz zum Angebot (wird nicht ans Backend der KI weitergegeben)…"
-          value={notiz}
-          onChange={(e) => setNotiz(e.target.value)}
-          rows={3}
-        />
       </div>
 
       {/* ── Hinweis an die KI (Fall 3) ── */}
@@ -1185,10 +998,7 @@ export const ReviewPage = () => {
         <div className="review-section-header">
           <h2>Hinweis an die KI</h2>
         </div>
-        <p
-          className="text-secondary"
-          style={{ fontSize: 13, marginBottom: 10 }}
-        >
+        <p className="text-secondary" style={{ fontSize: 13, marginBottom: 10 }}>
           Nur relevant bei manuellen Änderungen (Fall 3). Beschreibe, was
           angepasst werden soll.
         </p>
@@ -1203,11 +1013,9 @@ export const ReviewPage = () => {
 
       {/* ── Gesamtpreis ── */}
       <div className="card review-gesamtpreis">
-        <span className="review-gesamtpreis-label">
-          Gesamtpreis (geschätzt)
-        </span>
+        <span className="review-gesamtpreis-label">Gesamtpreis (geschätzt)</span>
         <span className="review-gesamtpreis-value">
-          {gesamtpreis.toFixed(2).replace(".", ",")} €
+          {formatEuro(gesamtpreis)} €
         </span>
       </div>
 
@@ -1227,17 +1035,18 @@ export const ReviewPage = () => {
 
       {/* ── Aktionen ── */}
       <div className="card review-actions">
-        {!arbeitszeitErfasst && (
+        {!arbeitszeitVollstaendig && (
           <p
             className="text-secondary"
             style={{ color: "var(--color-accent)", fontSize: 13 }}
           >
-            Bitte trage zuerst die Arbeitszeit ein, bevor du fortfährst.
+            Bitte trage für jede Arbeitszeit-Zeile Stunden und einen Stundensatz
+            ein, bevor du fortfährst.
           </p>
         )}
         <button
           className="button-primary"
-          disabled={bestaetigt || isSubmitting || !arbeitszeitErfasst}
+          disabled={bestaetigt || isSubmitting || !arbeitszeitVollstaendig}
           onClick={handleBestaetigen}
         >
           {isSubmitting ? "Wird übermittelt…" : "Angebot bestätigen"}
