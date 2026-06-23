@@ -1462,6 +1462,16 @@ const importedCount = Number(text);
                     !customerData.vorname ||
                     !customerData.nachname
                   ) {
+                    setCompanyErrorMessage("Vor- und Nachname sind erforderlich.");
+                    return;
+                  }
+
+                  // Validate email before sending to backend (backend requires non-empty, valid email)
+                  const emailValue = (customerData.email || "").trim();
+                  const emailRegex = /^\S+@\S+\.\S+$/;
+
+                  if (!emailValue || !emailRegex.test(emailValue)) {
+                    setCompanyErrorMessage("Bitte eine gültige E-Mail-Adresse angeben.");
                     return;
                   }
 
@@ -1483,7 +1493,7 @@ const importedCount = Number(text);
                     (async () => {
                       try {
                         const created = await createCustomer({
-                          email: customerData.email,
+                          email: emailValue,
                           firstName: customerData.vorname,
                           lastName: customerData.nachname,
                           phoneNumber: customerData.telefon,
@@ -1498,7 +1508,7 @@ const importedCount = Number(text);
                             ...customerData,
                             image: customerImage,
                             // reflect backend assigned id/email/status if needed
-                            email: created.email || customerData.email,
+                            email: created.email || emailValue,
                           },
                         ]);
 
