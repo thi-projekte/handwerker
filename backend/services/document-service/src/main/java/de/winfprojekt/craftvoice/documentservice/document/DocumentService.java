@@ -79,25 +79,22 @@ public class DocumentService {
     }
 
     @Transactional
-    public void shareOfferDocument(String offerBusinessKey, String authorizationHeader) {
+    public void shareInvoiceDocument(String invoiceId, String authorizationHeader) {
 
-        OfferDto offer =
-                offerClient.getOffer(offerBusinessKey, authorizationHeader);
-
-        UserDto customer =
-                userClient.getCustomer(offer.customerId(), authorizationHeader);
+        InvoiceDto invoice =
+                invoiceClient.getInvoice(invoiceId, authorizationHeader);
 
         Document document =
                 getOrGenerateDocument(
-                        DocumentType.OFFER,
-                        offerBusinessKey,
+                        DocumentType.INVOICE,
+                        invoiceId,
                         authorizationHeader
                 );
 
         mailService.sendDocument(
                 document,
-                customer.displayEmail(),
-                customer.fullName()
+                invoice.kundendaten().displayEmail(),
+                invoice.kundendaten().fullName()
         );
     }
 

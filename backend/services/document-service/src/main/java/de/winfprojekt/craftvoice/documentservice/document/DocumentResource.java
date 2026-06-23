@@ -51,7 +51,7 @@ public class DocumentResource {
     @POST
     @Path("/invoices/{invoiceId}/share")
     public Response shareInvoiceDocument(
-            @PathParam("invoicewo umbenen") String invoiceId,
+            @PathParam("invoiceId") String invoiceId,
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authorizationHeader
     ) {
         documentService.shareInvoiceDocument(invoiceId, authorizationHeader);
