@@ -17,7 +17,7 @@
       <bpmn:extensionElements>
         <camunda:connector>
           <camunda:inputOutput>
-            <camunda:inputParameter name="url">https://webhook.site/8ffe7a5c-320f-4839-af43-6c010f6e937f</camunda:inputParameter>
+            <camunda:inputParameter name="url">https://aiservice-craftvoice.winfprojekt.de/ai/process</camunda:inputParameter>
             <camunda:inputParameter name="method">POST</camunda:inputParameter>
             <camunda:inputParameter name="payload">
               <camunda:script scriptFormat="JavaScript">var korrekturschnipsel = execution.getVariable("korrekturschnipsel");
@@ -60,6 +60,11 @@ if (korrekturschnipsel !== null &amp;&amp; strukturierteAngebotspositionen !== n
 }
 
 JSON.stringify(payload);</camunda:script>
+            </camunda:inputParameter>
+            <camunda:inputParameter name="headers">
+              <camunda:map>
+                <camunda:entry key="X-Handwerker-Id">${handwerkerId}</camunda:entry>
+              </camunda:map>
             </camunda:inputParameter>
           </camunda:inputOutput>
           <camunda:connectorId>http-connector</camunda:connectorId>

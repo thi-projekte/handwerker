@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1mkb2zd" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.45.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.24.0">
   <bpmn:collaboration id="Collaboration_0skkfwd">
-    <bpmn:participant id="pool_01" name="Angebotsprozess" processRef="angebotsprozess">
-      <bpmn:documentation>© 2026 Emanuel Mrazek, Lasse Hoffmann</bpmn:documentation>
-    </bpmn:participant>
+    <bpmn:participant id="pool_01" name="Angebotsprozess" processRef="angebotsprozess" />
     <bpmn:participant id="Participant_1qnp1x8" name="Craftvoice Backend" />
     <bpmn:messageFlow id="Flow_0pgfajl" name="Angebotsbedarf mit Kundeninformationen und Sprachschnipsel&#10;und Vorlage" sourceRef="Participant_1qnp1x8" targetRef="StartEvent_01" />
     <bpmn:textAnnotation id="TextAnnotation_174368c">
@@ -15,7 +13,6 @@ Test before = true</bpmn:text>
     <bpmn:association id="Association_1padhlt" associationDirection="None" sourceRef="Activity_1.2" targetRef="TextAnnotation_174368c" />
   </bpmn:collaboration>
   <bpmn:process id="angebotsprozess" isExecutable="true" camunda:historyTimeToLive="10">
-    <bpmn:documentation>© 2026 Emanuel Mrazek</bpmn:documentation>
     <bpmn:laneSet id="LaneSet_1g859k8">
       <bpmn:lane id="Lane_0l4perl" name="Handwerker / Meister">
         <bpmn:flowNodeRef>StartEvent_01</bpmn:flowNodeRef>
@@ -23,6 +20,7 @@ Test before = true</bpmn:text>
         <bpmn:flowNodeRef>Activity_1.2</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>Activity_1.3</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>EndEvent_01</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Activity_1.4</bpmn:flowNodeRef>
       </bpmn:lane>
     </bpmn:laneSet>
     <bpmn:startEvent id="StartEvent_01" name="Angebotsbedarf mit Kundeninformationen und Sprachschnipsel  und Vorlage empfangen">
@@ -31,6 +29,7 @@ Test before = true</bpmn:text>
           <camunda:script scriptFormat="JavaScript">var customerId = execution.getVariable("customerId");
 var sprachschnipsel = execution.getVariable("sprachschnipsel");
 var vorlage = execution.getVariable("vorlage");
+var handwerkerId = execution.getVariable("handwerkerId");
 
 execution.setVariable("angebotsgenehmigung", false);</camunda:script>
         </camunda:executionListener>
@@ -44,6 +43,7 @@ execution.setVariable("angebotsgenehmigung", false);</camunda:script>
         <camunda:in source="sprachschnipsel" target="sprachschnipsel" />
         <camunda:in source="vorlage" target="vorlage" />
         <camunda:in businessKey="#{execution.processBusinessKey}" />
+        <camunda:in source="handwerkerId" target="handwerkerId" />
         <camunda:out source="ergebnisKI" target="ergebnisKI" />
         <camunda:out source="angebotsentwurf" target="angebotsentwurf" />
       </bpmn:extensionElements>
@@ -68,7 +68,7 @@ execution.setVariable("angebotsgenehmigung", false);</camunda:script>
     <bpmn:dataObjectReference id="DataObjectReference_1q2vq1i" name="Vorlage" dataObjectRef="DataObject_115u0z4" />
     <bpmn:dataObject id="DataObject_115u0z4" />
     <bpmn:sequenceFlow id="Flow_0kvsphi" sourceRef="StartEvent_01" targetRef="Activity_1.1" />
-    <bpmn:sequenceFlow id="Flow_0fiyzfx" sourceRef="Activity_1.3" targetRef="EndEvent_01" />
+    <bpmn:sequenceFlow id="Flow_0fiyzfx" sourceRef="Activity_1.3" targetRef="Activity_1.4" />
     <bpmn:sequenceFlow id="Flow_1wq7rno" sourceRef="Activity_1.2" targetRef="Activity_1.3" />
     <bpmn:sequenceFlow id="Flow_1ph56zt" sourceRef="Activity_1.1" targetRef="Activity_1.2" />
     <bpmn:callActivity id="Activity_1.2" name="Angebots-korrektur" calledElement="angebotskorrektur">
@@ -77,6 +77,7 @@ execution.setVariable("angebotsgenehmigung", false);</camunda:script>
         <camunda:in businessKey="#{execution.processBusinessKey}" />
         <camunda:in source="ergebnisKI" target="ergebnisKI" />
         <camunda:in source="angebotsentwurf" target="angebotsentwurf" />
+        <camunda:in source="handwerkerId" target="handwerkerId" />
         <camunda:out source="angebotsgenehmigung" target="angebotsgenehmigung" />
         <camunda:out source="ergebnisKI" target="ergebnisKI" />
         <camunda:out source="angebotsentwurf" target="angebotsentwurf" />
@@ -113,19 +114,30 @@ execution.setVariable("angebotsgenehmigung", false);</camunda:script>
     </bpmn:callActivity>
     <bpmn:dataObjectReference id="DataObjectReference_0dbieie" name="Kundendaten" dataObjectRef="DataObject_127vt9q" />
     <bpmn:dataObject id="DataObject_127vt9q" />
-    <bpmn:endEvent id="EndEvent_01" name="Angebot erfolgreich versendet">
-      <bpmn:incoming>Flow_0fiyzfx</bpmn:incoming>
+    <bpmn:sequenceFlow id="Flow_0nzzayq" sourceRef="Activity_1.4" targetRef="EndEvent_01" />
+    <bpmn:endEvent id="EndEvent_01" name="Angebotsabwicklung abgeschlossen">
+      <bpmn:incoming>Flow_0nzzayq</bpmn:incoming>
     </bpmn:endEvent>
+    <bpmn:callActivity id="Activity_1.4" name="Rechnungsprozess" calledElement="rechnungserstellung">
+      <bpmn:documentation>rechnungserstellung</bpmn:documentation>
+      <bpmn:extensionElements>
+        <camunda:in source="angebotsentwurf" target="angebotsentwurf" />
+        <camunda:in source="customerId" target="customerId" />
+        <camunda:in businessKey="#{execution.processBusinessKey}" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0fiyzfx</bpmn:incoming>
+      <bpmn:outgoing>Flow_0nzzayq</bpmn:outgoing>
+    </bpmn:callActivity>
   </bpmn:process>
   <bpmn:message id="Message_0l62g53" name="angebotPayload" />
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_0skkfwd">
       <bpmndi:BPMNShape id="BPMNShape_1sgfbn1" bpmnElement="pool_01" isHorizontal="true">
-        <dc:Bounds x="160" y="180" width="1050" height="400" />
+        <dc:Bounds x="160" y="180" width="1240" height="400" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="BPMNShape_1saqtwr" bpmnElement="Lane_0l4perl" isHorizontal="true">
-        <dc:Bounds x="190" y="180" width="1020" height="400" />
+        <dc:Bounds x="190" y="180" width="1210" height="400" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="BPMNShape_02wye3z" bpmnElement="StartEvent_01">
@@ -165,10 +177,14 @@ execution.setVariable("angebotsgenehmigung", false);</camunda:script>
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="BPMNShape_0ag84xq" bpmnElement="EndEvent_01">
-        <dc:Bounds x="1092" y="372" width="36" height="36" />
+        <dc:Bounds x="1302" y="372" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="1084" y="415" width="52" height="40" />
+          <dc:Bounds x="1279" y="415" width="83" height="40" />
         </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0wevpp1_di" bpmnElement="Activity_1.4">
+        <dc:Bounds x="1110" y="350" width="100" height="80" />
+        <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="BPMNEdge_1206tve" bpmnElement="Flow_0kvsphi">
         <di:waypoint x="358" y="390" />
@@ -176,7 +192,7 @@ execution.setVariable("angebotsgenehmigung", false);</camunda:script>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="BPMNEdge_05p2ipr" bpmnElement="Flow_0fiyzfx">
         <di:waypoint x="1000" y="390" />
-        <di:waypoint x="1092" y="390" />
+        <di:waypoint x="1110" y="390" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="BPMNEdge_1lu7v5n" bpmnElement="Flow_1wq7rno">
         <di:waypoint x="760" y="390" />
@@ -185,6 +201,10 @@ execution.setVariable("angebotsgenehmigung", false);</camunda:script>
       <bpmndi:BPMNEdge id="BPMNEdge_0qxs04f" bpmnElement="Flow_1ph56zt">
         <di:waypoint x="520" y="390" />
         <di:waypoint x="660" y="390" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0nzzayq_di" bpmnElement="Flow_0nzzayq">
+        <di:waypoint x="1210" y="390" />
+        <di:waypoint x="1302" y="390" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="BPMNShape_13814hl" bpmnElement="Participant_1qnp1x8" isHorizontal="true">
         <dc:Bounds x="190" y="80" width="300" height="60" />
