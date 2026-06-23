@@ -39,7 +39,7 @@ const API_BASE_URL = API_CONFIG.OFFER_SERVICE_URL; // Assuming the dashboard sta
 export const getDashboardStats = async (): Promise<DashboardStatsResponse> => {
   const token = await getToken();
 
-  const response = await fetch(`${API_BASE_URL}/offers`, {
+  const response = await fetch(`${API_BASE_URL}/dashboard`, {
     method: "GET",
     headers: {
       ...(token && { Authorization: `Bearer ${token}` }),
