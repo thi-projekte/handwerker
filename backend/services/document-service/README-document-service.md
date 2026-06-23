@@ -71,3 +71,37 @@ GET /documents/{documentId}/pdf
 ```
 
 Liefert die PDF-Datei des angegebenen Dokuments.
+
+
+## Struktur
+```
+de.winfprojekt.craftvoice.documentservice
+├── document
+│   ├── Document.java
+│   ├── DocumentType.java
+│   ├── DocumentRepository.java
+│   ├── DocumentService.java
+│   ├── DocumentResource.java
+│   └── DocumentResponse.java
+│
+├── client
+│   ├── offer
+│   │   ├── OfferClient.java
+│   │   ├── OfferDto.java
+│   │   ├── InvoiceDto.java
+│   │   └── OfferPositionDto.java
+│   │
+│   └── user
+│       ├── UserClient.java
+│       └── UserDto.java
+│
+├── pdf
+│   └── PdfGenerator.java
+│
+├── mail
+│   └── MailService.java
+│
+└── exception
+├── DocumentNotFoundException.java
+└── DocumentAccessException.java
+```

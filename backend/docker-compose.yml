@@ -80,8 +80,6 @@ services:
       DB_PASSWORD: postgres
       DOCUMENT_STORAGE_PATH: /data/documents
       PE_URL: http://host.docker.internal:8081/engine-rest
-    volumes:
-      - document_files:/data/documents
     depends_on:
       - postgres
     networks:
@@ -99,8 +97,6 @@ services:
       DB_USER: postgres
       DB_PASSWORD: postgres
       QUARKUS_OIDC_TENANT_ENABLED: "false"
-    volumes:
-      - document_files:/data/documents
     depends_on:
       - postgres
     networks:
