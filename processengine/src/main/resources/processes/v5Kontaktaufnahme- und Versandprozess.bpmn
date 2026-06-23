@@ -7,59 +7,83 @@
     <bpmn:messageFlow id="Flow_0vafef9" name="Auftrag zum versenden" sourceRef="Participant_1k8qmmv" targetRef="Event_0swpcl0" />
   </bpmn:collaboration>
   <bpmn:process id="kontaktaufnahmeUndVersandprozess" isExecutable="true" camunda:historyTimeToLive="10">
-    <bpmn:startEvent id="Event_1l0cogb" name="Angebot muss versendet werden">
+    <bpmn:startEvent id="Event_1l0cogb" name="Dokument muss erstellt versendet werden">
+      <bpmn:extensionElements>
+        <camunda:executionListener expression="${execution.setVariable(&#34;rechnung&#34;, execution.hasVariable(&#34;rechnungsentwurf&#34;))}" event="end" />
+      </bpmn:extensionElements>
       <bpmn:outgoing>Flow_098kihw</bpmn:outgoing>
     </bpmn:startEvent>
     <bpmn:serviceTask id="Activity_5.1" name="Dokument-erstellung">
       <bpmn:extensionElements>
         <camunda:connector>
           <camunda:inputOutput>
-            <camunda:inputParameter name="url">https://webhook.site/8ffe7a5c-320f-4839-af43-6c010f6e937f</camunda:inputParameter>
+            <camunda:inputParameter name="url">http://documentservice-craftvoice.winfprojekt.de/documents/${documentType}/${execution.processBusinessKey}/generate</camunda:inputParameter>
             <camunda:inputParameter name="method">POST</camunda:inputParameter>
             <camunda:inputParameter name="payload">
               <camunda:script scriptFormat="JavaScript">var customerId = execution.getVariable("customerId");
-var angebotsentwurf = execution.getVariable("angebotsentwurf");
+var businessKey = execution.getProcessBusinessKey();
+var rechnung = execution.getVariable("rechnung");
 
 var payload = {
-  businessKey: execution.getProcessBusinessKey(),
+  businessKey: businessKey,
   typ: "dokumenterstellung",
-  dokumentart: "Angebot",
   format: "PDF",
-
-  customerId: customerId,
-
-  angebotsentwurf: JSON.parse(
-    angebotsentwurf.toString()
-  )
+  customerId: customerId
 };
+
+if (rechnung === true) {
+
+  var rechnungsentwurf = execution.getVariable("rechnungsentwurf");
+
+  payload.dokumentart = "Rechnung";
+  payload.rechnungsentwurf = JSON.parse(
+    rechnungsentwurf.toString()
+  );
+
+} else {
+
+  var angebotsentwurf = execution.getVariable("angebotsentwurf");
+
+  payload.dokumentart = "Angebot";
+  payload.angebotsentwurf = JSON.parse(
+    angebotsentwurf.toString()
+  );
+}
 
 JSON.stringify(payload);</camunda:script>
             </camunda:inputParameter>
-            <camunda:inputParameter name="contentTyp">application/json</camunda:inputParameter>
           </camunda:inputOutput>
           <camunda:connectorId>http-connector</camunda:connectorId>
         </camunda:connector>
+        <camunda:executionListener event="start">
+          <camunda:script scriptFormat="JavaScript">if (execution.getVariable("rechnung")) {
+    execution.setVariable("documentType", "invoices");
+} else {
+    execution.setVariable("documentType", "offers");
+}</camunda:script>
+        </camunda:executionListener>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_098kihw</bpmn:incoming>
       <bpmn:outgoing>Flow_01al5x1</bpmn:outgoing>
     </bpmn:serviceTask>
-    <bpmn:eventBasedGateway id="Gateway_07eg1in" name="Angebot versenden?">
+    <bpmn:eventBasedGateway id="Gateway_07eg1in" name="Dokument versenden?">
       <bpmn:incoming>Flow_01al5x1</bpmn:incoming>
       <bpmn:outgoing>Flow_0li6atp</bpmn:outgoing>
       <bpmn:outgoing>Flow_0qiimcs</bpmn:outgoing>
     </bpmn:eventBasedGateway>
-    <bpmn:endEvent id="Event_1a71put" name="Angebot wurde erfolgreich versendet">
+    <bpmn:endEvent id="Event_1a71put" name="Dokument wurde erfolgreich erstellt und versendet">
       <bpmn:incoming>Flow_1585cu4</bpmn:incoming>
     </bpmn:endEvent>
-    <bpmn:callActivity id="Activity_5.2" name="Angebots-versand" calledElement="angebotsversand">
+    <bpmn:callActivity id="Activity_5.2" name="Dokument-versand" calledElement="dokumentversand">
       <bpmn:extensionElements>
         <camunda:in source="customerId" target="customerId" />
         <camunda:in businessKey="#{execution.processBusinessKey}" />
+        <camunda:in source="rechnung" target="rechnung" />
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_1myz5je</bpmn:incoming>
       <bpmn:outgoing>Flow_1585cu4</bpmn:outgoing>
     </bpmn:callActivity>
-    <bpmn:endEvent id="Event_1ofdyba" name="Angebot wurde erfolgreich persistiert">
+    <bpmn:endEvent id="Event_1ofdyba" name="Dokument wurde erfolgreich persistiert">
       <bpmn:incoming>Flow_0bs9ocl</bpmn:incoming>
     </bpmn:endEvent>
     <bpmn:intermediateCatchEvent id="Event_129s0d0" name="Auftrag zum Nicht-Versenden empfangen">
@@ -93,7 +117,7 @@ JSON.stringify(payload);</camunda:script>
       <bpmndi:BPMNShape id="BPMNShape_1smpw1g" bpmnElement="Event_1l0cogb">
         <dc:Bounds x="192" y="354" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="166" y="397" width="88" height="27" />
+          <dc:Bounds x="168" y="397" width="85" height="40" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_1j1zqh2_di" bpmnElement="Activity_5.1">
@@ -103,13 +127,13 @@ JSON.stringify(payload);</camunda:script>
       <bpmndi:BPMNShape id="Gateway_1b5kwas_di" bpmnElement="Gateway_07eg1in">
         <dc:Bounds x="415" y="347" width="50" height="50" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="451" y="385" width="58" height="27" />
+          <dc:Bounds x="452" y="385" width="57" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_1a71put_di" bpmnElement="Event_1a71put">
         <dc:Bounds x="882" y="284" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="864" y="327" width="74" height="40" />
+          <dc:Bounds x="860" y="327" width="84" height="53" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_1m1gany_di" bpmnElement="Activity_5.2">
@@ -119,7 +143,7 @@ JSON.stringify(payload);</camunda:script>
       <bpmndi:BPMNShape id="Event_1ofdyba_di" bpmnElement="Event_1ofdyba">
         <dc:Bounds x="882" y="444" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="864" y="487" width="74" height="40" />
+          <dc:Bounds x="860" y="487" width="84" height="40" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_129s0d0_di" bpmnElement="Event_129s0d0">

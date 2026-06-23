@@ -17,6 +17,7 @@
         <camunda:in source="sprachschnipsel" target="sprachschnipsel" />
         <camunda:in source="vorlage" target="vorlage" />
         <camunda:in businessKey="#{execution.processBusinessKey}" />
+        <camunda:in source="handwerkerId" target="handwerkerId" />
         <camunda:out source="ergebnisKI" target="ergebnisKI" />
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_0axxbsn</bpmn:incoming>
@@ -26,28 +27,20 @@
       <bpmn:extensionElements>
         <camunda:connector>
           <camunda:inputOutput>
-            <camunda:inputParameter name="url">https://webhook.site/8ffe7a5c-320f-4839-af43-6c010f6e937f</camunda:inputParameter>
+            <camunda:inputParameter name="url">http://offerservice-craftvoice.winfprojekt.de/angebote/${execution.processBusinessKey}/ki-ergebnis</camunda:inputParameter>
             <camunda:inputParameter name="method">POST</camunda:inputParameter>
             <camunda:inputParameter name="payload">
               <camunda:script scriptFormat="JavaScript">var ergebnisKI = execution.getVariable("ergebnisKI");
 var customerId = execution.getVariable("customerId");
 var businessKey = execution.getProcessBusinessKey();
 
-JSON.stringify({
-  businessKey: businessKey,
+var payload = JSON.parse(ergebnisKI.toString());
 
-  customerId: customerId,
+payload.businessKey = businessKey;
+payload.customerId = customerId;
 
-  strukturierteAngebotspositionen: JSON.parse(
-    ergebnisKI.prop("strukturierteAngebotspositionen").toString()
-  ),
-
-  korrekturvorschlaege: JSON.parse(
-    ergebnisKI.prop("korrekturvorschlaege").toString()
-  )
-});</camunda:script>
+JSON.stringify(payload);</camunda:script>
             </camunda:inputParameter>
-            <camunda:inputParameter name="contentType">application/json</camunda:inputParameter>
           </camunda:inputOutput>
           <camunda:connectorId>http-connector</camunda:connectorId>
         </camunda:connector>
@@ -67,7 +60,7 @@ JSON.stringify({
       <bpmn:extensionElements>
         <camunda:connector>
           <camunda:inputOutput>
-            <camunda:inputParameter name="url">https://webhook.site/8ffe7a5c-320f-4839-af43-6c010f6e937f</camunda:inputParameter>
+            <camunda:inputParameter name="url">https://webhook.site/68540626-4879-4e02-889d-31483b55ebbb</camunda:inputParameter>
             <camunda:inputParameter name="method">POST</camunda:inputParameter>
             <camunda:inputParameter name="payload">
               <camunda:script scriptFormat="JavaScript">var angebotsentwurf = execution.getVariable("angebotsentwurf");
@@ -83,7 +76,6 @@ JSON.stringify({
   )
 });</camunda:script>
             </camunda:inputParameter>
-            <camunda:inputParameter name="contentType">application/json</camunda:inputParameter>
           </camunda:inputOutput>
           <camunda:connectorId>http-connector</camunda:connectorId>
         </camunda:connector>

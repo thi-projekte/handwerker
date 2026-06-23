@@ -7,9 +7,7 @@
     <bpmn:messageFlow id="Flow_06lg0ec" name="Genehmigung" sourceRef="Participant_0ygo8na" targetRef="Event_0rauegq" />
     <bpmn:messageFlow id="Flow_09oxe5t" name="ausgewaehlterAngebotsentwurf" sourceRef="Participant_0ygo8na" targetRef="Event_0dm5q1c" />
     <bpmn:messageFlow id="Flow_06i7ezz" name="Angebotsentwurf" sourceRef="Participant_0gkh810" targetRef="Event_0cbd1w5" />
-    <bpmn:messageFlow id="Flow_0tbjbcl" sourceRef="Activity_4.2" targetRef="Participant_0gkh810" />
     <bpmn:messageFlow id="Flow_1akbk0l" name="Korrektur-schnipsel" sourceRef="Participant_0ygo8na" targetRef="Event_152vaxu" />
-    <bpmn:messageFlow id="Flow_1wgefxb" sourceRef="Activity_4.4" targetRef="Participant_0gkh810" />
     <bpmn:messageFlow id="Flow_1vhm422" sourceRef="Activity_4.3" targetRef="Participant_0ygo8na" />
   </bpmn:collaboration>
   <bpmn:process id="angebotskorrektur" isExecutable="true" camunda:historyTimeToLive="10">
@@ -39,28 +37,20 @@ execution.setVariable("korrekturschnipsel", korrekturschnipsel);</camunda:script
       <bpmn:extensionElements>
         <camunda:connector>
           <camunda:inputOutput>
-            <camunda:inputParameter name="url">https://webhook.site/8ffe7a5c-320f-4839-af43-6c010f6e937f</camunda:inputParameter>
+            <camunda:inputParameter name="url">http://offerservice-craftvoice.winfprojekt.de/angebote/${execution.processBusinessKey}/ki-ergebnis</camunda:inputParameter>
             <camunda:inputParameter name="method">POST</camunda:inputParameter>
             <camunda:inputParameter name="payload">
               <camunda:script scriptFormat="JavaScript">var ergebnisKI = execution.getVariable("ergebnisKI");
-var businessKey = execution.getProcessBusinessKey();
 var customerId = execution.getVariable("customerId");
+var businessKey = execution.getProcessBusinessKey();
 
-JSON.stringify({
-  businessKey: businessKey,
+var payload = JSON.parse(ergebnisKI.toString());
 
-  customerId: customerId,
+payload.businessKey = businessKey;
+payload.customerId = customerId;
 
-  angebotspositionen: JSON.parse(
-    ergebnisKI.prop("strukturierteAngebotspositionen").toString()
-  ),
-
-  korrekturvorschlaege: JSON.parse(
-    ergebnisKI.prop("korrekturvorschlaege").toString()
-  )
-});</camunda:script>
+JSON.stringify(payload);</camunda:script>
             </camunda:inputParameter>
-            <camunda:inputParameter name="contentTyp">application/json</camunda:inputParameter>
           </camunda:inputOutput>
           <camunda:connectorId>http-connector</camunda:connectorId>
         </camunda:connector>
@@ -73,13 +63,24 @@ JSON.stringify({
         <camunda:in source="korrekturschnipsel" target="korrekturschnipsel" />
         <camunda:in source="strukturierteAngebotspositionen" target="strukturierteAngebotspositionen" />
         <camunda:in businessKey="#{execution.processBusinessKey}" />
+        <camunda:in source="handwerkerId" target="handwerkerId" />
         <camunda:out source="ergebnisKI" target="ergebnisKI" />
         <camunda:executionListener event="start">
           <camunda:script scriptFormat="JavaScript">var ergebnisKI = execution.getVariable("ergebnisKI");
 
-var strukturierteAngebotspositionen = ergebnisKI.prop("strukturierteAngebotspositionen");
+var daten = {
+  strukturierteAngebotspositionen: JSON.parse(
+    ergebnisKI.prop("strukturierteAngebotspositionen").toString()
+  ),
+  geschaetzteArbeitsdauerStunden: ergebnisKI
+    .prop("geschaetzteArbeitsdauerStunden")
+    .numberValue()
+};
 
-execution.setVariable("strukturierteAngebotspositionen", strukturierteAngebotspositionen);</camunda:script>
+execution.setVariable(
+  "strukturierteAngebotspositionen",
+  S(JSON.stringify(daten), "application/json")
+);</camunda:script>
         </camunda:executionListener>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_0qs32fn</bpmn:incoming>
@@ -91,18 +92,6 @@ execution.setVariable("strukturierteAngebotspositionen", strukturierteAngebotspo
       <bpmn:outgoing>Flow_1f2lkut</bpmn:outgoing>
       <bpmn:messageEventDefinition id="MessageEventDefinition_0t08x2h" messageRef="Message_34bip6j" />
     </bpmn:intermediateCatchEvent>
-    <bpmn:sequenceFlow id="Flow_17niv5q" sourceRef="Event_0ag11bx" targetRef="Gateway_02rd13u" />
-    <bpmn:sequenceFlow id="Flow_0ce6u3e" sourceRef="Gateway_02rd13u" targetRef="Event_152vaxu" />
-    <bpmn:sequenceFlow id="Flow_0hyqud8" sourceRef="Gateway_02rd13u" targetRef="Event_0rauegq" />
-    <bpmn:sequenceFlow id="Flow_05kg6v9" sourceRef="Gateway_02rd13u" targetRef="Event_0dm5q1c" />
-    <bpmn:sequenceFlow id="Flow_0qs32fn" sourceRef="Event_152vaxu" targetRef="Activity_4.1" />
-    <bpmn:sequenceFlow id="Flow_169wxp8" sourceRef="Activity_4.1" targetRef="Activity_4.2" />
-    <bpmn:sequenceFlow id="Flow_0782qmn" sourceRef="Activity_4.2" targetRef="Event_0cbd1w5" />
-    <bpmn:sequenceFlow id="Flow_1awhw6b" sourceRef="Gateway_1nhqxzr" targetRef="Event_1oh23wl" />
-    <bpmn:sequenceFlow id="Flow_1f2lkut" sourceRef="Event_0dm5q1c" targetRef="Activity_4.4" />
-    <bpmn:sequenceFlow id="Flow_0thqi5y" sourceRef="Event_0rauegq" targetRef="Gateway_1nhqxzr" />
-    <bpmn:sequenceFlow id="Flow_0n9kqlj" sourceRef="Activity_4.4" targetRef="Gateway_1nhqxzr" />
-    <bpmn:sequenceFlow id="Flow_0npbid2" sourceRef="Event_0cbd1w5" targetRef="Activity_4.3" />
     <bpmn:intermediateCatchEvent id="Event_0cbd1w5" name="Angebotsentwurf empfangen">
       <bpmn:incoming>Flow_0782qmn</bpmn:incoming>
       <bpmn:outgoing>Flow_0npbid2</bpmn:outgoing>
@@ -128,7 +117,7 @@ execution.setVariable("strukturierteAngebotspositionen", strukturierteAngebotspo
       <bpmn:extensionElements>
         <camunda:connector>
           <camunda:inputOutput>
-            <camunda:inputParameter name="url">https://webhook.site/8ffe7a5c-320f-4839-af43-6c010f6e937f</camunda:inputParameter>
+            <camunda:inputParameter name="url">https://webhook.site/68540626-4879-4e02-889d-31483b55ebbb</camunda:inputParameter>
             <camunda:inputParameter name="method">POST</camunda:inputParameter>
             <camunda:inputParameter name="payload">
               <camunda:script scriptFormat="JavaScript">var angebotsentwurf = execution.getVariable("angebotsentwurf");
@@ -144,7 +133,6 @@ JSON.stringify({
   )
 });</camunda:script>
             </camunda:inputParameter>
-            <camunda:inputParameter name="contentTyp">application/json</camunda:inputParameter>
           </camunda:inputOutput>
           <camunda:connectorId>http-connector</camunda:connectorId>
         </camunda:connector>
@@ -152,8 +140,7 @@ JSON.stringify({
       <bpmn:incoming>Flow_0npbid2</bpmn:incoming>
       <bpmn:outgoing>Flow_1wd0vvq</bpmn:outgoing>
     </bpmn:serviceTask>
-    <bpmn:sequenceFlow id="Flow_1wd0vvq" sourceRef="Activity_4.3" targetRef="Event_157wgkm" />
-    <bpmn:intermediateCatchEvent id="Event_0rauegq" name="Genehmigung empfangen">
+    <bpmn:intermediateCatchEvent id="Event_0rauegq" name="Genehmigung Angebot empfangen">
       <bpmn:extensionElements />
       <bpmn:incoming>Flow_0hyqud8</bpmn:incoming>
       <bpmn:outgoing>Flow_0thqi5y</bpmn:outgoing>
@@ -163,7 +150,7 @@ JSON.stringify({
       <bpmn:extensionElements>
         <camunda:connector>
           <camunda:inputOutput>
-            <camunda:inputParameter name="url">https://webhook.site/8ffe7a5c-320f-4839-af43-6c010f6e937f</camunda:inputParameter>
+            <camunda:inputParameter name="url">http://offerservice-craftvoice.winfprojekt.de/angebote/${execution.processBusinessKey}/positionen</camunda:inputParameter>
             <camunda:inputParameter name="method">POST</camunda:inputParameter>
             <camunda:inputParameter name="payload">
               <camunda:script scriptFormat="JavaScript">var businessKey = execution.getProcessBusinessKey();
@@ -176,7 +163,6 @@ JSON.stringify({
   angebotsentwurf: JSON.parse(angebotsentwurf.toString())
 });</camunda:script>
             </camunda:inputParameter>
-            <camunda:inputParameter name="contentTyp">application/json</camunda:inputParameter>
           </camunda:inputOutput>
           <camunda:connectorId>http-connector</camunda:connectorId>
         </camunda:connector>
@@ -189,6 +175,19 @@ JSON.stringify({
       <bpmn:incoming>Flow_0n9kqlj</bpmn:incoming>
       <bpmn:outgoing>Flow_1awhw6b</bpmn:outgoing>
     </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_17niv5q" sourceRef="Event_0ag11bx" targetRef="Gateway_02rd13u" />
+    <bpmn:sequenceFlow id="Flow_0ce6u3e" sourceRef="Gateway_02rd13u" targetRef="Event_152vaxu" />
+    <bpmn:sequenceFlow id="Flow_0hyqud8" sourceRef="Gateway_02rd13u" targetRef="Event_0rauegq" />
+    <bpmn:sequenceFlow id="Flow_05kg6v9" sourceRef="Gateway_02rd13u" targetRef="Event_0dm5q1c" />
+    <bpmn:sequenceFlow id="Flow_0qs32fn" sourceRef="Event_152vaxu" targetRef="Activity_4.1" />
+    <bpmn:sequenceFlow id="Flow_169wxp8" sourceRef="Activity_4.1" targetRef="Activity_4.2" />
+    <bpmn:sequenceFlow id="Flow_0782qmn" sourceRef="Activity_4.2" targetRef="Event_0cbd1w5" />
+    <bpmn:sequenceFlow id="Flow_1f2lkut" sourceRef="Event_0dm5q1c" targetRef="Activity_4.4" />
+    <bpmn:sequenceFlow id="Flow_0npbid2" sourceRef="Event_0cbd1w5" targetRef="Activity_4.3" />
+    <bpmn:sequenceFlow id="Flow_1wd0vvq" sourceRef="Activity_4.3" targetRef="Event_157wgkm" />
+    <bpmn:sequenceFlow id="Flow_1awhw6b" sourceRef="Gateway_1nhqxzr" targetRef="Event_1oh23wl" />
+    <bpmn:sequenceFlow id="Flow_0thqi5y" sourceRef="Event_0rauegq" targetRef="Gateway_1nhqxzr" />
+    <bpmn:sequenceFlow id="Flow_0n9kqlj" sourceRef="Activity_4.4" targetRef="Gateway_1nhqxzr" />
   </bpmn:process>
   <bpmn:message id="Message_1a8dtpo" name="korrekturschnipsel" />
   <bpmn:message id="Message_340suoo" name="genehmigungAngebot" />
@@ -257,7 +256,7 @@ JSON.stringify({
       <bpmndi:BPMNShape id="Event_0rauegq_di" bpmnElement="Event_0rauegq">
         <dc:Bounds x="512" y="396" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="495" y="358.5" width="70" height="27" />
+          <dc:Bounds x="495" y="350" width="70" height="40" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_0cedwyj_di" bpmnElement="Activity_4.4">
@@ -298,21 +297,9 @@ JSON.stringify({
         <di:waypoint x="968" y="294" />
         <di:waypoint x="1022" y="294" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_1awhw6b_di" bpmnElement="Flow_1awhw6b">
-        <di:waypoint x="835" y="414" />
-        <di:waypoint x="1310" y="414" />
-      </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_1f2lkut_di" bpmnElement="Flow_1f2lkut">
         <di:waypoint x="648" y="510" />
         <di:waypoint x="760" y="510" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0thqi5y_di" bpmnElement="Flow_0thqi5y">
-        <di:waypoint x="548" y="414" />
-        <di:waypoint x="785" y="414" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0n9kqlj_di" bpmnElement="Flow_0n9kqlj">
-        <di:waypoint x="810" y="470" />
-        <di:waypoint x="810" y="439" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0npbid2_di" bpmnElement="Flow_0npbid2">
         <di:waypoint x="1058" y="294" />
@@ -322,12 +309,24 @@ JSON.stringify({
         <di:waypoint x="1200" y="294" />
         <di:waypoint x="1310" y="294" />
       </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1awhw6b_di" bpmnElement="Flow_1awhw6b">
+        <di:waypoint x="835" y="414" />
+        <di:waypoint x="1310" y="414" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0thqi5y_di" bpmnElement="Flow_0thqi5y">
+        <di:waypoint x="548" y="414" />
+        <di:waypoint x="785" y="414" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0n9kqlj_di" bpmnElement="Flow_0n9kqlj">
+        <di:waypoint x="810" y="470" />
+        <di:waypoint x="810" y="439" />
+      </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="Participant_16c03l2_di" bpmnElement="Participant_0ygo8na" isHorizontal="true">
         <dc:Bounds x="160" y="630" width="1270" height="60" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="BPMNShape_16g2g36" bpmnElement="Participant_0gkh810" isHorizontal="true">
-        <dc:Bounds x="160" y="80" width="1270" height="60" />
+        <dc:Bounds x="160" y="90" width="1270" height="60" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_06lg0ec_di" bpmnElement="Flow_06lg0ec">
@@ -345,15 +344,11 @@ JSON.stringify({
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_06i7ezz_di" bpmnElement="Flow_06i7ezz">
-        <di:waypoint x="1040" y="140" />
+        <di:waypoint x="1040" y="150" />
         <di:waypoint x="1040" y="276" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="1058" y="205" width="83" height="14" />
+          <dc:Bounds x="1058" y="210" width="83" height="14" />
         </bpmndi:BPMNLabel>
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0tbjbcl_di" bpmnElement="Flow_0tbjbcl">
-        <di:waypoint x="940" y="254" />
-        <di:waypoint x="940" y="140" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_1akbk0l_di" bpmnElement="Flow_1akbk0l">
         <di:waypoint x="428" y="630" />
@@ -361,10 +356,6 @@ JSON.stringify({
         <bpmndi:BPMNLabel>
           <dc:Bounds x="375" y="448" width="50" height="27" />
         </bpmndi:BPMNLabel>
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_1wgefxb_di" bpmnElement="Flow_1wgefxb">
-        <di:waypoint x="840" y="470" />
-        <di:waypoint x="840" y="140" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_1vhm422_di" bpmnElement="Flow_1vhm422">
         <di:waypoint x="1150" y="334" />
