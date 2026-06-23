@@ -20,11 +20,12 @@
  */
 
 import { API_CONFIG } from "@/config/api";
+import { getToken } from "@/services/authService";
 
 // ─── Auth-Helper ────────────────────────────────────────────────────────────
 
-function getAuthHeaders(): Record<string, string> {
-  const token = localStorage.getItem("authToken");
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  const token = await getToken();
   return {
     "Content-Type": "application/json",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -90,7 +91,7 @@ export async function createOffer(
 ): Promise<OfferResponse> {
   const res = await fetch(`${API_CONFIG.OFFER_SERVICE_URL}/offers`, {
     method: "POST",
-    headers: getAuthHeaders(),
+    headers: await getAuthHeaders(),
     body: JSON.stringify(request),
   });
 
@@ -113,7 +114,7 @@ export async function getOfferByBusinessKey(
 ): Promise<OfferResponse> {
   const res = await fetch(
     `${API_CONFIG.OFFER_SERVICE_URL}/offers/${businessKey}`,
-    { headers: getAuthHeaders() },
+    { headers: await getAuthHeaders() },
   );
 
   if (!res.ok) {
@@ -133,7 +134,7 @@ export async function approveOffer(businessKey: string): Promise<void> {
     `${API_CONFIG.OFFER_SERVICE_URL}/offers/${businessKey}/review/approve`,
     {
       method: "POST",
-      headers: getAuthHeaders(),
+      headers: await getAuthHeaders(),
     },
   );
 
@@ -155,7 +156,7 @@ export async function updateOfferPositions(
     `${API_CONFIG.OFFER_SERVICE_URL}/angebote/${businessKey}/positionen`,
     {
       method: "POST",
-      headers: getAuthHeaders(),
+      headers: await getAuthHeaders(),
       body: JSON.stringify(request),
     },
   );
@@ -189,7 +190,7 @@ export async function sendKorrektur(
   //   `${API_CONFIG.OFFER_SERVICE_URL}/angebote/${businessKey}/korrektur`,
   //   {
   //     method: "POST",
-  //     headers: getAuthHeaders(),
+  //     headers: await  getAuthHeaders(),
   //     body: JSON.stringify({ korrekturschnipsel }),
   //   },
   // );
