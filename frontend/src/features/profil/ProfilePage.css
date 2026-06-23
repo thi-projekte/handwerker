@@ -237,13 +237,16 @@
 
 @media (min-width: 640px) {
   .profile-actions {
-    flex-direction: row;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
   }
-  .profile-save-button {
-    flex: 1;
-  }
-  .profile-password-button {
-    flex: 1;
+
+  .profile-save-button,
+  .profile-password-button,
+  .profile-logout-button {
+    width: 100%;
+    min-height: 56px;
   }
 }
 
@@ -487,7 +490,8 @@
 
 .profile-image-button:disabled,
 .profile-save-button:disabled,
-.profile-password-button:disabled {
+.profile-password-button:disabled,
+.profile-logout-button:disabled {
   cursor: not-allowed;
   opacity: 0.6;
 }
@@ -495,4 +499,26 @@
 .profile-field .input-field:disabled {
   cursor: not-allowed;
   opacity: 0.7;
+}
+
+
+.profile-logout-button {
+  width: 100%;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 107, 107, 0.45);
+  background: rgba(255, 107, 107, 0.1);
+  color: #ff6b6b;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.profile-logout-button:hover {
+  border-color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.16);
+}
+
+.profile-logout-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }

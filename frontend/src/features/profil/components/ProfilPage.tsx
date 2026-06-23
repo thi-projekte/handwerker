@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "@/assets/stylesheets/stylesheet.css";
+import { logoutFromKeycloak } from "@/services/authService";
 import {
   getCurrentUser,
   getProfilePictureUrl,
@@ -85,6 +86,7 @@ export const ProfilPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -230,6 +232,19 @@ export const ProfilPage = () => {
       );
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    setErrorMessage("");
+
+    try {
+      await logoutFromKeycloak();
+    } catch (error) {
+      console.error("Logout fehlgeschlagen:", error);
+      setErrorMessage("Logout fehlgeschlagen. Bitte versuche es erneut.");
+      setIsLoggingOut(false);
     }
   };
 
@@ -405,7 +420,7 @@ export const ProfilPage = () => {
                   name="vorname"
                   value={formData.vorname}
                   onChange={handleInputChange}
-                  disabled={isSaving}
+                  disabled={isSaving || isLoggingOut}
                 />
               </label>
 
@@ -416,7 +431,7 @@ export const ProfilPage = () => {
                   name="nachname"
                   value={formData.nachname}
                   onChange={handleInputChange}
-                  disabled={isSaving}
+                  disabled={isSaving || isLoggingOut}
                 />
               </label>
 
@@ -436,7 +451,7 @@ export const ProfilPage = () => {
                   type="tel"
                   value={formData.telefon}
                   onChange={handleInputChange}
-                  disabled={isSaving}
+                  disabled={isSaving || isLoggingOut}
                 />
               </label>
 
@@ -448,22 +463,25 @@ export const ProfilPage = () => {
                   nicht geändert werden.
                 </p>
               </label>
+
               <label className="profile-field">
                 <span>Mitgliedschaft verwalten</span>
                 <button
                   className="profile-password-button"
                   type="button"
                   onClick={() => navigate("/abo")}
+                  disabled={isLoggingOut}
                 >
                   Abo verwalten
                 </button>
               </label>
             </div>
+
             <div className="profile-actions">
               <button
                 className="button-primary profile-save-button"
                 type="button"
-                disabled={isSaving}
+                disabled={isSaving || isLoggingOut}
                 onClick={handleSaveChanges}
               >
                 {isSaving ? "Wird gespeichert …" : "Änderungen speichern"}
@@ -473,12 +491,20 @@ export const ProfilPage = () => {
                 className="profile-password-button"
                 type="button"
                 onClick={() => navigate("/passwortAendern")}
+                disabled={isLoggingOut}
               >
                 Passwort ändern
               </button>
-              
+
+              <button
+                className="profile-logout-button"
+                type="button"
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+              >
+                {isLoggingOut ? "Wird ausgeloggt …" : "Ausloggen"}
+              </button>
             </div>
-            
           </section>
         </>
       )}
@@ -502,6 +528,7 @@ export const ProfilPage = () => {
               type="button"
               onClick={() => setIsLightMode((previousValue) => !previousValue)}
               aria-label="Darstellung wechseln"
+              disabled={isLoggingOut}
             >
               <span
                 className={isLightMode ? "switch-dot light" : "switch-dot"}
