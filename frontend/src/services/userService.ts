@@ -308,6 +308,31 @@ export const uploadProfilePicture = async (
   return handleResponse<ProfilePictureUploadResponse>(response);
 };
 
+export const createCustomer = async (
+  data: Partial<CustomerProfile> & { email: string; firstName?: string; lastName?: string },
+): Promise<CustomerProfile> => {
+  const authHeaders = await getAuthorizationHeader();
+
+  const response = await fetch(`${USER_SERVICE_URL}/customers`, {
+    method: "POST",
+    headers: {
+      ...authHeaders,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      email: data.email,
+      firstName: data.firstName || "",
+      lastName: data.lastName || "",
+      phoneNumber: data.phoneNumber || null,
+      companyName: data.companyName || null,
+      // allow additional fields to be filled by backend/entity mapping
+      ...data,
+    }),
+  });
+
+  return handleResponse<CustomerProfile>(response);
+};
+
 export const getCustomers = async (): Promise<CustomerProfile[]> => {
   const authHeaders = await getAuthorizationHeader();
 
