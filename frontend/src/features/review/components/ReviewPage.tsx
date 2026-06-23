@@ -6,7 +6,7 @@ import {
   getOfferByBusinessKey,
   approveOffer,
   updateOfferPositions,
-  sendKorrektur,
+  setArbeitsstunden,
   type OfferResponse,
   type OfferPosition,
 } from "@/data/api/offerService";
@@ -26,7 +26,8 @@ interface Position {
   einheit: string;
   preis: number;
   katalogProduktId: string | null;
-  typ: "LEISTUNG" | "MATERIAL";
+  // Backend kennt kein "LEISTUNG" — die UI führt nur noch Material-Positionen.
+  typ: "MATERIAL";
   alternativen: {
     bezeichnung: string;
     beschreibung: string;
@@ -91,10 +92,7 @@ const findMa = (id: string) => MOCK_MITARBEITER.find((m) => m.id === id);
  * KI liefert keine Alternativen direkt — Alternativen-Array bleibt leer.
  * TODO: Alternativen über catalog-service nachschlagen (katalogProduktId → Kandidaten).
  */
-function offerPositionToFrontend(
-  p: OfferPosition,
-  typ: "LEISTUNG" | "MATERIAL",
-): Position {
+function offerPositionToFrontend(p: OfferPosition): Position {
   return {
     id: String(p.id),
     bezeichnung: p.bezeichnung,
@@ -103,7 +101,7 @@ function offerPositionToFrontend(
     einheit: p.einheit,
     preis: p.einzelPreis ?? 0,
     katalogProduktId: p.katalogProduktId,
-    typ,
+    typ: "MATERIAL",
     alternativen: [],
     // TODO: Alternativen via GET /catalog/material/search befüllen
     // (katalogProduktId als Ausgangspunkt für Suche)
@@ -516,12 +514,10 @@ export const ReviewPage = () => {
   const [offerData, setOfferData] = useState<OfferResponse | null>(null);
 
   // ─── Positions-State ───
-  const [leistungen, setLeistungen] = useState<Position[]>([]);
   const [materialien, setMaterialien] = useState<Position[]>([]);
   const [kiHinweise, setKiHinweise] = useState<string[]>([]);
 
   // ─── Stichpunkte ───
-  const [spLeistungen, setSpLeistungen] = useState<Stichpunkt[]>([]);
   const [spMaterialien, setSpMaterialien] = useState<Stichpunkt[]>([]);
   const [spArbeitszeit, setSpArbeitszeit] = useState<Stichpunkt[]>([]);
   const [editingSpId, setEditingSpId] = useState<string | null>(null);
@@ -548,24 +544,22 @@ export const ReviewPage = () => {
       const offer = await getOfferByBusinessKey(businessKey);
       setOfferData(offer);
 
-      // Positionen aufteilen in Leistungen und Materialien
-      const leistungPositionen = offer.positions
-        .filter((p) => p.typ === "LEISTUNG")
-        .map((p) => offerPositionToFrontend(p, "LEISTUNG"));
-
+      // Backend kennt nur MATERIAL/ARBEITSZEIT/ANFAHRT — kein "LEISTUNG".
+      // Die Positionsliste zeigt die Material-Positionen aus dem KI-Durchlauf.
       const materialPositionen = offer.positions
-        .filter((p) => p.typ === "MATERIAL")
-        .map((p) => offerPositionToFrontend(p, "MATERIAL"));
+        .filter((p) => p.type === "MATERIAL")
+        .map((p) => offerPositionToFrontend(p));
 
-      setLeistungen(leistungPositionen);
       setMaterialien(materialPositionen);
 
       // KI-Hinweise (korrekturvorschlaege)
       setKiHinweise(offer.korrekturvorschlaege ?? []);
 
-      // Arbeitszeit-Vorschlag aus KI
+      // Arbeitszeit: Hat die KI im Sprachschnipsel eine Dauer erkannt, wird sie
+      // als erste Mitarbeiterzeile vorbelegt. Andernfalls (null) bleibt die Liste
+      // leer und der Handwerker muss die Stunden selbst eintragen (Pflichtfeld).
       if (
-        offer.geschaetzteArbeitsdauerStunden &&
+        offer.geschaetzteArbeitsdauerStunden != null &&
         offer.geschaetzteArbeitsdauerStunden > 0
       ) {
         const defaultMa = MOCK_MITARBEITER[0];
@@ -577,6 +571,8 @@ export const ReviewPage = () => {
             manuellGeaendert: false,
           },
         ]);
+      } else {
+        setMaZeilen([]);
       }
     } catch (err) {
       console.error("[ReviewPage] Daten laden fehlgeschlagen:", err);
@@ -610,7 +606,6 @@ export const ReviewPage = () => {
       setter((p) => p.map((s) => (s.id === id ? { ...s, text } : s))),
   });
 
-  const spHelpersLeistungen = makeSpHelpers(setSpLeistungen);
   const spHelpersMaterialien = makeSpHelpers(setSpMaterialien);
   const spHelpersArbeitszeit = makeSpHelpers(setSpArbeitszeit);
 
@@ -722,7 +717,6 @@ export const ReviewPage = () => {
 
   const addPosition = (
     setter: React.Dispatch<React.SetStateAction<Position[]>>,
-    typ: "LEISTUNG" | "MATERIAL",
   ) => {
     setter((prev) => [
       ...prev,
@@ -734,7 +728,7 @@ export const ReviewPage = () => {
         einheit: "Stück",
         preis: 0,
         katalogProduktId: null,
-        typ,
+        typ: "MATERIAL",
         alternativen: [],
         gewaehlteAlternativeIndex: null,
         manuellGeaendert: true,
@@ -745,19 +739,17 @@ export const ReviewPage = () => {
   // ─── Änderungs-Checks ────────────────────────────────────────────────────
 
   const hatManuelleAenderung = () =>
-    [...leistungen, ...materialien].some((p) => p.manuellGeaendert) ||
+    materialien.some((p) => p.manuellGeaendert) ||
     maZeilen.some((z) => z.manuellGeaendert);
 
   const hatReihenfolgeOderAlternative = () =>
     reihenfolgeGeaendert ||
-    [...leistungen, ...materialien].some(
-      (p) => p.gewaehlteAlternativeIndex !== null,
-    );
+    materialien.some((p) => p.gewaehlteAlternativeIndex !== null);
 
   // ─── Payload-Builder ─────────────────────────────────────────────────────
 
   const buildAngebotsentwurf = () => {
-    const allPositionen = [...leistungen, ...materialien].map((p) => {
+    const allPositionen = materialien.map((p) => {
       const ap =
         p.gewaehlteAlternativeIndex !== null
           ? p.alternativen[p.gewaehlteAlternativeIndex]
@@ -788,7 +780,9 @@ export const ReviewPage = () => {
         anfahrtspauschale: anfahrt,
       },
       stichpunkte: {
-        leistungen: spLeistungen.map((s) => s.text),
+        // "leistungen" bleibt im PE-Payload erhalten (Vertrag zum Dokument-
+        // Service), wird aber nicht mehr aus einer eigenen UI-Sektion gefüllt.
+        leistungen: [] as string[],
         materialien: spMaterialien.map((s) => s.text),
         arbeitszeit: spArbeitszeit.map((s) => s.text),
       },
@@ -807,14 +801,22 @@ export const ReviewPage = () => {
     const istManuell = hatManuelleAenderung();
     const istReihenfolge = hatReihenfolgeOderAlternative();
 
+    // Die vom Handwerker manuell eingetragene Arbeitsdauer (Summe aller
+    // Mitarbeiter-Stunden) an den offer-service übermitteln. Daraus berechnet
+    // dieser die ARBEITSZEIT-Position neu.
+    const gesamtStunden = maZeilen.reduce((sum, z) => sum + z.stunden, 0);
+
     try {
+      await setArbeitsstunden(businessKey, {
+        arbeitsdauerStunden: gesamtStunden,
+      });
+
       if (istManuell) {
         // ── Fall 3: Manuelle Änderung ──
-        // offer-service informieren (Vorbereitung, Endpunkt noch nicht da)
-        await sendKorrektur(
-          businessKey,
-          kiHinweis || "Manuelle Änderung durch Handwerker",
-        );
+        // Hinweis: Der offer-service-Endpunkt für die Korrektur existiert noch
+        // nicht (siehe sendKorrektur, wirft bewusst). Der Flow läuft aktuell
+        // ausschließlich über die PE-Nachricht. Sobald der Endpunkt da ist,
+        // hier wieder sendKorrektur(...) ergänzen.
         // PE-Nachricht: korrekturschnipsel
         await sendKorrekturschnipsel(
           businessKey,
@@ -828,15 +830,18 @@ export const ReviewPage = () => {
         // ── Fall 2: Reihenfolge / Alternative ──
         // offer-service Positionen aktualisieren
         await updateOfferPositions(businessKey, {
-          positionen: [...leistungen, ...materialien].map((p) => ({
-            bezeichnung: p.bezeichnung,
-            beschreibung: p.beschreibung,
-            menge: p.menge,
-            einheit: p.einheit,
-            einzelPreis: p.preis,
-            typ: p.typ,
-            katalogProduktId: p.katalogProduktId,
-          })),
+          strukturierteAngebotspositionen: {
+            leistungen: [],
+            material: materialien.map((p) => ({
+              bezeichnung: p.bezeichnung,
+              beschreibung: p.beschreibung,
+              menge: p.menge,
+              einheit: p.einheit,
+              katalogProduktId: p.katalogProduktId,
+            })),
+            notizen: [],
+          },
+          korrekturvorschlaege: [],
         });
         // PE-Nachricht: angebotsentwurf
         await sendAngebotsentwurf(businessKey, buildAngebotsentwurf());
@@ -868,6 +873,14 @@ export const ReviewPage = () => {
 
   // ─── Berechnungen ────────────────────────────────────────────────────────
 
+  // Summe der eingetragenen Arbeitsstunden. Solange hier nichts steht, darf das
+  // Angebot nicht bestätigt werden (KI-Wert ist dann ggf. schon vorbelegt).
+  const eingetrageneArbeitsstunden = maZeilen.reduce(
+    (sum, z) => sum + z.stunden,
+    0,
+  );
+  const arbeitszeitErfasst = eingetrageneArbeitsstunden > 0;
+
   const arbeitskosten =
     maZeilen.reduce(
       (sum, z) => sum + (findMa(z.mitarbeiterId)?.stundensatz ?? 0) * z.stunden,
@@ -875,7 +888,7 @@ export const ReviewPage = () => {
     ) + anfahrt;
 
   const gesamtpreis =
-    [...leistungen, ...materialien].reduce((sum, p) => {
+    materialien.reduce((sum, p) => {
       const ap =
         p.gewaehlteAlternativeIndex !== null
           ? p.alternativen[p.gewaehlteAlternativeIndex]
@@ -984,62 +997,6 @@ export const ReviewPage = () => {
         </div>
       )}
 
-      {/* ── Leistungen ── */}
-      <div className="card review-section">
-        <div className="review-section-header">
-          <h2>Leistungen</h2>
-          <span className="review-count">{leistungen.length}</span>
-        </div>
-        <div className="review-positions-list">
-          {leistungen.length === 0 && (
-            <p className="text-secondary" style={{ fontSize: 13 }}>
-              Keine Leistungen vom AI-Service erhalten.
-              {/* Mögliche Ursachen: Sprachschnipsel war zu vage, oder KI hat nur Material erkannt */}
-            </p>
-          )}
-          {leistungen.map((pos, i) => (
-            <PositionsKarte
-              key={pos.id}
-              position={pos}
-              index={i}
-              total={leistungen.length}
-              onMoveUp={() => movePosition(setLeistungen, leistungen, i, "up")}
-              onMoveDown={() =>
-                movePosition(setLeistungen, leistungen, i, "down")
-              }
-              onAlternativeWaehlen={(a) =>
-                setAlternative(setLeistungen, leistungen, pos.id, a)
-              }
-              onPreisAendern={(p) =>
-                setPreis(setLeistungen, leistungen, pos.id, p)
-              }
-              onBezeichnungAendern={(b) =>
-                setBez(setLeistungen, leistungen, pos.id, b)
-              }
-              onMengeAendern={(m) =>
-                setMenge(setLeistungen, leistungen, pos.id, m)
-              }
-              onLoeschen={() => removePosition(setLeistungen, pos.id)}
-            />
-          ))}
-        </div>
-        <StichpunktListe
-          stichpunkte={spLeistungen}
-          editingId={editingSpId}
-          hatManuell={spLeistungen.length > 0}
-          onAdd={spHelpersLeistungen.add}
-          onDelete={spHelpersLeistungen.remove}
-          onUpdate={spHelpersLeistungen.update}
-          onSetEditing={setEditingSpId}
-        />
-        <button
-          className="review-add-position-btn"
-          onClick={() => addPosition(setLeistungen, "LEISTUNG")}
-        >
-          + Leistung hinzufügen
-        </button>
-      </div>
-
       {/* ── Materialien ── */}
       <div className="card review-section">
         <div className="review-section-header">
@@ -1091,7 +1048,7 @@ export const ReviewPage = () => {
         />
         <button
           className="review-add-position-btn"
-          onClick={() => addPosition(setMaterialien, "MATERIAL")}
+          onClick={() => addPosition(setMaterialien)}
         >
           + Material hinzufügen
         </button>
@@ -1103,15 +1060,14 @@ export const ReviewPage = () => {
           <h2>Arbeitszeit</h2>
           <span className="review-count">{maZeilen.length}</span>
         </div>
-        {offerData?.geschaetzteArbeitsdauerStunden == null && (
-          <p
-            className="text-secondary"
-            style={{ fontSize: 12, marginBottom: 8 }}
-          >
-            Die KI hat keine Arbeitszeit im Sprachschnipsel erkannt — bitte
-            manuell eintragen.
-          </p>
-        )}
+        <p
+          className="text-secondary"
+          style={{ fontSize: 12, marginBottom: 8 }}
+        >
+          {offerData?.geschaetzteArbeitsdauerStunden != null
+            ? "Die KI hat eine Arbeitszeit aus dem Sprachschnipsel übernommen — bitte prüfen und ggf. anpassen."
+            : "Die KI hat keine Arbeitszeit erkannt — bitte Mitarbeiter und Stunden manuell eintragen."}
+        </p>
         <div className="review-ma-list">
           {maZeilen.map((z, i) => (
             <MitarbeiterZeileCard
@@ -1227,9 +1183,17 @@ export const ReviewPage = () => {
 
       {/* ── Aktionen ── */}
       <div className="card review-actions">
+        {!arbeitszeitErfasst && (
+          <p
+            className="text-secondary"
+            style={{ color: "var(--color-accent)", fontSize: 13 }}
+          >
+            Bitte trage zuerst die Arbeitszeit ein, bevor du fortfährst.
+          </p>
+        )}
         <button
           className="button-primary"
-          disabled={bestaetigt || isSubmitting}
+          disabled={bestaetigt || isSubmitting || !arbeitszeitErfasst}
           onClick={handleBestaetigen}
         >
           {isSubmitting ? "Wird übermittelt…" : "Angebot bestätigen"}

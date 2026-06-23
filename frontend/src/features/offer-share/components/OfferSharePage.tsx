@@ -190,7 +190,7 @@ export const OfferSharePage = () => {
 
   const vorschauPositionen =
     offerData?.positions
-      .filter((p) => p.typ === "LEISTUNG" || p.typ === "MATERIAL")
+      .filter((p) => p.type === "MATERIAL")
       .map((p) => ({
         title: p.bezeichnung,
         amount: p.positionsPreis

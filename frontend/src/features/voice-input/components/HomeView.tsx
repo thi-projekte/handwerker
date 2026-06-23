@@ -1,28 +1,22 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "@/assets/stylesheets/stylesheet.css";
 import "./HomeView.css";
 import { useNavigate } from "react-router-dom";
 import { useVoiceInput } from "@/features/voice-input/hooks/useVoiceInput";
 import { MicButton } from "@/features/voice-input/components/MicButton";
+import { createOffer } from "@/data/api/offerService";
+import { getCustomers, type CustomerProfile } from "@/services/userService";
 
 export const HomeView = () => {
-  // Mock-Daten für Kunden - in der echten App werden diese von einem Backend kommen!! -> Muss noch angepasst werden
-  const recentCustomers = [
-    {
-      id: 1,
-      name: "Max Mustermann",
-      company: "Mustermann GmbH",
-    },
-    {
-      id: 2,
-      name: "Susi Sorglos",
-      company: "Susi CoKG",
-    },
-  ];
+  // Kunden werden aus dem user-service geladen (GET /customers).
+  const [customers, setCustomers] = useState<CustomerProfile[]>([]);
+  const [customersLoading, setCustomersLoading] = useState(true);
+  const [customersError, setCustomersError] = useState<string | null>(null);
+
   const [mode, setMode] = useState<"voice" | "text">("voice");
   const [customerCollapsed, setCustomerCollapsed] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<number | null>(null);
-  const selectedCustomerData = recentCustomers.find(
+  const selectedCustomerData = customers.find(
     (c) => c.id === selectedCustomer,
   );
   const [search, setSearch] = useState("");
@@ -46,6 +40,64 @@ export const HomeView = () => {
   const [customerError, setCustomerError] = useState(false);
   const [textError, setTextError] = useState(false);
 
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await getCustomers();
+        if (!cancelled) setCustomers(data);
+      } catch (err) {
+        if (!cancelled) {
+          const message =
+            err instanceof Error ? err.message : "Unbekannter Fehler";
+          setCustomersError(
+            `Kunden konnten nicht geladen werden: ${message}`,
+          );
+        }
+      } finally {
+        if (!cancelled) setCustomersLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const customerDisplayName = (c: CustomerProfile) =>
+    [c.firstName, c.lastName].filter(Boolean).join(" ").trim() || c.email;
+  const customerCompany = (c: CustomerProfile) => c.companyName ?? "";
+
+  const filteredCustomers = customers.filter((c) => {
+    const q = search.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      customerDisplayName(c).toLowerCase().includes(q) ||
+      customerCompany(c).toLowerCase().includes(q)
+    );
+  });
+
+  /**
+   * Erstellt das Angebot im offer-service (startet damit den PE-/KI-Flow) und
+   * navigiert anschließend zur Laden-Seite, die per Polling auf das KI-Ergebnis
+   * wartet und dann den businessKey an /review weiterreicht.
+   */
+  const erstelleAngebotUndWeiter = async (
+    customerId: number,
+    speechSnippet: string,
+  ) => {
+    const offer = await createOffer({
+      customerId: String(customerId),
+      speechSnippet,
+    });
+    navigate("/laden", {
+      state: {
+        businessKey: offer.businessKey,
+        offerId: offer.id,
+        mode: "ki-warten",
+      },
+    });
+  };
+
   const handleVoiceWeiter = async () => {
     finalizeRecording();
 
@@ -58,15 +110,30 @@ export const HomeView = () => {
 
     try {
       const speechSnippet = await transcribeAudio();
-      navigate("/review", {
-        state: {
-          speechSnippet,
-          customerId: selectedCustomer,
-        },
-      });
+      await erstelleAngebotUndWeiter(selectedCustomer, speechSnippet);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unbekannter Fehler";
-      setTranscribeError(`Transkription fehlgeschlagen: ${message}`);
+      setTranscribeError(`Angebot konnte nicht erstellt werden: ${message}`);
+    } finally {
+      setIsTranscribing(false);
+    }
+  };
+
+  const handleTextWeiter = async () => {
+    const hasCustomer = !!selectedCustomer;
+    const hasText = !!transcript.trim();
+    setCustomerError(!hasCustomer);
+    setTextError(!hasText);
+    if (!hasCustomer || !hasText) return;
+
+    setTranscribeError(null);
+    setIsTranscribing(true);
+
+    try {
+      await erstelleAngebotUndWeiter(selectedCustomer!, transcript);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unbekannter Fehler";
+      setTranscribeError(`Angebot konnte nicht erstellt werden: ${message}`);
     } finally {
       setIsTranscribing(false);
     }
@@ -176,24 +243,16 @@ export const HomeView = () => {
 
               <button
                 className="continue-button"
-                onClick={() => {
-                  const hasCustomer = !!selectedCustomer;
-                  const hasText = !!transcript.trim();
-                  setCustomerError(!hasCustomer);
-                  setTextError(!hasText);
-                  if (!hasCustomer || !hasText) return;
-                  navigate("/review", {
-                    state: {
-                      speechSnippet: transcript,
-                      customerId: selectedCustomer,
-                    },
-                  });
-                }}
+                onClick={handleTextWeiter}
+                disabled={isTranscribing}
               >
-                ➜ Weiter
+                {isTranscribing ? "⏳ Angebot wird erstellt…" : "➜ Weiter"}
               </button>
             </div>
           </div>
+          {transcribeError && (
+            <div className="text-error">{transcribeError}</div>
+          )}
           <p className="text-secondary">
             Beschreibe dein Angebot möglichst genau
           </p>
@@ -217,12 +276,12 @@ export const HomeView = () => {
             }}
           >
             <div className="customer-avatar">
-              {selectedCustomerData.name.charAt(0)}
+              {customerDisplayName(selectedCustomerData).charAt(0)}
             </div>
 
             <div className="customer-info">
-              <strong>{selectedCustomerData.name}</strong>
-              <span>{selectedCustomerData.company}</span>
+              <strong>{customerDisplayName(selectedCustomerData)}</strong>
+              <span>{customerCompany(selectedCustomerData)}</span>
             </div>
 
             <div className="customer-selected-badge">Ausgewählt</div>
@@ -257,7 +316,22 @@ export const HomeView = () => {
               </div>
 
               <div className="customer-list">
-                {recentCustomers.map((customer) => (
+                {customersLoading && (
+                  <div className="customer-list-hint">Kunden werden geladen…</div>
+                )}
+                {customersError && (
+                  <div className="customer-error">{customersError}</div>
+                )}
+                {!customersLoading &&
+                  !customersError &&
+                  filteredCustomers.length === 0 && (
+                    <div className="customer-list-hint">
+                      {customers.length === 0
+                        ? "Noch keine Kunden vorhanden."
+                        : "Keine Kunden gefunden."}
+                    </div>
+                  )}
+                {filteredCustomers.map((customer) => (
                   <button
                     key={customer.id}
                     className={`customer-item ${
@@ -270,11 +344,11 @@ export const HomeView = () => {
                     }}
                   >
                     <div className="customer-avatar">
-                      {customer.name.charAt(0)}
+                      {customerDisplayName(customer).charAt(0)}
                     </div>
                     <div className="customer-info">
-                      <strong>{customer.name}</strong>
-                      <span>{customer.company}</span>
+                      <strong>{customerDisplayName(customer)}</strong>
+                      <span>{customerCompany(customer)}</span>
                     </div>
                   </button>
                 ))}
