@@ -35,6 +35,22 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
 
 // ─── Typen ───────────────────────────────────────────────────────────────────
 
+/**
+ * Eine Alternative zu einer Position (z.B. günstigeres Ersatzprodukt).
+ * Wird – sofern vorhanden – von der Process Engine im angebotsentwurf
+ * mitgeliefert. Solange der PE-Vertrag das Feld nicht enthält, bleibt
+ * {@link OfferPosition.alternativen} undefiniert/leer; die ReviewPage füllt die
+ * Alternativen dann ersatzweise aus der catalog-service-Suche.
+ */
+export interface OfferPositionAlternative {
+  bezeichnung: string;
+  beschreibung: string;
+  menge: number | null;
+  einheit: string;
+  einzelPreis: number | null;
+  katalogProduktId: string | null;
+}
+
 export interface OfferPosition {
   id: number;
   bezeichnung: string;
@@ -47,6 +63,11 @@ export interface OfferPosition {
   // Enum common.OfferPositionType). Es gibt KEIN "LEISTUNG".
   type: "MATERIAL" | "ARBEITSZEIT" | "ANFAHRT";
   katalogProduktId: string | null; // UUID-String, kein Long!
+  /**
+   * Optionale Alternativen zu dieser Position. Werden von der PE geliefert,
+   * sobald der angebotsentwurf-Vertrag sie enthält; bis dahin undefined.
+   */
+  alternativen?: OfferPositionAlternative[];
 }
 
 export interface OfferResponse {
@@ -143,6 +164,31 @@ export async function getOfferByBusinessKey(
   }
 
   return res.json();
+}
+
+/**
+ * Holt den von der Process Engine gelieferten **Angebotsentwurf** ab.
+ *
+ * Architektur: ai-service → `ergebnisKI` (ohne Preise) → offer-service (reichert
+ * Preise aus dem catalog-service an) → PE-Message `angebotsentwurf`. Der Inhalt
+ * dieser Message ist exakt das serialisierte {@link OfferResponse}-DTO
+ * (siehe offer-service `ProcessEngineClient.sendAngebotsentwurf`).
+ *
+ * Die PE pusht diesen Entwurf eigentlich an einen Frontend-Endpunkt
+ * (BPMN „Erstangebotsentwurf anzeigen"); da eine reine Browser-SPA keinen
+ * HTTP-Push empfangen kann, **holt** das Frontend den Entwurf hier per GET ab.
+ * Solange das so läuft, ist die Funktion deckungsgleich mit
+ * {@link getOfferByBusinessKey} — sie existiert bewusst als eigener,
+ * sprechender Einstiegspunkt für „den von der PE gelieferten Review-Inhalt".
+ *
+ * TODO (Backend/PE): Der PE-Task `Activity_2.3` zeigt aktuell auf eine
+ * `webhook.site`-Platzhalter-URL. Sobald ein echter Endpunkt steht, kann hier
+ * die konkrete Quelle angepasst werden, ohne die ReviewPage zu ändern.
+ */
+export async function getAngebotsentwurf(
+  businessKey: string,
+): Promise<OfferResponse> {
+  return getOfferByBusinessKey(businessKey);
 }
 
 /**
