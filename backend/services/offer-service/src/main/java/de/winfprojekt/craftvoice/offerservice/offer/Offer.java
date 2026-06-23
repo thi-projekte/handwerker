@@ -53,6 +53,15 @@ public class Offer extends BaseEntity {
     @Column(name = "gesamt_preis", precision = 15, scale = 2)
     public BigDecimal gesamtPreis;
 
+    /**
+     * Von der KI geschätzte Gesamt-Arbeitsdauer in Stunden — nur gesetzt, wenn der
+     * Handwerker im Sprachschnipsel eine Dauer ausspricht; sonst {@code null}.
+     * Dient dem Frontend als Vorbelegung des Arbeitszeit-Felds. Ist der Wert
+     * {@code null}, muss der Handwerker die Stunden selbst eintragen.
+     */
+    @Column(name = "geschaetzte_arbeitsdauer_stunden", precision = 15, scale = 2)
+    public BigDecimal geschaetzteArbeitsdauerStunden;
+
     @OneToMany(mappedBy = "offer", cascade = CascadeType.ALL, orphanRemoval = true)
     public List<OfferPosition> positions = new ArrayList<>();
 

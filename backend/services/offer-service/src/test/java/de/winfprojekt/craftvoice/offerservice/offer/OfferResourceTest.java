@@ -264,7 +264,7 @@ class OfferResourceTest {
                 .contentType(ContentType.JSON)
                 .body("""
                 {
-                  "strukturierteAngebotspositionen": [
+                  "strukturierteAngebotspositionen": { "leistungen": [], "notizen": [], "material": [
                     {
                       "bezeichnung": "Badrenovierung",
                       "hersteller": "Knauf",
@@ -273,7 +273,7 @@ class OfferResourceTest {
                       "einheit": "Pauschal",
                       "katalogProduktId": "00000000-0000-0000-0000-000000000042"
                     }
-                  ],
+                  ] },
                   "korrekturvorschlaege": ["Materialkosten pr\u00fcfen"]
                 }
                 """)
@@ -363,7 +363,7 @@ class OfferResourceTest {
                 .contentType(ContentType.JSON)
                 .body("""
                 {
-                  "strukturierteAngebotspositionen": [
+                  "strukturierteAngebotspositionen": { "leistungen": [], "notizen": [], "material": [
                     {
                       "bezeichnung": "Badrenovierung",
                       "hersteller": "Knauf",
@@ -372,7 +372,7 @@ class OfferResourceTest {
                       "einheit": "Pauschal",
                       "katalogProduktId": "00000000-0000-0000-0000-000000000042"
                     }
-                  ],
+                  ] },
                   "korrekturvorschlaege": []
                 }
                 """)
@@ -419,7 +419,7 @@ class OfferResourceTest {
                 .contentType(ContentType.JSON)
                 .body("""
                 {
-                  "strukturierteAngebotspositionen": [],
+                  "strukturierteAngebotspositionen": { "material": [], "leistungen": [], "notizen": [] },
                   "korrekturvorschlaege": []
                 }
                 """)
@@ -442,7 +442,7 @@ class OfferResourceTest {
                 .contentType(ContentType.JSON)
                 .body("""
                 {
-                  "strukturierteAngebotspositionen": [],
+                  "strukturierteAngebotspositionen": { "material": [], "leistungen": [], "notizen": [] },
                   "korrekturvorschlaege": []
                 }
                 """)
@@ -869,7 +869,7 @@ class OfferResourceTest {
                 .contentType(ContentType.JSON)
                 .body("""
                 {
-                  "strukturierteAngebotspositionen": [],
+                  "strukturierteAngebotspositionen": { "material": [], "leistungen": [], "notizen": [] },
                   "korrekturvorschlaege": []
                 }
                 """)
@@ -929,7 +929,7 @@ class OfferResourceTest {
                 .contentType(ContentType.JSON)
                 .body("""
                 {
-                  "strukturierteAngebotspositionen": [],
+                  "strukturierteAngebotspositionen": { "material": [], "leistungen": [], "notizen": [] },
                   "korrekturvorschlaege": []
                 }
                 """)
@@ -986,7 +986,7 @@ class OfferResourceTest {
                 .contentType(ContentType.JSON)
                 .body("""
                 {
-                  "strukturierteAngebotspositionen": [],
+                  "strukturierteAngebotspositionen": { "material": [], "leistungen": [], "notizen": [] },
                   "korrekturvorschlaege": []
                 }
                 """)
@@ -1046,7 +1046,7 @@ class OfferResourceTest {
                 .contentType(ContentType.JSON)
                 .body("""
                 {
-                  "strukturierteAngebotspositionen": [],
+                  "strukturierteAngebotspositionen": { "material": [], "leistungen": [], "notizen": [] },
                   "korrekturvorschlaege": []
                 }
                 """)
@@ -1398,7 +1398,7 @@ class OfferResourceTest {
                 .contentType(ContentType.JSON)
                 .body("""
             {
-              "strukturierteAngebotspositionen": [],
+              "strukturierteAngebotspositionen": { "material": [], "leistungen": [], "notizen": [] },
               "korrekturvorschlaege": []
             }
             """)
@@ -1468,7 +1468,7 @@ class OfferResourceTest {
                 .contentType(ContentType.JSON)
                 .body("""
         {
-          "strukturierteAngebotspositionen": [
+          "strukturierteAngebotspositionen": { "leistungen": [], "notizen": [], "material": [
             {
               "bezeichnung": "NEU MATERIAL",
               "hersteller": "Test",
@@ -1476,7 +1476,7 @@ class OfferResourceTest {
               "menge": 1,
               "einheit": "Stk"
             }
-          ],\s
+          ] },\s
           "korrekturvorschlaege": []
         }
        \s""")
@@ -1532,11 +1532,11 @@ class OfferResourceTest {
                 .contentType(ContentType.JSON)
                 .body("""
         {
-          "strukturierteAngebotspositionen": [
+          "strukturierteAngebotspositionen": { "leistungen": [], "notizen": [], "material": [
             {"bezeichnung": "A", "menge": 1, "einheit": "Stk"},
             {"bezeichnung": "B", "menge": 1, "einheit": "Stk"},
             {"bezeichnung": "C", "menge": 1, "einheit": "Stk"}
-          ],
+          ] },
           "korrekturvorschlaege": []
         }
         """)
@@ -1582,13 +1582,13 @@ class OfferResourceTest {
 
         String requestBody = """
     {
-      "strukturierteAngebotspositionen": [
+      "strukturierteAngebotspositionen": { "leistungen": [], "notizen": [], "material": [
         {
           "bezeichnung": "Material X",
           "menge": 2,
           "einheit": "Stk"
         }
-      ], "korrekturvorschlaege": []
+      ] }, "korrekturvorschlaege": []
     }
     """;
 
@@ -1643,9 +1643,9 @@ class OfferResourceTest {
                 .contentType(ContentType.JSON)
                 .body("""
         {
-          "strukturierteAngebotspositionen": [
+          "strukturierteAngebotspositionen": { "leistungen": [], "notizen": [], "material": [
             {"bezeichnung": "Neu", "menge": 1, "einheit": "Stk"}
-          ], "korrekturvorschlaege": []
+          ] }, "korrekturvorschlaege": []
         }
         """)
                 .when()
@@ -1688,9 +1688,9 @@ class OfferResourceTest {
                 .contentType(ContentType.JSON)
                 .body("""
         {
-          "strukturierteAngebotspositionen": [
+          "strukturierteAngebotspositionen": { "leistungen": [], "notizen": [], "material": [
             {"bezeichnung": "X", "menge": 1, "einheit": "Stk"}
-          ], "korrekturvorschlaege": []
+          ] }, "korrekturvorschlaege": []
         }
         """)
                 .when()
@@ -1736,7 +1736,7 @@ class OfferResourceTest {
                 .contentType(ContentType.JSON)
                 .body("""
         {
-          "strukturierteAngebotspositionen": [],"korrekturvorschlaege": []
+          "strukturierteAngebotspositionen": { "material": [], "leistungen": [], "notizen": [] },"korrekturvorschlaege": []
         }
         """)
                 .when()
@@ -1845,7 +1845,7 @@ class OfferResourceTest {
                 .contentType(ContentType.JSON)
                 .body("""
             {
-              "strukturierteAngebotspositionen": [
+              "strukturierteAngebotspositionen": { "leistungen": [], "notizen": [], "material": [
                 {
                   "bezeichnung": "Test Material",
                   "hersteller": "Test",
@@ -1853,7 +1853,7 @@ class OfferResourceTest {
                   "menge": 1,
                   "einheit": "Stk"
                 }
-              ],
+              ] },
               "korrekturvorschlaege": []
             }
             """)
@@ -1869,7 +1869,7 @@ class OfferResourceTest {
                 .contentType(ContentType.JSON)
                 .body("""
             {
-              "strukturierteAngebotspositionen": [
+              "strukturierteAngebotspositionen": { "leistungen": [], "notizen": [], "material": [
                 {
                   "bezeichnung": "Test Material",
                   "hersteller": "Test",
@@ -1877,7 +1877,7 @@ class OfferResourceTest {
                   "menge": 1,
                   "einheit": "Stk"
                 }
-              ],
+              ] },
               "korrekturvorschlaege": []
             }
             """)

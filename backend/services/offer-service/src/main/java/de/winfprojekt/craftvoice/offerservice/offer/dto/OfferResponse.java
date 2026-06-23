@@ -24,6 +24,8 @@ public class OfferResponse {
     public LocalDateTime createdAt;
     public LocalDateTime updatedAt;
     public BigDecimal gesamtPreis;
+    /** Von der KI geschätzte Arbeitsdauer in Stunden; {@code null}, wenn nicht ausgesprochen. */
+    public BigDecimal geschaetzteArbeitsdauerStunden;
 
     public static OfferResponse fromEntity(Offer offer) {
         if (offer == null) {
@@ -42,6 +44,7 @@ public class OfferResponse {
         response.createdAt = offer.createdAt;
         response.updatedAt = offer.updatedAt;
         response.gesamtPreis = offer.gesamtPreis;
+        response.geschaetzteArbeitsdauerStunden = offer.geschaetzteArbeitsdauerStunden;
         return response;
     }
 }

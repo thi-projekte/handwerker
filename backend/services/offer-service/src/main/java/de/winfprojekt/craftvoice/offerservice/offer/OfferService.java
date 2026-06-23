@@ -191,7 +191,14 @@ public class OfferService {
         // =========================
         // 2. MATERIAL NEU
         // =========================
-        for (StructuredOfferPositionDTO posDto : request.strukturierteAngebotspositionen) {
+        // Nur die material-Liste der KI wird zu Angebotspositionen — Leistungen
+        // werden bewusst ignoriert (kein LEISTUNG-Typ im Angebot).
+        List<StructuredOfferPositionDTO> materialPositionen =
+                request.strukturierteAngebotspositionen != null
+                        && request.strukturierteAngebotspositionen.material != null
+                        ? request.strukturierteAngebotspositionen.material
+                        : java.util.List.of();
+        for (StructuredOfferPositionDTO posDto : materialPositionen) {
             BigDecimal preis = BigDecimal.ZERO;
             if (posDto.katalogProduktId != null) {
                 try {
@@ -302,6 +309,10 @@ public class OfferService {
         offer.korrekturvorschlaege = request.korrekturvorschlaege != null
                 ? new java.util.ArrayList<>(request.korrekturvorschlaege)
                 : new java.util.ArrayList<>();
+
+        // Von der KI geschätzte Arbeitsdauer (nur gesetzt, wenn ausgesprochen) als
+        // Vorbelegung fürs Frontend übernehmen. Bleibt null, wenn die KI nichts liefert.
+        offer.geschaetzteArbeitsdauerStunden = request.geschaetzteArbeitsdauerStunden;
 
         offer.persist();
 

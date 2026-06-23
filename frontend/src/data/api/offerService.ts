@@ -10,8 +10,9 @@
  *   GET  /offers/{businessKey}               → Angebot + Positionen abrufen
  *   POST /offers/{businessKey}/review/approve → Fall 1: Genehmigung
  *   POST /angebote/{businessKey}/positionen   → Fall 2: Positionen-Update (Reihenfolge/Alternative)
+ *   POST /angebote/{businessKey}/arbeitsstunden → manuelle Arbeitsstunden-Eingabe
  *   [TODO] POST /angebote/{businessKey}/korrektur → Fall 3: Korrekturschnipsel
- *         → Endpunkt noch nicht implementiert, wird hier als Vorbereitung angelegt.
+ *         → Endpunkt noch nicht implementiert; sendKorrektur wirft daher.
  *
  * ⚠️  Was das Frontend vom AI-Service NICHT direkt bekommt:
  *   - KI wird von der PE getriggert, nicht vom Frontend
@@ -42,41 +43,61 @@ export interface OfferPosition {
   einheit: string;
   einzelPreis: number | null;
   positionsPreis: number | null;
-  typ: "LEISTUNG" | "MATERIAL" | "ARBEITSZEIT" | "ANFAHRT";
+  // Feldname und Werte exakt wie im Backend (Entity OfferPosition.type,
+  // Enum common.OfferPositionType). Es gibt KEIN "LEISTUNG".
+  type: "MATERIAL" | "ARBEITSZEIT" | "ANFAHRT";
   katalogProduktId: string | null; // UUID-String, kein Long!
 }
 
 export interface OfferResponse {
   id: number;
   businessKey: string;
-  customerId: number;
-  handwerkerId: number;
+  // String, passend zum Backend-DTO (OfferResponse.customerId/handwerkerId).
+  // handwerkerId ist die Keycloak-UUID (sub), keine Zahl.
+  customerId: string;
+  handwerkerId: string;
   status: string;
   gesamtPreis: number | null;
   korrekturvorschlaege: string[];
+  // Von der KI geschätzte Arbeitsdauer in Stunden; null, wenn der Handwerker im
+  // Sprachschnipsel keine Dauer ausgesprochen hat (dann manuelle Pflichteingabe).
   geschaetzteArbeitsdauerStunden: number | null;
   positions: OfferPosition[];
   createdAt: string;
 }
 
 export interface CreateOfferRequest {
-  customerId: number;
-  handwerkerId: number;
+  // String, passend zum Backend-DTO (CreateOfferRequest.customerId).
+  customerId: string;
+  // handwerkerId wird backendseitig aus dem JWT abgeleitet, nicht mitgesendet.
   speechSnippet: string;
 }
 
+/**
+ * Eine strukturierte Position wie im Backend-DTO StructuredOfferPositionDTO.
+ * Enthält bewusst KEINEN Preis — Preise kommen aus dem catalog-service.
+ */
+export interface StructuredOfferPosition {
+  bezeichnung: string;
+  hersteller?: string | null;
+  beschreibung: string;
+  menge: number | null;
+  einheit: string;
+  katalogProduktId?: string | null;
+}
+
+/**
+ * Passt zum Backend-DTO OfferChangesRequest: strukturierteAngebotspositionen ist
+ * ein Objekt { leistungen, material, notizen } (KI-Struktur). Verarbeitet wird
+ * backendseitig nur `material`. `korrekturvorschlaege` ist Pflicht (ggf. []).
+ */
 export interface OfferChangesRequest {
-  korrekturvorschlaege?: string[];
-  geschaetzteArbeitsdauerStunden?: number | null;
-  positionen: {
-    bezeichnung: string;
-    beschreibung: string;
-    menge: number | null;
-    einheit: string;
-    einzelPreis?: number | null;
-    typ: string;
-    katalogProduktId?: string | null;
-  }[];
+  strukturierteAngebotspositionen: {
+    leistungen: StructuredOfferPosition[];
+    material: StructuredOfferPosition[];
+    notizen: string[];
+  };
+  korrekturvorschlaege: string[];
 }
 
 // ─── API-Funktionen ──────────────────────────────────────────────────────────
@@ -167,34 +188,54 @@ export async function updateOfferPositions(
 }
 
 /**
+ * Manuelle Arbeitsstunden-Eingabe durch den Handwerker.
+ * Der Handwerker trägt die Arbeitsdauer selbst ein (kommt NICHT von der KI);
+ * der offer-service berechnet daraus die ARBEITSZEIT-Position neu.
+ *
+ * Backend: POST /angebote/{businessKey}/arbeitsstunden (SetArbeitsstundenRequest).
+ */
+export interface SetArbeitsstundenRequest {
+  // Entspricht SetArbeitsstundenRequest.arbeitsdauerStunden (BigDecimal, >= 0).
+  arbeitsdauerStunden: number;
+}
+
+export async function setArbeitsstunden(
+  businessKey: string,
+  request: SetArbeitsstundenRequest,
+): Promise<OfferResponse> {
+  const res = await fetch(
+    `${API_CONFIG.OFFER_SERVICE_URL}/angebote/${businessKey}/arbeitsstunden`,
+    {
+      method: "POST",
+      headers: await getAuthHeaders(),
+      body: JSON.stringify(request),
+    },
+  );
+
+  if (!res.ok) {
+    throw new Error(`Arbeitsstunden setzen fehlgeschlagen: ${res.status}`);
+  }
+
+  return res.json();
+}
+
+/**
  * Fall 3: Handwerker hat manuelle Änderungen vorgenommen.
  *
  * TODO: Dieser Endpunkt existiert noch nicht im offer-service.
- * Vorbereitung: Sobald Lennart/Marvin den Endpunkt implementiert haben,
- * diese Funktion aktivieren. Aktuell wird nur die PE-Nachricht gesendet.
- *
  * Erwarteter Endpunkt: POST /angebote/{businessKey}/korrektur
+ *
+ * Solange der Endpunkt fehlt, wirft diese Funktion bewusst einen Fehler,
+ * statt Erfolg vorzutäuschen — der Aufrufer muss den Fehlerfall behandeln.
  */
 export async function sendKorrektur(
   businessKey: string,
   korrekturschnipsel: string,
 ): Promise<void> {
-  // TODO: Endpunkt noch nicht vorhanden — wird vorbereitet
-  console.warn(
-    "[offerService] sendKorrektur: Endpunkt noch nicht implementiert.",
-    { businessKey, korrekturschnipsel },
+  void korrekturschnipsel;
+  throw new Error(
+    `Korrektur-Endpunkt im offer-service noch nicht implementiert (businessKey ${businessKey}).`,
   );
-
-  // Wenn der Endpunkt verfügbar ist, so aufrufen:
-  // const res = await fetch(
-  //   `${API_CONFIG.OFFER_SERVICE_URL}/angebote/${businessKey}/korrektur`,
-  //   {
-  //     method: "POST",
-  //     headers: await  getAuthHeaders(),
-  //     body: JSON.stringify({ korrekturschnipsel }),
-  //   },
-  // );
-  // if (!res.ok) throw new Error(`Korrektur fehlgeschlagen: ${res.status}`);
 }
 
 /**
