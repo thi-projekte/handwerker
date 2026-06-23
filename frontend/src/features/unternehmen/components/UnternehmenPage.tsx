@@ -13,6 +13,9 @@ import {
   getCurrentUser,
   updateCompany,
   createCustomer,
+  getCustomers,
+  updateCustomer,
+  deleteCustomer,
   type UserProfile,
 } from "@/services/userService";
 import {
@@ -41,6 +44,7 @@ type GeneralEmployee = {
 };
 
 type Customer = {
+  id: number;
   vorname: string;
   nachname: string;
   email: string;
@@ -286,7 +290,32 @@ export const UnternehmenPage = () => {
       setCompanyErrorMessage("Materialien konnten nicht geladen werden.");
     }
   };
+const loadCustomers = async () => {
+  try {
+    const data = await getCustomers();
 
+    setCustomers(
+  data
+    .filter((customer) =>
+      !customer.email?.startsWith("deleted_customer")
+    )
+    .map((customer) => ({
+      id: customer.id,
+      vorname: customer.firstName ?? "",
+      nachname: customer.lastName ?? "",
+      email: customer.email ?? "",
+      telefon: customer.phoneNumber ?? "",
+      image: customer.profilePictureUrl ?? null,
+      adresse: "",
+      plz: "",
+      ort: "",
+    }))
+);
+  } catch (error) {
+    console.error(error);
+    setCompanyErrorMessage("Kunden konnten nicht geladen werden.");
+  }
+};
   const applyUserProfileToCompanyData = useCallback((user: UserProfile) => {
     const roles = user.roles ?? [];
 
@@ -353,6 +382,8 @@ export const UnternehmenPage = () => {
   const init = async () => {
     await loadCompanyData();
     await loadMaterials();
+    await loadCustomers();
+    
   };
 
   void init();
@@ -1291,14 +1322,29 @@ export const UnternehmenPage = () => {
                     <button
                       className="employee-remove-button"
                       type="button"
-                      onClick={() =>
-                        setCustomers((previousCustomers) =>
-                          previousCustomers.filter(
-                            (_, customerIndex) =>
-                              customerIndex !== index,
-                          ),
-                        )
-                      }
+                      onClick={async () => {
+  const customer = customers[index];
+
+  const confirmed = window.confirm(
+    "Kunde wirklich löschen?",
+  );
+
+  if (!confirmed) return;
+
+  try {
+    await deleteCustomer(customer.id);
+
+await loadCustomers();
+
+    setCompanySuccessMessage("Kunde gelöscht.");
+  } catch (error) {
+    console.error(error);
+
+    setCompanyErrorMessage(
+      `Kunde konnte nicht gelöscht werden: ${getErrorMessage(error)}`,
+    );
+  }
+}}
                     >
                       🗑
                     </button>
@@ -1421,41 +1467,58 @@ export const UnternehmenPage = () => {
                   }
 
                   if (editingIndex !== null) {
-                    setCustomers((previousCustomers) =>
-                      previousCustomers.map((customer, index) =>
-                        index === editingIndex
-                          ? {
-                              ...customerData,
-                              image: customerImage,
-                            }
-                          : customer,
-                      ),
-                    );
+  (async () => {
+    try {
+      const customer = customers[editingIndex];
 
-                    setEditingIndex(null);
-                  } else {
+      await updateCustomer(customer.id, {
+        firstName: customerData.vorname,
+        lastName: customerData.nachname,
+        email: customerData.email,
+        phoneNumber: customerData.telefon,
+      });
+
+      await loadCustomers();
+
+      setCompanySuccessMessage(
+        "Kunde erfolgreich aktualisiert."
+      );
+
+      setCustomerData({
+        vorname: "",
+        nachname: "",
+        email: "",
+        telefon: "",
+        adresse: "",
+        plz: "",
+        ort: "",
+      });
+
+      setCustomerImage(null);
+
+      setEditingIndex(null);
+      setShowCustomerForm(false);
+    } catch (error) {
+      setCompanyErrorMessage(
+        `Kunde konnte nicht aktualisiert werden: ${getErrorMessage(error)}`
+      );
+    }
+  })();
+
+  return;
+} else {
                     // Persist to backend
                     (async () => {
                       try {
-                        const created = await createCustomer({
-                          email: emailValue,
-                          firstName: customerData.vorname,
-                          lastName: customerData.nachname,
-                          phoneNumber: customerData.telefon,
-                          companyName: null,
-                          // address fields are not part of backend entity directly here;
-                          // frontend still keeps local representation
-                        });
+                        await createCustomer({
+  email: emailValue,
+  firstName: customerData.vorname,
+  lastName: customerData.nachname,
+  phoneNumber: customerData.telefon,
+  companyName: null,
+});
 
-                        setCustomers((previousCustomers) => [
-                          ...previousCustomers,
-                          {
-                            ...customerData,
-                            image: customerImage,
-                            // reflect backend assigned id/email/status if needed
-                            email: created.email || emailValue,
-                          },
-                        ]);
+await loadCustomers();
 
                         setCompanySuccessMessage("Kunde wurde angelegt.");
                         window.setTimeout(() => setCompanySuccessMessage(""), 3000);
@@ -1921,12 +1984,17 @@ export const UnternehmenPage = () => {
 
       if (materialData.id) {
         await updateMaterial(materialData.id, payload);
+        setMaterials((prev) =>
+  prev.map((m) =>
+    m.id === materialData.id
+      ? { ...m, ...payload }
+      : m
+  )
+);
       } else {
         await createMaterial(payload);
+        await loadMaterials();
       }
-
-      // Neu laden vom Backend
-      await loadMaterials();
 
       setCompanySuccessMessage(
         "Material gespeichert",
