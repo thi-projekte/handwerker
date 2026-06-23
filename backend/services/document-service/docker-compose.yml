@@ -1,0 +1,45 @@
+services:
+  document-db:
+    image: postgres:15
+    container_name: document-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: document
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: document-db
+    volumes:
+      - document_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U document -d document-db" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - document-internal
+
+  document-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.jvm
+    container_name: document-service
+    restart: unless-stopped
+    environment:
+      DB_HOST: document-db
+      DB_NAME: document-db
+      DB_USER: document
+      DB_PASSWORD: postgres
+      QUARKUS_OIDC_TENANT_ENABLED: "false"
+    depends_on:
+      document-db:
+        condition: service_healthy
+    networks:
+      - document-internal
+      - nginx-proxy-manager
+
+volumes:
+  document_postgres_data:
+
+networks:
+  document-internal:
+  nginx-proxy-manager:
+    external: true

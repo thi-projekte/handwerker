@@ -1,179 +1,194 @@
 package de.winfprojekt.craftvoice.documentservice.pdf;
 
 import com.lowagie.text.*;
+import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
-import de.winfprojekt.craftvoice.documentservice.common.CompanyDto;
-import de.winfprojekt.craftvoice.documentservice.common.CustomerDto;
-import de.winfprojekt.craftvoice.documentservice.common.OfferDto;
-import de.winfprojekt.craftvoice.documentservice.common.OfferPositionDto;
+import de.winfprojekt.craftvoice.documentservice.client.invoice.InvoiceClient;
+import de.winfprojekt.craftvoice.documentservice.client.invoice.InvoiceDto;
+import de.winfprojekt.craftvoice.documentservice.client.invoice.InvoicePositionDto;
+import de.winfprojekt.craftvoice.documentservice.client.offer.OfferClient;
+import de.winfprojekt.craftvoice.documentservice.client.offer.OfferDto;
+import de.winfprojekt.craftvoice.documentservice.client.offer.OfferPositionDto;
+import de.winfprojekt.craftvoice.documentservice.client.user.UserClient;
+import de.winfprojekt.craftvoice.documentservice.client.user.UserDto;
 import jakarta.enterprise.context.ApplicationScoped;
 
-import java.io.FileOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.time.format.DateTimeFormatter;
 
 @ApplicationScoped
 public class PdfGenerator {
 
-    public void generateOfferPdf(
-            OfferDto offer,
-            CustomerDto customer,
-            CompanyDto company,
-            Path outputPath
+    private static final DateTimeFormatter DATE_FORMAT =
+            DateTimeFormatter.ofPattern("dd.MM.yyyy");
+
+    private final OfferClient offerClient;
+    private final InvoiceClient invoiceClient;
+    private final UserClient userClient;
+
+    public PdfGenerator(
+            OfferClient offerClient,
+            InvoiceClient invoiceClient,
+            UserClient userClient
     ) {
+        this.offerClient = offerClient;
+        this.invoiceClient = invoiceClient;
+        this.userClient = userClient;
+    }
+
+    public byte[] generateOfferPdf(String offerBusinessKey, String authorizationHeader) {
+        OfferDto offer = offerClient.getOffer(offerBusinessKey, authorizationHeader);
+        UserDto craftsman = userClient.getMe(authorizationHeader);
+        UserDto customer = userClient.getCustomer(offer.customerId(), authorizationHeader);
+
         try {
-            Files.createDirectories(outputPath.getParent());
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            Document document = new Document(PageSize.A4);
+            PdfWriter.getInstance(document, outputStream);
 
-            Document pdf = new Document(PageSize.A4, 50, 50, 50, 50);
-            PdfWriter.getInstance(pdf, new FileOutputStream(outputPath.toFile()));
+            document.open();
 
-            pdf.open();
+            addTitle(document, "Angebot");
+            addCompanyBlock(document, craftsman);
+            addCustomerBlock(document, customer);
+            addMeta(document, "Angebotsnummer", offer.businessKey(), offer.createdAt() != null ? offer.createdAt().format(DATE_FORMAT) : null);
 
-            addCompanyHeader(pdf, company);
-            addCustomerAddress(pdf, customer);
-            addTitle(pdf, offer);
-            addPositions(pdf, offer);
-            addTotals(pdf, offer);
-            addFooter(pdf, company);
+            document.add(Chunk.NEWLINE);
+            addOfferPositions(document, offer);
+            addTotal(document, offer.gesamtPreis());
 
-            pdf.close();
-
+            document.close();
+            return outputStream.toByteArray();
         } catch (Exception e) {
-            throw new RuntimeException("PDF konnte nicht erzeugt werden: " + e.getMessage(), e);
+            throw new RuntimeException("Offer PDF could not be generated", e);
         }
     }
 
-    private void addCompanyHeader(Document pdf, CompanyDto company) throws DocumentException {
-        Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14);
-        Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 10);
+    public byte[] generateInvoicePdf(String offerBusinessKey, String authorizationHeader) {
+        InvoiceDto invoice = invoiceClient.getInvoiceByOfferBusinessKey(offerBusinessKey, authorizationHeader);
+        UserDto craftsman = userClient.getMe(authorizationHeader);
 
-        Paragraph header = new Paragraph();
-        header.setAlignment(Element.ALIGN_RIGHT);
+        try {
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            Document document = new Document(PageSize.A4);
+            PdfWriter.getInstance(document, outputStream);
 
-        header.add(new Chunk(nullSafe(company.companyName) + "\n", titleFont));
-        header.add(new Chunk(nullSafe(company.street) + " " + nullSafe(company.houseNumber) + "\n", normalFont));
-        header.add(new Chunk(nullSafe(company.postalCode) + " " + nullSafe(company.city) + "\n", normalFont));
-        header.add(new Chunk("Tel: " + nullSafe(company.phone) + "\n", normalFont));
-        header.add(new Chunk("E-Mail: " + nullSafe(company.email) + "\n", normalFont));
+            document.open();
 
-        pdf.add(header);
-        pdf.add(Chunk.NEWLINE);
-        pdf.add(Chunk.NEWLINE);
-    }
+            addTitle(document, "Rechnung");
+            addCompanyBlock(document, craftsman);
 
-    private void addCustomerAddress(Document pdf, CustomerDto customer) throws DocumentException {
-        Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 10);
+            document.add(new Paragraph("Kunde"));
+            document.add(new Paragraph(invoice.kundendaten().fullName()));
+            document.add(new Paragraph(invoice.kundendaten().addressLine()));
+            document.add(new Paragraph(invoice.kundendaten().cityLine()));
 
-        Paragraph address = new Paragraph();
-        address.setAlignment(Element.ALIGN_LEFT);
+            addMeta(
+                    document,
+                    "Rechnungsnummer",
+                    invoice.rechnungsnummer(),
+                    invoice.createdAt() != null ? invoice.createdAt().format(DATE_FORMAT) : null
+            );
 
-        if (customer.companyName != null && !customer.companyName.isBlank()) {
-            address.add(new Chunk(customer.companyName + "\n", normalFont));
+            document.add(Chunk.NEWLINE);
+            addInvoicePositions(document, invoice);
+            addTotal(document, invoice.gesamtPreis());
+
+            document.close();
+            return outputStream.toByteArray();
+        } catch (Exception e) {
+            throw new RuntimeException("Invoice PDF could not be generated", e);
         }
-
-        address.add(new Chunk(nullSafe(customer.firstName) + " " + nullSafe(customer.lastName) + "\n", normalFont));
-        address.add(new Chunk(nullSafe(customer.street) + " " + nullSafe(customer.houseNumber) + "\n", normalFont));
-        address.add(new Chunk(nullSafe(customer.postalCode) + " " + nullSafe(customer.city) + "\n", normalFont));
-
-        pdf.add(address);
-        pdf.add(Chunk.NEWLINE);
-        pdf.add(Chunk.NEWLINE);
     }
 
-    private void addTitle(Document pdf, OfferDto offer) throws DocumentException {
-        Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18);
-        Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 10);
-
-        Paragraph title = new Paragraph("Angebot", titleFont);
-        title.setSpacingAfter(10);
-        pdf.add(title);
-
-        String offerNumber = offer.offerNumber != null ? offer.offerNumber : offer.id.toString();
-
-        Paragraph meta = new Paragraph("Angebotsnummer: " + offerNumber, normalFont);
-        meta.setSpacingAfter(20);
-        pdf.add(meta);
+    private void addTitle(Document document, String title) throws DocumentException {
+        Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 20);
+        Paragraph paragraph = new Paragraph(title, titleFont);
+        paragraph.setSpacingAfter(20);
+        document.add(paragraph);
     }
 
-    private void addPositions(Document pdf, OfferDto offer) throws DocumentException {
-        Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9);
-        Font cellFont = FontFactory.getFont(FontFactory.HELVETICA, 9);
+    private void addCompanyBlock(Document document, UserDto user) throws DocumentException {
+        document.add(new Paragraph(nullSafe(user.companyName())));
+        document.add(new Paragraph(user.addressLine()));
+        document.add(new Paragraph(user.cityLine()));
+        document.add(new Paragraph(nullSafe(user.displayEmail())));
+        document.add(new Paragraph(nullSafe(user.displayPhoneNumber())));
+        document.add(Chunk.NEWLINE);
+    }
 
-        Table table = new Table(5);
-        table.setWidth(100);
-        table.setPadding(4);
-        table.setSpacing(1);
+    private void addCustomerBlock(Document document, UserDto customer) throws DocumentException {
+        document.add(new Paragraph("Kunde"));
+        document.add(new Paragraph(customer.fullName()));
+        document.add(new Paragraph(customer.addressLine()));
+        document.add(new Paragraph(customer.cityLine()));
+        document.add(new Paragraph(nullSafe(customer.displayEmail())));
+        document.add(Chunk.NEWLINE);
+    }
 
-        table.addCell(new Phrase("Pos.", headerFont));
-        table.addCell(new Phrase("Bezeichnung", headerFont));
-        table.addCell(new Phrase("Menge", headerFont));
-        table.addCell(new Phrase("Einzelpreis", headerFont));
-        table.addCell(new Phrase("Gesamt", headerFont));
+    private void addMeta(Document document, String label, String number, String date) throws DocumentException {
+        document.add(new Paragraph(label + ": " + nullSafe(number)));
+        if (date != null) {
+            document.add(new Paragraph("Datum: " + date));
+        }
+    }
 
-        if (offer.positions != null) {
-            int index = 1;
+    private void addOfferPositions(Document document, OfferDto offer) throws DocumentException {
+        PdfPTable table = new PdfPTable(5);
+        table.setWidthPercentage(100);
+        table.addCell("Pos.");
+        table.addCell("Bezeichnung");
+        table.addCell("Menge");
+        table.addCell("Einzelpreis");
+        table.addCell("Summe");
 
-            for (OfferPositionDto position : offer.positions) {
-                table.addCell(new Phrase(String.valueOf(index), cellFont));
-                table.addCell(new Phrase(nullSafe(position.name), cellFont));
-                table.addCell(new Phrase(format(position.quantity) + " " + nullSafe(position.unit), cellFont));
-                table.addCell(new Phrase(format(position.unitPrice) + " €", cellFont));
-                table.addCell(new Phrase(format(position.totalPrice) + " €", cellFont));
-                index++;
+        if (offer.positions() != null) {
+            for (OfferPositionDto position : offer.positions()) {
+                table.addCell(String.valueOf(position.reihenfolge()));
+                table.addCell(nullSafe(position.bezeichnung()));
+                table.addCell(format(position.menge()) + " " + nullSafe(position.einheit()));
+                table.addCell(format(position.einzelPreis()) + " €");
+                table.addCell(format(position.positionsPreis()) + " €");
             }
         }
 
-        pdf.add(table);
-        pdf.add(Chunk.NEWLINE);
+        document.add(table);
     }
 
-    private void addTotals(Document pdf, OfferDto offer) throws DocumentException {
-        Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 10);
-        Font boldFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11);
+    private void addInvoicePositions(Document document, InvoiceDto invoice) throws DocumentException {
+        PdfPTable table = new PdfPTable(5);
+        table.setWidthPercentage(100);
+        table.addCell("Pos.");
+        table.addCell("Bezeichnung");
+        table.addCell("Menge");
+        table.addCell("Einzelpreis");
+        table.addCell("Summe");
 
-        Paragraph totals = new Paragraph();
-        totals.setAlignment(Element.ALIGN_RIGHT);
+        if (invoice.positions() != null) {
+            for (InvoicePositionDto position : invoice.positions()) {
+                table.addCell(String.valueOf(position.reihenfolge()));
+                table.addCell(nullSafe(position.bezeichnung()));
+                table.addCell(format(position.menge()) + " " + nullSafe(position.einheit()));
+                table.addCell(format(position.einzelPreis()) + " €");
+                table.addCell(format(position.positionsPreis()) + " €");
+            }
+        }
 
-        totals.add(new Chunk("Netto: " + format(offer.totalNet) + " €\n", normalFont));
-        totals.add(new Chunk("MwSt.: " + format(offer.vatAmount) + " €\n", normalFont));
-        totals.add(new Chunk("Brutto: " + format(offer.totalGross) + " €\n", boldFont));
-
-        pdf.add(totals);
-        pdf.add(Chunk.NEWLINE);
+        document.add(table);
     }
 
-    private void addFooter(Document pdf, CompanyDto company) throws DocumentException {
-        Font smallFont = FontFactory.getFont(FontFactory.HELVETICA, 8);
+    private void addTotal(Document document, BigDecimal total) throws DocumentException {
+        document.add(Chunk.NEWLINE);
+        Font font = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12);
+        document.add(new Paragraph("Gesamtbetrag: " + format(total) + " €", font));
+    }
 
-        Paragraph footer = new Paragraph();
-        footer.setSpacingBefore(40);
-        footer.setAlignment(Element.ALIGN_CENTER);
-
-        footer.add(new Chunk(nullSafe(company.companyName), smallFont));
-
-        if (company.taxNumber != null && !company.taxNumber.isBlank()) {
-            footer.add(new Chunk(" | Steuernummer: " + company.taxNumber, smallFont));
-        }
-
-        if (company.vatId != null && !company.vatId.isBlank()) {
-            footer.add(new Chunk(" | USt-IdNr.: " + company.vatId, smallFont));
-        }
-
-        pdf.add(footer);
+    private String format(BigDecimal value) {
+        return value == null ? "0.00" : value.setScale(2, java.math.RoundingMode.HALF_UP).toString();
     }
 
     private String nullSafe(String value) {
         return value == null ? "" : value;
-    }
-
-    private String format(BigDecimal value) {
-        if (value == null) {
-            return "0,00";
-        }
-
-        return value.setScale(2, java.math.RoundingMode.HALF_UP)
-                .toString()
-                .replace(".", ",");
     }
 }
