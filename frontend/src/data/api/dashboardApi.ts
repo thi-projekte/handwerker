@@ -1,3 +1,4 @@
+import { API_CONFIG } from "@/config/api";
 import { getToken } from "@/services/authService";
 
 export interface ChartDataDTO {
@@ -33,11 +34,11 @@ export interface DashboardStatsResponse {
   angebotsuebersicht: ChartDataDTO[];
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://offerservice-craftvoice.winfprojekt.de";
+const API_BASE_URL = API_CONFIG.OFFER_SERVICE_URL; // Assuming the dashboard stats are fetched from the offer service
 
 export const getDashboardStats = async (): Promise<DashboardStatsResponse> => {
   const token = await getToken();
-  
+
   const response = await fetch(`${API_BASE_URL}/offers`, {
     method: "GET",
     headers: {
