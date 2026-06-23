@@ -1,7 +1,6 @@
 package de.winfprojekt.craftvoice.userservice;
 
 import io.quarkus.security.Authenticated;
-import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -11,6 +10,8 @@ import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.jboss.resteasy.reactive.RestForm;
 import org.jboss.resteasy.reactive.multipart.FileUpload;
+
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -25,18 +26,17 @@ public class UserResource {
     @Inject
     JsonWebToken jwt;
 
-    @Inject
-    SecurityIdentity identity;
-
     @POST
     @Path("/register")
-    @jakarta.annotation.security.PermitAll
+    @PermitAll
     public Response register(RegistrationRequest request) {
         UserEntity user = new UserEntity();
         user.email = request.email;
         user.firstName = request.firstName;
         user.lastName = request.lastName;
+
         userService.register(user, request.password);
+
         return Response.status(Response.Status.CREATED).build();
     }
 
@@ -52,8 +52,10 @@ public class UserResource {
     @RolesAllowed({"OWNER", "EMPLOYEE"})
     public Response getHourlyRate() {
         UserEntity user = userService.syncUserWithDatabase();
-        java.util.Map<String, Object> response = new java.util.HashMap<>();
+
+        Map<String, Object> response = new HashMap<>();
         response.put("stundensatz", user.hourlyRate != null ? user.hourlyRate : 0.0);
+
         return Response.ok(response).build();
     }
 
@@ -63,13 +65,15 @@ public class UserResource {
     public Response getTravelConfig() {
         UserEntity user = userService.syncUserWithDatabase();
 
-        String formattedAddress = String.format("%s %s, %s %s",
+        String formattedAddress = String.format(
+                "%s %s, %s %s",
                 user.street != null ? user.street : "",
                 user.houseNumber != null ? user.houseNumber : "",
                 user.zipCode != null ? user.zipCode : "",
-                user.city != null ? user.city : "").trim();
+                user.city != null ? user.city : ""
+        ).trim();
 
-        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        Map<String, Object> response = new HashMap<>();
         response.put("modell", user.travelModel != null ? user.travelModel : "PAUSCHALE");
         response.put("pauschale", user.travelFlatRate);
         response.put("kmSatz", user.travelKmRate);
@@ -84,6 +88,7 @@ public class UserResource {
     @Authenticated
     public Response uploadProfilePicture(@RestForm("file") FileUpload file) {
         String url = userService.uploadProfilePicture(getUserId(), file);
+
         return Response.ok(Map.of("url", url)).build();
     }
 
@@ -91,8 +96,9 @@ public class UserResource {
     @Path("/profile")
     @Authenticated
     public Response updateProfile(UserEntity data) {
-        userService.updateProfile(getUserId(), data);
-        return Response.ok().build();
+        UserEntity updatedUser = userService.updateProfile(getUserId(), data);
+
+        return Response.ok(updatedUser).build();
     }
 
     @PUT
@@ -100,20 +106,26 @@ public class UserResource {
     @RolesAllowed("OWNER")
     public Response updateCompany(UserEntity data) {
         userService.updateCompanyData(getUserId(), data);
+
         return Response.ok().build();
     }
 
     @POST
     @Path("/password-reset/initiate")
+    @PermitAll
     public Response initiateReset(Map<String, String> request) {
         userService.initiatePasswordReset(request.get("email"));
-        return Response.ok("If the email exists, a reset instruction has been sent via Keycloak").build();
+
+        return Response
+                .ok("If the email exists, a reset instruction has been sent via Keycloak")
+                .build();
     }
 
     @DELETE
     @RolesAllowed("OWNER")
     public Response deleteAccount() {
         userService.deleteAccount(getUserId());
+
         return Response.ok("Account deleted in Keycloak and anonymized locally").build();
     }
 
@@ -122,6 +134,7 @@ public class UserResource {
     @RolesAllowed({"OWNER", "EMPLOYEE"})
     public Response createCustomer(UserEntity customer) {
         UserEntity created = userService.createCustomer(customer);
+
         return Response.status(Response.Status.CREATED).entity(created).build();
     }
 
@@ -140,8 +153,12 @@ public class UserResource {
     }
 
     private Long getUserId() {
-        UserEntity user = UserEntity.findByKeycloakId(jwt.getSubject());
-        if (user == null) throw new NotFoundException("User not synced");
+        UserEntity user = userService.syncUserWithDatabase();
+
+        if (user == null) {
+            throw new NotFoundException("User not synced");
+        }
+
         return user.id;
     }
 

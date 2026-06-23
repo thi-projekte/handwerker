@@ -5,13 +5,14 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.jwt.JsonWebToken;
+import org.jboss.resteasy.reactive.multipart.FileUpload;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
+
 import jakarta.ws.rs.core.Response;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.jboss.resteasy.reactive.multipart.FileUpload;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -36,18 +37,27 @@ public class UserService {
     @Transactional
     public String uploadProfilePicture(Long userId, FileUpload file) {
         UserEntity user = UserEntity.findById(userId);
-        if (user == null) throw new NotFoundException("User not found");
+        if (user == null) {
+            throw new NotFoundException("User not found");
+        }
 
         try {
-            String fileName = "profile_" + userId + "_" + System.currentTimeMillis() + getExtension(file.fileName());
+            String fileName =
+                    "profile_" + userId + "_" + System.currentTimeMillis() + getExtension(file.fileName());
+
             Path path = Paths.get(storagePath, "profiles", fileName);
             Files.createDirectories(path.getParent());
             Files.copy(file.uploadedFile(), path);
-            
+
             String url = "/api/users/profile-picture/" + fileName;
             user.profilePictureUrl = url;
-            
-            AuditLogEntity.log(user.id, "PROFILE_PICTURE_UPLOAD", "User uploaded a new profile picture: " + fileName);
+
+            AuditLogEntity.log(
+                    user.id,
+                    "PROFILE_PICTURE_UPLOAD",
+                    "User uploaded a new profile picture: " + fileName
+            );
+
             return url;
         } catch (IOException e) {
             throw new RuntimeException("Could not save profile picture", e);
@@ -55,7 +65,10 @@ public class UserService {
     }
 
     private String getExtension(String fileName) {
-        if (fileName == null || !fileName.contains(".")) return "";
+        if (fileName == null || !fileName.contains(".")) {
+            return "";
+        }
+
         return fileName.substring(fileName.lastIndexOf("."));
     }
 
@@ -80,18 +93,20 @@ public class UserService {
         user.setCredentials(Collections.singletonList(cred));
 
         Response response = keycloak.realm(REALM).users().create(user);
+
         if (response.getStatus() != 201) {
-            throw new BadRequestException("Could not create user in Keycloak: " + response.readEntity(String.class));
+            throw new BadRequestException(
+                    "Could not create user in Keycloak: " + response.readEntity(String.class)
+            );
         }
 
         String keycloakId = response.getLocation().getPath().replaceAll(".*/([^/]+)$", "$1");
-        
+
         userData.keycloakId = keycloakId;
         userData.status = UserStatus.PENDING;
         userData.roles.add(UserRole.OWNER);
         userData.persist();
 
-        // Trigger verification email via Keycloak
         keycloak.realm(REALM).users().get(keycloakId).sendVerifyEmail();
 
         // Assign default realm role in Keycloak (ensure role exists in the realm)
@@ -120,46 +135,92 @@ public class UserService {
             user.firstName = jwt.getClaim("given_name");
             user.lastName = jwt.getClaim("family_name");
             user.status = UserStatus.ACTIVE;
-            user.roles.add(UserRole.OWNER); // Default for first sync
+            user.roles.add(UserRole.OWNER);
             user.persist();
         } else {
             user.email = jwt.getClaim("email");
-            user.firstName = jwt.getClaim("given_name");
-            user.lastName = jwt.getClaim("family_name");
+
+            if (user.firstName == null || user.firstName.isBlank()) {
+                user.firstName = jwt.getClaim("given_name");
+            }
+
+            if (user.lastName == null || user.lastName.isBlank()) {
+                user.lastName = jwt.getClaim("family_name");
+            }
         }
 
         return user;
     }
 
     @Transactional
-    public void updateProfile(Long userId, UserEntity data) {
+    public UserEntity updateProfile(Long userId, UserEntity data) {
         UserEntity user = UserEntity.findById(userId);
-        if (user == null) throw new NotFoundException("User not found");
 
-        if (data.firstName != null) user.firstName = data.firstName;
-        if (data.lastName != null) user.lastName = data.lastName;
-        if (data.phoneNumber != null) user.phoneNumber = data.phoneNumber;
-        if (data.profilePictureUrl != null) user.profilePictureUrl = data.profilePictureUrl;
-        
-        // Sync names to Keycloak
-        UserRepresentation kcUser = keycloak.realm(REALM).users().get(user.keycloakId).toRepresentation();
-        if (data.firstName != null) kcUser.setFirstName(data.firstName);
-        if (data.lastName != null) kcUser.setLastName(data.lastName);
-        keycloak.realm(REALM).users().get(user.keycloakId).update(kcUser);
+        if (user == null) {
+            throw new NotFoundException("User not found");
+        }
 
-        AuditLogEntity.log(user.id, "PROFILE_UPDATE", "User updated personal data (synced with Keycloak)");
+        if (data.firstName != null) {
+            user.firstName = data.firstName;
+        }
+
+        if (data.lastName != null) {
+            user.lastName = data.lastName;
+        }
+
+        if (data.phoneNumber != null) {
+            user.phoneNumber = data.phoneNumber;
+        }
+
+        if (data.profilePictureUrl != null) {
+            user.profilePictureUrl = data.profilePictureUrl;
+        }
+
+        try {
+            if (user.keycloakId != null && !user.keycloakId.isBlank()) {
+                UserRepresentation kcUser =
+                        keycloak.realm(REALM).users().get(user.keycloakId).toRepresentation();
+
+                if (data.firstName != null) {
+                    kcUser.setFirstName(data.firstName);
+                }
+
+                if (data.lastName != null) {
+                    kcUser.setLastName(data.lastName);
+                }
+
+                keycloak.realm(REALM).users().get(user.keycloakId).update(kcUser);
+            }
+        } catch (Exception e) {
+            System.err.println(
+                    "Keycloak profile sync failed for user "
+                            + user.id
+                            + ": "
+                            + e.getMessage()
+            );
+        }
+
+        AuditLogEntity.log(
+                user.id,
+                "PROFILE_UPDATE",
+                "User updated personal data"
+        );
+
+        return user;
     }
 
     @Transactional
     public void updateCompanyData(Long userId, UserEntity data) {
         UserEntity user = UserEntity.findById(userId);
-        if (user == null) throw new NotFoundException("User not found");
+
+        if (user == null) {
+            throw new NotFoundException("User not found");
+        }
 
         if (data.companyName != null) user.companyName = data.companyName;
         if (data.vatId != null) user.vatId = data.vatId;
         if (data.tradeRegisterNumber != null) user.tradeRegisterNumber = data.tradeRegisterNumber;
-        
-        // Detailed Address
+
         if (data.street != null) user.street = data.street;
         if (data.houseNumber != null) user.houseNumber = data.houseNumber;
         if (data.zipCode != null) user.zipCode = data.zipCode;
@@ -167,48 +228,62 @@ public class UserService {
         if (data.state != null) user.state = data.state;
         if (data.country != null) user.country = data.country;
 
-        // Company Contact
         if (data.companyEmail != null) user.companyEmail = data.companyEmail;
         if (data.companyPhoneNumber != null) user.companyPhoneNumber = data.companyPhoneNumber;
         if (data.website != null) user.website = data.website;
         if (data.industry != null) user.industry = data.industry;
 
-        // Banking Info
         if (data.iban != null) user.iban = data.iban;
         if (data.bic != null) user.bic = data.bic;
         if (data.bankName != null) user.bankName = data.bankName;
         if (data.accountHolder != null) user.accountHolder = data.accountHolder;
 
-        // Tax Info
         if (data.taxNumber != null) user.taxNumber = data.taxNumber;
         if (data.legalForm != null) user.legalForm = data.legalForm;
 
-        // Business Details
         if (data.employeeCount != null) user.employeeCount = data.employeeCount;
         if (data.customerCount != null) user.customerCount = data.customerCount;
         if (data.hourlyRate != null) user.hourlyRate = data.hourlyRate;
         if (data.priceListUrl != null) user.priceListUrl = data.priceListUrl;
-        
-        AuditLogEntity.log(user.id, "COMPANY_DATA_UPDATE", "User updated company metadata");
+
+        if (data.travelModel != null) user.travelModel = data.travelModel;
+        if (data.travelFlatRate != null) user.travelFlatRate = data.travelFlatRate;
+        if (data.travelKmRate != null) user.travelKmRate = data.travelKmRate;
+
+        AuditLogEntity.log(
+                user.id,
+                "COMPANY_DATA_UPDATE",
+                "User updated company metadata"
+        );
     }
 
     @Transactional
     public void initiatePasswordReset(String email) {
         List<UserRepresentation> users = keycloak.realm(REALM).users().search(email, true);
-        if (users.isEmpty()) return;
 
-        keycloak.realm(REALM).users().get(users.get(0).getId()).executeActionsEmail(Collections.singletonList("UPDATE_PASSWORD"));
+        if (users.isEmpty()) {
+            return;
+        }
+
+        keycloak
+                .realm(REALM)
+                .users()
+                .get(users.get(0).getId())
+                .executeActionsEmail(Collections.singletonList("UPDATE_PASSWORD"));
     }
 
     @Transactional
     public void deleteAccount(Long userId) {
         UserEntity user = UserEntity.findById(userId);
-        if (user == null) throw new NotFoundException("User not found");
 
-        // Delete in Keycloak
-        keycloak.realm(REALM).users().get(user.keycloakId).remove();
+        if (user == null) {
+            throw new NotFoundException("User not found");
+        }
 
-        // Anonymize locally (GDPR)
+        if (user.keycloakId != null && !user.keycloakId.isBlank()) {
+            keycloak.realm(REALM).users().get(user.keycloakId).remove();
+        }
+
         user.status = UserStatus.DELETED;
         user.email = "deleted_" + user.id + "@handwerker.de";
         user.keycloakId = null;
@@ -219,8 +294,7 @@ public class UserService {
         user.companyName = null;
         user.vatId = null;
         user.tradeRegisterNumber = null;
-        
-        // Anonymize Address
+
         user.street = null;
         user.houseNumber = null;
         user.zipCode = null;
@@ -228,7 +302,6 @@ public class UserService {
         user.state = null;
         user.country = null;
 
-        // Anonymize Contact & Banking
         user.companyEmail = null;
         user.companyPhoneNumber = null;
         user.website = null;
@@ -238,8 +311,12 @@ public class UserService {
         user.accountHolder = null;
         user.taxNumber = null;
         user.priceListUrl = null;
-        
-        AuditLogEntity.log(userId, "ACCOUNT_DELETED", "User account deleted (Synced with Keycloak)");
+
+        AuditLogEntity.log(
+                userId,
+                "ACCOUNT_DELETED",
+                "User account deleted and anonymized locally"
+        );
     }
 
     @Transactional
@@ -247,26 +324,34 @@ public class UserService {
         if (UserEntity.findByEmail(customerData.email) != null) {
             throw new BadRequestException("User with this email already exists");
         }
-        
+
         customerData.status = UserStatus.ACTIVE;
         customerData.roles.add(UserRole.CUSTOMER);
         customerData.persist();
-        
-        AuditLogEntity.log(customerData.id, "CUSTOMER_CREATED", "Customer profile created by craftsman");
+
+        AuditLogEntity.log(
+                customerData.id,
+                "CUSTOMER_CREATED",
+                "Customer profile created by craftsman"
+        );
+
         return customerData;
     }
 
     public List<UserEntity> listCustomers() {
-        // Simple implementation: return all users with CUSTOMER role
-        // In a real multi-tenant app, this would be filtered by company
-        return UserEntity.list("from UserEntity u join u.roles r where r = ?1", UserRole.CUSTOMER);
+        return UserEntity.list(
+                "from UserEntity u join u.roles r where r = ?1",
+                UserRole.CUSTOMER
+        );
     }
 
     public UserEntity getCustomerById(Long id) {
         UserEntity customer = UserEntity.findById(id);
+
         if (customer == null || !customer.roles.contains(UserRole.CUSTOMER)) {
             throw new NotFoundException("Customer not found");
         }
+
         return customer;
     }
 }

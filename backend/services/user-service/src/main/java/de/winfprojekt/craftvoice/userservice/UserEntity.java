@@ -1,10 +1,18 @@
 package de.winfprojekt.craftvoice.userservice;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntity;
-import jakarta.persistence.*;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import java.time.LocalDateTime;
+
+import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -38,7 +46,7 @@ public class UserEntity extends BaseEntity {
     public String companyName;
     public String vatId;
     public String tradeRegisterNumber;
-    
+
     // Detailed Address
     public String street;
     public String houseNumber;
@@ -73,21 +81,20 @@ public class UserEntity extends BaseEntity {
     // Allowed values: "PAUSCHALE", "PAUSCHALE_PLUS_KM", "NUR_KM"
     public String travelModel;
 
-    // Pauschalbetrag for flat-rate travel
     @Column(precision = 19, scale = 4)
-    public java.math.BigDecimal travelFlatRate;
+    public BigDecimal travelFlatRate;
 
-    // Preis pro km
     @Column(precision = 19, scale = 4)
-    public java.math.BigDecimal travelKmRate;
+    public BigDecimal travelKmRate;
 
     // AI Style Preferences
-    public String toneOfVoice; // e.g. "Du" vs "Sie"
-    public String detailLevel; // e.g. "kurz & prägnant" vs "detailliert"
+    public String toneOfVoice;
+    public String detailLevel;
 
     // Text Blocks
     @Column(columnDefinition = "TEXT")
     public String agbNotes;
+
     @Column(columnDefinition = "TEXT")
     public String paymentTerms;
 
@@ -101,9 +108,14 @@ public class UserEntity extends BaseEntity {
 }
 
 enum UserStatus {
-    PENDING, ACTIVE, DELETED
+    PENDING,
+    ACTIVE,
+    DELETED
 }
 
 enum UserRole {
-    OWNER, EMPLOYEE, ACCOUNTANT, CUSTOMER
+    OWNER,
+    EMPLOYEE,
+    ACCOUNTANT,
+    CUSTOMER
 }
