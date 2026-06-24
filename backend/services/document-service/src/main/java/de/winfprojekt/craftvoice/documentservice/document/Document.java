@@ -23,7 +23,7 @@ public class Document extends PanacheEntity {
     @Column(nullable = false)
     public String referenceId;
 
-    @Column(nullable = false)
+    @Column
     public String customerId;
 
     @Column(nullable = false)
@@ -31,6 +31,12 @@ public class Document extends PanacheEntity {
 
     @Column(nullable = false)
     public String fileName;
+
+    @Column
+    public String recipientEmail;
+
+    @Column
+    public String recipientName;
 
     @Lob
     @Basic(fetch = FetchType.LAZY)

@@ -12,17 +12,19 @@ import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 import jakarta.enterprise.context.ApplicationScoped;
 
+import de.winfprojekt.craftvoice.documentservice.client.user.UserDto;
+
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 
 @ApplicationScoped
 public class PdfGenerator {
 
-    public byte[] generateOfferPdf(JsonNode angebotsentwurf) {
+    public byte[] generateOfferPdf(JsonNode angebotsentwurf, UserDto craftsman, UserDto customer) {
         return generatePdf("Angebot", angebotsentwurf);
     }
 
-    public byte[] generateInvoicePdf(JsonNode rechnungsentwurf) {
+    public byte[] generateInvoicePdf(JsonNode rechnungsentwurf, UserDto craftsman) {
         return generatePdf("Rechnung", rechnungsentwurf);
     }
 

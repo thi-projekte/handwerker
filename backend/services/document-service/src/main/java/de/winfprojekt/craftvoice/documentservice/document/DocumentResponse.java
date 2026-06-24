@@ -11,6 +11,8 @@ public class DocumentResponse {
     public String ownerId;
     public String fileName;
     public LocalDateTime createdAt;
+    public String recipientEmail;
+    public String recipientName;
 
     public static DocumentResponse from(Document document) {
         if (document == null) {
@@ -25,6 +27,8 @@ public class DocumentResponse {
         response.ownerId = document.ownerId;
         response.fileName = document.fileName;
         response.createdAt = document.createdAt;
+        response.recipientEmail = document.recipientEmail;
+        response.recipientName = document.recipientName;
 
         return response;
     }
