@@ -4,7 +4,9 @@
     <bpmn:participant id="pool_02" name="Erstangeboterstellung" processRef="erstangebotserstellung" />
     <bpmn:participant id="Participant_1a6hvug" name="Backend" />
     <bpmn:participant id="Participant_12naaur" name="Frontend" />
+    <bpmn:messageFlow id="Flow_1yw7s9q" sourceRef="Participant_1a6hvug" targetRef="Event_10bgkb0" />
     <bpmn:messageFlow id="Flow_1lrvkfb" sourceRef="Activity_2.2" targetRef="Participant_1a6hvug" />
+    <bpmn:messageFlow id="Flow_1kb5fr5" sourceRef="Activity_2.3" targetRef="Participant_12naaur" />
   </bpmn:collaboration>
   <bpmn:process id="erstangebotserstellung" isExecutable="true" camunda:historyTimeToLive="10">
     <bpmn:startEvent id="Event_1ek2v5p" name="Erstangebot muss erstellt werden">
@@ -39,22 +41,6 @@ payload.customerId = customerId;
 
 JSON.stringify(payload);</camunda:script>
             </camunda:inputParameter>
-            <camunda:inputParameter name="headers">
-              <camunda:map>
-                <camunda:entry key="X-Handwerker-Id">${handwerkerId}</camunda:entry>
-              </camunda:map>
-            </camunda:inputParameter>
-            <camunda:outputParameter name="kiErgebnisStatus">
-              <camunda:script scriptFormat="JavaScript">if (statusCode == null || statusCode &gt;= 400) {
-  throw new java.lang.RuntimeException(
-    "offer-service /ki-ergebnis fehlgeschlagen: HTTP " + statusCode
-    + " (businessKey=" + execution.getProcessBusinessKey() + ")");
-}
-statusCode;</camunda:script>
-            </camunda:outputParameter>
-            <camunda:outputParameter name="angebotsentwurf">
-              <camunda:script scriptFormat="JavaScript">response;</camunda:script>
-            </camunda:outputParameter>
           </camunda:inputOutput>
           <camunda:connectorId>http-connector</camunda:connectorId>
         </camunda:connector>
@@ -63,12 +49,47 @@ statusCode;</camunda:script>
       <bpmn:outgoing>Flow_0pmesfm</bpmn:outgoing>
     </bpmn:serviceTask>
     <bpmn:endEvent id="Event_1tmobws" name="Erstangebot erfolgreich angezeigt">
-      <bpmn:incoming>Flow_0pmesfm</bpmn:incoming>
+      <bpmn:incoming>Flow_0vhx2td</bpmn:incoming>
     </bpmn:endEvent>
+    <bpmn:intermediateCatchEvent id="Event_10bgkb0" name="Erstangebots-entwurf emfangen">
+      <bpmn:incoming>Flow_0pmesfm</bpmn:incoming>
+      <bpmn:outgoing>Flow_0n1nv9b</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_0bvvao6" messageRef="Message_3n3lqjh" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:serviceTask id="Activity_2.3" name="Erst-    angebots-entwurf anzeigen">
+      <bpmn:extensionElements>
+        <camunda:connector>
+          <camunda:inputOutput>
+            <camunda:inputParameter name="url">https://webhook.site/68540626-4879-4e02-889d-31483b55ebbb</camunda:inputParameter>
+            <camunda:inputParameter name="method">POST</camunda:inputParameter>
+            <camunda:inputParameter name="payload">
+              <camunda:script scriptFormat="JavaScript">var angebotsentwurf = execution.getVariable("angebotsentwurf");
+var customerId = execution.getVariable("customerId");
+var businessKey = execution.getProcessBusinessKey();
+
+JSON.stringify({
+  businessKey: businessKey,
+  customerId: customerId,
+
+  angebotsentwurf: JSON.parse(
+    angebotsentwurf.toString()
+  )
+});</camunda:script>
+            </camunda:inputParameter>
+          </camunda:inputOutput>
+          <camunda:connectorId>http-connector</camunda:connectorId>
+        </camunda:connector>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0n1nv9b</bpmn:incoming>
+      <bpmn:outgoing>Flow_0vhx2td</bpmn:outgoing>
+    </bpmn:serviceTask>
     <bpmn:sequenceFlow id="Flow_0axxbsn" sourceRef="Event_1ek2v5p" targetRef="Activity_2.1" />
     <bpmn:sequenceFlow id="Flow_0qed4q0" sourceRef="Activity_2.1" targetRef="Activity_2.2" />
-    <bpmn:sequenceFlow id="Flow_0pmesfm" sourceRef="Activity_2.2" targetRef="Event_1tmobws" />
+    <bpmn:sequenceFlow id="Flow_0pmesfm" sourceRef="Activity_2.2" targetRef="Event_10bgkb0" />
+    <bpmn:sequenceFlow id="Flow_0vhx2td" sourceRef="Activity_2.3" targetRef="Event_1tmobws" />
+    <bpmn:sequenceFlow id="Flow_0n1nv9b" sourceRef="Event_10bgkb0" targetRef="Activity_2.3" />
   </bpmn:process>
+  <bpmn:message id="Message_3n3lqjh" name="angebotsentwurf" />
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_1wnqy36">
       <bpmndi:BPMNShape id="Participant_1s1ta0b_di" bpmnElement="pool_02" isHorizontal="true">
@@ -95,6 +116,16 @@ statusCode;</camunda:script>
           <dc:Bounds x="884" y="305" width="61" height="40" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_12a2lyu_di" bpmnElement="Event_10bgkb0">
+        <dc:Bounds x="652" y="262" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="626" y="305" width="89" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1mc4e02_di" bpmnElement="Activity_2.3">
+        <dc:Bounds x="730" y="240" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_0axxbsn_di" bpmnElement="Flow_0axxbsn">
         <di:waypoint x="230" y="280" />
         <di:waypoint x="312" y="280" />
@@ -105,7 +136,15 @@ statusCode;</camunda:script>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0pmesfm_di" bpmnElement="Flow_0pmesfm">
         <di:waypoint x="600" y="280" />
+        <di:waypoint x="652" y="280" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0vhx2td_di" bpmnElement="Flow_0vhx2td">
+        <di:waypoint x="830" y="280" />
         <di:waypoint x="894" y="280" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0n1nv9b_di" bpmnElement="Flow_0n1nv9b">
+        <di:waypoint x="688" y="280" />
+        <di:waypoint x="730" y="280" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="Participant_12pdxo7_di" bpmnElement="Participant_1a6hvug" isHorizontal="true">
         <dc:Bounds x="530" y="40" width="300" height="60" />
@@ -115,9 +154,17 @@ statusCode;</camunda:script>
         <dc:Bounds x="620" y="420" width="300" height="60" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1yw7s9q_di" bpmnElement="Flow_1yw7s9q">
+        <di:waypoint x="670" y="100" />
+        <di:waypoint x="670" y="262" />
+      </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_1lrvkfb_di" bpmnElement="Flow_1lrvkfb">
         <di:waypoint x="550" y="240" />
         <di:waypoint x="550" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1kb5fr5_di" bpmnElement="Flow_1kb5fr5">
+        <di:waypoint x="780" y="320" />
+        <di:waypoint x="780" y="420" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>

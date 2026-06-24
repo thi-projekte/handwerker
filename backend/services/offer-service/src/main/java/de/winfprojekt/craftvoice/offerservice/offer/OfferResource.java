@@ -84,11 +84,9 @@ public class OfferResource {
         String userId = resolveHandwerkerId();
         Offer offer = offerService.findOwnOfferOrThrow(businessKey, userId);
 
-        // Der angereicherte Entwurf wird im Body zurueckgegeben; die Process Engine mappt
-        // ihn direkt in die Prozessvariable "angebotsentwurf" (kein PE-Message-Roundtrip).
-        OfferResponse response = offerService.initializeOrUpdateOfferFromAiOrFrontend(offer.businessKey, request);
+        offerService.initializeOrUpdateOfferFromAiOrFrontend(offer.businessKey, request);
 
-        return Response.ok(response).build();
+        return Response.status(200).build();
     }
 
     /**
@@ -101,17 +99,14 @@ public class OfferResource {
      */
     @POST
     @Path("/angebote/{businessKey}/positionen")
-    @Authenticated   // dual-use: Frontend (OWNER) ODER technischer Caller (PE, Angebotskorrektur Activity_4.4)
+    @RolesAllowed({"OWNER"})
     public Response processOfferChanges(@PathParam("businessKey") String businessKey, @Valid OfferChangesRequest request) {
-        // resolveHandwerkerId() liefert bei technischem Caller (process-engine-Rolle) den
-        // Wert aus X-Handwerker-Id, sonst den JWT-Subject. findOwnOfferOrThrow stellt die
-        // Eigentuemerschaft sicher.
-        String userId = resolveHandwerkerId();
+        String userId = jwt.getSubject();
         Offer offer = offerService.findOwnOfferOrThrow(businessKey, userId);
 
-        OfferResponse response = offerService.initializeOrUpdateOfferFromAiOrFrontend(offer.businessKey, request);
+        offerService.initializeOrUpdateOfferFromAiOrFrontend(offer.businessKey, request);
 
-        return Response.ok(response).build();
+        return Response.status(200).build();
     }
 
     /**

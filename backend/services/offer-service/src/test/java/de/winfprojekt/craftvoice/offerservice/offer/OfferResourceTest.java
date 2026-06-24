@@ -280,10 +280,7 @@ class OfferResourceTest {
                 .when()
                 .post("/angebote/{businessKey}/ki-ergebnis", businessKey)
                 .then()
-                .statusCode(200)
-                // Der angereicherte Entwurf kommt jetzt synchron im Response-Body zur\u00fcck
-                // (statt per PE-Message). Korrekturvorschl\u00e4ge m\u00fcssen enthalten sein.
-                .body("korrekturvorschlaege", org.hamcrest.Matchers.hasItem("Materialkosten pr\u00fcfen"));
+                .statusCode(200);
 
         // Datenbankpr\u00fcfung
         QuarkusTransaction.requiringNew().run(() -> {
@@ -318,7 +315,16 @@ class OfferResourceTest {
                     "Keine Arbeitszeit-Position bei ki-ergebnis erwartet");
         });
 
-        // Korrekturvorschläge wurden bereits oben am Response-Body geprüft.
+        // sendAngebotsentwurf muss genau einmal aufgerufen werden
+        ArgumentCaptor<String> jsonCaptor = ArgumentCaptor.forClass(String.class);
+        verify(processEngineClient, times(1)).sendAngebotsentwurf(Mockito.eq(businessKey), jsonCaptor.capture());
+
+        // Korrekturvorschläge müssen im serialisierten JSON enthalten sein
+        String sentJson = jsonCaptor.getValue();
+        assertTrue(sentJson.contains("korrekturvorschlaege"),
+                "JSON muss das Feld korrekturvorschlaege enthalten");
+        assertTrue(sentJson.contains("Materialkosten prüfen"),
+                "JSON muss den Korrekturvorschlag 'Materialkosten prüfen' enthalten");
     }
 
     /**
@@ -885,7 +891,9 @@ class OfferResourceTest {
             assertNull(anfahrt.einzelPreis);
         });
 
-        Mockito.verify(osrmClient, org.mockito.Mockito.never()).getDistanzKm(anyString(), anyString());    }
+        Mockito.verify(osrmClient, org.mockito.Mockito.never()).getDistanzKm(anyString(), anyString());
+        verify(processEngineClient, times(1)).sendAngebotsentwurf(Mockito.eq(businessKey), anyString());
+    }
 
     /**
      * Modell PAUSCHALE_PLUS_KM: preis = pauschale + (km × kmSatz).
@@ -941,6 +949,8 @@ class OfferResourceTest {
             assertEquals(new BigDecimal("26.00"), anfahrt.positionsPreis);
             assertNull(anfahrt.einzelPreis);
         });
+
+        verify(processEngineClient, times(1)).sendAngebotsentwurf(Mockito.eq(businessKey), anyString());
     }
 
     /**
@@ -996,6 +1006,8 @@ class OfferResourceTest {
             assertEquals(new BigDecimal("4.50"), anfahrt.positionsPreis);
             assertNull(anfahrt.einzelPreis);
         });
+
+        verify(processEngineClient, times(1)).sendAngebotsentwurf(Mockito.eq(businessKey), anyString());
     }
 
     /**
@@ -1051,6 +1063,8 @@ class OfferResourceTest {
                     .anyMatch(p -> "Anfahrtskosten".equals(p.bezeichnung)),
                     "Keine Anfahrtskosten-Position bei OSRM-Fehler");
         });
+
+        verify(processEngineClient, times(1)).sendAngebotsentwurf(Mockito.eq(businessKey), anyString());
     }
 
     // =========================================================================
