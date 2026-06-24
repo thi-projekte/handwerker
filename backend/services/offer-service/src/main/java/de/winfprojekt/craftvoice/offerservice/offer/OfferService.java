@@ -627,4 +627,49 @@ public class OfferService {
 
         return offer;
     }
+
+    /**
+     * Ändert den Status eines Angebots manuell durch den Handwerker.
+     * Dies ist nur erlaubt, wenn das Angebot sich im Status VERSENDET befindet.
+     * Als Ziel-Status sind nur ANGENOMMEN und ABGELEHNT erlaubt.
+     * Die Process Engine wird entsprechend benachrichtigt.
+     *
+     * @param businessKey  Business-Key des Angebots
+     * @param targetStatus Der neue Status (nur ANGENOMMEN oder ABGELEHNT erlaubt)
+     * @param userId       ID des Handwerkers aus dem JWT
+     */
+    @Transactional
+    public void updateOfferStatusManually(String businessKey, String targetStatus, String userId) {
+        Offer offer = findOwnOfferOrThrow(businessKey, userId);
+
+        if (!Offer.STATUS_VERSENDET.equals(offer.status)) {
+            throw new WebApplicationException(
+                    "Statusänderung nur erlaubt, wenn das Angebot versendet wurde (aktueller Status: " + offer.status + ")",
+                    409);
+        }
+
+        if (!Offer.STATUS_ANGENOMMEN.equals(targetStatus) && !Offer.STATUS_ABGELEHNT.equals(targetStatus)) {
+            throw new WebApplicationException(
+                    "Ungültiger Zielstatus. Nur ANGENOMMEN oder ABGELEHNT sind manuell erlaubt.",
+                    400);
+        }
+
+        offer.status = targetStatus;
+
+        OfferStatusHistory history = new OfferStatusHistory();
+        history.offer = offer;
+        history.status = targetStatus;
+        history.zeitpunkt = LocalDateTime.now();
+        history.notiz = "Manuelle Änderung durch Handwerker";
+        offer.statusHistory.add(history);
+
+        offer.persist();
+
+        // Process Engine benachrichtigen
+        if (Offer.STATUS_ANGENOMMEN.equals(targetStatus)) {
+            processEngineClient.sendAngebotAngenommen(offer.businessKey);
+        } else {
+            processEngineClient.sendAngebotAbgelehnt(offer.businessKey);
+        }
+    }
 }

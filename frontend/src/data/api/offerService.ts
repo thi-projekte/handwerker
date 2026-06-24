@@ -316,3 +316,26 @@ export async function pollUntilKiFertig(
     `Timeout: KI-Ergebnis für ${businessKey} nicht innerhalb von ${timeoutMs / 1000}s verfügbar.`,
   );
 }
+
+/**
+ * Aktualisiert den Status eines Angebots manuell durch den Handwerker.
+ * Dies ist nur erlaubt, wenn das Angebot bereits im Status "VERSENDET" ist
+ * und auf "ANGENOMMEN" oder "ABGELEHNT" geändert werden soll.
+ */
+export async function updateOfferStatus(
+  businessKey: string,
+  status: "ANGENOMMEN" | "ABGELEHNT",
+): Promise<void> {
+  const res = await fetch(
+    `${API_CONFIG.OFFER_SERVICE_URL}/offers/${businessKey}/status`,
+    {
+      method: "PUT",
+      headers: await getAuthHeaders(),
+      body: JSON.stringify({ status }),
+    },
+  );
+
+  if (!res.ok) {
+    throw new Error(`Status-Update auf ${status} fehlgeschlagen: ${res.status}`);
+  }
+}

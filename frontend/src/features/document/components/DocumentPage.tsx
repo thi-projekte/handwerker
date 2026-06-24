@@ -1,4 +1,6 @@
 import { useDocuments } from "@/features/document/hooks/useDocuments";
+import { updateOfferStatus } from "@/data/api/offerService";
+import { Angebot } from "@/features/document/types/document.types";
 import { useState, useMemo, useEffect } from "react";
 import {
   MapPin,
@@ -103,6 +105,7 @@ interface StatusDropdownProps<T extends string> {
   onSelect: (status: T) => void;
   isOpen: boolean;
   onToggle: () => void;
+  disabled?: boolean;
 }
 
 function StatusDropdown<T extends string>({
@@ -112,7 +115,18 @@ function StatusDropdown<T extends string>({
   onSelect,
   isOpen,
   onToggle,
+  disabled = false,
 }: StatusDropdownProps<T>) {
+  if (disabled) {
+    return (
+      <div className="doc-status-dropdown-wrapper">
+        <span className={`doc-status-badge tag ${styleMap[currentStatus]}`} style={{ cursor: "default" }}>
+          <span>{currentStatus}</span>
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div className="doc-status-dropdown-wrapper">
       <button
@@ -177,7 +191,14 @@ export const DocumentPage = () => {
   const [showFilterStatusDropdown, setShowFilterStatusDropdown] =
     useState(false);
   const { data: angebote, loading, error } = useDocuments();
+  const [localAngebote, setLocalAngebote] = useState<Angebot[]>([]);
   const [rechnungen, setRechnungen] = useState<Rechnung[]>([]);
+
+  useEffect(() => {
+    if (angebote) {
+      setLocalAngebote(angebote);
+    }
+  }, [angebote]);
 
   useEffect(() => {
     const handleOutsideClick = (event: MouseEvent) => {
@@ -216,11 +237,29 @@ export const DocumentPage = () => {
     }
   };
 
-  const handleAngebotStatusChange = (
+  const handleAngebotStatusChange = async (
     id: string,
     newStatus: AngebotStatus,
   ) => {
-    console.log(id, newStatus);
+    const angebot = localAngebote.find((a) => a.id === id);
+    if (!angebot) return;
+
+    if (newStatus !== "Angenommen" && newStatus !== "Abgelehnt") {
+      console.warn("Manuelle Statusänderung nur auf Angenommen oder Abgelehnt erlaubt.");
+      return;
+    }
+
+    const apiStatus = newStatus === "Angenommen" ? "ANGENOMMEN" : "ABGELEHNT";
+
+    try {
+      await updateOfferStatus(angebot.angebotsnummer, apiStatus);
+      setLocalAngebote((prev) =>
+        prev.map((a) => (a.id === id ? { ...a, status: newStatus } : a))
+      );
+    } catch (err) {
+      console.error("Fehler beim Ändern des Status:", err);
+      alert("Statusänderung fehlgeschlagen. Bitte erneut versuchen.");
+    }
 
     setActiveStatusDropdownId(null);
   };
@@ -250,7 +289,7 @@ export const DocumentPage = () => {
 
   // ── Filtered & Sorted Angebote ──
   const filteredAngebote = useMemo(() => {
-    return angebote.filter((a) => {
+    return localAngebote.filter((a) => {
       const q = search.toLowerCase();
       const fullName = `${a.vorname ?? ""} ${a.nachname ?? ""}`.toLowerCase();
       const adresse =
@@ -270,7 +309,7 @@ export const DocumentPage = () => {
       if (endDate) matchesDate = matchesDate && aDate <= eDate;
       return matchesSearch && matchesStatus && matchesDate;
     });
-  }, [angebote, search, filterAngebotStatus, startDate, endDate]);
+  }, [localAngebote, search, filterAngebotStatus, startDate, endDate]);
 
   const sortedAngebote = useMemo(() => {
     const mult = sortDir === "asc" ? 1 : -1;
@@ -533,6 +572,7 @@ export const DocumentPage = () => {
                           : angebot.id,
                       )
                     }
+                    disabled={angebot.status !== "Versendet"}
                   />
                 </div>
 

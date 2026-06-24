@@ -8,6 +8,7 @@ import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -211,4 +212,23 @@ public class OfferResource {
         return Response.ok().build();
     }
 
+    /**
+     * Ändert den Status eines Angebots manuell durch den Handwerker.
+     * Dies ist nur erlaubt, wenn das Angebot bereits versendet wurde (Status VERSENDET).
+     * Erlaubte Zielstatus sind ANGENOMMEN oder ABGELEHNT.
+     *
+     * @param businessKey Business-Key des Angebots
+     * @param request     Request-DTO mit dem gewünschten Zielstatus
+     * @return HTTP-Response 200 bei Erfolg
+     */
+    @PUT
+    @Path("/offers/{businessKey}/status")
+    @RolesAllowed({"OWNER"})
+    public Response updateOfferStatusManually(
+            @PathParam("businessKey") String businessKey,
+            @Valid UpdateOfferStatusRequest request) {
+        String userId = jwt.getSubject();
+        offerService.updateOfferStatusManually(businessKey, request.status, userId);
+        return Response.ok().build();
+    }
 }
