@@ -1,3 +1,4 @@
+import { useDocuments } from "@/features/document/hooks/useDocuments";
 import { useState, useMemo, useEffect } from "react";
 import {
   MapPin,
@@ -19,20 +20,6 @@ type RechnungStatus =
   | "Bezahlt"
   | "Im Zahlungsverzug";
 
-interface Angebot {
-  id: string;
-  angebotsnummer: string;
-  vorname: string;
-  nachname: string;
-  strasse: string;
-  hausnummer: string;
-  plz: string;
-  ort: string;
-  datum: string;
-  status: AngebotStatus;
-  betrag: number;
-}
-
 interface Rechnung {
   id: string;
   rechnungsnummer: string;
@@ -47,135 +34,6 @@ interface Rechnung {
   status: RechnungStatus;
   betrag: number;
 }
-
-// ── Mock Data ──────────────────────────────────────────────────────────────
-
-const INITIAL_ANGEBOTE: Angebot[] = [
-  {
-    id: "1",
-    angebotsnummer: "ANG-2025-001",
-    vorname: "Thomas",
-    nachname: "Müller",
-    strasse: "Hauptstraße",
-    hausnummer: "12",
-    plz: "80331",
-    ort: "München",
-    datum: "2025-04-02",
-    status: "Versendet",
-    betrag: 3480.0,
-  },
-  {
-    id: "2",
-    angebotsnummer: "ANG-2025-002",
-    vorname: "Sabine",
-    nachname: "Hoffmann",
-    strasse: "Gartenweg",
-    hausnummer: "5",
-    plz: "70174",
-    ort: "Stuttgart",
-    datum: "2025-03-28",
-    status: "Erstellt",
-    betrag: 1250.5,
-  },
-  {
-    id: "3",
-    angebotsnummer: "ANG-2025-003",
-    vorname: "Klaus",
-    nachname: "Becker",
-    strasse: "Kirchplatz",
-    hausnummer: "3",
-    plz: "50667",
-    ort: "Köln",
-    datum: "2025-03-14",
-    status: "Angenommen",
-    betrag: 8920.0,
-  },
-  {
-    id: "4",
-    angebotsnummer: "ANG-2025-004",
-    vorname: "Maria",
-    nachname: "Schmidt",
-    strasse: "Rosenstraße",
-    hausnummer: "8",
-    plz: "60311",
-    ort: "Frankfurt",
-    datum: "2025-04-10",
-    status: "Erstellt",
-    betrag: 540.0,
-  },
-  {
-    id: "5",
-    angebotsnummer: "ANG-2025-005",
-    vorname: "Peter",
-    nachname: "Wagner",
-    strasse: "Bahnhofstraße",
-    hausnummer: "21",
-    plz: "90402",
-    ort: "Nürnberg",
-    datum: "2025-02-19",
-    status: "Abgelehnt",
-    betrag: 2100.0,
-  },
-];
-
-const INITIAL_RECHNUNGEN: Rechnung[] = [
-  {
-    id: "r1",
-    rechnungsnummer: "REC-2025-001",
-    vorname: "Klaus",
-    nachname: "Becker",
-    strasse: "Kirchplatz",
-    hausnummer: "3",
-    plz: "50667",
-    ort: "Köln",
-    erstelldatum: "2025-03-20",
-    faelligkeitsdatum: "2025-04-20",
-    status: "Bezahlt",
-    betrag: 8920.0,
-  },
-  {
-    id: "r2",
-    rechnungsnummer: "REC-2025-002",
-    vorname: "Thomas",
-    nachname: "Müller",
-    strasse: "Hauptstraße",
-    hausnummer: "12",
-    plz: "80331",
-    ort: "München",
-    erstelldatum: "2025-04-05",
-    faelligkeitsdatum: "2025-05-05",
-    status: "Im Zahlungsverzug",
-    betrag: 3480.0,
-  },
-  {
-    id: "r3",
-    rechnungsnummer: "REC-2025-003",
-    vorname: "Anna",
-    nachname: "Krause",
-    strasse: "Lindenallee",
-    hausnummer: "7",
-    plz: "10115",
-    ort: "Berlin",
-    erstelldatum: "2025-04-12",
-    faelligkeitsdatum: "2025-05-12",
-    status: "Versendet",
-    betrag: 1870.0,
-  },
-  {
-    id: "r4",
-    rechnungsnummer: "REC-2025-004",
-    vorname: "Markus",
-    nachname: "Fischer",
-    strasse: "Marktplatz",
-    hausnummer: "1",
-    plz: "70173",
-    ort: "Stuttgart",
-    erstelldatum: "2025-04-18",
-    faelligkeitsdatum: "2025-05-18",
-    status: "Erstellt",
-    betrag: 4250.0,
-  },
-];
 
 // ── Style Maps ─────────────────────────────────────────────────────────────
 
@@ -208,13 +66,22 @@ const RECHNUNG_STATUS_OPTIONS: RechnungStatus[] = [
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-function formatDatum(iso: string) {
+function formatDatum(iso?: string | null) {
+  if (!iso) return "-";
+
   const [y, m, d] = iso.split("-");
+  if (!y || !m || !d) return iso;
+
   return `${d}.${m}.${y}`;
 }
 
-function formatBetrag(n: number) {
-  return n.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
+function formatBetrag(n?: number | null) {
+  if (n == null) return "-";
+
+  return n.toLocaleString("de-DE", {
+    style: "currency",
+    currency: "EUR",
+  });
 }
 
 type Tab = "angebote" | "rechnungen";
@@ -296,9 +163,6 @@ export const DocumentPage = () => {
   const [sortKey, setSortKey] = useState<SortKey>("datum");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
 
-  const [angebote, setAngebote] = useState<Angebot[]>(INITIAL_ANGEBOTE);
-  const [rechnungen, setRechnungen] = useState<Rechnung[]>(INITIAL_RECHNUNGEN);
-
   const [filterAngebotStatus, setFilterAngebotStatus] =
     useState<AngebotStatus | null>(null);
   const [filterRechnungStatus, setFilterRechnungStatus] =
@@ -312,6 +176,8 @@ export const DocumentPage = () => {
   >(null);
   const [showFilterStatusDropdown, setShowFilterStatusDropdown] =
     useState(false);
+  const { data: angebote, loading, error } = useDocuments();
+  const [rechnungen, setRechnungen] = useState<Rechnung[]>([]);
 
   useEffect(() => {
     const handleOutsideClick = (event: MouseEvent) => {
@@ -350,10 +216,12 @@ export const DocumentPage = () => {
     }
   };
 
-  const handleAngebotStatusChange = (id: string, newStatus: AngebotStatus) => {
-    setAngebote((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, status: newStatus } : a)),
-    );
+  const handleAngebotStatusChange = (
+    id: string,
+    newStatus: AngebotStatus,
+  ) => {
+    console.log(id, newStatus);
+
     setActiveStatusDropdownId(null);
   };
 
@@ -384,18 +252,22 @@ export const DocumentPage = () => {
   const filteredAngebote = useMemo(() => {
     return angebote.filter((a) => {
       const q = search.toLowerCase();
-      const fullName = `${a.vorname} ${a.nachname}`.toLowerCase();
+      const fullName = `${a.vorname ?? ""} ${a.nachname ?? ""}`.toLowerCase();
       const adresse =
-        `${a.strasse} ${a.hausnummer}, ${a.plz} ${a.ort}`.toLowerCase();
+        `${a.strasse ?? ""} ${a.hausnummer ?? ""}, ${a.plz ?? ""} ${a.ort ?? ""}`
+          .toLowerCase();
       const matchesSearch =
-        a.angebotsnummer.toLowerCase().includes(q) ||
+        (a.angebotsnummer ?? "").toLowerCase().includes(q) ||
         fullName.includes(q) ||
         adresse.includes(q);
       const matchesStatus =
         !filterAngebotStatus || a.status === filterAngebotStatus;
       let matchesDate = true;
-      if (startDate) matchesDate = matchesDate && a.datum >= startDate;
-      if (endDate) matchesDate = matchesDate && a.datum <= endDate;
+      const aDate = new Date(a.datum);
+      const sDate = new Date(startDate);
+      const eDate = new Date(endDate);
+      if (startDate) matchesDate = matchesDate && aDate >= sDate;
+      if (endDate) matchesDate = matchesDate && aDate <= eDate;
       return matchesSearch && matchesStatus && matchesDate;
     });
   }, [angebote, search, filterAngebotStatus, startDate, endDate]);
@@ -403,10 +275,18 @@ export const DocumentPage = () => {
   const sortedAngebote = useMemo(() => {
     const mult = sortDir === "asc" ? 1 : -1;
     return [...filteredAngebote].sort((a, b) => {
-      if (sortKey === "datum") return mult * a.datum.localeCompare(b.datum);
-      if (sortKey === "status") return mult * a.status.localeCompare(b.status);
-      if (sortKey === "name")
-        return mult * a.nachname.localeCompare(b.nachname);
+      if (sortKey === "datum") {
+        return mult * ((a.datum ?? "").localeCompare(b.datum ?? ""));
+      }
+
+      if (sortKey === "status") {
+        return mult * ((a.status ?? "").localeCompare(b.status ?? ""));
+      }
+
+      if (sortKey === "name") {
+        return mult * ((a.nachname ?? "").localeCompare(b.nachname ?? ""));
+      }
+
       return 0;
     });
   }, [filteredAngebote, sortKey, sortDir]);
@@ -415,11 +295,12 @@ export const DocumentPage = () => {
   const filteredRechnungen = useMemo(() => {
     return rechnungen.filter((r) => {
       const q = search.toLowerCase();
-      const fullName = `${r.vorname} ${r.nachname}`.toLowerCase();
+      const fullName = `${r.vorname ?? ""} ${r.nachname ?? ""}`.toLowerCase();
       const adresse =
-        `${r.strasse} ${r.hausnummer}, ${r.plz} ${r.ort}`.toLowerCase();
+        `${r.strasse ?? ""} ${r.hausnummer ?? ""}, ${r.plz ?? ""} ${r.ort ?? ""}`
+          .toLowerCase();
       const matchesSearch =
-        r.rechnungsnummer.toLowerCase().includes(q) ||
+        (r.rechnungsnummer ?? "").toLowerCase().includes(q) ||
         fullName.includes(q) ||
         adresse.includes(q);
       const matchesStatus =
@@ -436,9 +317,10 @@ export const DocumentPage = () => {
     return [...filteredRechnungen].sort((a, b) => {
       if (sortKey === "datum")
         return mult * a.erstelldatum.localeCompare(b.erstelldatum);
-      if (sortKey === "status") return mult * a.status.localeCompare(b.status);
+      if (sortKey === "status")
+        return mult * (a.status ?? "").localeCompare(b.status ?? "");
       if (sortKey === "name")
-        return mult * a.nachname.localeCompare(b.nachname);
+        return mult * (a.nachname ?? "").localeCompare(b.nachname ?? "");
       return 0;
     });
   }, [filteredRechnungen, sortKey, sortDir]);
@@ -462,8 +344,22 @@ export const DocumentPage = () => {
     activeTab === "angebote"
       ? (v: string | null) => setFilterAngebotStatus(v as AngebotStatus | null)
       : (v: string | null) =>
-          setFilterRechnungStatus(v as RechnungStatus | null);
+        setFilterRechnungStatus(v as RechnungStatus | null);
 
+  if (loading) {
+    return (
+      <div className="doc-page">
+        <p>Lade Dokumente...</p>
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="doc-page">
+        <p>Fehler beim Laden der Dokumente.</p>
+      </div>
+    );
+  }
   return (
     <div className="doc-page">
       {/* ── Sticky Header ── */}
@@ -628,7 +524,7 @@ export const DocumentPage = () => {
                     currentStatus={angebot.status}
                     options={ANGEBOT_STATUS_OPTIONS}
                     styleMap={ANGEBOT_STATUS_STYLES}
-                    onSelect={(s) => handleAngebotStatusChange(angebot.id, s)}
+                    onSelect={(status) => handleAngebotStatusChange(angebot.id, status)}
                     isOpen={activeStatusDropdownId === angebot.id}
                     onToggle={() =>
                       setActiveStatusDropdownId(
@@ -676,64 +572,64 @@ export const DocumentPage = () => {
             ))
           )
         ) : /* ── Rechnungen Tab ── */
-        sortedRechnungen.length === 0 ? (
-          <div className="card doc-empty">
-            <p className="text-secondary">Keine Rechnungen gefunden.</p>
-          </div>
-        ) : (
-          sortedRechnungen.map((rechnung) => (
-            <div key={rechnung.id} className="card doc-card">
-              <div className="doc-card-top">
-                <span className="doc-nummer">{rechnung.rechnungsnummer}</span>
-                <StatusDropdown
-                  currentStatus={rechnung.status}
-                  options={RECHNUNG_STATUS_OPTIONS}
-                  styleMap={RECHNUNG_STATUS_STYLES}
-                  onSelect={(s) => handleRechnungStatusChange(rechnung.id, s)}
-                  isOpen={activeStatusDropdownId === rechnung.id}
-                  onToggle={() =>
-                    setActiveStatusDropdownId(
-                      activeStatusDropdownId === rechnung.id
-                        ? null
-                        : rechnung.id,
-                    )
-                  }
-                />
-              </div>
+          sortedRechnungen.length === 0 ? (
+            <div className="card doc-empty">
+              <p className="text-secondary">Keine Rechnungen gefunden.</p>
+            </div>
+          ) : (
+            sortedRechnungen.map((rechnung) => (
+              <div key={rechnung.id} className="card doc-card">
+                <div className="doc-card-top">
+                  <span className="doc-nummer">{rechnung.rechnungsnummer}</span>
+                  <StatusDropdown
+                    currentStatus={rechnung.status}
+                    options={RECHNUNG_STATUS_OPTIONS}
+                    styleMap={RECHNUNG_STATUS_STYLES}
+                    onSelect={(s) => handleRechnungStatusChange(rechnung.id, s)}
+                    isOpen={activeStatusDropdownId === rechnung.id}
+                    onToggle={() =>
+                      setActiveStatusDropdownId(
+                        activeStatusDropdownId === rechnung.id
+                          ? null
+                          : rechnung.id,
+                      )
+                    }
+                  />
+                </div>
 
-              <div className="doc-card-name">
-                {rechnung.vorname} {rechnung.nachname}
-              </div>
+                <div className="doc-card-name">
+                  {rechnung.vorname} {rechnung.nachname}
+                </div>
 
-              <div className="doc-card-meta">
-                <span className="text-secondary doc-meta-item">
-                  <MapPin size={13} className="doc-icon-inline" />
-                  {rechnung.strasse} {rechnung.hausnummer}, {rechnung.plz}{" "}
-                  {rechnung.ort}
-                </span>
-                <span className="text-secondary doc-meta-item">
-                  <Calendar size={13} className="doc-icon-inline" />
-                  Erstellt: {formatDatum(rechnung.erstelldatum)}
-                </span>
-                <span className="text-secondary doc-meta-item">
-                  <Calendar size={13} className="doc-icon-inline" />
-                  Fällig: {formatDatum(rechnung.faelligkeitsdatum)}
-                </span>
-              </div>
+                <div className="doc-card-meta">
+                  <span className="text-secondary doc-meta-item">
+                    <MapPin size={13} className="doc-icon-inline" />
+                    {rechnung.strasse} {rechnung.hausnummer}, {rechnung.plz}{" "}
+                    {rechnung.ort}
+                  </span>
+                  <span className="text-secondary doc-meta-item">
+                    <Calendar size={13} className="doc-icon-inline" />
+                    Erstellt: {formatDatum(rechnung.erstelldatum)}
+                  </span>
+                  <span className="text-secondary doc-meta-item">
+                    <Calendar size={13} className="doc-icon-inline" />
+                    Fällig: {formatDatum(rechnung.faelligkeitsdatum)}
+                  </span>
+                </div>
 
-              <hr className="divider" />
+                <hr className="divider" />
 
-              <div className="doc-card-footer">
-                <span className="doc-betrag">
-                  {formatBetrag(rechnung.betrag)}
-                </span>
-                <div className="doc-card-actions">
-                  <button className="doc-detail-btn">Details →</button>
+                <div className="doc-card-footer">
+                  <span className="doc-betrag">
+                    {formatBetrag(rechnung.betrag)}
+                  </span>
+                  <div className="doc-card-actions">
+                    <button className="doc-detail-btn">Details →</button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
-        )}
+            ))
+          )}
       </div>
     </div>
   );
