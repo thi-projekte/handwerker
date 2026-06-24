@@ -246,6 +246,8 @@ public class OfferResource {
         offerService.updateOfferStatusManually(businessKey, request.status, userId);
         return Response.ok().build();
     }
+
+    /**
      * Liefert die Handwerker-ID (= ownerId des Angebots).
      *
      * <p>Normalfall (User-Login): die Keycloak-ID des eingeloggten Handwerkers ({@code jwt.getSubject()}).
