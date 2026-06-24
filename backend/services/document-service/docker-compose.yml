@@ -18,9 +18,7 @@ services:
       - document-internal
 
   document-service:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.jvm
+    image: ghcr.io/thi-projekte/handwerker/document-service:sprint4
     container_name: document-service
     restart: unless-stopped
     environment:
@@ -32,8 +30,6 @@ services:
       DOCUMENT_STORAGE_PATH: /data/documents
       MAIL_USERNAME: noreply.craftvoice@gmail.com
       MAIL_PASSWORD: ladj zasm krrs dauq
-    ports:
-      - "8080:8080"
     volumes:
       - document_files:/data/documents
     depends_on:
