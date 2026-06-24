@@ -78,6 +78,7 @@ type CompanyFormData = {
   mitarbeiterVorname: string;
   mitarbeiterNachname: string;
   rolle: string;
+  hourlyRate: number;
   strasse: string;
   hausnummer: string;
   plz: string;
@@ -205,6 +206,7 @@ export const UnternehmenPage = () => {
     mitarbeiterVorname: "",
     mitarbeiterNachname: "",
     rolle: "",
+    hourlyRate: 0,
     strasse: "",
     hausnummer: "",
     plz: "",
@@ -321,12 +323,13 @@ const loadCustomers = async () => {
 
     setCurrentUserRoles(roles);
 
+    
     setCompanyData((previousData) => ({
       ...previousData,
       mitarbeiterVorname: user.firstName ?? "",
       mitarbeiterNachname: user.lastName ?? "",
       rolle: getRoleLabel(roles),
-
+      hourlyRate: user.hourlyRate ?? 0,
       firmenname: user.companyName ?? "",
       branche: user.industry ?? "",
       rechtsform: user.legalForm ?? "",
@@ -378,13 +381,38 @@ const loadCustomers = async () => {
       }
     }
   };
+  const loadEmployees = async () => {
+  try {
+    const user = await getCurrentUser();
+
+    setEmployees([
+      {
+        vorname: user.firstName ?? "",
+        nachname: user.lastName ?? "",
+        rolle: getRoleLabel(user.roles ?? []),
+        stundensatz: String(user.hourlyRate ?? 0),
+      },
+    ]);
+  } catch (error) {
+    console.error("Employees konnten nicht geladen werden", error);
+  }
+};
 
   const init = async () => {
-    await loadCompanyData();
-    await loadMaterials();
-    await loadCustomers();
-    
-  };
+  await loadCompanyData();
+  await loadMaterials();
+  await loadCustomers();
+  await loadEmployees();
+
+  try {
+   
+  } catch (error) {
+    console.error(
+      "Stundensatz konnte nicht geladen werden",
+      error,
+    );
+  }
+};
 
   void init();
 
@@ -1679,57 +1707,64 @@ await loadCustomers();
               />
 
               <input
-                className="input-field"
-                name="stundensatz"
-                placeholder="€/Stunde"
-                value={employeeData.stundensatz}
-                onChange={(event) =>
-                  setEmployeeData((previousData) => ({
-                    ...previousData,
-                    stundensatz: event.target.value.replace(
-                      /[^0-9.,]/g,
-                      "",
-                    ),
-                  }))
-                }
-              />
+  className="input-field"
+  type="number"
+  placeholder="€/Stunde"
+  value={companyData.hourlyRate}
+onChange={(event) =>
+  setCompanyData((prev) => ({
+    ...prev,
+    hourlyRate: parseFloat(event.target.value) || 0,
+  }))
+}
+/>
 
               <button
                 className="button-primary company-add-button"
                 type="button"
-                onClick={() => {
-                  if (
-                    !employeeData.vorname ||
-                    !employeeData.nachname
-                  ) {
-                    return;
-                  }
+                onClick={async () => {
+  try {
+    await updateCompany({
+  hourlyRate: companyData.hourlyRate,
+});
 
-                  if (editingEmployeeIndex !== null) {
-                    setEmployees((previousEmployees) =>
-                      previousEmployees.map((employee, index) =>
-                        index === editingEmployeeIndex
-                          ? employeeData
-                          : employee,
-                      ),
-                    );
-                  } else {
-                    setEmployees((previousEmployees) => [
-                      ...previousEmployees,
-                      employeeData,
-                    ]);
-                  }
+setEmployees((prev) =>
+  prev.map((emp, index) =>
+    index === editingEmployeeIndex
+      ? {
+          ...emp,
+          vorname: employeeData.vorname,
+          nachname: employeeData.nachname,
+          rolle: employeeData.rolle,
+          stundensatz: String(companyData.hourlyRate),
+        }
+      : emp
+  )
+);
 
-                  setEmployeeData({
-                    vorname: "",
-                    nachname: "",
-                    rolle: "",
-                    stundensatz: "",
-                  });
+setCompanySuccessMessage("Stundensatz gespeichert");
 
-                  setEditingEmployeeIndex(null);
-                  setShowEmployeeForm(false);
-                }}
+    const refreshedUser = await getCurrentUser();
+  applyUserProfileToCompanyData(refreshedUser);
+  setShowEmployeeForm(false);
+  setEditingEmployeeIndex(null);
+
+  setEmployeeData({
+    vorname: "",
+    nachname: "",
+    rolle: "",
+    stundensatz: "",
+  });
+
+
+  } catch (error) {
+    setCompanyErrorMessage(
+      `Stundensatz konnte nicht gespeichert werden: ${getErrorMessage(
+        error,
+      )}`,
+    );
+  }
+}}
               >
                 {editingEmployeeIndex !== null
                   ? "Mitarbeiter speichern"
