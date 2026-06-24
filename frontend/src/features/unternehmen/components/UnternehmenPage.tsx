@@ -186,6 +186,7 @@ export const UnternehmenPage = () => {
   const [customerImage, setCustomerImage] = useState<string | null>(null);
 
   const [materials, setMaterials] = useState<Material[]>([]);
+  const [materialSearch, setMaterialSearch] = useState("");
   const [showMaterialForm, setShowMaterialForm] = useState(false);
 
 
@@ -531,6 +532,18 @@ const loadCustomers = async () => {
   !!materialData.category &&
   materialData.price >= 0 &&
   !!materialData.unit;
+
+  // Client-seitige Filterung der bereits geladenen Materialliste (Name/Beschreibung/
+  // Hersteller/Kategorie, case-insensitive). Bewusst KEIN Backend-/search-Call: die
+  // Liste ist komplett geladen -> sofortige Filterung ohne Netzwerk/Debounce.
+  const filteredMaterials = (() => {
+    const q = materialSearch.trim().toLowerCase();
+    if (!q) return materials;
+    return materials.filter((m) =>
+      [m.name, m.description, m.manufacturer, m.category]
+        .some((field) => field?.toLowerCase().includes(q)),
+    );
+  })();
 
   return (
     <div className="app company-page">
@@ -1798,8 +1811,26 @@ await loadCustomers();
           )}
 
           {!showMaterialForm && materials.length > 0 && (
+            <input
+              type="text"
+              className="input-field"
+              placeholder="Material suchen…"
+              value={materialSearch}
+              onChange={(e) => setMaterialSearch(e.target.value)}
+            />
+          )}
+
+          {!showMaterialForm &&
+            materials.length > 0 &&
+            filteredMaterials.length === 0 && (
+              <p className="text-secondary empty-state">
+                Keine Materialien gefunden.
+              </p>
+            )}
+
+          {!showMaterialForm && filteredMaterials.length > 0 && (
             <div className="employee-list">
-              {materials.map((material, index) => (
+              {filteredMaterials.map((material, index) => (
                 <div
                   key={`${material.name}-${index}`}
                   className="employee-card-modern"
