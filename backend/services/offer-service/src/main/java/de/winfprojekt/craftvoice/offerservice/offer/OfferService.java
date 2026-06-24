@@ -19,8 +19,6 @@ import de.winfprojekt.craftvoice.offerservice.user.AnfahrtskostenKonfiguration;
 import de.winfprojekt.craftvoice.offerservice.user.CustomerDTO;
 import de.winfprojekt.craftvoice.offerservice.routing.OsrmClient;
 import de.winfprojekt.craftvoice.offerservice.routing.RoutingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.WebApplicationException;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.OfferResponse;
@@ -59,9 +57,6 @@ public class OfferService {
 
     @Inject
     OsrmClient osrmClient;
-
-    @Inject
-    ObjectMapper objectMapper;
 
     /**
      * Erstellt ein neues Angebot aus den übergebenen Request-Daten, persistiert
@@ -161,7 +156,7 @@ public class OfferService {
      * @param request AI- oder Frontend-Result-Daten für die Angebotspositionen
      */
     @Transactional
-    public void initializeOrUpdateOfferFromAiOrFrontend(String businessKey, OfferChangesRequest request) {
+    public OfferResponse initializeOrUpdateOfferFromAiOrFrontend(String businessKey, OfferChangesRequest request) {
         Offer offer = Offer.find("businessKey", businessKey).firstResult();
 
         if (offer == null) {
@@ -319,22 +314,15 @@ public class OfferService {
 
         offer.persist();
 
-        // Correlation: Prozess wartet an Event_10bgkb0 auf "angebotsentwurf"
-        OfferResponse response = OfferResponse.fromEntity(offer);
-        String angebotsentwurfJson;
-        try {
-            angebotsentwurfJson = objectMapper.writeValueAsString(response);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Serialisierung des Angebotsentwurfs fehlgeschlagen", e);
-        }
-
-        // OS-5: PE-Fehler darf das persistierte Angebot nicht zurückrollen.
-        try {
-            processEngineClient.sendAngebotsentwurf(offer.businessKey, angebotsentwurfJson);
-        } catch (Exception e) {
-            LOG.errorf(e, "Angebot %s wurde gespeichert, aber die PE-Nachricht 'angebotsentwurf' konnte nicht zugestellt werden.",
-                    offer.businessKey);
-        }
+        // Der angereicherte Entwurf wird synchron als HTTP-Response an die Process Engine
+        // zurueckgegeben. Die Connector-Tasks (Activity_2.2 / Activity_4.2 / Activity_4.4)
+        // mappen die Response direkt in die Prozessvariable "angebotsentwurf".
+        //
+        // Frueher wurde stattdessen die PE-Message "angebotsentwurf" korreliert. Das war
+        // fehlerhaft: Die PE steckte zu diesem Zeitpunkt noch synchron im /ki-ergebnis-Call
+        // (Activity_2.2) und hatte den wartenden Catch-Event noch nicht erreicht, die
+        // Korrelation lief daher ins Leere und der Prozess blieb haengen.
+        return OfferResponse.fromEntity(offer);
     }
 
     /**
