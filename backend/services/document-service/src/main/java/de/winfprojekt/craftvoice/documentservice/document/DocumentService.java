@@ -42,7 +42,7 @@ public class DocumentService {
             String authorizationHeader,
             GenerateDocumentRequest request
     ) {
-        String ownerId = jwt.getSubject();
+        String ownerId = "dev-user";// TODO: jwt.getSubject();
 
         return documentRepository.findByTypeAndReferenceId(type, businessKeyFromPath)
                 .map(DocumentResponse::from)

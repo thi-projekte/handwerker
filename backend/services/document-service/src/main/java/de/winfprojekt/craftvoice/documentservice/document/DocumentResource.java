@@ -10,6 +10,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.transaction.Transactional;
 
 import java.util.List;
 
@@ -106,6 +107,7 @@ public class DocumentResource {
     @GET
     @Path("/{documentId}/pdf")
     @Produces("application/pdf")
+    @Transactional
     public Response downloadPdf(@PathParam("documentId") Long documentId) {
         Document document = documentService.getPdfDocument(documentId);
 
