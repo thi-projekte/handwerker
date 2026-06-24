@@ -1,5 +1,22 @@
 import { Angebot } from "@/features/document/types/document.types";
 
+interface OfferDTO {
+    id: number | string;
+    businessKey?: string;
+    createdAt?: string;
+    status: string;
+    gesamtPreis?: number;
+
+    customer?: {
+        vorname?: string;
+        nachname?: string;
+        strasse?: string;
+        hausnummer?: string;
+        plz?: string;
+        ort?: string;
+    };
+}
+
 const mapStatus = (status: string): Angebot["status"] => {
     switch (status) {
         case "IN_BEARBEITUNG":
@@ -15,7 +32,7 @@ const mapStatus = (status: string): Angebot["status"] => {
     }
 };
 
-export function mapOfferDTOToAngebot(dto: any): Angebot {
+export function mapOfferDTOToAngebot(dto: OfferDTO): Angebot {
     return {
         id: String(dto.id),
         angebotsnummer: dto.businessKey ?? "",

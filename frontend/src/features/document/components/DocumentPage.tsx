@@ -21,20 +21,6 @@ type RechnungStatus =
   | "Bezahlt"
   | "Im Zahlungsverzug";
 
-interface Angebot {
-  id: string;
-  angebotsnummer: string;
-  vorname: string;
-  nachname: string;
-  strasse: string;
-  hausnummer: string;
-  plz: string;
-  ort: string;
-  datum: string;
-  status: AngebotStatus;
-  betrag: number;
-}
-
 interface Rechnung {
   id: string;
   rechnungsnummer: string;
@@ -192,18 +178,13 @@ export const DocumentPage = () => {
   const [showFilterStatusDropdown, setShowFilterStatusDropdown] =
     useState(false);
   const { data, loading, error } = useDocuments();
-  const [angebote, setAngebote] = useState<Angebot[]>([]);
+  const angebote = useMemo(() => {
+    if (!data) return [];
+
+    return data.map(mapOfferDTOToAngebot);
+  }, [data]);
   const [rechnungen, setRechnungen] = useState<Rechnung[]>([]);
 
-  useEffect(() => {
-    if (!data) {
-      setAngebote([]);
-      return;
-    }
-
-    const mapped = data.map(mapOfferDTOToAngebot);
-    setAngebote(mapped);
-  }, [data]);
   useEffect(() => {
     const handleOutsideClick = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
@@ -241,7 +222,11 @@ export const DocumentPage = () => {
     }
   };
 
-  const handleAngebotStatusChange = (id: string, newStatus: AngebotStatus) => {
+  const handleAngebotStatusChange = (
+    id: string,
+    newStatus: AngebotStatus,
+  ) => {
+    // später Backend-Aufruf
     setActiveStatusDropdownId(null);
   };
 
@@ -271,7 +256,7 @@ export const DocumentPage = () => {
   // ── Filtered & Sorted Angebote ──
   const filteredAngebote = useMemo(() => {
     return angebote.filter((a) => {
-      const q = (search ?? "").toLowerCase();
+      const q = search.toLowerCase();
       const fullName = `${a.vorname ?? ""} ${a.nachname ?? ""}`.toLowerCase();
       const adresse =
         `${a.strasse ?? ""} ${a.hausnummer ?? ""}, ${a.plz ?? ""} ${a.ort ?? ""}`
@@ -314,7 +299,7 @@ export const DocumentPage = () => {
   // ── Filtered & Sorted Rechnungen ──
   const filteredRechnungen = useMemo(() => {
     return rechnungen.filter((r) => {
-      const q = (search ?? "").toLowerCase();;
+      const q = search.toLowerCase();
       const fullName = `${r.vorname ?? ""} ${r.nachname ?? ""}`.toLowerCase();
       const adresse =
         `${r.strasse ?? ""} ${r.hausnummer ?? ""}, ${r.plz ?? ""} ${r.ort ?? ""}`
@@ -544,7 +529,7 @@ export const DocumentPage = () => {
                     currentStatus={angebot.status}
                     options={ANGEBOT_STATUS_OPTIONS}
                     styleMap={ANGEBOT_STATUS_STYLES}
-                    onSelect={(s) => handleAngebotStatusChange(angebot.id, s)}
+                    onSelect={(status) => handleAngebotStatusChange(angebot.id, status)}
                     isOpen={activeStatusDropdownId === angebot.id}
                     onToggle={() =>
                       setActiveStatusDropdownId(
