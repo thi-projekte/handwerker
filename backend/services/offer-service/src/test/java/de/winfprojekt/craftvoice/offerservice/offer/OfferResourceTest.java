@@ -255,7 +255,7 @@ class OfferResourceTest {
         // Stub des Catalog-Clients
         MaterialResponse materialResponse = new MaterialResponse();
         materialResponse.price = new BigDecimal("49.99");
-        when(catalogServiceClient.getMaterial(any(UUID.class))).thenReturn(materialResponse);
+        when(catalogServiceClient.getMaterial(any(UUID.class), any())).thenReturn(materialResponse);
 
         // Stub der Process Engine
         Mockito.doNothing().when(processEngineClient).sendAngebotsentwurf(any(), any());
@@ -354,7 +354,7 @@ class OfferResourceTest {
         // Stub des Catalog-Clients
         MaterialResponse materialResponse = new MaterialResponse();
         materialResponse.price = new BigDecimal("49.99");
-        when(catalogServiceClient.getMaterial(any(UUID.class))).thenReturn(materialResponse);
+        when(catalogServiceClient.getMaterial(any(UUID.class), any())).thenReturn(materialResponse);
 
         // Stub der Process Engine
         Mockito.doNothing().when(processEngineClient).sendAngebotsentwurf(any(), any());
@@ -856,7 +856,7 @@ class OfferResourceTest {
         final Long offerId = offer.id;
         final String businessKey = offer.businessKey;
 
-        when(catalogServiceClient.getMaterial(any(UUID.class))).thenReturn(null);
+        when(catalogServiceClient.getMaterial(any(UUID.class), any())).thenReturn(null);
         Mockito.doNothing().when(processEngineClient).sendAngebotsentwurf(any(), any());
 
         AnfahrtskostenKonfiguration konfig = new AnfahrtskostenKonfiguration();
@@ -913,7 +913,7 @@ class OfferResourceTest {
         final Long offerId = offer.id;
         final String businessKey = offer.businessKey;
 
-        when(catalogServiceClient.getMaterial(any(UUID.class))).thenReturn(null);
+        when(catalogServiceClient.getMaterial(any(UUID.class), any())).thenReturn(null);
         Mockito.doNothing().when(processEngineClient).sendAngebotsentwurf(any(), any());
 
         AnfahrtskostenKonfiguration konfig = new AnfahrtskostenKonfiguration();
@@ -971,7 +971,7 @@ class OfferResourceTest {
         final Long offerId = offer.id;
         final String businessKey = offer.businessKey;
 
-        when(catalogServiceClient.getMaterial(any(UUID.class))).thenReturn(null);
+        when(catalogServiceClient.getMaterial(any(UUID.class), any())).thenReturn(null);
         Mockito.doNothing().when(processEngineClient).sendAngebotsentwurf(any(), any());
 
         AnfahrtskostenKonfiguration konfig = new AnfahrtskostenKonfiguration();
@@ -1029,7 +1029,7 @@ class OfferResourceTest {
         final Long offerId = offer.id;
         final String businessKey = offer.businessKey;
 
-        when(catalogServiceClient.getMaterial(any(UUID.class))).thenReturn(null);
+        when(catalogServiceClient.getMaterial(any(UUID.class), any())).thenReturn(null);
         Mockito.doNothing().when(processEngineClient).sendAngebotsentwurf(any(), any());
 
         AnfahrtskostenKonfiguration konfig = new AnfahrtskostenKonfiguration();
