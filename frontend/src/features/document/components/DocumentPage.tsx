@@ -177,12 +177,7 @@ export const DocumentPage = () => {
   >(null);
   const [showFilterStatusDropdown, setShowFilterStatusDropdown] =
     useState(false);
-  const { data, loading, error } = useDocuments();
-  const angebote = useMemo(() => {
-    if (!data) return [];
-
-    return data.map(mapOfferDTOToAngebot);
-  }, [data]);
+  const { data: angebote, loading, error } = useDocuments();
   const [rechnungen, setRechnungen] = useState<Rechnung[]>([]);
 
   useEffect(() => {
@@ -226,7 +221,8 @@ export const DocumentPage = () => {
     id: string,
     newStatus: AngebotStatus,
   ) => {
-    // später Backend-Aufruf
+    console.log(id, newStatus);
+
     setActiveStatusDropdownId(null);
   };
 

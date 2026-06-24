@@ -15,7 +15,7 @@ export const useDocuments = () => {
 
         const res = await getDocuments();
 
-        setData(res.map(mapOfferDTOToAngebot)); // ⭐ WICHTIG
+        setData(res.map(mapOfferDTOToAngebot)); // WICHTIG
       } catch (e) {
         setError(e instanceof Error ? e : new Error("Unknown error"));
       } finally {

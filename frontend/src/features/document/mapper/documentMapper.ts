@@ -5,7 +5,7 @@ interface OfferDTO {
     businessKey?: string;
     createdAt?: string;
     status: string;
-    gesamtPreis?: number;
+    gesamtPreis?: number | null;
 
     customer?: {
         vorname?: string;
