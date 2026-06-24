@@ -14,8 +14,21 @@ public class DocumentRepository implements PanacheRepository<Document> {
                 .firstResultOptional();
     }
 
-    public List<Document> findAllByType(DocumentType type) {
-        return list("type", type);
+    public Optional<Document> findByTypeAndReferenceIdAndOwnerId(
+            DocumentType type,
+            String referenceId,
+            String ownerId
+    ) {
+        return find(
+                "type = ?1 and referenceId = ?2 and ownerId = ?3",
+                type,
+                referenceId,
+                ownerId
+        ).firstResultOptional();
+    }
+
+    public List<Document> findAllByOwnerId(String ownerId) {
+        return list("ownerId", ownerId);
     }
 
     public boolean existsByTypeAndReferenceId(DocumentType type, String referenceId) {

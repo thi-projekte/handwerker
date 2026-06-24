@@ -1,87 +1,60 @@
 package de.winfprojekt.craftvoice.documentservice.client.user;
 
-import java.math.BigDecimal;
-import java.util.Set;
+public class UserDto {
 
-public record UserDto(
-        Long id,
-        String keycloakId,
+    public String id;
+    public String keycloakId;
 
-        String email,
-        String firstName,
-        String lastName,
-        String phoneNumber,
-        String profilePictureUrl,
+    public String firstName;
+    public String lastName;
 
-        String status,
-        Set<String> roles,
+    public String email;
 
-        String companyName,
-        String vatId,
-        String tradeRegisterNumber,
+    public String companyName;
 
-        String street,
-        String houseNumber,
-        String zipCode,
-        String city,
-        String state,
-        String country,
-
-        String companyEmail,
-        String companyPhoneNumber,
-        String website,
-        String industry,
-
-        String iban,
-        String bic,
-        String bankName,
-        String accountHolder,
-
-        String taxNumber,
-        String legalForm,
-
-        Integer employeeCount,
-        Integer customerCount,
-        Double hourlyRate,
-        String priceListUrl,
-
-        String travelModel,
-        BigDecimal travelFlatRate,
-        BigDecimal travelKmRate,
-
-        String toneOfVoice,
-        String detailLevel,
-
-        String agbNotes,
-        String paymentTerms
-) {
-    public String fullName() {
-        return (safe(firstName) + " " + safe(lastName)).trim();
-    }
+    public String street;
+    public String houseNumber;
+    public String zipCode;
+    public String city;
 
     public String displayEmail() {
-        if (email != null && !email.isBlank()) {
-            return email;
+        return email != null ? email : "";
+    }
+
+    public String fullName() {
+        String first = firstName != null ? firstName : "";
+        String last = lastName != null ? lastName : "";
+
+        String name = (first + " " + last).trim();
+
+        if (!name.isBlank()) {
+            return name;
         }
-        return companyEmail;
-    }
 
-    public String displayPhoneNumber() {
-        if (phoneNumber != null && !phoneNumber.isBlank()) {
-            return phoneNumber;
+        if (companyName != null && !companyName.isBlank()) {
+            return companyName;
         }
-        return companyPhoneNumber;
+
+        return displayEmail();
     }
 
-    public String addressLine() {
-        return (safe(street) + " " + safe(houseNumber)).trim();
-    }
+    public String fullAddress() {
+        String streetPart = street != null ? street : "";
+        String housePart = houseNumber != null ? houseNumber : "";
+        String zipPart = zipCode != null ? zipCode : "";
+        String cityPart = city != null ? city : "";
 
-    public String cityLine() {
-        return (safe(zipCode) + " " + safe(city)).trim();
-    }
+        String line1 = (streetPart + " " + housePart).trim();
+        String line2 = (zipPart + " " + cityPart).trim();
 
-    private static String safe(String value) {
-        return value == null ? "" : value;
+        if (!line1.isBlank() && !line2.isBlank()) {
+            return line1 + ", " + line2;
+        }
+
+        if (!line1.isBlank()) {
+            return line1;
+        }
+
+        return line2;
     }
 }

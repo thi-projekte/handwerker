@@ -1,31 +1,43 @@
 package de.winfprojekt.craftvoice.documentservice.mail;
 
 import de.winfprojekt.craftvoice.documentservice.document.Document;
+import io.quarkus.mailer.Mail;
+import io.quarkus.mailer.Mailer;
 import jakarta.enterprise.context.ApplicationScoped;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 @ApplicationScoped
 public class MailService {
 
-    @ConfigProperty(name = "document.mail.from", defaultValue = "noreply@craftvoice.de")
-    String fromAddress;
+    private final Mailer mailer;
 
-    public void sendDocument(Document document, String recipientEmail, String recipientName) {
+    public MailService(Mailer mailer) {
+        this.mailer = mailer;
+    }
+
+    public void sendDocument(
+            Document document,
+            String recipientEmail,
+            String recipientName
+    ) {
         if (recipientEmail == null || recipientEmail.isBlank()) {
-            throw new IllegalArgumentException("Recipient email is missing");
+            throw new IllegalArgumentException("Customer email is missing");
         }
 
         String subject = buildSubject(document);
         String body = buildBody(document, recipientName);
 
-        // TODO: SMTP / Quarkus Mailer später hier anschließen.
-        // Aktuell bewusst vorbereitet, damit der Document Service schon sauber kompiliert.
-        System.out.println("Sending mail");
-        System.out.println("From: " + fromAddress);
-        System.out.println("To: " + recipientEmail);
-        System.out.println("Subject: " + subject);
-        System.out.println("Attachment: " + document.fileName);
-        System.out.println(body);
+        mailer.send(
+                Mail.withText(
+                                recipientEmail,
+                                subject,
+                                body
+                        )
+                        .addAttachment(
+                                document.fileName,
+                                document.pdfContent,
+                                "application/pdf"
+                        )
+        );
     }
 
     private String buildSubject(Document document) {
@@ -36,22 +48,22 @@ public class MailService {
     }
 
     private String buildBody(Document document, String recipientName) {
-        String greetingName = recipientName == null || recipientName.isBlank()
-                ? "Guten Tag"
-                : "Guten Tag " + recipientName;
+        String greetingName = recipientName != null && !recipientName.isBlank()
+                ? recipientName
+                : "Kunde";
 
-        String documentText = switch (document.type) {
-            case OFFER -> "anbei erhalten Sie Ihr Angebot als PDF.";
-            case INVOICE -> "anbei erhalten Sie Ihre Rechnung als PDF.";
+        String documentName = switch (document.type) {
+            case OFFER -> "Angebot";
+            case INVOICE -> "Rechnung";
         };
 
         return """
-                %s,
-                
-                %s
-                
+                Hallo %s,
+
+                im Anhang finden Sie Ihr %s als PDF.
+
                 Mit freundlichen Grüßen
-                Ihr CraftVoice-Team
-                """.formatted(greetingName, documentText);
+                CraftVoice
+                """.formatted(greetingName, documentName);
     }
 }
