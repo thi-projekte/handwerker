@@ -17,6 +17,13 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.validation.Valid;
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.NotAuthorizedException;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonValue;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 
 /**
@@ -35,6 +42,14 @@ public class OfferResource {
 
     @Inject
     JsonWebToken jwt;
+
+    @Context
+    HttpHeaders httpHeaders;
+
+    /** Header, über den ein technischer Caller (Rolle process-engine) den Ziel-Handwerker angibt. */
+    private static final String HANDWERKER_HEADER = "X-Handwerker-Id";
+    /** Client-Rolle, die einen technischen Service-Aufruf (z.B. PE/ai-service) kennzeichnet. */
+    private static final String TECHNICAL_ROLE = "process-engine";
 
     /**
      * Erstellt ein neues Angebot auf Basis der übergebenen Daten.
@@ -64,9 +79,9 @@ public class OfferResource {
      */
     @POST
     @Path("/angebote/{businessKey}/ki-ergebnis")
-    @RolesAllowed("OWNER")
+    @Authenticated   // statt @RolesAllowed("OWNER"): technischer Caller (PE) wird in resolveHandwerkerId() geprüft
     public Response processAiResult(@PathParam("businessKey") String businessKey, @Valid OfferChangesRequest request) {
-        String userId = jwt.getSubject();
+        String userId = resolveHandwerkerId();
         Offer offer = offerService.findOwnOfferOrThrow(businessKey, userId);
 
         offerService.initializeOrUpdateOfferFromAiOrFrontend(offer.businessKey, request);
@@ -231,4 +246,59 @@ public class OfferResource {
         offerService.updateOfferStatusManually(businessKey, request.status, userId);
         return Response.ok().build();
     }
+     * Liefert die Handwerker-ID (= ownerId des Angebots).
+     *
+     * <p>Normalfall (User-Login): die Keycloak-ID des eingeloggten Handwerkers ({@code jwt.getSubject()}).
+     *
+     * <p>Technischer Caller (PE/ai-service, Rolle {@code process-engine}): hat KEIN User-Token mit dem
+     * Handwerker als Subject, sondern ein technisches Token. Der Ziel-Handwerker kommt daher über den
+     * Header {@code X-Handwerker-Id}. Dieser Header wird NUR vertraut, wenn der Caller die Rolle
+     * {@code process-engine} trägt — sonst könnte jeder eine fremde Handwerker-ID vortäuschen.
+     * (Gleiches Muster wie catalog-service {@code MaterialResource.ownerId()}.)
+     */
+    private String resolveHandwerkerId() {
+        if (hasTechnicalRole()) {
+            String handwerkerId = httpHeaders.getHeaderString(HANDWERKER_HEADER);
+            if (handwerkerId != null && !handwerkerId.isBlank()) {
+                return handwerkerId;
+            }
+            throw new BadRequestException(
+                    "Header " + HANDWERKER_HEADER + " fehlt für technischen Aufruf (Rolle "
+                            + TECHNICAL_ROLE + ").");
+        }
+
+        String subject = jwt.getSubject();
+        if (subject == null || subject.isBlank()) {
+            throw new NotAuthorizedException("Missing JWT subject");
+        }
+        return subject;
+    }
+
+    /**
+     * Prüft, ob das Token die Rolle {@code process-engine} trägt. Sie ist eine catalog-Client-Rolle
+     * und liegt daher unter {@code resource_access.catalog.roles} (NICHT realm_access und NICHT im
+     * offer-service-Role-Claim-Path), darum wird sie hier direkt aus dem Claim gelesen.
+     */
+    private boolean hasTechnicalRole() {
+        Object resourceAccess = jwt.getClaim("resource_access");
+        if (!(resourceAccess instanceof JsonObject ra)) {
+            return false;
+        }
+        JsonObject catalog = ra.getJsonObject("catalog");
+        if (catalog == null) {
+            return false;
+        }
+        JsonArray roles = catalog.getJsonArray("roles");
+        if (roles == null) {
+            return false;
+        }
+        for (JsonValue role : roles) {
+            if (role.getValueType() == JsonValue.ValueType.STRING
+                    && TECHNICAL_ROLE.equals(((jakarta.json.JsonString) role).getString())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 }
