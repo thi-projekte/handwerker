@@ -399,13 +399,12 @@ const loadCustomers = async () => {
 };
 
   const init = async () => {
-  await loadCompanyData();
+
+  try {
+   await loadCompanyData();
   await loadMaterials();
   await loadCustomers();
   await loadEmployees();
-
-  try {
-   
   } catch (error) {
     console.error(
       "Stundensatz konnte nicht geladen werden",
