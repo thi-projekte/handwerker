@@ -1,179 +1,206 @@
 package de.winfprojekt.craftvoice.documentservice.pdf;
 
-import com.lowagie.text.*;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.lowagie.text.Document;
+import com.lowagie.text.Element;
+import com.lowagie.text.Font;
+import com.lowagie.text.FontFactory;
+import com.lowagie.text.Paragraph;
+import com.lowagie.text.Phrase;
+import com.lowagie.text.pdf.PdfPCell;
+import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
-import de.winfprojekt.craftvoice.documentservice.common.CompanyDto;
-import de.winfprojekt.craftvoice.documentservice.common.CustomerDto;
-import de.winfprojekt.craftvoice.documentservice.common.OfferDto;
-import de.winfprojekt.craftvoice.documentservice.common.OfferPositionDto;
 import jakarta.enterprise.context.ApplicationScoped;
 
-import java.io.FileOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 @ApplicationScoped
 public class PdfGenerator {
 
-    public void generateOfferPdf(
-            OfferDto offer,
-            CustomerDto customer,
-            CompanyDto company,
-            Path outputPath
-    ) {
-        try {
-            Files.createDirectories(outputPath.getParent());
+    public byte[] generateOfferPdf(JsonNode angebotsentwurf) {
+        return generatePdf("Angebot", angebotsentwurf);
+    }
 
-            Document pdf = new Document(PageSize.A4, 50, 50, 50, 50);
-            PdfWriter.getInstance(pdf, new FileOutputStream(outputPath.toFile()));
+    public byte[] generateInvoicePdf(JsonNode rechnungsentwurf) {
+        return generatePdf("Rechnung", rechnungsentwurf);
+    }
+
+    private byte[] generatePdf(String title, JsonNode payload) {
+        try {
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+            Document pdf = new Document();
+            PdfWriter.getInstance(pdf, outputStream);
 
             pdf.open();
 
-            addCompanyHeader(pdf, company);
-            addCustomerAddress(pdf, customer);
-            addTitle(pdf, offer);
-            addPositions(pdf, offer);
-            addTotals(pdf, offer);
-            addFooter(pdf, company);
+            addTitle(pdf, title);
+            addMetadata(pdf, title, payload);
+            addCustomerData(pdf, payload);
+            addPositions(pdf, payload);
+            addTotal(pdf, payload);
 
             pdf.close();
 
+            return outputStream.toByteArray();
         } catch (Exception e) {
-            throw new RuntimeException("PDF konnte nicht erzeugt werden: " + e.getMessage(), e);
+            throw new RuntimeException("PDF konnte nicht generiert werden", e);
         }
     }
 
-    private void addCompanyHeader(Document pdf, CompanyDto company) throws DocumentException {
-        Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14);
-        Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 10);
-
-        Paragraph header = new Paragraph();
-        header.setAlignment(Element.ALIGN_RIGHT);
-
-        header.add(new Chunk(nullSafe(company.companyName) + "\n", titleFont));
-        header.add(new Chunk(nullSafe(company.street) + " " + nullSafe(company.houseNumber) + "\n", normalFont));
-        header.add(new Chunk(nullSafe(company.postalCode) + " " + nullSafe(company.city) + "\n", normalFont));
-        header.add(new Chunk("Tel: " + nullSafe(company.phone) + "\n", normalFont));
-        header.add(new Chunk("E-Mail: " + nullSafe(company.email) + "\n", normalFont));
-
-        pdf.add(header);
-        pdf.add(Chunk.NEWLINE);
-        pdf.add(Chunk.NEWLINE);
-    }
-
-    private void addCustomerAddress(Document pdf, CustomerDto customer) throws DocumentException {
-        Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 10);
-
-        Paragraph address = new Paragraph();
-        address.setAlignment(Element.ALIGN_LEFT);
-
-        if (customer.companyName != null && !customer.companyName.isBlank()) {
-            address.add(new Chunk(customer.companyName + "\n", normalFont));
-        }
-
-        address.add(new Chunk(nullSafe(customer.firstName) + " " + nullSafe(customer.lastName) + "\n", normalFont));
-        address.add(new Chunk(nullSafe(customer.street) + " " + nullSafe(customer.houseNumber) + "\n", normalFont));
-        address.add(new Chunk(nullSafe(customer.postalCode) + " " + nullSafe(customer.city) + "\n", normalFont));
-
-        pdf.add(address);
-        pdf.add(Chunk.NEWLINE);
-        pdf.add(Chunk.NEWLINE);
-    }
-
-    private void addTitle(Document pdf, OfferDto offer) throws DocumentException {
+    private void addTitle(Document pdf, String title) throws Exception {
         Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18);
-        Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 10);
 
-        Paragraph title = new Paragraph("Angebot", titleFont);
-        title.setSpacingAfter(10);
-        pdf.add(title);
+        Paragraph paragraph = new Paragraph(title, titleFont);
+        paragraph.setAlignment(Element.ALIGN_CENTER);
+        paragraph.setSpacingAfter(20);
 
-        String offerNumber = offer.offerNumber != null ? offer.offerNumber : offer.id.toString();
-
-        Paragraph meta = new Paragraph("Angebotsnummer: " + offerNumber, normalFont);
-        meta.setSpacingAfter(20);
-        pdf.add(meta);
+        pdf.add(paragraph);
     }
 
-    private void addPositions(Document pdf, OfferDto offer) throws DocumentException {
-        Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 9);
-        Font cellFont = FontFactory.getFont(FontFactory.HELVETICA, 9);
+    private void addMetadata(Document pdf, String title, JsonNode payload) throws Exception {
+        Font bold = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11);
+        Font normal = FontFactory.getFont(FontFactory.HELVETICA, 11);
 
-        Table table = new Table(5);
-        table.setWidth(100);
-        table.setPadding(4);
-        table.setSpacing(1);
+        PdfPTable table = new PdfPTable(2);
+        table.setWidthPercentage(100);
+        table.setSpacingAfter(20);
 
-        table.addCell(new Phrase("Pos.", headerFont));
-        table.addCell(new Phrase("Bezeichnung", headerFont));
-        table.addCell(new Phrase("Menge", headerFont));
-        table.addCell(new Phrase("Einzelpreis", headerFont));
-        table.addCell(new Phrase("Gesamt", headerFont));
+        if ("Angebot".equals(title)) {
+            addRow(table, "Business Key", text(payload, "businessKey"), bold, normal);
+            addRow(table, "Status", text(payload, "status"), bold, normal);
+        } else {
+            addRow(table, "Rechnungsnummer", text(payload, "rechnungsnummer"), bold, normal);
+            addRow(table, "Angebot", text(payload, "offerBusinessKey"), bold, normal);
+        }
 
-        if (offer.positions != null) {
-            int index = 1;
+        pdf.add(table);
+    }
 
-            for (OfferPositionDto position : offer.positions) {
-                table.addCell(new Phrase(String.valueOf(index), cellFont));
-                table.addCell(new Phrase(nullSafe(position.name), cellFont));
-                table.addCell(new Phrase(format(position.quantity) + " " + nullSafe(position.unit), cellFont));
-                table.addCell(new Phrase(format(position.unitPrice) + " €", cellFont));
-                table.addCell(new Phrase(format(position.totalPrice) + " €", cellFont));
-                index++;
+    private void addCustomerData(Document pdf, JsonNode payload) throws Exception {
+        Font heading = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 13);
+        Font normal = FontFactory.getFont(FontFactory.HELVETICA, 11);
+
+        Paragraph section = new Paragraph("Kundendaten", heading);
+        section.setSpacingAfter(8);
+        pdf.add(section);
+
+        if (payload.hasNonNull("kundendaten")) {
+            JsonNode customer = payload.get("kundendaten");
+
+            pdf.add(new Paragraph(
+                    text(customer, "vorname") + " " + text(customer, "nachname"),
+                    normal
+            ));
+
+            pdf.add(new Paragraph(text(customer, "email"), normal));
+            pdf.add(new Paragraph(
+                    text(customer, "strasse") + " " + text(customer, "hausnummer"),
+                    normal
+            ));
+            pdf.add(new Paragraph(
+                    text(customer, "plz") + " " + text(customer, "ort"),
+                    normal
+            ));
+        } else {
+            pdf.add(new Paragraph("Customer-ID: " + text(payload, "customerId"), normal));
+        }
+
+        Paragraph spacing = new Paragraph(" ");
+        spacing.setSpacingAfter(10);
+        pdf.add(spacing);
+    }
+
+    private void addPositions(Document pdf, JsonNode payload) throws Exception {
+        Font heading = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 13);
+        Font header = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10);
+        Font normal = FontFactory.getFont(FontFactory.HELVETICA, 10);
+
+        Paragraph section = new Paragraph("Positionen", heading);
+        section.setSpacingAfter(8);
+        pdf.add(section);
+
+        PdfPTable table = new PdfPTable(5);
+        table.setWidthPercentage(100);
+        table.setWidths(new float[]{4, 1, 1, 2, 2});
+        table.setSpacingAfter(20);
+
+        addHeaderCell(table, "Bezeichnung", header);
+        addHeaderCell(table, "Menge", header);
+        addHeaderCell(table, "Einheit", header);
+        addHeaderCell(table, "Einzelpreis", header);
+        addHeaderCell(table, "Preis", header);
+
+        JsonNode positions = payload.get("positions");
+
+        if (positions != null && positions.isArray()) {
+            for (JsonNode position : positions) {
+                addCell(table, text(position, "bezeichnung"), normal);
+                addCell(table, text(position, "menge"), normal);
+                addCell(table, text(position, "einheit"), normal);
+                addCell(table, money(position, "einzelPreis"), normal);
+                addCell(table, money(position, "positionsPreis"), normal);
             }
         }
 
         pdf.add(table);
-        pdf.add(Chunk.NEWLINE);
     }
 
-    private void addTotals(Document pdf, OfferDto offer) throws DocumentException {
-        Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 10);
-        Font boldFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11);
+    private void addTotal(Document pdf, JsonNode payload) throws Exception {
+        Font bold = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 13);
 
-        Paragraph totals = new Paragraph();
-        totals.setAlignment(Element.ALIGN_RIGHT);
+        Paragraph total = new Paragraph(
+                "Gesamtpreis: " + money(payload, "gesamtPreis"),
+                bold
+        );
 
-        totals.add(new Chunk("Netto: " + format(offer.totalNet) + " €\n", normalFont));
-        totals.add(new Chunk("MwSt.: " + format(offer.vatAmount) + " €\n", normalFont));
-        totals.add(new Chunk("Brutto: " + format(offer.totalGross) + " €\n", boldFont));
-
-        pdf.add(totals);
-        pdf.add(Chunk.NEWLINE);
+        total.setAlignment(Element.ALIGN_RIGHT);
+        pdf.add(total);
     }
 
-    private void addFooter(Document pdf, CompanyDto company) throws DocumentException {
-        Font smallFont = FontFactory.getFont(FontFactory.HELVETICA, 8);
+    private void addRow(
+            PdfPTable table,
+            String label,
+            String value,
+            Font labelFont,
+            Font valueFont
+    ) {
+        addCell(table, label, labelFont);
+        addCell(table, value, valueFont);
+    }
 
-        Paragraph footer = new Paragraph();
-        footer.setSpacingBefore(40);
-        footer.setAlignment(Element.ALIGN_CENTER);
+    private void addHeaderCell(PdfPTable table, String value, Font font) {
+        PdfPCell cell = new PdfPCell(new Phrase(value, font));
+        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cell.setPadding(6);
+        table.addCell(cell);
+    }
 
-        footer.add(new Chunk(nullSafe(company.companyName), smallFont));
+    private void addCell(PdfPTable table, String value, Font font) {
+        PdfPCell cell = new PdfPCell(new Phrase(value != null ? value : "", font));
+        cell.setPadding(5);
+        table.addCell(cell);
+    }
 
-        if (company.taxNumber != null && !company.taxNumber.isBlank()) {
-            footer.add(new Chunk(" | Steuernummer: " + company.taxNumber, smallFont));
+    private String text(JsonNode node, String field) {
+        if (node == null || !node.hasNonNull(field)) {
+            return "";
         }
 
-        if (company.vatId != null && !company.vatId.isBlank()) {
-            footer.add(new Chunk(" | USt-IdNr.: " + company.vatId, smallFont));
-        }
-
-        pdf.add(footer);
+        return node.get(field).asText();
     }
 
-    private String nullSafe(String value) {
-        return value == null ? "" : value;
-    }
-
-    private String format(BigDecimal value) {
-        if (value == null) {
-            return "0,00";
+    private String money(JsonNode node, String field) {
+        if (node == null || !node.hasNonNull(field)) {
+            return "";
         }
 
-        return value.setScale(2, java.math.RoundingMode.HALF_UP)
-                .toString()
-                .replace(".", ",");
+        try {
+            BigDecimal value = node.get(field).decimalValue();
+            return value.setScale(2) + " EUR";
+        } catch (Exception e) {
+            return node.get(field).asText();
+        }
     }
 }

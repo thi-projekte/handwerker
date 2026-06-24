@@ -1,36 +1,42 @@
 package de.winfprojekt.craftvoice.documentservice.document;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
-import jakarta.persistence.*;
+import io.quarkus.hibernate.orm.panache.PanacheEntity;
+import jakarta.persistence.Basic;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Lob;
+import jakarta.persistence.Table;
 
-import java.time.Instant;
-import java.util.UUID;
+import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "documents")
-public class Document extends PanacheEntityBase {
-
-    @Id
-    @GeneratedValue
-    public UUID id;
+@Table(name = "document")
+public class Document extends PanacheEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     public DocumentType type;
 
     @Column(nullable = false)
-    public UUID offerId;
+    public String referenceId;
 
-    public UUID customerId;
+    @Column(nullable = false)
+    public String customerId;
+
+    @Column(nullable = false)
+    public String ownerId;
 
     @Column(nullable = false)
     public String fileName;
 
-    @Column(nullable = false, length = 1000)
-    public String filePath;
+    @Lob
+    @Basic(fetch = FetchType.LAZY)
+    @Column(nullable = false)
+    public byte[] pdfContent;
 
     @Column(nullable = false)
-    public Instant createdAt = Instant.now();
-
-    public Instant updatedAt;
+    public LocalDateTime createdAt = LocalDateTime.now();
 }
