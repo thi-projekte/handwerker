@@ -190,8 +190,8 @@ export const DocumentPage = () => {
   >(null);
   const [showFilterStatusDropdown, setShowFilterStatusDropdown] =
     useState(false);
-  const { data: angebote, loading, error } = useDocuments();
-  const [localAngebote, setLocalAngebote] = useState<Angebot[]>([]);
+  const { data: angebote = [], loading, error } = useDocuments();
+  const [localAngebote, setLocalAngebote] = useState<Angebot[]>(angebote);
   const [rechnungen, setRechnungen] = useState<Rechnung[]>([]);
 
   useEffect(() => {
