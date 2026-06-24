@@ -191,14 +191,10 @@ export const DocumentPage = () => {
   const [showFilterStatusDropdown, setShowFilterStatusDropdown] =
     useState(false);
   const { data: angebote = [], loading, error } = useDocuments();
-  const [localAngebote, setLocalAngebote] = useState<Angebot[]>(angebote);
+  const [statusOverrides, setStatusOverrides] = useState<
+    Record<string, AngebotStatus>
+  >({});
   const [rechnungen, setRechnungen] = useState<Rechnung[]>([]);
-
-  useEffect(() => {
-    if (angebote) {
-      setLocalAngebote(angebote);
-    }
-  }, [angebote]);
 
   useEffect(() => {
     const handleOutsideClick = (event: MouseEvent) => {
@@ -241,7 +237,7 @@ export const DocumentPage = () => {
     id: string,
     newStatus: AngebotStatus,
   ) => {
-    const angebot = localAngebote.find((a) => a.id === id);
+    const angebot = angebote.find((a) => a.id === id);
     if (!angebot) return;
 
     if (newStatus !== "Angenommen" && newStatus !== "Abgelehnt") {
@@ -253,9 +249,10 @@ export const DocumentPage = () => {
 
     try {
       await updateOfferStatus(angebot.angebotsnummer, apiStatus);
-      setLocalAngebote((prev) =>
-        prev.map((a) => (a.id === id ? { ...a, status: newStatus } : a))
-      );
+      setStatusOverrides((prev) => ({
+        ...prev,
+        [id]: newStatus,
+      }));
     } catch (err) {
       console.error("Fehler beim Ändern des Status:", err);
       alert("Statusänderung fehlgeschlagen. Bitte erneut versuchen.");
@@ -289,7 +286,7 @@ export const DocumentPage = () => {
 
   // ── Filtered & Sorted Angebote ──
   const filteredAngebote = useMemo(() => {
-    return localAngebote.filter((a) => {
+    return angebote.filter((a) => {
       const q = search.toLowerCase();
       const fullName = `${a.vorname ?? ""} ${a.nachname ?? ""}`.toLowerCase();
       const adresse =
@@ -309,7 +306,7 @@ export const DocumentPage = () => {
       if (endDate) matchesDate = matchesDate && aDate <= eDate;
       return matchesSearch && matchesStatus && matchesDate;
     });
-  }, [localAngebote, search, filterAngebotStatus, startDate, endDate]);
+  }, [angebote, search, filterAngebotStatus, startDate, endDate]);
 
   const sortedAngebote = useMemo(() => {
     const mult = sortDir === "asc" ? 1 : -1;
@@ -342,8 +339,11 @@ export const DocumentPage = () => {
         (r.rechnungsnummer ?? "").toLowerCase().includes(q) ||
         fullName.includes(q) ||
         adresse.includes(q);
+      const currentStatus =
+        statusOverrides[r.id] ?? r.status;
+
       const matchesStatus =
-        !filterRechnungStatus || r.status === filterRechnungStatus;
+        !filterAngebotStatus || currentStatus === filterAngebotStatus;
       let matchesDate = true;
       if (startDate) matchesDate = matchesDate && r.erstelldatum >= startDate;
       if (endDate) matchesDate = matchesDate && r.erstelldatum <= endDate;
@@ -555,61 +555,66 @@ export const DocumentPage = () => {
               <p className="text-secondary">Keine Angebote gefunden.</p>
             </div>
           ) : (
-            sortedAngebote.map((angebot) => (
-              <div key={angebot.id} className="card doc-card">
-                <div className="doc-card-top">
-                  <span className="doc-nummer">{angebot.angebotsnummer}</span>
-                  <StatusDropdown
-                    currentStatus={angebot.status}
-                    options={ANGEBOT_STATUS_OPTIONS}
-                    styleMap={ANGEBOT_STATUS_STYLES}
-                    onSelect={(status) => handleAngebotStatusChange(angebot.id, status)}
-                    isOpen={activeStatusDropdownId === angebot.id}
-                    onToggle={() =>
-                      setActiveStatusDropdownId(
-                        activeStatusDropdownId === angebot.id
-                          ? null
-                          : angebot.id,
-                      )
-                    }
-                    disabled={angebot.status !== "Versendet"}
-                  />
-                </div>
+            sortedAngebote.map((angebot) => {
+              const currentStatus =
+                statusOverrides[angebot.id] ?? angebot.status;
 
-                <div className="doc-card-name">
-                  {angebot.vorname} {angebot.nachname}
-                </div>
+              return (
+                <div key={angebot.id} className="card doc-card">
+                  <div className="doc-card-top">
+                    <span className="doc-nummer">{angebot.angebotsnummer}</span>
+                    <StatusDropdown
+                      currentStatus={currentStatus}
+                      options={ANGEBOT_STATUS_OPTIONS}
+                      styleMap={ANGEBOT_STATUS_STYLES}
+                      onSelect={(status) => handleAngebotStatusChange(angebot.id, status)}
+                      isOpen={activeStatusDropdownId === angebot.id}
+                      onToggle={() =>
+                        setActiveStatusDropdownId(
+                          activeStatusDropdownId === angebot.id
+                            ? null
+                            : angebot.id,
+                        )
+                      }
+                      disabled={currentStatus !== "Versendet"}
+                    />
+                  </div>
 
-                <div className="doc-card-meta">
-                  <span className="text-secondary doc-meta-item">
-                    <MapPin size={13} className="doc-icon-inline" />
-                    {angebot.strasse} {angebot.hausnummer}, {angebot.plz}{" "}
-                    {angebot.ort}
-                  </span>
-                  <span className="text-secondary doc-meta-item">
-                    <Calendar size={13} className="doc-icon-inline" />
-                    {formatDatum(angebot.datum)}
-                  </span>
-                </div>
+                  <div className="doc-card-name">
+                    {angebot.vorname} {angebot.nachname}
+                  </div>
 
-                <hr className="divider" />
+                  <div className="doc-card-meta">
+                    <span className="text-secondary doc-meta-item">
+                      <MapPin size={13} className="doc-icon-inline" />
+                      {angebot.strasse} {angebot.hausnummer}, {angebot.plz}{" "}
+                      {angebot.ort}
+                    </span>
+                    <span className="text-secondary doc-meta-item">
+                      <Calendar size={13} className="doc-icon-inline" />
+                      {formatDatum(angebot.datum)}
+                    </span>
+                  </div>
 
-                <div className="doc-card-footer">
-                  <span className="doc-betrag">
-                    {formatBetrag(angebot.betrag)}
-                  </span>
-                  <div className="doc-card-actions">
-                    <button
-                      className="doc-invoice-btn"
-                      title="In Rechnung umwandeln"
-                    >
-                      <FileText size={15} />
-                    </button>
-                    <button className="doc-detail-btn">Details →</button>
+                  <hr className="divider" />
+
+                  <div className="doc-card-footer">
+                    <span className="doc-betrag">
+                      {formatBetrag(angebot.betrag)}
+                    </span>
+                    <div className="doc-card-actions">
+                      <button
+                        className="doc-invoice-btn"
+                        title="In Rechnung umwandeln"
+                      >
+                        <FileText size={15} />
+                      </button>
+                      <button className="doc-detail-btn">Details →</button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )
         ) : /* ── Rechnungen Tab ── */
           sortedRechnungen.length === 0 ? (
