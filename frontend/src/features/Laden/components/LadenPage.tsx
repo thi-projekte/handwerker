@@ -1,7 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { pollUntilKiFertig } from "@/data/api/offerService";
-import logoWhite from "@/assets/logos/CraftVoice_Logo_white.png";
 import "./LadenPage.css";
 
 interface LadenState {
@@ -78,7 +77,7 @@ export const LadenPage = () => {
       <div className="ai-loading-container">
         <div className="logo-wrapper">
           <img
-            src={logoWhite}
+            src="/src/assets/logos/CraftVoice_Logo_white.png"
             alt="CraftVoice Logo"
             className="logo-image"
           />
