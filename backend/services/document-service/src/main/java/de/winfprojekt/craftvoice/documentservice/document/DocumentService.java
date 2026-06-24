@@ -67,41 +67,71 @@ public class DocumentService {
             GenerateDocumentRequest request,
             String ownerId
     ) {
+        validateGenerateRequest(type, request);
+
         UserDto craftsman = authEnabled
                 ? userClient.getMe(requireAuthorizationHeader(authorizationHeader))
-                : null;
+                : createDevCraftsman();
 
         UserDto customer = null;
+        String customerId = null;
         String recipientEmail;
         String recipientName;
 
         if (type == DocumentType.OFFER) {
-            if (request.customerId == null || request.customerId.isBlank()) {
+            customerId = text(request.angebotsentwurf, "customerId");
+
+            if (customerId.isBlank()) {
+                customerId = request.customerId;
+            }
+
+            if (customerId == null || customerId.isBlank()) {
                 throw new BadRequestException("Customer ID is missing for offer document");
             }
 
             if (authEnabled) {
+                Long numericCustomerId;
+
+                try {
+                    numericCustomerId = Long.valueOf(customerId);
+                } catch (NumberFormatException e) {
+                    throw new BadRequestException("Customer ID must be numeric");
+                }
+
                 customer = userClient.getCustomer(
-                        Long.valueOf(request.customerId),
+                        numericCustomerId,
                         requireAuthorizationHeader(authorizationHeader)
                 );
 
-                recipientEmail = customer.displayEmail();
-                recipientName = customer.fullName();
+                if (customer == null) {
+                    throw new BadRequestException("Customer data could not be loaded");
+                }
             } else {
-                recipientEmail = "dev-customer@example.de";
-                recipientName = "Dev Customer";
+                customer = createDevCustomer(customerId);
             }
+
+            recipientEmail = customer.displayEmail();
+            recipientName = customer.fullName();
         } else {
             JsonNode kundendaten = request.rechnungsentwurf != null
                     ? request.rechnungsentwurf.get("kundendaten")
                     : null;
+
+            if (kundendaten == null || kundendaten.isNull()) {
+                throw new BadRequestException(
+                        "Customer snapshot is missing in invoice payload"
+                );
+            }
 
             recipientEmail = text(kundendaten, "email");
             recipientName = (
                     text(kundendaten, "vorname") + " " +
                             text(kundendaten, "nachname")
             ).trim();
+        }
+
+        if (recipientEmail == null || recipientEmail.isBlank()) {
+            throw new BadRequestException("Recipient email is missing");
         }
 
         byte[] pdf = switch (type) {
@@ -119,7 +149,7 @@ public class DocumentService {
         Document document = new Document();
         document.type = type;
         document.referenceId = businessKey;
-        document.customerId = type == DocumentType.OFFER ? request.customerId : null;
+        document.customerId = type == DocumentType.OFFER ? customerId : null;
         document.ownerId = ownerId;
         document.fileName = buildFileName(type, businessKey);
         document.pdfContent = pdf;
@@ -130,6 +160,25 @@ public class DocumentService {
         documentRepository.persist(document);
 
         return DocumentResponse.from(document);
+    }
+
+    private void validateGenerateRequest(
+            DocumentType type,
+            GenerateDocumentRequest request
+    ) {
+        if (request == null) {
+            throw new BadRequestException("Request body is missing");
+        }
+
+        if (type == DocumentType.OFFER &&
+                (request.angebotsentwurf == null || request.angebotsentwurf.isNull())) {
+            throw new BadRequestException("Offer payload is missing");
+        }
+
+        if (type == DocumentType.INVOICE &&
+                (request.rechnungsentwurf == null || request.rechnungsentwurf.isNull())) {
+            throw new BadRequestException("Invoice payload is missing");
+        }
     }
 
     @Transactional
@@ -216,6 +265,56 @@ public class DocumentService {
         };
 
         return prefix + "-" + referenceId + ".pdf";
+    }
+
+    private UserDto createDevCraftsman() {
+        UserDto craftsman = new UserDto();
+        craftsman.id = 1L;
+        craftsman.keycloakId = devOwnerId;
+        craftsman.firstName = "Max";
+        craftsman.lastName = "Mustermann";
+        craftsman.email = "max.mustermann@example.de";
+
+        craftsman.companyName = "Mustermann Handwerk GmbH";
+        craftsman.companyEmail = "kontakt@mustermann-handwerk.de";
+        craftsman.companyPhoneNumber = "+49 30 12345678";
+        craftsman.website = "https://www.mustermann-handwerk.de";
+
+        craftsman.street = "Handwerkerstraße";
+        craftsman.houseNumber = "12";
+        craftsman.zipCode = "10115";
+        craftsman.city = "Berlin";
+
+        craftsman.vatId = "DE123456789";
+        craftsman.taxNumber = "12/345/67890";
+        craftsman.iban = "DE02120300000000202051";
+        craftsman.bic = "BYLADEM1001";
+        craftsman.bankName = "Musterbank";
+        craftsman.accountHolder = "Mustermann Handwerk GmbH";
+        craftsman.paymentTerms =
+                "Bitte überweisen Sie den Rechnungsbetrag innerhalb von 14 Tagen.";
+
+        return craftsman;
+    }
+
+    private UserDto createDevCustomer(String customerId) {
+        UserDto customer = new UserDto();
+
+        try {
+            customer.id = Long.valueOf(customerId);
+        } catch (NumberFormatException e) {
+            customer.id = 1L;
+        }
+
+        customer.firstName = "Erika";
+        customer.lastName = "Musterfrau";
+        customer.email = "erika.musterfrau@example.de";
+        customer.street = "Kundenweg";
+        customer.houseNumber = "5";
+        customer.zipCode = "14467";
+        customer.city = "Potsdam";
+
+        return customer;
     }
 
     private String text(JsonNode node, String field) {
