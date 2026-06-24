@@ -203,7 +203,10 @@ public class OfferService {
             if (posDto.katalogProduktId != null) {
                 try {
                     UUID materialId = UUID.fromString(posDto.katalogProduktId);
-                    MaterialResponse material = catalogServiceClient.getMaterial(materialId);
+                    // X-Handwerker-Id mitgeben: nötig, wenn der Aufruf vom technischen Caller (PE)
+                    // mit process-engine-Token kommt (catalog ermittelt den Owner dann aus dem Header).
+                    // Im User-Flow ignoriert der catalog-service den Header.
+                    MaterialResponse material = catalogServiceClient.getMaterial(materialId, offer.handwerkerId);
                     if (material != null && material.price != null) {
                         preis = material.price;
                     }
