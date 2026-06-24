@@ -1,5 +1,4 @@
 import { useDocuments } from "@/features/document/hooks/useDocuments";
-import { mapOfferDTOToAngebot } from "../mapper/documentMapper";
 import { useState, useMemo, useEffect } from "react";
 import {
   MapPin,
