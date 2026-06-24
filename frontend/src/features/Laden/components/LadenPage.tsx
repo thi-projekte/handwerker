@@ -38,7 +38,7 @@ export const LadenPage = () => {
       pollUntilKiFertig(
         businessKey,
         2500, // alle 2,5 Sekunden
-        120_000, // max. 2 Minuten
+        300_000, // max. 5 Minuten
         (status) => {
           console.log(`[LadenPage] Angebot ${businessKey}: Status = ${status}`);
         },
