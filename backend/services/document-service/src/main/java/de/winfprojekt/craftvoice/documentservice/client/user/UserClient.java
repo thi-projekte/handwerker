@@ -12,12 +12,14 @@ public interface UserClient {
 
     @GET
     @Path("/me")
-    UserDto getMe(@HeaderParam("Authorization") String authorizationHeader);
+    UserDto getMe(
+            @HeaderParam("Authorization") String authorizationHeader
+    );
 
     @GET
     @Path("/customers/{id}")
     UserDto getCustomer(
-            @PathParam("id") String customerKeycloakId,
+            @PathParam("id") String customerId,
             @HeaderParam("Authorization") String authorizationHeader
     );
 }

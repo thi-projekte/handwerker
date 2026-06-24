@@ -1,6 +1,12 @@
 package de.winfprojekt.craftvoice.documentservice.document;
 
-import jakarta.ws.rs.*;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.HeaderParam;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -19,42 +25,70 @@ public class DocumentResource {
     }
 
     @POST
-    @Path("/offers/{offerId}/generate")
+    @Path("/offers/{businessKey}/generate")
     public Response generateOfferDocument(
-            @PathParam("offerId") String offerId,
-            @HeaderParam(HttpHeaders.AUTHORIZATION) String authorizationHeader
+            @PathParam("businessKey") String businessKey,
+            @HeaderParam(HttpHeaders.AUTHORIZATION) String authorizationHeader,
+            GenerateDocumentRequest request
     ) {
-        DocumentResponse response = documentService.generateOfferDocument(offerId, authorizationHeader);
-        return Response.status(Response.Status.CREATED).entity(response).build();
+        DocumentResponse response = documentService.generateDocument(
+                DocumentType.OFFER,
+                businessKey,
+                authorizationHeader,
+                request
+        );
+
+        return Response.status(Response.Status.CREATED)
+                .entity(response)
+                .build();
     }
 
     @POST
-    @Path("/invoices/{invoiceId}/generate")
+    @Path("/invoices/{businessKey}/generate")
     public Response generateInvoiceDocument(
-            @PathParam("invoiceId") String invoiceId,
-            @HeaderParam(HttpHeaders.AUTHORIZATION) String authorizationHeader
+            @PathParam("businessKey") String businessKey,
+            @HeaderParam(HttpHeaders.AUTHORIZATION) String authorizationHeader,
+            GenerateDocumentRequest request
     ) {
-        DocumentResponse response = documentService.generateInvoiceDocument(invoiceId, authorizationHeader);
-        return Response.status(Response.Status.CREATED).entity(response).build();
+        DocumentResponse response = documentService.generateDocument(
+                DocumentType.INVOICE,
+                businessKey,
+                authorizationHeader,
+                request
+        );
+
+        return Response.status(Response.Status.CREATED)
+                .entity(response)
+                .build();
     }
 
     @POST
-    @Path("/offers/{offerId}/share")
+    @Path("/offers/{businessKey}/share")
     public Response shareOfferDocument(
-            @PathParam("offerId") String offerId,
+            @PathParam("businessKey") String businessKey,
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authorizationHeader
     ) {
-        documentService.shareOfferDocument(offerId, authorizationHeader);
+        documentService.shareDocument(
+                DocumentType.OFFER,
+                businessKey,
+                authorizationHeader
+        );
+
         return Response.noContent().build();
     }
 
     @POST
-    @Path("/invoices/{invoiceId}/share")
+    @Path("/invoices/{businessKey}/share")
     public Response shareInvoiceDocument(
-            @PathParam("invoiceId") String invoiceId,
+            @PathParam("businessKey") String businessKey,
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authorizationHeader
     ) {
-        documentService.shareInvoiceDocument(invoiceId, authorizationHeader);
+        documentService.shareDocument(
+                DocumentType.INVOICE,
+                businessKey,
+                authorizationHeader
+        );
+
         return Response.noContent().build();
     }
 
@@ -77,7 +111,10 @@ public class DocumentResource {
 
         return Response.ok(document.pdfContent)
                 .type("application/pdf")
-                .header("Content-Disposition", "attachment; filename=\"" + document.fileName + "\"")
+                .header(
+                        "Content-Disposition",
+                        "attachment; filename=\"" + document.fileName + "\""
+                )
                 .build();
     }
 }

@@ -29,6 +29,11 @@ services:
       DB_USER: document
       DB_PASSWORD: postgres
       QUARKUS_OIDC_TENANT_ENABLED: "false"
+      DOCUMENT_STORAGE_PATH: /data/documents
+      MAIL_USERNAME: noreply.craftvoice@gmail.com
+      MAIL_PASSWORD: ladj zasm krrs dauq
+    volumes:
+      - document_files:/data/documents
     depends_on:
       document-db:
         condition: service_healthy
@@ -38,6 +43,7 @@ services:
 
 volumes:
   document_postgres_data:
+  document_files:
 
 networks:
   document-internal:
