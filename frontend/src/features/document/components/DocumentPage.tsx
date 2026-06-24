@@ -1,6 +1,6 @@
 import { useDocuments } from "@/features/document/hooks/useDocuments";
 import { updateOfferStatus } from "@/data/api/offerService";
-import { Angebot } from "@/features/document/types/document.types";
+//import { Angebot } from "@/features/document/types/document.types";
 import { useState, useMemo, useEffect } from "react";
 import {
   MapPin,
@@ -296,8 +296,10 @@ export const DocumentPage = () => {
         (a.angebotsnummer ?? "").toLowerCase().includes(q) ||
         fullName.includes(q) ||
         adresse.includes(q);
+      const currentStatus =
+        statusOverrides[a.id] ?? a.status;
       const matchesStatus =
-        !filterAngebotStatus || a.status === filterAngebotStatus;
+        !filterAngebotStatus || currentStatus === filterAngebotStatus;
       let matchesDate = true;
       const aDate = new Date(a.datum);
       const sDate = new Date(startDate);
@@ -306,7 +308,7 @@ export const DocumentPage = () => {
       if (endDate) matchesDate = matchesDate && aDate <= eDate;
       return matchesSearch && matchesStatus && matchesDate;
     });
-  }, [angebote, search, filterAngebotStatus, startDate, endDate]);
+  }, [angebote, search, filterAngebotStatus, startDate, endDate, statusOverrides]);
 
   const sortedAngebote = useMemo(() => {
     const mult = sortDir === "asc" ? 1 : -1;
@@ -331,22 +333,32 @@ export const DocumentPage = () => {
   const filteredRechnungen = useMemo(() => {
     return rechnungen.filter((r) => {
       const q = search.toLowerCase();
-      const fullName = `${r.vorname ?? ""} ${r.nachname ?? ""}`.toLowerCase();
+
+      const fullName =
+        `${r.vorname ?? ""} ${r.nachname ?? ""}`.toLowerCase();
+
       const adresse =
         `${r.strasse ?? ""} ${r.hausnummer ?? ""}, ${r.plz ?? ""} ${r.ort ?? ""}`
           .toLowerCase();
+
       const matchesSearch =
         (r.rechnungsnummer ?? "").toLowerCase().includes(q) ||
         fullName.includes(q) ||
         adresse.includes(q);
-      const currentStatus =
-        statusOverrides[r.id] ?? r.status;
 
       const matchesStatus =
-        !filterAngebotStatus || currentStatus === filterAngebotStatus;
+        !filterRechnungStatus || r.status === filterRechnungStatus;
+
       let matchesDate = true;
-      if (startDate) matchesDate = matchesDate && r.erstelldatum >= startDate;
-      if (endDate) matchesDate = matchesDate && r.erstelldatum <= endDate;
+
+      if (startDate) {
+        matchesDate = matchesDate && r.erstelldatum >= startDate;
+      }
+
+      if (endDate) {
+        matchesDate = matchesDate && r.erstelldatum <= endDate;
+      }
+
       return matchesSearch && matchesStatus && matchesDate;
     });
   }, [rechnungen, search, filterRechnungStatus, startDate, endDate]);
