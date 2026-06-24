@@ -18,9 +18,10 @@ services:
       - catalog-internal
 
   catalog-service:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.jvm
+    # Fertiges Image aus GHCR (von der Backend-CI gebaut, Tag = Branchname, z.B. sprint4).
+    # NICHT lokal bauen (build:) - sonst landet ein neuer Commit (z.B. CORS-Fix) nie im
+    # laufenden Container, weil "Recreate" das alte lokale Image nur neu startet.
+    image: ghcr.io/thi-projekte/handwerker/catalog-service:${IMAGE_TAG:-sprint4}
     container_name: catalog-service
     environment:
       DB_HOST: catalog-db
