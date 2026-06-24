@@ -110,6 +110,7 @@ export type CompanyUpdateRequest = {
   employeeCount?: number;
   customerCount?: number;
   hourlyRate?: number;
+
 };
 
 export type ProfilePictureUploadResponse = {
@@ -256,6 +257,11 @@ export const getCurrentUser = async (): Promise<UserProfile> => {
 
   return handleResponse<UserProfile>(response);
 };
+export type HourlyRateResponse = {
+  stundensatz: number;
+};
+
+
 
 export const updateProfile = async (
   data: ProfileUpdateRequest,
