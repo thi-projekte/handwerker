@@ -65,3 +65,27 @@ export const getDocuments = async (): Promise<DocumentResponse> => {
 
     return response.json();
 };
+
+export const getRechnungen = async (): Promise<RechnungDTO[]> => {
+    const token = await getToken();
+
+    const response = await fetch(
+        "https://offerservice-craftvoice.winfprojekt.de/rechnungen",
+        {
+            method: "GET",
+            headers: {
+                ...(token && {
+                    Authorization: `Bearer ${token}`,
+                }),
+            },
+        },
+    );
+
+    if (!response.ok) {
+        throw new Error(
+            `Failed to fetch invoices: ${response.status} ${response.statusText}`,
+        );
+    }
+
+    return response.json();
+};
