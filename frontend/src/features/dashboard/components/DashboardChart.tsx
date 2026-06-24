@@ -23,12 +23,6 @@ export const DashboardChart = ({ data }: Props) => {
     <div className="dashboard-chart">
       <div className="chart-header">
         <h2>Angebotsübersicht</h2>
-
-        <select>
-          <option>Monatlich</option>
-          <option>Wöchentlich</option>
-          <option>Täglich</option>
-        </select>
       </div>
 
       <ResponsiveContainer width="100%" height={300}>
