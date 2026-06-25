@@ -16,11 +16,15 @@
  */
 
 import { API_CONFIG } from "@/config/api";
+import { getToken } from "@/services/authService";
 
 // ─── Auth-Helper ────────────────────────────────────────────────────────────
 
-function getAuthHeaders(): Record<string, string> {
-  const token = localStorage.getItem("authToken");
+// Der Token wird konsequent über getToken (Keycloak) geholt — NICHT über
+// localStorage. Die PE prüft auf /engine-rest/** einen gültigen Keycloak-JWT
+// (issuer handwerker-realm); ein veralteter localStorage-Token führt zu 403.
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  const token = await getToken();
   return {
     "Content-Type": "application/json",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -46,7 +50,7 @@ interface PeMessagePayload {
 async function sendPeMessage(payload: PeMessagePayload): Promise<void> {
   const res = await fetch(`${API_CONFIG.PE_URL}/message`, {
     method: "POST",
-    headers: getAuthHeaders(),
+    headers: await getAuthHeaders(),
     body: JSON.stringify(payload),
   });
 
