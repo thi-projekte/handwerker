@@ -27,8 +27,8 @@ services:
       DB_USER: document
       DB_PASSWORD: postgres
       DOCUMENT_STORAGE_PATH: /data/documents
-      USER_SERVICE_URL: ${USER_SERVICE_URL:-http://user-service:8080}
-      KEYCLOAK_URL: ${KEYCLOAK_URL:-https://id-craftvoice.winfprojekt.de}
+      USER_SERVICE_URL: ${USER_SERVICE_URL:-http://craftvoice-user-service:8080}
+      KEYCLOAK_URL: ${KEYCLOAK_URL:-http://craftvoice-keycloak:8080}
       MAIL_HOST: ${MAIL_HOST:-smtp-relay.brevo.com}
       MAIL_PORT: "${MAIL_PORT:-587}"
       MAIL_USERNAME: ${MAIL_USERNAME}
