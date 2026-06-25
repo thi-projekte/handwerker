@@ -36,6 +36,7 @@ class ProcessEngineClientTest {
         PeMessagePayload payload = new PeMessagePayload(
                 "test",
                 "bizKey",
+                new java.util.HashMap<>(),
                 false
         );
 
