@@ -51,7 +51,6 @@ execution.setVariable("angebotsgenehmigung", false);</camunda:script>
         <camunda:in businessKey="#{execution.processBusinessKey}" />
         <camunda:in source="handwerkerId" target="handwerkerId" />
         <camunda:out source="ergebnisKI" target="ergebnisKI" />
-        <camunda:out source="angebotsentwurf" target="angebotsentwurf" />
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_0kvsphi</bpmn:incoming>
       <bpmn:outgoing>Flow_1ph56zt</bpmn:outgoing>
@@ -84,7 +83,6 @@ execution.setVariable("angebotsgenehmigung", false);</camunda:script>
         <camunda:in source="handwerkerId" target="handwerkerId" />
         <camunda:out source="angebotsgenehmigung" target="angebotsgenehmigung" />
         <camunda:out source="ergebnisKI" target="ergebnisKI" />
-        <camunda:out source="angebotsentwurf" target="angebotsentwurf" />
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_1ph56zt</bpmn:incoming>
       <bpmn:outgoing>Flow_1wq7rno</bpmn:outgoing>

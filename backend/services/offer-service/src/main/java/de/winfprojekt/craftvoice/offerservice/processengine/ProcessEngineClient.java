@@ -82,7 +82,6 @@ public class ProcessEngineClient {
                 PeMessagePayload payload = new PeMessagePayload(
                         "angebotPayload",
                         businessKey,
-                        processVariables,
                         false
                 );
 
@@ -104,16 +103,15 @@ public class ProcessEngineClient {
                         businessKey
                 );
 
-                Map<String, Object> processVariables = Map.of(
-                        "angebotsentwurf", Map.of(
-                                "value", angebotsentwurfJson,
-                                "type", "String"));
+               // Map<String, Object> processVariables = Map.of(
+                 //       "angebotsentwurf", Map.of(
+                   //             "value", angebotsentwurfJson,
+                     //           "type", "String"));
 
                 PeMessagePayload payload = new PeMessagePayload(
                         "angebotsentwurf",
                         businessKey,
-                        processVariables,
-                        false
+                        true
                 );
 
                 int maxAttempts = 5;
@@ -151,7 +149,6 @@ public class ProcessEngineClient {
                 PeMessagePayload payload = new PeMessagePayload(
                         "angebotAngenommen",
                         businessKey,
-                        Map.of(),
                         false
                 );
 
@@ -170,7 +167,6 @@ public class ProcessEngineClient {
                 PeMessagePayload payload = new PeMessagePayload(
                         "angebotAbgelehnt",
                         businessKey,
-                        Map.of(),
                         false
                 );
 
@@ -195,7 +191,6 @@ public class ProcessEngineClient {
                 PeMessagePayload payload = new PeMessagePayload(
                         "rechnungsentwurf",
                         businessKey,
-                        processVariables,
                         false
                 );
 
