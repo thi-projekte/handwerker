@@ -82,6 +82,29 @@ public class UserResource {
         return Response.ok(response).build();
     }
 
+    @GET
+    @Path("/profile/travel-config-detailed")
+    @RolesAllowed({"OWNER", "EMPLOYEE"})
+    public Response getTravelConfigDetailed() {
+        UserEntity user = userService.syncUserWithDatabase();
+
+        Map<String, Object> address = new HashMap<>();
+        address.put("strasse", user.street);
+        address.put("hausnummer", user.houseNumber);
+        address.put("plz", user.zipCode);
+        address.put("ort", user.city);
+        address.put("bundesland", user.state);
+        address.put("land", user.country);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("modell", user.travelModel != null ? user.travelModel : "PAUSCHALE");
+        response.put("pauschale", user.travelFlatRate);
+        response.put("kmSatz", user.travelKmRate);
+        response.put("adresse", address);
+
+        return Response.ok(response).build();
+    }
+
     @POST
     @Path("/profile-picture")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
