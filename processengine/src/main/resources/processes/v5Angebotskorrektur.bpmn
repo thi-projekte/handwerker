@@ -51,6 +51,11 @@ payload.customerId = customerId;
 
 JSON.stringify(payload);</camunda:script>
             </camunda:inputParameter>
+            <camunda:inputParameter name="headers">
+              <camunda:map>
+                <camunda:entry key="X-Handwerker-Id">${handwerkerId}</camunda:entry>
+              </camunda:map>
+            </camunda:inputParameter>
           </camunda:inputOutput>
           <camunda:connectorId>http-connector</camunda:connectorId>
         </camunda:connector>
