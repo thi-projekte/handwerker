@@ -51,10 +51,10 @@ type Customer = {
   telefon: string;
   image: string | null;
 
-  adresse: string;
+  strasse: string;
+  hausnummer: string;
   plz: string;
   ort: string;
-
 };
 
 type Material = {
@@ -78,7 +78,6 @@ type CompanyFormData = {
   mitarbeiterVorname: string;
   mitarbeiterNachname: string;
   rolle: string;
-  hourlyRate: number;
   strasse: string;
   hausnummer: string;
   plz: string;
@@ -175,19 +174,19 @@ export const UnternehmenPage = () => {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
   const [customerData, setCustomerData] = useState({
-    vorname: "",
-    nachname: "",
-    email: "",
-    telefon: "",
-    adresse: "",
-    plz: "",
-    ort: "",
-  });
+  vorname: "",
+  nachname: "",
+  email: "",
+  telefon: "",
+  strasse: "",
+  hausnummer: "",
+  plz: "",
+  ort: "",
+});
 
   const [customerImage, setCustomerImage] = useState<string | null>(null);
 
   const [materials, setMaterials] = useState<Material[]>([]);
-  const [materialSearch, setMaterialSearch] = useState("");
   const [showMaterialForm, setShowMaterialForm] = useState(false);
 
 
@@ -207,7 +206,6 @@ export const UnternehmenPage = () => {
     mitarbeiterVorname: "",
     mitarbeiterNachname: "",
     rolle: "",
-    hourlyRate: 0,
     strasse: "",
     hausnummer: "",
     plz: "",
@@ -298,22 +296,22 @@ const loadCustomers = async () => {
     const data = await getCustomers();
 
     setCustomers(
-  data
-    .filter((customer) =>
-      !customer.email?.startsWith("deleted_customer")
-    )
-    .map((customer) => ({
-      id: customer.id,
-      vorname: customer.firstName ?? "",
-      nachname: customer.lastName ?? "",
-      email: customer.email ?? "",
-      telefon: customer.phoneNumber ?? "",
-      image: customer.profilePictureUrl ?? null,
-      adresse: "",
-      plz: "",
-      ort: "",
-    }))
-);
+      data
+        .filter((customer) => !customer.email?.startsWith("deleted_customer"))
+        .map((customer) => ({
+          id: customer.id,
+          vorname: customer.firstName ?? "",
+          nachname: customer.lastName ?? "",
+          email: customer.email ?? "",
+          telefon: customer.phoneNumber ?? "",
+          image: customer.profilePictureUrl ?? null,
+
+          strasse: customer.street ?? "",
+          hausnummer: customer.houseNumber ?? "",
+          plz: customer.zipCode ?? "",
+          ort: customer.city ?? "",
+        })),
+    );
   } catch (error) {
     console.error(error);
     setCompanyErrorMessage("Kunden konnten nicht geladen werden.");
@@ -324,13 +322,12 @@ const loadCustomers = async () => {
 
     setCurrentUserRoles(roles);
 
-    
     setCompanyData((previousData) => ({
       ...previousData,
       mitarbeiterVorname: user.firstName ?? "",
       mitarbeiterNachname: user.lastName ?? "",
       rolle: getRoleLabel(roles),
-      hourlyRate: user.hourlyRate ?? 0,
+
       firmenname: user.companyName ?? "",
       branche: user.industry ?? "",
       rechtsform: user.legalForm ?? "",
@@ -382,37 +379,13 @@ const loadCustomers = async () => {
       }
     }
   };
-  const loadEmployees = async () => {
-  try {
-    const user = await getCurrentUser();
-
-    setEmployees([
-      {
-        vorname: user.firstName ?? "",
-        nachname: user.lastName ?? "",
-        rolle: getRoleLabel(user.roles ?? []),
-        stundensatz: String(user.hourlyRate ?? 0),
-      },
-    ]);
-  } catch (error) {
-    console.error("Employees konnten nicht geladen werden", error);
-  }
-};
 
   const init = async () => {
-
-  try {
-   await loadCompanyData();
-  await loadMaterials();
-  await loadCustomers();
-  await loadEmployees();
-  } catch (error) {
-    console.error(
-      "Stundensatz konnte nicht geladen werden",
-      error,
-    );
-  }
-};
+    await loadCompanyData();
+    await loadMaterials();
+    await loadCustomers();
+    
+  };
 
   void init();
 
@@ -559,18 +532,6 @@ const loadCustomers = async () => {
   !!materialData.category &&
   materialData.price >= 0 &&
   !!materialData.unit;
-
-  // Client-seitige Filterung der bereits geladenen Materialliste (Name/Beschreibung/
-  // Hersteller/Kategorie, case-insensitive). Bewusst KEIN Backend-/search-Call: die
-  // Liste ist komplett geladen -> sofortige Filterung ohne Netzwerk/Debounce.
-  const filteredMaterials = (() => {
-    const q = materialSearch.trim().toLowerCase();
-    if (!q) return materials;
-    return materials.filter((m) =>
-      [m.name, m.description, m.manufacturer, m.category]
-        .some((field) => field?.toLowerCase().includes(q)),
-    );
-  })();
 
   return (
     <div className="app company-page">
@@ -1023,7 +984,6 @@ const loadCustomers = async () => {
 
               <label className="company-field">
                 <span>Hausnummer</span>
-
                 <input
                   className="input-field"
                   name="hausnummer"
@@ -1035,7 +995,6 @@ const loadCustomers = async () => {
 
               <label className="company-field">
                 <span>PLZ</span>
-
                 <input
                   className="input-field"
                   name="plz"
@@ -1276,14 +1235,15 @@ const loadCustomers = async () => {
                 setEditingIndex(null);
 
                 setCustomerData({
-                  vorname: "",
-                  nachname: "",
-                  email: "",
-                  telefon: "",
-                  adresse: "",
-                  plz: "",
-                  ort: "",
-                });
+  vorname: "",
+  nachname: "",
+  email: "",
+  telefon: "",
+  strasse: "",
+  hausnummer: "",
+  plz: "",
+  ort: "",
+});
 
                 setCustomerImage(null);
               }}
@@ -1341,20 +1301,21 @@ const loadCustomers = async () => {
                       className="employee-edit-button"
                       type="button"
                       onClick={() => {
-                        setCustomerData({
-                          vorname: customer.vorname,
-                          nachname: customer.nachname,
-                          email: customer.email,
-                          telefon: customer.telefon,
-                          adresse: customer.adresse,
-                          plz: customer.plz,
-                          ort: customer.ort,
-                        });
+  setCustomerData({
+    vorname: customer.vorname,
+    nachname: customer.nachname,
+    email: customer.email,
+    telefon: customer.telefon,
+    strasse: customer.strasse,
+    hausnummer: customer.hausnummer,
+    plz: customer.plz,
+    ort: customer.ort,
+  });
 
-                        setCustomerImage(customer.image);
-                        setEditingIndex(index);
-                        setShowCustomerForm(true);
-                      }}
+  setCustomerImage(customer.image);
+  setEditingIndex(index);
+  setShowCustomerForm(true);
+}}
                     >
                       ✎
                     </button>
@@ -1437,12 +1398,20 @@ await loadCustomers();
                 onChange={handleCustomerChange}
               />
               <input
-                className="input-field"
-                name="adresse"
-                placeholder="Adresse"
-                value={customerData.adresse}
-                onChange={handleCustomerChange}
-              />
+  className="input-field"
+  name="strasse"
+  placeholder="Straße"
+  value={customerData.strasse}
+  onChange={handleCustomerChange}
+/>
+
+<input
+  className="input-field"
+  name="hausnummer"
+  placeholder="Hausnummer"
+  value={customerData.hausnummer}
+  onChange={handleCustomerChange}
+/>
 <input
   className="input-field"
   name="plz"
@@ -1454,7 +1423,9 @@ await loadCustomers();
       plz: event.target.value.replace(/\D/g, "").slice(0, 5),
     }))
   }
-/><input
+/>
+
+<input
   className="input-field"
   name="ort"
   placeholder="Ort"
@@ -1512,11 +1483,16 @@ await loadCustomers();
       const customer = customers[editingIndex];
 
       await updateCustomer(customer.id, {
-        firstName: customerData.vorname,
-        lastName: customerData.nachname,
-        email: customerData.email,
-        phoneNumber: customerData.telefon,
-      });
+  firstName: customerData.vorname,
+  lastName: customerData.nachname,
+  email: customerData.email,
+  phoneNumber: customerData.telefon,
+
+  street: customerData.strasse,
+  houseNumber: customerData.hausnummer,
+  zipCode: customerData.plz,
+  city: customerData.ort,
+});
 
       await loadCustomers();
 
@@ -1525,14 +1501,15 @@ await loadCustomers();
       );
 
       setCustomerData({
-        vorname: "",
-        nachname: "",
-        email: "",
-        telefon: "",
-        adresse: "",
-        plz: "",
-        ort: "",
-      });
+  vorname: "",
+  nachname: "",
+  email: "",
+  telefon: "",
+  strasse: "",
+  hausnummer: "",
+  plz: "",
+  ort: "",
+});
 
       setCustomerImage(null);
 
@@ -1556,6 +1533,12 @@ await loadCustomers();
   lastName: customerData.nachname,
   phoneNumber: customerData.telefon,
   companyName: null,
+
+  street: customerData.strasse,
+  houseNumber: customerData.hausnummer,
+  zipCode: customerData.plz,
+  city: customerData.ort,
+  country: "Deutschland",
 });
 
 await loadCustomers();
@@ -1569,14 +1552,15 @@ await loadCustomers();
 
                       // clear form on success
                       setCustomerData({
-                        vorname: "",
-                        nachname: "",
-                        email: "",
-                        telefon: "",
-                        adresse: "",
-                        plz: "",
-                        ort: "",
-                      });
+  vorname: "",
+  nachname: "",
+  email: "",
+  telefon: "",
+  strasse: "",
+  hausnummer: "",
+  plz: "",
+  ort: "",
+});
 
                       setCustomerImage(null);
                       setShowCustomerForm(false);
@@ -1719,64 +1703,57 @@ await loadCustomers();
               />
 
               <input
-  className="input-field"
-  type="number"
-  placeholder="€/Stunde"
-  value={companyData.hourlyRate}
-onChange={(event) =>
-  setCompanyData((prev) => ({
-    ...prev,
-    hourlyRate: parseFloat(event.target.value) || 0,
-  }))
-}
-/>
+                className="input-field"
+                name="stundensatz"
+                placeholder="€/Stunde"
+                value={employeeData.stundensatz}
+                onChange={(event) =>
+                  setEmployeeData((previousData) => ({
+                    ...previousData,
+                    stundensatz: event.target.value.replace(
+                      /[^0-9.,]/g,
+                      "",
+                    ),
+                  }))
+                }
+              />
 
               <button
                 className="button-primary company-add-button"
                 type="button"
-                onClick={async () => {
-  try {
-    await updateCompany({
-  hourlyRate: companyData.hourlyRate,
-});
+                onClick={() => {
+                  if (
+                    !employeeData.vorname ||
+                    !employeeData.nachname
+                  ) {
+                    return;
+                  }
 
-setEmployees((prev) =>
-  prev.map((emp, index) =>
-    index === editingEmployeeIndex
-      ? {
-          ...emp,
-          vorname: employeeData.vorname,
-          nachname: employeeData.nachname,
-          rolle: employeeData.rolle,
-          stundensatz: String(companyData.hourlyRate),
-        }
-      : emp
-  )
-);
+                  if (editingEmployeeIndex !== null) {
+                    setEmployees((previousEmployees) =>
+                      previousEmployees.map((employee, index) =>
+                        index === editingEmployeeIndex
+                          ? employeeData
+                          : employee,
+                      ),
+                    );
+                  } else {
+                    setEmployees((previousEmployees) => [
+                      ...previousEmployees,
+                      employeeData,
+                    ]);
+                  }
 
-setCompanySuccessMessage("Stundensatz gespeichert");
+                  setEmployeeData({
+                    vorname: "",
+                    nachname: "",
+                    rolle: "",
+                    stundensatz: "",
+                  });
 
-    const refreshedUser = await getCurrentUser();
-  applyUserProfileToCompanyData(refreshedUser);
-  setShowEmployeeForm(false);
-  setEditingEmployeeIndex(null);
-
-  setEmployeeData({
-    vorname: "",
-    nachname: "",
-    rolle: "",
-    stundensatz: "",
-  });
-
-
-  } catch (error) {
-    setCompanyErrorMessage(
-      `Stundensatz konnte nicht gespeichert werden: ${getErrorMessage(
-        error,
-      )}`,
-    );
-  }
-}}
+                  setEditingEmployeeIndex(null);
+                  setShowEmployeeForm(false);
+                }}
               >
                 {editingEmployeeIndex !== null
                   ? "Mitarbeiter speichern"
@@ -1845,26 +1822,8 @@ setCompanySuccessMessage("Stundensatz gespeichert");
           )}
 
           {!showMaterialForm && materials.length > 0 && (
-            <input
-              type="text"
-              className="input-field"
-              placeholder="Material suchen…"
-              value={materialSearch}
-              onChange={(e) => setMaterialSearch(e.target.value)}
-            />
-          )}
-
-          {!showMaterialForm &&
-            materials.length > 0 &&
-            filteredMaterials.length === 0 && (
-              <p className="text-secondary empty-state">
-                Keine Materialien gefunden.
-              </p>
-            )}
-
-          {!showMaterialForm && filteredMaterials.length > 0 && (
             <div className="employee-list">
-              {filteredMaterials.map((material, index) => (
+              {materials.map((material, index) => (
                 <div
                   key={`${material.name}-${index}`}
                   className="employee-card-modern"

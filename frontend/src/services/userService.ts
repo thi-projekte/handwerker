@@ -110,7 +110,6 @@ export type CompanyUpdateRequest = {
   employeeCount?: number;
   customerCount?: number;
   hourlyRate?: number;
-
 };
 
 export type ProfilePictureUploadResponse = {
@@ -257,11 +256,6 @@ export const getCurrentUser = async (): Promise<UserProfile> => {
 
   return handleResponse<UserProfile>(response);
 };
-export type HourlyRateResponse = {
-  stundensatz: number;
-};
-
-
 
 export const updateProfile = async (
   data: ProfileUpdateRequest,
@@ -315,7 +309,11 @@ export const uploadProfilePicture = async (
 };
 
 export const createCustomer = async (
-  data: Partial<CustomerProfile> & { email: string; firstName?: string; lastName?: string },
+  data: Partial<CustomerProfile> & {
+    email: string;
+    firstName?: string;
+    lastName?: string;
+  },
 ): Promise<CustomerProfile> => {
   const authHeaders = await getAuthorizationHeader();
 
@@ -326,12 +324,17 @@ export const createCustomer = async (
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      // spread provided data first, then ensure certain fields have defaults / normalized values
       ...data,
+
       firstName: data.firstName || "",
       lastName: data.lastName || "",
       phoneNumber: data.phoneNumber || null,
       companyName: data.companyName || null,
+
+      street: data.street || "",
+      houseNumber: data.houseNumber || "",
+      zipCode: data.zipCode || "",
+      city: data.city || "",
     }),
   });
 
