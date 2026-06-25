@@ -9,8 +9,8 @@ import java.util.Optional;
 @ApplicationScoped
 public class DocumentRepository implements PanacheRepository<Document> {
 
-    public Optional<Document> findByTypeAndReferenceId(DocumentType type, String referenceId) {
-        return find("type = ?1 and referenceId = ?2", type, referenceId)
+    public Optional<Document> findByIdAndOwnerId(Long id, String ownerId) {
+        return find("id = ?1 and ownerId = ?2", id, ownerId)
                 .firstResultOptional();
     }
 
@@ -29,13 +29,5 @@ public class DocumentRepository implements PanacheRepository<Document> {
 
     public List<Document> findAllByOwnerId(String ownerId) {
         return list("ownerId", ownerId);
-    }
-
-    public boolean existsByTypeAndReferenceId(DocumentType type, String referenceId) {
-        return findByTypeAndReferenceId(type, referenceId).isPresent();
-    }
-
-    public void deleteByTypeAndReferenceId(DocumentType type, String referenceId) {
-        delete("type = ?1 and referenceId = ?2", type, referenceId);
     }
 }

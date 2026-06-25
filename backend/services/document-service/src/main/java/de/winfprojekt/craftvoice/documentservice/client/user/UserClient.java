@@ -19,7 +19,7 @@ public interface UserClient {
     @GET
     @Path("/customers/{id}")
     UserDto getCustomer(
-            @PathParam("id") String customerId,
+            @PathParam("id") Long customerId,
             @HeaderParam("Authorization") String authorizationHeader
     );
 }

@@ -26,10 +26,17 @@ services:
       DB_NAME: document-db
       DB_USER: document
       DB_PASSWORD: postgres
-      QUARKUS_OIDC_TENANT_ENABLED: "false"
       DOCUMENT_STORAGE_PATH: /data/documents
-      MAIL_USERNAME: noreply.craftvoice@gmail.com
-      MAIL_PASSWORD: ladj zasm krrs dauq
+      USER_SERVICE_URL: ${USER_SERVICE_URL:-http://user-service:8080}
+      KEYCLOAK_URL: ${KEYCLOAK_URL:-https://id-craftvoice.winfprojekt.de}
+      MAIL_HOST: ${MAIL_HOST:-smtp-relay.brevo.com}
+      MAIL_PORT: "${MAIL_PORT:-587}"
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      MAIL_FROM: ${MAIL_FROM}
+      MAIL_MOCK: "${MAIL_MOCK:-false}"
+      DOCUMENT_AUTH_ENABLED: "${DOCUMENT_AUTH_ENABLED:-true}"
+      QUARKUS_OIDC_TENANT_ENABLED: "${QUARKUS_OIDC_TENANT_ENABLED:-true}"
     volumes:
       - document_files:/data/documents
     depends_on:
