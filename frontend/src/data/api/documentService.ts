@@ -18,11 +18,12 @@
  */
 
 import { API_CONFIG } from "@/config/api";
+import { getToken } from "@/services/authService";
 
 // ─── Auth-Helper ────────────────────────────────────────────────────────────
 
-function getAuthHeaders(): Record<string, string> {
-  const token = localStorage.getItem("authToken");
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  const token = await getToken();
   return {
     "Content-Type": "application/json",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -65,7 +66,7 @@ export async function getDocumentByOfferId(
 ): Promise<DocumentMetadata | null> {
   const res = await fetch(
     `${API_CONFIG.DOCUMENT_SERVICE_URL}/documents/offers/${offerId}`,
-    { headers: getAuthHeaders() },
+    { headers: await getAuthHeaders() },
   );
 
   if (res.status === 404) return null;
@@ -90,7 +91,7 @@ export async function shareOfferByEmail(offerId: number): Promise<void> {
     `${API_CONFIG.DOCUMENT_SERVICE_URL}/documents/offers/${offerId}/share`,
     {
       method: "POST",
-      headers: getAuthHeaders(),
+      headers: await getAuthHeaders(),
     },
   );
 
