@@ -1,6 +1,8 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { pollUntilKiFertig } from "@/data/api/offerService";
+import logoWhite from "@/assets/logos/CraftVoice_Logo_white.png";
+import logoBlack from "@/assets/logos/CraftVoice_Logo_black.png";
 import "./LadenPage.css";
 
 interface LadenState {
@@ -19,6 +21,27 @@ export const LadenPage = () => {
 
   // Verhindert doppeltes Starten des Pollings bei StrictMode-Remounts
   const pollingStarted = useRef(false);
+
+  // Logo an Dark-/Light-Mode anpassen (reagiert live auf Theme-Wechsel,
+  // gleiches Muster wie Navbar/AppHeader).
+  const [isLight, setIsLight] = useState(
+    () => document.documentElement.getAttribute("data-theme") === "light",
+  );
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsLight(
+        document.documentElement.getAttribute("data-theme") === "light",
+      );
+    });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme"],
+    });
+    return () => observer.disconnect();
+  }, []);
+
+  const logo = isLight ? logoBlack : logoWhite;
 
   useEffect(() => {
     // Kein businessKey → Fallback zur HomeView
@@ -76,11 +99,7 @@ export const LadenPage = () => {
     <div className="ai-loading-page">
       <div className="ai-loading-container">
         <div className="logo-wrapper">
-          <img
-            src="/src/assets/logos/CraftVoice_Logo_white.png"
-            alt="CraftVoice Logo"
-            className="logo-image"
-          />
+          <img src={logo} alt="CraftVoice Logo" className="logo-image" />
         </div>
         <br />
         <h1>
