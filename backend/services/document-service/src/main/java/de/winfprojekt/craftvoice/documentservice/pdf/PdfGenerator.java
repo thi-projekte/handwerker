@@ -40,6 +40,7 @@ public class PdfGenerator {
     private static final Color BLACK = new Color(15, 15, 16);
     private static final Color TEXT_SECONDARY = new Color(107, 114, 128);
     private static final Color BORDER_COLOR = new Color(229, 231, 235);
+    private static final Color TABLE_ROW_ALTERNATE = new Color(248, 250, 252);
     private static final String LOGO_RESOURCE = "branding/craftvoice-logo.png";
 
     private static final DateTimeFormatter INPUT_DATE_TIME =
@@ -246,7 +247,7 @@ public class PdfGenerator {
 
         PdfPTable table = new PdfPTable(5);
         table.setWidthPercentage(100);
-        table.setWidths(new float[]{4.8f, 1.1f, 1.3f, 1.8f, 1.8f});
+        table.setWidths(new float[]{4.4f, 1.1f, 1.7f, 1.7f, 1.7f});
         table.setHeaderRows(1);
         table.setSplitRows(true);
         table.setSplitLate(true);
@@ -254,45 +255,60 @@ public class PdfGenerator {
         table.setSpacingAfter(6);
 
         addHeaderCell(table, "Leistung / Artikel", headerFont, Element.ALIGN_LEFT);
-        addHeaderCell(table, "Menge", headerFont, Element.ALIGN_RIGHT);
+        addHeaderCell(table, "Menge", headerFont, Element.ALIGN_CENTER);
         addHeaderCell(table, "Einheit", headerFont, Element.ALIGN_CENTER);
-        addHeaderCell(table, "Einzelpreis", headerFont, Element.ALIGN_RIGHT);
-        addHeaderCell(table, "Gesamt", headerFont, Element.ALIGN_RIGHT);
+        addHeaderCell(table, "Einzelpreis", headerFont, Element.ALIGN_CENTER);
+        addHeaderCell(table, "Gesamt", headerFont, Element.ALIGN_CENTER);
 
         JsonNode positions = payload != null ? payload.get("positions") : null;
-
         if (positions != null && positions.isArray()) {
+            int rowIndex = 0;
             for (JsonNode position : sortedPositions(positions)) {
+                Color rowBackground = rowIndex % 2 == 0
+                        ? Color.WHITE
+                        : TABLE_ROW_ALTERNATE;
+
                 addPositionDescriptionCell(
                         table,
                         position,
                         positionTitleFont,
-                        manufacturerFont
+                        manufacturerFont,
+                        rowBackground
                 );
                 addBodyCell(
                         table,
                         formatQuantity(text(position, "menge")),
                         normalFont,
-                        Element.ALIGN_RIGHT
+                        Element.ALIGN_CENTER,
+                        true,
+                        rowBackground
                 );
                 addBodyCell(
                         table,
                         text(position, "einheit"),
                         normalFont,
-                        Element.ALIGN_CENTER
+                        Element.ALIGN_CENTER,
+                        true,
+                        rowBackground
                 );
                 addBodyCell(
                         table,
                         money(position, "einzelPreis"),
                         normalFont,
-                        Element.ALIGN_RIGHT
+                        Element.ALIGN_CENTER,
+                        true,
+                        rowBackground
                 );
                 addBodyCell(
                         table,
                         money(position, "positionsPreis"),
                         normalFont,
-                        Element.ALIGN_RIGHT
+                        Element.ALIGN_CENTER,
+                        true,
+                        rowBackground
                 );
+
+                rowIndex++;
             }
         }
 
@@ -422,7 +438,8 @@ public class PdfGenerator {
             PdfPTable table,
             JsonNode position,
             Font titleFont,
-            Font manufacturerFont
+            Font manufacturerFont,
+            Color backgroundColor
     ) {
         String designation = text(position, "bezeichnung");
         String manufacturer = text(position, "hersteller");
@@ -443,6 +460,7 @@ public class PdfGenerator {
 
         PdfPCell cell = new PdfPCell(phrase);
         cell.setBorderColor(BORDER_COLOR);
+        cell.setBackgroundColor(backgroundColor);
         cell.setHorizontalAlignment(Element.ALIGN_LEFT);
         cell.setVerticalAlignment(Element.ALIGN_TOP);
         cell.setPadding(5);
@@ -556,12 +574,35 @@ public class PdfGenerator {
             Font font,
             int alignment
     ) {
+        addBodyCell(table, value, font, alignment, false, Color.WHITE);
+    }
+
+    private void addBodyCell(
+            PdfPTable table,
+            String value,
+            Font font,
+            int alignment,
+            boolean noWrap
+    ) {
+        addBodyCell(table, value, font, alignment, noWrap, Color.WHITE);
+    }
+
+    private void addBodyCell(
+            PdfPTable table,
+            String value,
+            Font font,
+            int alignment,
+            boolean noWrap,
+            Color backgroundColor
+    ) {
         PdfPCell cell = new PdfPCell(
                 new Phrase(value != null ? value : "", font)
         );
         cell.setBorderColor(BORDER_COLOR);
+        cell.setBackgroundColor(backgroundColor);
         cell.setHorizontalAlignment(alignment);
-        cell.setVerticalAlignment(Element.ALIGN_TOP);
+        cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        cell.setNoWrap(noWrap);
         cell.setPadding(5);
         table.addCell(cell);
     }
@@ -689,11 +730,14 @@ public class PdfGenerator {
                 legalCell.setBorderWidthTop(1.2f);
                 legalCell.setPaddingTop(5);
                 legalCell.setPaddingBottom(4);
-                legalCell.addElement(new Paragraph("GESCHÄFTSANGABEN", headingFont));
+                Paragraph footerHeading = new Paragraph("GESCHÄFTSANGABEN", headingFont);
+                footerHeading.setAlignment(Element.ALIGN_CENTER);
+                legalCell.addElement(footerHeading);
 
                 if (!legalInformation.isBlank()) {
                     Paragraph details = new Paragraph(legalInformation, detailsFont);
                     details.setLeading(9);
+                    details.setAlignment(Element.ALIGN_CENTER);
                     legalCell.addElement(details);
                 }
                 footer.addCell(legalCell);
@@ -715,6 +759,11 @@ public class PdfGenerator {
 
         private static String buildFooterLegalInformation(UserDto craftsman) {
             StringBuilder result = new StringBuilder();
+            appendFooterValue(result, "Firma", craftsman.companyName);
+            appendFooterValue(result, "Anschrift", craftsman.fullAddress());
+            appendFooterValue(result, "E-Mail", craftsman.businessEmail());
+            appendFooterValue(result, "Telefon", craftsman.companyPhoneNumber);
+            appendFooterValue(result, "Webseite", craftsman.website);
             appendFooterValue(result, "USt-IdNr.", craftsman.vatId);
             appendFooterValue(result, "Steuernummer", craftsman.taxNumber);
             appendFooterValue(result, "IBAN", craftsman.iban);
