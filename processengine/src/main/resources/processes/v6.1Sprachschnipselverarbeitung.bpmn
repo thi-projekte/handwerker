@@ -2,7 +2,7 @@
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0ejgl0b" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.45.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.24.0">
   <bpmn:collaboration id="Collaboration_042vbpn">
     <bpmn:participant id="pool_03" name="Sprachschnipselverarbeitung" processRef="sprachschnipselverarbeitung" />
-    <bpmn:participant id="Participant_09kwgqt" name="Backend" />
+    <bpmn:participant id="Participant_09kwgqt" name="Craftvoice Backend" />
     <bpmn:messageFlow id="Flow_19wur4r" name="Sprachschnipsel&#10;und Vorlage" sourceRef="Activity_3.1" targetRef="Participant_09kwgqt" />
     <bpmn:messageFlow id="Flow_0n6lggq" name="strukturierte Angebots-positionen und Korrektur-vorschläge" sourceRef="Participant_09kwgqt" targetRef="Activity_3.2" />
   </bpmn:collaboration>
