@@ -1,6 +1,7 @@
 package de.winfprojekt.craftvoice.documentservice.pdf;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.lowagie.text.Chunk;
 import com.lowagie.text.Document;
 import com.lowagie.text.Element;
 import com.lowagie.text.Font;
@@ -214,7 +215,7 @@ public class PdfGenerator {
         pdf.add(paragraph);
 
         PdfPTable accent = new PdfPTable(1);
-        accent.setWidthPercentage(15);
+        accent.setWidthPercentage(22);
         accent.setHorizontalAlignment(Element.ALIGN_LEFT);
         accent.setSpacingAfter(16);
         PdfPCell accentCell = new PdfPCell();
@@ -232,6 +233,16 @@ public class PdfGenerator {
                 Color.WHITE
         );
         Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 9);
+        Font positionTitleFont = FontFactory.getFont(
+                FontFactory.HELVETICA,
+                9,
+                BLACK
+        );
+        Font manufacturerFont = FontFactory.getFont(
+                FontFactory.HELVETICA,
+                7.5f,
+                TEXT_SECONDARY
+        );
 
         PdfPTable table = new PdfPTable(5);
         table.setWidthPercentage(100);
@@ -252,9 +263,12 @@ public class PdfGenerator {
 
         if (positions != null && positions.isArray()) {
             for (JsonNode position : sortedPositions(positions)) {
-                String description = buildPositionDescription(position);
-
-                addBodyCell(table, description, normalFont, Element.ALIGN_LEFT);
+                addPositionDescriptionCell(
+                        table,
+                        position,
+                        positionTitleFont,
+                        manufacturerFont
+                );
                 addBodyCell(
                         table,
                         formatQuantity(text(position, "menge")),
@@ -404,20 +418,39 @@ public class PdfGenerator {
         return result.toString().trim();
     }
 
-    private String buildPositionDescription(JsonNode position) {
+    private void addPositionDescriptionCell(
+            PdfPTable table,
+            JsonNode position,
+            Font titleFont,
+            Font manufacturerFont
+    ) {
         String designation = text(position, "bezeichnung");
         String manufacturer = text(position, "hersteller");
         String description = text(position, "beschreibung");
 
-        StringBuilder result = new StringBuilder();
-        appendLine(result, designation);
+        Phrase phrase = new Phrase();
+        phrase.add(new Chunk(designation, titleFont));
 
         if (!manufacturer.isBlank()) {
-            appendLine(result, "Hersteller: " + manufacturer);
+            phrase.add(Chunk.NEWLINE);
+            phrase.add(new Chunk("Hersteller: " + manufacturer, manufacturerFont));
         }
 
-        appendLine(result, description);
-        return result.toString().trim();
+        if (!isMaterialPosition(position) && !description.isBlank()) {
+            phrase.add(Chunk.NEWLINE);
+            phrase.add(new Chunk(description, titleFont));
+        }
+
+        PdfPCell cell = new PdfPCell(phrase);
+        cell.setBorderColor(BORDER_COLOR);
+        cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        cell.setVerticalAlignment(Element.ALIGN_TOP);
+        cell.setPadding(5);
+        table.addCell(cell);
+    }
+
+    private boolean isMaterialPosition(JsonNode position) {
+        return "MATERIAL".equalsIgnoreCase(text(position, "type"));
     }
 
     private List<JsonNode> sortedPositions(JsonNode positions) {
