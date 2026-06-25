@@ -105,6 +105,16 @@ public class UserResource {
         return Response.ok(response).build();
     }
 
+    @PUT
+    @Path("/profile/travel-config-detailed")
+    @RolesAllowed({"OWNER", "EMPLOYEE"})
+    public Response updateTravelConfigDetailed(Map<String, Object> data) {
+        UserEntity user = userService.syncUserWithDatabase();
+        userService.updateTravelConfig(user.id, data);
+
+        return Response.ok().build();
+    }
+
     @POST
     @Path("/profile-picture")
     @Consumes(MediaType.MULTIPART_FORM_DATA)
