@@ -5,11 +5,14 @@ import com.lowagie.text.Document;
 import com.lowagie.text.Element;
 import com.lowagie.text.Font;
 import com.lowagie.text.FontFactory;
+import com.lowagie.text.Image;
 import com.lowagie.text.PageSize;
 import com.lowagie.text.Paragraph;
 import com.lowagie.text.Phrase;
 import com.lowagie.text.Rectangle;
+import com.lowagie.text.pdf.PdfContentByte;
 import com.lowagie.text.pdf.PdfPCell;
+import com.lowagie.text.pdf.PdfPageEventHelper;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 import de.winfprojekt.craftvoice.documentservice.client.user.UserDto;
@@ -23,14 +26,20 @@ import java.text.NumberFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Locale;
+import java.net.URL;
 
 @ApplicationScoped
 public class PdfGenerator {
 
-    private static final Color PRIMARY_COLOR = new Color(36, 78, 112);
-    private static final Color LIGHT_BACKGROUND = new Color(238, 243, 247);
-    private static final Color BORDER_COLOR = new Color(190, 200, 208);
+    private static final Color ACCENT_COLOR = new Color(255, 106, 0);
+    private static final Color BLACK = new Color(15, 15, 16);
+    private static final Color TEXT_SECONDARY = new Color(107, 114, 128);
+    private static final Color BORDER_COLOR = new Color(229, 231, 235);
+    private static final String LOGO_RESOURCE = "branding/craftvoice-logo.png";
 
     private static final DateTimeFormatter INPUT_DATE_TIME =
             DateTimeFormatter.ISO_LOCAL_DATE_TIME;
@@ -60,8 +69,9 @@ public class PdfGenerator {
     ) {
         try {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            Document pdf = new Document(PageSize.A4, 42, 42, 40, 40);
-            PdfWriter.getInstance(pdf, outputStream);
+            Document pdf = new Document(PageSize.A4, 42, 42, 42, 108);
+            PdfWriter writer = PdfWriter.getInstance(pdf, outputStream);
+            writer.setPageEvent(new CraftVoiceFooter(craftsman));
 
             pdf.open();
 
@@ -70,7 +80,7 @@ public class PdfGenerator {
             addTitle(pdf, documentTitle);
             addPositions(pdf, payload);
             addTotal(pdf, payload);
-            addPaymentAndLegalInformation(pdf, documentTitle, craftsman);
+            addPaymentTerms(pdf, documentTitle, craftsman);
 
             pdf.close();
             return outputStream.toByteArray();
@@ -82,35 +92,44 @@ public class PdfGenerator {
     private void addHeader(Document pdf, UserDto craftsman) throws Exception {
         Font companyFont = FontFactory.getFont(
                 FontFactory.HELVETICA_BOLD,
-                17,
-                PRIMARY_COLOR
+                13,
+                BLACK
         );
-        Font contactFont = FontFactory.getFont(FontFactory.HELVETICA, 9);
+        Font contactFont = FontFactory.getFont(
+                FontFactory.HELVETICA,
+                8.5f,
+                TEXT_SECONDARY
+        );
 
         PdfPTable header = new PdfPTable(2);
         header.setWidthPercentage(100);
-        header.setWidths(new float[]{3, 2});
-        header.setSpacingAfter(24);
+        header.setWidths(new float[]{2.5f, 2.5f});
+        header.setSpacingAfter(8);
 
-        String companyName = firstNonBlank(
-                craftsman != null ? craftsman.companyName : null,
-                craftsman != null ? craftsman.fullName() : null,
-                "CraftVoice"
-        );
+        PdfPCell logoCell = borderlessCell();
+        logoCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        logoCell.addElement(loadLogo());
+        header.addCell(logoCell);
 
-        PdfPCell companyCell = borderlessCell(new Phrase(companyName, companyFont));
-        companyCell.setVerticalAlignment(Element.ALIGN_TOP);
-        header.addCell(companyCell);
-
-        PdfPCell contactCell = borderlessCell(new Phrase(
+        PdfPCell contactCell = borderlessCell();
+        contactCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        contactCell.setVerticalAlignment(Element.ALIGN_TOP);
+        contactCell.addElement(rightAlignedParagraph(
+                firstNonBlank(
+                        craftsman != null ? craftsman.companyName : null,
+                        craftsman != null ? craftsman.fullName() : null,
+                        "CraftVoice"
+                ),
+                companyFont
+        ));
+        contactCell.addElement(rightAlignedParagraph(
                 buildCraftsmanContact(craftsman),
                 contactFont
         ));
-        contactCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
-        contactCell.setVerticalAlignment(Element.ALIGN_TOP);
         header.addCell(contactCell);
 
         pdf.add(header);
+        addAccentRule(pdf);
     }
 
     private void addRecipientAndDocumentData(
@@ -122,9 +141,13 @@ public class PdfGenerator {
         Font labelFont = FontFactory.getFont(
                 FontFactory.HELVETICA_BOLD,
                 9,
-                PRIMARY_COLOR
+                ACCENT_COLOR
         );
-        Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 10);
+        Font normalFont = FontFactory.getFont(
+                FontFactory.HELVETICA,
+                10,
+                BLACK
+        );
 
         PdfPTable table = new PdfPTable(2);
         table.setWidthPercentage(100);
@@ -140,7 +163,11 @@ public class PdfGenerator {
         table.addCell(recipientCell);
 
         PdfPCell metadataCell = borderlessCell();
-        metadataCell.addElement(new Paragraph("DOKUMENTDATEN", labelFont));
+        metadataCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        metadataCell.addElement(rightAlignedParagraph(
+                "DOKUMENTDATEN",
+                labelFont
+        ));
 
         if ("Angebot".equals(documentTitle)) {
             addMetadataLine(
@@ -179,12 +206,23 @@ public class PdfGenerator {
         Font titleFont = FontFactory.getFont(
                 FontFactory.HELVETICA_BOLD,
                 22,
-                PRIMARY_COLOR
+                BLACK
         );
 
         Paragraph paragraph = new Paragraph(title, titleFont);
-        paragraph.setSpacingAfter(16);
+        paragraph.setSpacingAfter(5);
         pdf.add(paragraph);
+
+        PdfPTable accent = new PdfPTable(1);
+        accent.setWidthPercentage(15);
+        accent.setHorizontalAlignment(Element.ALIGN_LEFT);
+        accent.setSpacingAfter(16);
+        PdfPCell accentCell = new PdfPCell();
+        accentCell.setFixedHeight(4);
+        accentCell.setBorder(Rectangle.NO_BORDER);
+        accentCell.setBackgroundColor(ACCENT_COLOR);
+        accent.addCell(accentCell);
+        pdf.add(accent);
     }
 
     private void addPositions(Document pdf, JsonNode payload) throws Exception {
@@ -199,7 +237,10 @@ public class PdfGenerator {
         table.setWidthPercentage(100);
         table.setWidths(new float[]{4.8f, 1.1f, 1.3f, 1.8f, 1.8f});
         table.setHeaderRows(1);
-        table.setSpacingAfter(12);
+        table.setSplitRows(true);
+        table.setSplitLate(true);
+        table.setKeepTogether(false);
+        table.setSpacingAfter(6);
 
         addHeaderCell(table, "Leistung / Artikel", headerFont, Element.ALIGN_LEFT);
         addHeaderCell(table, "Menge", headerFont, Element.ALIGN_RIGHT);
@@ -210,7 +251,7 @@ public class PdfGenerator {
         JsonNode positions = payload != null ? payload.get("positions") : null;
 
         if (positions != null && positions.isArray()) {
-            for (JsonNode position : positions) {
+            for (JsonNode position : sortedPositions(positions)) {
                 String description = buildPositionDescription(position);
 
                 addBodyCell(table, description, normalFont, Element.ALIGN_LEFT);
@@ -245,38 +286,40 @@ public class PdfGenerator {
     }
 
     private void addTotal(Document pdf, JsonNode payload) throws Exception {
-        Font labelFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11);
+        Font labelFont = FontFactory.getFont(
+                FontFactory.HELVETICA_BOLD,
+                9,
+                TEXT_SECONDARY
+        );
         Font amountFont = FontFactory.getFont(
                 FontFactory.HELVETICA_BOLD,
-                13,
-                PRIMARY_COLOR
+                18,
+                BLACK
         );
 
-        PdfPTable totalTable = new PdfPTable(2);
-        totalTable.setWidthPercentage(45);
+        PdfPTable totalTable = new PdfPTable(1);
+        totalTable.setWidthPercentage(42);
         totalTable.setHorizontalAlignment(Element.ALIGN_RIGHT);
-        totalTable.setWidths(new float[]{2, 2});
-        totalTable.setSpacingAfter(24);
+        totalTable.setSpacingAfter(12);
 
-        PdfPCell labelCell = new PdfPCell(new Phrase("Gesamtbetrag", labelFont));
-        labelCell.setBackgroundColor(LIGHT_BACKGROUND);
-        labelCell.setBorderColor(BORDER_COLOR);
-        labelCell.setPadding(9);
-        totalTable.addCell(labelCell);
-
-        PdfPCell amountCell = new PdfPCell(
-                new Phrase(money(payload, "gesamtPreis"), amountFont)
-        );
-        amountCell.setBackgroundColor(LIGHT_BACKGROUND);
-        amountCell.setBorderColor(BORDER_COLOR);
-        amountCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
-        amountCell.setPadding(9);
-        totalTable.addCell(amountCell);
+        PdfPCell totalCell = new PdfPCell();
+        totalCell.setBorder(Rectangle.TOP);
+        totalCell.setBorderColor(BLACK);
+        totalCell.setBorderWidthTop(2);
+        totalCell.setPaddingTop(8);
+        totalCell.setPaddingBottom(8);
+        totalCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        totalCell.addElement(rightAlignedParagraph("GESAMTBETRAG", labelFont));
+        totalCell.addElement(rightAlignedParagraph(
+                money(payload, "gesamtPreis"),
+                amountFont
+        ));
+        totalTable.addCell(totalCell);
 
         pdf.add(totalTable);
     }
 
-    private void addPaymentAndLegalInformation(
+    private void addPaymentTerms(
             Document pdf,
             String documentTitle,
             UserDto craftsman
@@ -288,9 +331,13 @@ public class PdfGenerator {
         Font headingFont = FontFactory.getFont(
                 FontFactory.HELVETICA_BOLD,
                 9,
-                PRIMARY_COLOR
+                ACCENT_COLOR
         );
-        Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 8);
+        Font normalFont = FontFactory.getFont(
+                FontFactory.HELVETICA,
+                8,
+                TEXT_SECONDARY
+        );
 
         if ("Rechnung".equals(documentTitle) &&
                 craftsman.paymentTerms != null &&
@@ -305,17 +352,6 @@ public class PdfGenerator {
             Paragraph terms = new Paragraph(craftsman.paymentTerms, normalFont);
             terms.setSpacingAfter(12);
             pdf.add(terms);
-        }
-
-        String legalInformation = buildLegalInformation(craftsman);
-        if (!legalInformation.isBlank()) {
-            Paragraph legalHeading = new Paragraph(
-                    "GESCHÄFTSANGABEN",
-                    headingFont
-            );
-            legalHeading.setSpacingAfter(3);
-            pdf.add(legalHeading);
-            pdf.add(new Paragraph(legalInformation, normalFont));
         }
     }
 
@@ -384,17 +420,18 @@ public class PdfGenerator {
         return result.toString().trim();
     }
 
-    private String buildLegalInformation(UserDto craftsman) {
-        StringBuilder result = new StringBuilder();
+    private List<JsonNode> sortedPositions(JsonNode positions) {
+        List<JsonNode> sorted = new ArrayList<>();
+        positions.forEach(sorted::add);
 
-        appendInline(result, "USt-IdNr.", craftsman.vatId);
-        appendInline(result, "Steuernummer", craftsman.taxNumber);
-        appendInline(result, "IBAN", craftsman.iban);
-        appendInline(result, "BIC", craftsman.bic);
-        appendInline(result, "Bank", craftsman.bankName);
-        appendInline(result, "Kontoinhaber", craftsman.accountHolder);
+        sorted.sort(Comparator.comparingInt(position -> {
+            JsonNode order = position.get("reihenfolge");
+            return order != null && order.canConvertToInt()
+                    ? order.asInt()
+                    : Integer.MAX_VALUE;
+        }));
 
-        return result.toString();
+        return sorted;
     }
 
     private void addMetadataLine(
@@ -404,7 +441,10 @@ public class PdfGenerator {
             Font font
     ) {
         if (value != null && !value.isBlank()) {
-            cell.addElement(new Paragraph(label + ": " + value, font));
+            cell.addElement(rightAlignedParagraph(
+                    label + ": " + value,
+                    font
+            ));
         }
     }
 
@@ -429,11 +469,52 @@ public class PdfGenerator {
             int alignment
     ) {
         PdfPCell cell = new PdfPCell(new Phrase(value, font));
-        cell.setBackgroundColor(PRIMARY_COLOR);
-        cell.setBorderColor(PRIMARY_COLOR);
+        cell.setBackgroundColor(BLACK);
+        cell.setBorderColor(BLACK);
         cell.setHorizontalAlignment(alignment);
-        cell.setPadding(7);
+        cell.setPadding(6);
         table.addCell(cell);
+    }
+
+    private Image loadLogo() throws Exception {
+        URL logoUrl = Thread.currentThread()
+                .getContextClassLoader()
+                .getResource(LOGO_RESOURCE);
+
+        if (logoUrl == null) {
+            throw new IllegalStateException(
+                    "CraftVoice logo resource is missing: " + LOGO_RESOURCE
+            );
+        }
+
+        Image logo = Image.getInstance(logoUrl);
+        logo.scaleToFit(175, 52);
+        logo.setAlignment(Element.ALIGN_LEFT);
+        return logo;
+    }
+
+    private Paragraph rightAlignedParagraph(String value, Font font) {
+        Paragraph paragraph = new Paragraph(
+                value != null ? value : "",
+                font
+        );
+        paragraph.setAlignment(Element.ALIGN_RIGHT);
+        paragraph.setLeading(font.getSize() + 2);
+        return paragraph;
+    }
+
+    private void addAccentRule(Document pdf) throws Exception {
+        PdfPTable rule = new PdfPTable(1);
+        rule.setWidthPercentage(100);
+        rule.setSpacingAfter(24);
+
+        PdfPCell cell = new PdfPCell();
+        cell.setFixedHeight(3);
+        cell.setBorder(Rectangle.NO_BORDER);
+        cell.setBackgroundColor(ACCENT_COLOR);
+        rule.addCell(cell);
+
+        pdf.add(rule);
     }
 
     private void addBodyCell(
@@ -448,7 +529,7 @@ public class PdfGenerator {
         cell.setBorderColor(BORDER_COLOR);
         cell.setHorizontalAlignment(alignment);
         cell.setVerticalAlignment(Element.ALIGN_TOP);
-        cell.setPadding(7);
+        cell.setPadding(5);
         table.addCell(cell);
     }
 
@@ -531,19 +612,99 @@ public class PdfGenerator {
         target.append(value);
     }
 
-    private void appendInline(
-            StringBuilder target,
-            String label,
-            String value
-    ) {
-        if (value == null || value.isBlank()) {
-            return;
+    private static class CraftVoiceFooter extends PdfPageEventHelper {
+
+        private final String legalInformation;
+
+        private CraftVoiceFooter(UserDto craftsman) {
+            this.legalInformation = craftsman != null
+                    ? buildFooterLegalInformation(craftsman)
+                    : "";
         }
 
-        if (!target.isEmpty()) {
-            target.append("  |  ");
+        @Override
+        public void onEndPage(PdfWriter writer, Document document) {
+            try {
+                PdfContentByte canvas = writer.getDirectContent();
+                float left = document.left();
+                float right = document.right();
+                float footerTop = 101;
+
+                PdfPTable footer = new PdfPTable(1);
+                footer.setTotalWidth(right - left);
+                footer.setLockedWidth(true);
+
+                Font headingFont = FontFactory.getFont(
+                        FontFactory.HELVETICA_BOLD,
+                        7.5f,
+                        ACCENT_COLOR
+                );
+                Font detailsFont = FontFactory.getFont(
+                        FontFactory.HELVETICA,
+                        7.2f,
+                        TEXT_SECONDARY
+                );
+                Font brandFont = FontFactory.getFont(
+                        FontFactory.HELVETICA,
+                        7.5f,
+                        TEXT_SECONDARY
+                );
+
+                PdfPCell legalCell = new PdfPCell();
+                legalCell.setBorder(Rectangle.TOP);
+                legalCell.setBorderColor(ACCENT_COLOR);
+                legalCell.setBorderWidthTop(1.2f);
+                legalCell.setPaddingTop(5);
+                legalCell.setPaddingBottom(4);
+                legalCell.addElement(new Paragraph("GESCHÄFTSANGABEN", headingFont));
+
+                if (!legalInformation.isBlank()) {
+                    Paragraph details = new Paragraph(legalInformation, detailsFont);
+                    details.setLeading(9);
+                    legalCell.addElement(details);
+                }
+                footer.addCell(legalCell);
+
+                PdfPCell brandCell = new PdfPCell(new Phrase(
+                        "Mit CraftVoice erstellt  |  Seite " + writer.getPageNumber(),
+                        brandFont
+                ));
+                brandCell.setBorder(Rectangle.NO_BORDER);
+                brandCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                brandCell.setPaddingTop(4);
+                footer.addCell(brandCell);
+
+                footer.writeSelectedRows(0, -1, left, footerTop, canvas);
+            } catch (Exception e) {
+                throw new RuntimeException("PDF-Fußzeile konnte nicht erzeugt werden", e);
+            }
         }
 
-        target.append(label).append(": ").append(value);
+        private static String buildFooterLegalInformation(UserDto craftsman) {
+            StringBuilder result = new StringBuilder();
+            appendFooterValue(result, "USt-IdNr.", craftsman.vatId);
+            appendFooterValue(result, "Steuernummer", craftsman.taxNumber);
+            appendFooterValue(result, "IBAN", craftsman.iban);
+            appendFooterValue(result, "BIC", craftsman.bic);
+            appendFooterValue(result, "Bank", craftsman.bankName);
+            appendFooterValue(result, "Kontoinhaber", craftsman.accountHolder);
+            return result.toString();
+        }
+
+        private static void appendFooterValue(
+                StringBuilder target,
+                String label,
+                String value
+        ) {
+            if (value == null || value.isBlank()) {
+                return;
+            }
+
+            if (!target.isEmpty()) {
+                target.append("  |  ");
+            }
+
+            target.append(label).append(": ").append(value);
+        }
     }
 }
