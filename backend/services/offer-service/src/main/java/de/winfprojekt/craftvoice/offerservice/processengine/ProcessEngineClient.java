@@ -1,6 +1,7 @@
 package de.winfprojekt.craftvoice.offerservice.processengine;
 
 import de.winfprojekt.craftvoice.offerservice.processengine.dto.PeMessagePayload;
+import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
@@ -96,6 +97,12 @@ public class ProcessEngineClient {
          * @param angebotsentwurfJson das serialisierte OfferResponse-DTO als JSON-String
          */
         public void sendAngebotsentwurf(String businessKey, String angebotsentwurfJson) {
+
+                Log.infof(
+                        "Sende PE-Nachricht: messageName=%s, businessKey=%s",
+                        "angebotsentwurf",
+                        businessKey
+                );
 
                 Map<String, Object> processVariables = Map.of(
                         "angebotsentwurf", Map.of(
