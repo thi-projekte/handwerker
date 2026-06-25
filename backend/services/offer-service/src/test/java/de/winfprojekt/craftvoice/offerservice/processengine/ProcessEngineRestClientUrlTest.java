@@ -53,7 +53,6 @@ class ProcessEngineRestClientWireMockTest {
         PeMessagePayload payload = new PeMessagePayload(
                 "test",
                 "bizKey",
-                new HashMap<>(),
                 false
         );
 
