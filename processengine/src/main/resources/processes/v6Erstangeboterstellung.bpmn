@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0yoyz4c" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.45.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.24.0">
   <bpmn:collaboration id="Collaboration_1wnqy36">
-    <bpmn:participant id="pool_02" name="Erstangeboterstellung" processRef="erstangebotserstellung" />
-    <bpmn:participant id="Participant_1a6hvug" name="Backend" />
-    <bpmn:participant id="Participant_12naaur" name="Frontend" />
+    <bpmn:participant id="pool_02" name="Erstangeboterstellungsprozess" processRef="erstangebotserstellung" />
+    <bpmn:participant id="Participant_1a6hvug" name="Craftvoice-Backend" />
+    <bpmn:participant id="Participant_12naaur" name="Craftvoice Frontend" />
     <bpmn:messageFlow id="Flow_1yw7s9q" sourceRef="Participant_1a6hvug" targetRef="Event_10bgkb0" />
     <bpmn:messageFlow id="Flow_1lrvkfb" sourceRef="Activity_2.2" targetRef="Participant_1a6hvug" />
     <bpmn:messageFlow id="Flow_1kb5fr5" sourceRef="Activity_2.3" targetRef="Participant_12naaur" />
@@ -40,6 +40,11 @@ payload.businessKey = businessKey;
 payload.customerId = customerId;
 
 JSON.stringify(payload);</camunda:script>
+            </camunda:inputParameter>
+            <camunda:inputParameter name="headers">
+              <camunda:map>
+                <camunda:entry key="X-Handwerker-Id">${handwerkerId}</camunda:entry>
+              </camunda:map>
             </camunda:inputParameter>
           </camunda:inputOutput>
           <camunda:connectorId>http-connector</camunda:connectorId>
@@ -147,7 +152,7 @@ JSON.stringify({
         <di:waypoint x="730" y="280" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="Participant_12pdxo7_di" bpmnElement="Participant_1a6hvug" isHorizontal="true">
-        <dc:Bounds x="530" y="40" width="300" height="60" />
+        <dc:Bounds x="480" y="40" width="300" height="60" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Participant_1x8labk_di" bpmnElement="Participant_12naaur" isHorizontal="true">
