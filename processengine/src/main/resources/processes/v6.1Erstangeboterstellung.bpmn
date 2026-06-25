@@ -3,10 +3,8 @@
   <bpmn:collaboration id="Collaboration_1wnqy36">
     <bpmn:participant id="pool_02" name="Erstangeboterstellungsprozess" processRef="erstangebotserstellung" />
     <bpmn:participant id="Participant_1a6hvug" name="Craftvoice-Backend" />
-    <bpmn:participant id="Participant_12naaur" name="Craftvoice Frontend" />
     <bpmn:messageFlow id="Flow_1yw7s9q" sourceRef="Participant_1a6hvug" targetRef="Event_10bgkb0" />
     <bpmn:messageFlow id="Flow_1lrvkfb" sourceRef="Activity_2.2" targetRef="Participant_1a6hvug" />
-    <bpmn:messageFlow id="Flow_1kb5fr5" sourceRef="Activity_2.3" targetRef="Participant_12naaur" />
   </bpmn:collaboration>
   <bpmn:process id="erstangebotserstellung" isExecutable="true" camunda:historyTimeToLive="10">
     <bpmn:startEvent id="Event_1ek2v5p" name="Erstangebot muss erstellt werden">
@@ -54,45 +52,17 @@ JSON.stringify(payload);</camunda:script>
       <bpmn:outgoing>Flow_0pmesfm</bpmn:outgoing>
     </bpmn:serviceTask>
     <bpmn:endEvent id="Event_1tmobws" name="Erstangebot erfolgreich angezeigt">
-      <bpmn:incoming>Flow_0vhx2td</bpmn:incoming>
+      <bpmn:incoming>Flow_11tn90s</bpmn:incoming>
     </bpmn:endEvent>
     <bpmn:intermediateCatchEvent id="Event_10bgkb0" name="Erstangebots-entwurf emfangen">
       <bpmn:incoming>Flow_0pmesfm</bpmn:incoming>
-      <bpmn:outgoing>Flow_0n1nv9b</bpmn:outgoing>
+      <bpmn:outgoing>Flow_11tn90s</bpmn:outgoing>
       <bpmn:messageEventDefinition id="MessageEventDefinition_0bvvao6" messageRef="Message_3n3lqjh" />
     </bpmn:intermediateCatchEvent>
-    <bpmn:serviceTask id="Activity_2.3" name="Erst-    angebots-entwurf anzeigen">
-      <bpmn:extensionElements>
-        <camunda:connector>
-          <camunda:inputOutput>
-            <camunda:inputParameter name="url">https://webhook.site/68540626-4879-4e02-889d-31483b55ebbb</camunda:inputParameter>
-            <camunda:inputParameter name="method">POST</camunda:inputParameter>
-            <camunda:inputParameter name="payload">
-              <camunda:script scriptFormat="JavaScript">var angebotsentwurf = execution.getVariable("angebotsentwurf");
-var customerId = execution.getVariable("customerId");
-var businessKey = execution.getProcessBusinessKey();
-
-JSON.stringify({
-  businessKey: businessKey,
-  customerId: customerId,
-
-  angebotsentwurf: JSON.parse(
-    angebotsentwurf.toString()
-  )
-});</camunda:script>
-            </camunda:inputParameter>
-          </camunda:inputOutput>
-          <camunda:connectorId>http-connector</camunda:connectorId>
-        </camunda:connector>
-      </bpmn:extensionElements>
-      <bpmn:incoming>Flow_0n1nv9b</bpmn:incoming>
-      <bpmn:outgoing>Flow_0vhx2td</bpmn:outgoing>
-    </bpmn:serviceTask>
     <bpmn:sequenceFlow id="Flow_0axxbsn" sourceRef="Event_1ek2v5p" targetRef="Activity_2.1" />
     <bpmn:sequenceFlow id="Flow_0qed4q0" sourceRef="Activity_2.1" targetRef="Activity_2.2" />
     <bpmn:sequenceFlow id="Flow_0pmesfm" sourceRef="Activity_2.2" targetRef="Event_10bgkb0" />
-    <bpmn:sequenceFlow id="Flow_0vhx2td" sourceRef="Activity_2.3" targetRef="Event_1tmobws" />
-    <bpmn:sequenceFlow id="Flow_0n1nv9b" sourceRef="Event_10bgkb0" targetRef="Activity_2.3" />
+    <bpmn:sequenceFlow id="Flow_11tn90s" sourceRef="Event_10bgkb0" targetRef="Event_1tmobws" />
   </bpmn:process>
   <bpmn:message id="Message_3n3lqjh" name="angebotsentwurf" />
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
@@ -127,10 +97,6 @@ JSON.stringify({
           <dc:Bounds x="626" y="305" width="89" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_1mc4e02_di" bpmnElement="Activity_2.3">
-        <dc:Bounds x="730" y="240" width="100" height="80" />
-        <bpmndi:BPMNLabel />
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_0axxbsn_di" bpmnElement="Flow_0axxbsn">
         <di:waypoint x="230" y="280" />
         <di:waypoint x="312" y="280" />
@@ -143,20 +109,12 @@ JSON.stringify({
         <di:waypoint x="600" y="280" />
         <di:waypoint x="652" y="280" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0vhx2td_di" bpmnElement="Flow_0vhx2td">
-        <di:waypoint x="830" y="280" />
-        <di:waypoint x="894" y="280" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0n1nv9b_di" bpmnElement="Flow_0n1nv9b">
+      <bpmndi:BPMNEdge id="Flow_11tn90s_di" bpmnElement="Flow_11tn90s">
         <di:waypoint x="688" y="280" />
-        <di:waypoint x="730" y="280" />
+        <di:waypoint x="894" y="280" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="Participant_12pdxo7_di" bpmnElement="Participant_1a6hvug" isHorizontal="true">
         <dc:Bounds x="480" y="40" width="300" height="60" />
-        <bpmndi:BPMNLabel />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Participant_1x8labk_di" bpmnElement="Participant_12naaur" isHorizontal="true">
-        <dc:Bounds x="620" y="420" width="300" height="60" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_1yw7s9q_di" bpmnElement="Flow_1yw7s9q">
@@ -166,10 +124,6 @@ JSON.stringify({
       <bpmndi:BPMNEdge id="Flow_1lrvkfb_di" bpmnElement="Flow_1lrvkfb">
         <di:waypoint x="550" y="240" />
         <di:waypoint x="550" y="100" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_1kb5fr5_di" bpmnElement="Flow_1kb5fr5">
-        <di:waypoint x="780" y="320" />
-        <di:waypoint x="780" y="420" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
