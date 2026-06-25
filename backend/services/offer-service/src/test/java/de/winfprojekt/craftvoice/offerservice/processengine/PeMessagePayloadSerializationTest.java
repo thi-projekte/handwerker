@@ -20,8 +20,30 @@ class PeMessagePayloadSerializationTest {
     /**
      * Prüft, ob ein Payload mit Prozessvariablen korrekt in JSON serialisiert wird.
      */
+    @Test
+    void shouldSerializePayloadCorrectly() throws Exception {
 
+        Map<String, Object> processVariables = new HashMap<>();
+        processVariables.put("testVar", Map.of(
+                "value", "123",
+                "type", "String"
+        ));
 
+        PeMessagePayload payload = new PeMessagePayload(
+                "testMessage",
+                "bizKey-1",
+                processVariables,
+                false
+        );
+
+        String json = mapper.writeValueAsString(payload);
+
+        assertTrue(json.contains("\"messageName\":\"testMessage\""));
+        assertTrue(json.contains("\"businessKey\":\"bizKey-1\""));
+        assertTrue(json.contains("\"processVariables\""));
+        assertTrue(json.contains("\"testVar\""));
+        assertTrue(json.contains("\"value\":\"123\""));
+    }
 
     /**
      * Prüft, ob leere Prozessvariablen als leeres JSON-Objekt ({}) serialisiert werden.
@@ -32,6 +54,7 @@ class PeMessagePayloadSerializationTest {
         PeMessagePayload payload = new PeMessagePayload(
                 "test",
                 "123",
+                new HashMap<>(),
                 false
         );
 

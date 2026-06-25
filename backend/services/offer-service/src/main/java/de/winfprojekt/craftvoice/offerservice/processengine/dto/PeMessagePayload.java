@@ -16,10 +16,14 @@ public class PeMessagePayload {
     public PeMessagePayload(
             String messageName,
             String businessKey,
+            Map<String, Object> processVariables,
             boolean resultEnabled) {
 
         this.messageName = messageName;
         this.businessKey = businessKey;
+        this.processVariables = processVariables != null
+                ? processVariables
+                : new HashMap<>();
         this.resultEnabled = resultEnabled;
     }
 }
