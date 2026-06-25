@@ -1,4 +1,4 @@
-services:
+﻿services:
   document-db:
     image: postgres:15
     container_name: document-db
@@ -28,7 +28,7 @@ services:
       DB_PASSWORD: postgres
       DOCUMENT_STORAGE_PATH: /data/documents
       USER_SERVICE_URL: ${USER_SERVICE_URL:-http://craftvoice-user-service:8080}
-      KEYCLOAK_URL: ${KEYCLOAK_URL:-http://craftvoice-keycloak:8080}
+      KEYCLOAK_URL: https://id-craftvoice.winfprojekt.de
       MAIL_HOST: ${MAIL_HOST:-smtp-relay.brevo.com}
       MAIL_PORT: "${MAIL_PORT:-587}"
       MAIL_USERNAME: ${MAIL_USERNAME}
@@ -54,3 +54,5 @@ networks:
   document-internal:
   nginx-proxy-manager:
     external: true
+
+
