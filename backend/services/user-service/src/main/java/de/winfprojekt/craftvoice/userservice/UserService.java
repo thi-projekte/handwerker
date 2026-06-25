@@ -19,6 +19,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.math.BigDecimal;
 
 @ApplicationScoped
 public class UserService {
@@ -413,5 +415,62 @@ public class UserService {
         }
 
         return customer;
+    }
+
+    @Transactional
+    public void updateTravelConfig(Long userId, Map<String, Object> data) {
+        UserEntity user = UserEntity.findById(userId);
+
+        if (user == null) {
+            throw new NotFoundException("User not found");
+        }
+
+        if (data.containsKey("modell")) {
+            user.travelModel = (String) data.get("modell");
+        }
+
+        if (data.containsKey("pauschale")) {
+            Object pauschale = data.get("pauschale");
+            if (pauschale != null) {
+                user.travelFlatRate = new BigDecimal(pauschale.toString());
+            }
+        }
+
+        if (data.containsKey("kmSatz")) {
+            Object kmSatz = data.get("kmSatz");
+            if (kmSatz != null) {
+                user.travelKmRate = new BigDecimal(kmSatz.toString());
+            }
+        }
+
+        if (data.containsKey("adresse")) {
+            Map<String, Object> address = (Map<String, Object>) data.get("adresse");
+            if (address != null) {
+                if (address.containsKey("strasse")) {
+                    user.street = (String) address.get("strasse");
+                }
+                if (address.containsKey("hausnummer")) {
+                    user.houseNumber = (String) address.get("hausnummer");
+                }
+                if (address.containsKey("plz")) {
+                    user.zipCode = (String) address.get("plz");
+                }
+                if (address.containsKey("ort")) {
+                    user.city = (String) address.get("ort");
+                }
+                if (address.containsKey("bundesland")) {
+                    user.state = (String) address.get("bundesland");
+                }
+                if (address.containsKey("land")) {
+                    user.country = (String) address.get("land");
+                }
+            }
+        }
+
+        AuditLogEntity.log(
+                user.id,
+                "TRAVEL_CONFIG_UPDATE",
+                "User updated travel configuration and address details"
+        );
     }
 }
