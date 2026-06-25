@@ -7,6 +7,9 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 import jakarta.ws.rs.core.Response;
 
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import static java.lang.Thread.sleep;
 
 /**
  * Client zur Kommunikation mit der Process Engine.
@@ -106,7 +109,28 @@ public class ProcessEngineClient {
                         false
                 );
 
-                sendMessage(payload);
+                int maxAttempts = 5;
+
+                for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+                        try {
+                                sendMessage(payload);
+                                return;
+                        } catch (ProcessEngineException exception) {
+                                if (attempt == maxAttempts) {
+                                        throw exception;
+                                }
+
+                                try {
+                                        TimeUnit.SECONDS.sleep(2);
+                                } catch (InterruptedException interruptedException) {
+                                        Thread.currentThread().interrupt();
+                                        throw new ProcessEngineException(
+                                                "Retry wurde unterbrochen",
+                                                interruptedException
+                                        );
+                                }
+                        }
+                }
         }
         /**
          * Korreliert die Nachricht "angebotAngenommen" zurück an die Process Engine.
