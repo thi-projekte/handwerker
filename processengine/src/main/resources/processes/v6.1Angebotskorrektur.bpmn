@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0y9nw1t" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.45.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.24.0">
   <bpmn:collaboration id="Collaboration_1xu5tqs">
-    <bpmn:participant id="pool_04" name="Angebotskorrektur" processRef="angebotskorrektur" />
+    <bpmn:participant id="pool_04" name="Angebotskorrekturprozess" processRef="angebotskorrektur" />
     <bpmn:participant id="Participant_0ygo8na" name="Frontend" />
     <bpmn:participant id="Participant_0gkh810" name="CraftVoice-Backend" />
     <bpmn:messageFlow id="Flow_06lg0ec" name="Genehmigung" sourceRef="Participant_0ygo8na" targetRef="Event_0rauegq" />
-    <bpmn:messageFlow id="Flow_09oxe5t" name="ausgewaehlterAngebotsentwurf" sourceRef="Participant_0ygo8na" targetRef="Event_0dm5q1c" />
+    <bpmn:messageFlow id="Flow_09oxe5t" name="Ausgewählter Angebotsentwurf" sourceRef="Participant_0ygo8na" targetRef="Event_0dm5q1c" />
     <bpmn:messageFlow id="Flow_06i7ezz" name="Angebotsentwurf" sourceRef="Participant_0gkh810" targetRef="Event_0cbd1w5" />
     <bpmn:messageFlow id="Flow_1akbk0l" name="Korrektur-schnipsel" sourceRef="Participant_0ygo8na" targetRef="Event_152vaxu" />
     <bpmn:messageFlow id="Flow_1vhm422" sourceRef="Activity_4.3" targetRef="Participant_0ygo8na" />
   </bpmn:collaboration>
   <bpmn:process id="angebotskorrektur" isExecutable="true" camunda:historyTimeToLive="10">
-    <bpmn:startEvent id="Event_0ag11bx">
+    <bpmn:startEvent id="Event_0ag11bx" name="Angebot soll korrigiert werden">
       <bpmn:extensionElements />
       <bpmn:outgoing>Flow_17niv5q</bpmn:outgoing>
     </bpmn:startEvent>
@@ -91,7 +91,7 @@ execution.setVariable(
       <bpmn:incoming>Flow_0qs32fn</bpmn:incoming>
       <bpmn:outgoing>Flow_169wxp8</bpmn:outgoing>
     </bpmn:callActivity>
-    <bpmn:intermediateCatchEvent id="Event_0dm5q1c" name="ausgewaehlterAngebotsentwurf empfangen">
+    <bpmn:intermediateCatchEvent id="Event_0dm5q1c" name="Ausgewählter Angebotsentwurf empfangen">
       <bpmn:extensionElements />
       <bpmn:incoming>Flow_05kg6v9</bpmn:incoming>
       <bpmn:outgoing>Flow_1f2lkut</bpmn:outgoing>
@@ -207,13 +207,13 @@ JSON.stringify({
       <bpmndi:BPMNShape id="Event_066gn1r_di" bpmnElement="Event_0ag11bx">
         <dc:Bounds x="230" y="336" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="180" y="325" width="81" height="40" />
+          <dc:Bounds x="208" y="379" width="82" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Gateway_0nnw2lx_di" bpmnElement="Gateway_02rd13u">
         <dc:Bounds x="323" y="329" width="50" height="50" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="280" y="366" width="59" height="27" />
+          <dc:Bounds x="280" y="306" width="59" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_152vaxu_di" bpmnElement="Event_152vaxu">
@@ -233,7 +233,7 @@ JSON.stringify({
       <bpmndi:BPMNShape id="Event_0dm5q1c_di" bpmnElement="Event_0dm5q1c">
         <dc:Bounds x="612" y="492" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="587" y="442" width="86" height="40" />
+          <dc:Bounds x="589" y="442" width="83" height="40" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_0860wgv_di" bpmnElement="Event_0cbd1w5">
@@ -345,7 +345,7 @@ JSON.stringify({
         <di:waypoint x="630" y="630" />
         <di:waypoint x="630" y="528" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="647" y="562" width="86" height="27" />
+          <dc:Bounds x="649" y="562" width="83" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_06i7ezz_di" bpmnElement="Flow_06i7ezz">
