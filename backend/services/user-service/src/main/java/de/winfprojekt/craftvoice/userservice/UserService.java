@@ -126,19 +126,25 @@ public class UserService {
     @Transactional
     public UserEntity syncUserWithDatabase() {
         String keycloakId = jwt.getSubject();
+        String email = jwt.getClaim("email");
+
+        if (email == null || email.isBlank()) {
+            throw new BadRequestException("User hat kein email-Claim im JWT-Token (Keycloak-Konfiguration überprüfen)");
+        }
+
         UserEntity user = UserEntity.findByKeycloakId(keycloakId);
 
         if (user == null) {
             user = new UserEntity();
             user.keycloakId = keycloakId;
-            user.email = jwt.getClaim("email");
+            user.email = email;
             user.firstName = jwt.getClaim("given_name");
             user.lastName = jwt.getClaim("family_name");
             user.status = UserStatus.ACTIVE;
             user.roles.add(UserRole.OWNER);
             user.persist();
         } else {
-            user.email = jwt.getClaim("email");
+            user.email = email;
 
             if (user.firstName == null || user.firstName.isBlank()) {
                 user.firstName = jwt.getClaim("given_name");
