@@ -51,10 +51,10 @@ type Customer = {
   telefon: string;
   image: string | null;
 
-  adresse: string;
+  strasse: string;
+  hausnummer: string;
   plz: string;
   ort: string;
-
 };
 
 type Material = {
@@ -175,14 +175,15 @@ export const UnternehmenPage = () => {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
   const [customerData, setCustomerData] = useState({
-    vorname: "",
-    nachname: "",
-    email: "",
-    telefon: "",
-    adresse: "",
-    plz: "",
-    ort: "",
-  });
+  vorname: "",
+  nachname: "",
+  email: "",
+  telefon: "",
+  strasse: "",
+  hausnummer: "",
+  plz: "",
+  ort: "",
+});
 
   const [customerImage, setCustomerImage] = useState<string | null>(null);
 
@@ -298,22 +299,22 @@ const loadCustomers = async () => {
     const data = await getCustomers();
 
     setCustomers(
-  data
-    .filter((customer) =>
-      !customer.email?.startsWith("deleted_customer")
-    )
-    .map((customer) => ({
-      id: customer.id,
-      vorname: customer.firstName ?? "",
-      nachname: customer.lastName ?? "",
-      email: customer.email ?? "",
-      telefon: customer.phoneNumber ?? "",
-      image: customer.profilePictureUrl ?? null,
-      adresse: "",
-      plz: "",
-      ort: "",
-    }))
-);
+      data
+        .filter((customer) => !customer.email?.startsWith("deleted_customer"))
+        .map((customer) => ({
+          id: customer.id,
+          vorname: customer.firstName ?? "",
+          nachname: customer.lastName ?? "",
+          email: customer.email ?? "",
+          telefon: customer.phoneNumber ?? "",
+          image: customer.profilePictureUrl ?? null,
+
+          strasse: customer.street ?? "",
+          hausnummer: customer.houseNumber ?? "",
+          plz: customer.zipCode ?? "",
+          ort: customer.city ?? "",
+        })),
+    );
   } catch (error) {
     console.error(error);
     setCompanyErrorMessage("Kunden konnten nicht geladen werden.");
@@ -1276,14 +1277,15 @@ const loadCustomers = async () => {
                 setEditingIndex(null);
 
                 setCustomerData({
-                  vorname: "",
-                  nachname: "",
-                  email: "",
-                  telefon: "",
-                  adresse: "",
-                  plz: "",
-                  ort: "",
-                });
+  vorname: "",
+  nachname: "",
+  email: "",
+  telefon: "",
+  strasse: "",
+  hausnummer: "",
+  plz: "",
+  ort: "",
+});
 
                 setCustomerImage(null);
               }}
@@ -1342,14 +1344,15 @@ const loadCustomers = async () => {
                       type="button"
                       onClick={() => {
                         setCustomerData({
-                          vorname: customer.vorname,
-                          nachname: customer.nachname,
-                          email: customer.email,
-                          telefon: customer.telefon,
-                          adresse: customer.adresse,
-                          plz: customer.plz,
-                          ort: customer.ort,
-                        });
+  vorname: customer.vorname,
+  nachname: customer.nachname,
+  email: customer.email,
+  telefon: customer.telefon,
+  strasse: customer.strasse,
+  hausnummer: customer.hausnummer,
+  plz: customer.plz,
+  ort: customer.ort,
+});
 
                         setCustomerImage(customer.image);
                         setEditingIndex(index);
@@ -1437,12 +1440,20 @@ await loadCustomers();
                 onChange={handleCustomerChange}
               />
               <input
-                className="input-field"
-                name="adresse"
-                placeholder="Adresse"
-                value={customerData.adresse}
-                onChange={handleCustomerChange}
-              />
+  className="input-field"
+  name="strasse"
+  placeholder="Straße"
+  value={customerData.strasse}
+  onChange={handleCustomerChange}
+/>
+
+<input
+  className="input-field"
+  name="hausnummer"
+  placeholder="Hausnummer"
+  value={customerData.hausnummer}
+  onChange={handleCustomerChange}
+/>
 <input
   className="input-field"
   name="plz"
@@ -1454,7 +1465,9 @@ await loadCustomers();
       plz: event.target.value.replace(/\D/g, "").slice(0, 5),
     }))
   }
-/><input
+/>
+
+<input
   className="input-field"
   name="ort"
   placeholder="Ort"
@@ -1512,11 +1525,16 @@ await loadCustomers();
       const customer = customers[editingIndex];
 
       await updateCustomer(customer.id, {
-        firstName: customerData.vorname,
-        lastName: customerData.nachname,
-        email: customerData.email,
-        phoneNumber: customerData.telefon,
-      });
+  firstName: customerData.vorname,
+  lastName: customerData.nachname,
+  email: customerData.email,
+  phoneNumber: customerData.telefon,
+
+  street: customerData.strasse,
+  houseNumber: customerData.hausnummer,
+  zipCode: customerData.plz,
+  city: customerData.ort,
+});
 
       await loadCustomers();
 
@@ -1525,14 +1543,15 @@ await loadCustomers();
       );
 
       setCustomerData({
-        vorname: "",
-        nachname: "",
-        email: "",
-        telefon: "",
-        adresse: "",
-        plz: "",
-        ort: "",
-      });
+  vorname: "",
+  nachname: "",
+  email: "",
+  telefon: "",
+  strasse: "",
+  hausnummer: "",
+  plz: "",
+  ort: "",
+});
 
       setCustomerImage(null);
 
@@ -1556,6 +1575,12 @@ await loadCustomers();
   lastName: customerData.nachname,
   phoneNumber: customerData.telefon,
   companyName: null,
+
+  street: customerData.strasse,
+  houseNumber: customerData.hausnummer,
+  zipCode: customerData.plz,
+  city: customerData.ort,
+  country: "Deutschland",
 });
 
 await loadCustomers();
@@ -1569,14 +1594,15 @@ await loadCustomers();
 
                       // clear form on success
                       setCustomerData({
-                        vorname: "",
-                        nachname: "",
-                        email: "",
-                        telefon: "",
-                        adresse: "",
-                        plz: "",
-                        ort: "",
-                      });
+  vorname: "",
+  nachname: "",
+  email: "",
+  telefon: "",
+  strasse: "",
+  hausnummer: "",
+  plz: "",
+  ort: "",
+});
 
                       setCustomerImage(null);
                       setShowCustomerForm(false);
