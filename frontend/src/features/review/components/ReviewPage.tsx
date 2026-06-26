@@ -35,7 +35,6 @@ interface Position {
     menge: number;
     einheit: string;
     preis: number;
-    katalogProduktId: string | null;
   }[];
   gewaehlteAlternativeIndex: number | null;
   manuellGeaendert: boolean;
@@ -62,10 +61,6 @@ const newId = () => `pos_${Date.now()}_${_idCounter++}`;
 
 const formatEuro = (v: number) => v.toFixed(2).replace(".", ",");
 
-// Fest hinterlegte Anfahrtspauschale in € — wird unverändert als Teil des
-// Gesamtpreises ausgewiesen (kein Abruf/keine Berechnung im Frontend).
-const ANFAHRTSPAUSCHALE = 25;
-
 /**
  * Konvertiert eine OfferPosition (Backend-Format) in das Frontend-Position-Format.
  * Alternativen werden – sofern die PE sie im angebotsentwurf mitliefert – direkt
@@ -89,7 +84,6 @@ function offerPositionToFrontend(p: OfferPosition): Position {
       menge: a.menge ?? menge,
       einheit: a.einheit,
       preis: a.einzelPreis ?? 0,
-      katalogProduktId: a.katalogProduktId,
     })),
     gewaehlteAlternativeIndex: null,
     manuellGeaendert: false,
@@ -223,7 +217,7 @@ const PositionsKarte = ({
             <input
               className="review-pos-menge-input"
               type="number"
-              step="1"
+              step="0.01"
               min="0"
               autoFocus
               value={mengeWert}
@@ -456,6 +450,8 @@ export const ReviewPage = () => {
 
   // ─── Arbeitszeit ───
   const [maZeilen, setMaZeilen] = useState<ArbeitszeitZeile[]>([]);
+  const [anfahrt, setAnfahrt] = useState(0);
+  const [editAnfahrt, setEditAnfahrt] = useState(false);
   // Im user-service konfigurierter Stundensatz (Vorbelegung neuer Zeilen).
   const [konfigStundensatz, setKonfigStundensatz] = useState<number | null>(
     null,
@@ -491,7 +487,6 @@ export const ReviewPage = () => {
                 menge: pos.menge,
                 einheit: c.unit,
                 preis: c.price,
-                katalogProduktId: c.id,
               }));
             return { ...pos, alternativen };
           } catch (e) {
@@ -535,8 +530,9 @@ export const ReviewPage = () => {
       // KI-Hinweise (korrekturvorschlaege)
       setKiHinweise(offer.korrekturvorschlaege ?? []);
 
-      // Anfahrt wird nicht mehr aus der PE übernommen — sie ist fest auf
-      // ANFAHRTSPAUSCHALE (25 €) hinterlegt (siehe Gesamtpreis-Berechnung).
+      // Anfahrt aus der ANFAHRT-Position der PE (sonst 0 → manuell eintragen).
+      const anfahrtPos = offer.positions.find((p) => p.type === "ANFAHRT");
+      setAnfahrt(anfahrtPos?.einzelPreis ?? anfahrtPos?.positionsPreis ?? 0);
 
       // Konfigurierten Stundensatz des Handwerkers aus dem user-service holen —
       // dieselbe Quelle, die der offer-service für die ARBEITSZEIT-Position nutzt.
@@ -712,25 +708,6 @@ export const ReviewPage = () => {
       },
     ]);
 
-  // Liefert die tatsächlich gewählten Werte einer Position: Ist eine Alternative
-  // gewählt (und nichts manuell überschrieben), wird deren Produkt inkl.
-  // katalogProduktId zurückgegeben — nur so kann der offer-service den Preis des
-  // neu gewählten Produkts aus dem catalog-service auflösen. Bei manueller
-  // Änderung bzw. ohne Alternative gelten die Originalwerte der Position.
-  const effektivePosition = (p: Position) => {
-    const alt =
-      p.gewaehlteAlternativeIndex !== null && !p.manuellGeaendert
-        ? p.alternativen[p.gewaehlteAlternativeIndex]
-        : null;
-    return {
-      bezeichnung: alt ? alt.bezeichnung : p.bezeichnung,
-      beschreibung: alt ? alt.beschreibung : p.beschreibung,
-      menge: alt ? alt.menge : p.menge,
-      einheit: alt ? alt.einheit : p.einheit,
-      katalogProduktId: alt ? alt.katalogProduktId : p.katalogProduktId,
-    };
-  };
-
   // ─── Änderungs-Checks ────────────────────────────────────────────────────
 
   const hatManuelleAenderung = () =>
@@ -825,18 +802,13 @@ export const ReviewPage = () => {
         await updateOfferPositions(businessKey, {
           strukturierteAngebotspositionen: {
             leistungen: [],
-            // Effektive Werte: bei gewählter Alternative deren Produkt inkl.
-            // katalogProduktId, damit der offer-service den richtigen Preis lädt.
-            material: materialien.map((p) => {
-              const e = effektivePosition(p);
-              return {
-                bezeichnung: e.bezeichnung,
-                beschreibung: e.beschreibung,
-                menge: e.menge,
-                einheit: e.einheit,
-                katalogProduktId: e.katalogProduktId,
-              };
-            }),
+            material: materialien.map((p) => ({
+              bezeichnung: p.bezeichnung,
+              beschreibung: p.beschreibung,
+              menge: p.menge,
+              einheit: p.einheit,
+              katalogProduktId: p.katalogProduktId,
+            })),
             notizen: [],
           },
           korrekturvorschlaege: [],
@@ -896,7 +868,7 @@ export const ReviewPage = () => {
 
   const arbeitskosten =
     maZeilen.reduce((sum, z) => sum + (z.stundensatz ?? 0) * z.stunden, 0) +
-    ANFAHRTSPAUSCHALE;
+    anfahrt;
 
   const gesamtpreis =
     materialien.reduce((sum, p) => {
@@ -1051,12 +1023,29 @@ export const ReviewPage = () => {
           + Mitarbeiter hinzufügen
         </button>
 
-        {/* Anfahrtspauschale — fest auf 25 € (nicht editierbar) */}
+        {/* Anfahrtspauschale */}
         <div className="review-stunden-row" style={{ marginTop: 12 }}>
           <span className="review-stunden-label">Anfahrtspauschale</span>
-          <span className="review-stunden-value">
-            {formatEuro(ANFAHRTSPAUSCHALE)} €
-          </span>
+          {editAnfahrt ? (
+            <input
+              className="review-stunden-input"
+              type="number"
+              step="0.01"
+              min="0"
+              autoFocus
+              value={anfahrt}
+              onChange={(e) => setAnfahrt(parseFloat(e.target.value) || 0)}
+              onBlur={() => setEditAnfahrt(false)}
+            />
+          ) : (
+            <span
+              className="review-stunden-value editable"
+              onClick={() => setEditAnfahrt(true)}
+              title="Anpassen"
+            >
+              {formatEuro(anfahrt)} €
+            </span>
+          )}
         </div>
       </div>
 
@@ -1122,9 +1111,7 @@ export const ReviewPage = () => {
         >
           {isSubmitting
             ? "Wird übermittelt…"
-            : hatManuelleAenderung()
-              ? "Änderungen bestätigen"
-              : "Angebot bestätigen"}
+            : "Angebot bestätigen/überarbeiten"}
         </button>
         <button
           className="review-secondary-btn"
