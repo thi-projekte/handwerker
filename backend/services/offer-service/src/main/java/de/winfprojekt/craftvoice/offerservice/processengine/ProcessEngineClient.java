@@ -107,7 +107,7 @@ public class ProcessEngineClient {
                 Map<String, Object> processVariables = Map.of(
                         "angebotsentwurf", Map.of(
                                 "value", angebotsentwurfJson,
-                                "type", "String"));
+                                "type", "Json"));
 
                 PeMessagePayload payload = new PeMessagePayload(
                         "angebotsentwurf",
