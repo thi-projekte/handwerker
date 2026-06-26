@@ -1,12 +1,17 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "@/assets/stylesheets/stylesheet.css";
 import "./OfferSharePage.css";
 import {
   getDocumentByOfferId,
   getPdfDownloadUrl,
+  fetchPdfData,
   type DocumentMetadata,
 } from "@/data/api/documentService";
+// pdf.js ist groß – nur laden, wenn die Vorschau tatsächlich gebraucht wird.
+const PdfPreview = lazy(() =>
+  import("./PdfPreview").then((m) => ({ default: m.PdfPreview })),
+);
 import {
   getOfferByBusinessKey,
   type OfferResponse,
@@ -36,6 +41,8 @@ export const OfferSharePage = () => {
   // ─── State ───
   const [offerData, setOfferData] = useState<OfferResponse | null>(null);
   const [document, setDocument] = useState<DocumentMetadata | null>(null);
+  // Rohe PDF-Bytes für die clientseitig gerenderte Inline-Vorschau.
+  const [pdfData, setPdfData] = useState<ArrayBuffer | null>(null);
   const [isLoading, setIsLoading] = useState(!!(offerId || businessKey));
   const [pdfLoading, setPdfLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -57,6 +64,13 @@ export const OfferSharePage = () => {
         const doc = await getDocumentByOfferId(id);
         if (doc) {
           setDocument(doc);
+          // PDF-Bytes für die Inline-Vorschau (pdf.js) laden.
+          try {
+            const data = await fetchPdfData(doc.id);
+            setPdfData(data);
+          } catch (e) {
+            console.error("[OfferSharePage] PDF-Vorschau-Daten fehlten:", e);
+          }
           setPdfLoading(false);
           return;
         }
@@ -296,26 +310,43 @@ export const OfferSharePage = () => {
               </div>
               <p className="text-secondary">PDF wird erstellt…</p>
             </div>
-          ) : pdfUrl ? (
-            <a
-              href={pdfUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="offer-pdf-link"
-              title="PDF öffnen und prüfen"
-            >
-              <div className="offer-pdf-icon">📄</div>
-              <div className="offer-pdf-info">
-                <strong>{document?.fileName ?? "Angebot.pdf"}</strong>
-                <span className="text-secondary">
-                  Erstellt am{" "}
-                  {document?.createdAt
-                    ? new Date(document.createdAt).toLocaleDateString("de-DE")
-                    : "—"}
-                </span>
+          ) : pdfData && pdfUrl ? (
+            <div className="offer-pdf-viewer">
+              <Suspense
+                fallback={
+                  <div className="offer-pdf-loading">
+                    <div className="loader">
+                      <span></span>
+                      <span></span>
+                      <span></span>
+                    </div>
+                    <p className="text-secondary">Vorschau wird geladen…</p>
+                  </div>
+                }
+              >
+                <PdfPreview data={pdfData} />
+              </Suspense>
+              <div className="offer-pdf-bar">
+                <div className="offer-pdf-info">
+                  <strong>{document?.fileName ?? "Angebot.pdf"}</strong>
+                  <span className="text-secondary">
+                    Erstellt am{" "}
+                    {document?.createdAt
+                      ? new Date(document.createdAt).toLocaleDateString("de-DE")
+                      : "—"}
+                  </span>
+                </div>
+                <a
+                  href={pdfUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="offer-pdf-open-btn"
+                  title="PDF in neuem Tab öffnen"
+                >
+                  Öffnen →
+                </a>
               </div>
-              <span className="offer-pdf-open">Öffnen →</span>
-            </a>
+            </div>
           ) : (
             <div className="offer-pdf-missing">
               <p className="text-secondary">

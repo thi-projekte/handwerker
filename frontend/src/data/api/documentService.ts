@@ -53,6 +53,24 @@ export function getPdfDownloadUrl(documentId: string): string {
 }
 
 /**
+ * Lädt das PDF als rohe Bytes für die clientseitige Inline-Vorschau (pdf.js).
+ *
+ * Der PDF-Endpunkt ist öffentlich (kein Auth nötig). Wir holen die Bytes selbst,
+ * statt die URL direkt in ein <iframe> zu hängen, weil mobile Browser PDFs in
+ * einem iframe/embed nicht inline rendern, sondern nur eine Download-Karte
+ * anzeigen. Die Bytes werden von pdf.js zu Bildern gerastert.
+ *
+ * @param documentId  UUID des Dokuments (aus DocumentMetadata.id)
+ */
+export async function fetchPdfData(documentId: string): Promise<ArrayBuffer> {
+  const res = await fetch(getPdfDownloadUrl(documentId));
+  if (!res.ok) {
+    throw new Error(`PDF konnte nicht geladen werden: ${res.status}`);
+  }
+  return res.arrayBuffer();
+}
+
+/**
  * Ruft die Dokument-Metadaten für ein Angebot ab.
  * Damit bekommt man die documentId, die für den PDF-Download benötigt wird.
  *
