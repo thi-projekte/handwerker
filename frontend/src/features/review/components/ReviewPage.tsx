@@ -6,6 +6,7 @@ import {
   getAngebotsentwurf,
   approveOffer,
   setArbeitsstunden,
+  updateOfferPositions,
   type OfferResponse,
   type OfferPosition,
 } from "@/data/api/offerService";
@@ -714,14 +715,34 @@ export const ReviewPage = () => {
 
   // ─── Angebotsentwurf für Fall 2 (Reihenfolge / Alternative) ────────────────
 
+  // Liefert die tatsächlich gewählten Werte einer Position: Ist eine Alternative
+  // gewählt (und nichts manuell überschrieben), wird deren Produkt inkl.
+  // katalogProduktId zurückgegeben — nur so kann der offer-service den Preis des
+  // neu gewählten Produkts aus dem catalog-service auflösen. Bei manueller
+  // Änderung bzw. ohne Alternative gelten die Originalwerte der Position.
+  const effektivePosition = (p: Position) => {
+    const alt =
+      p.gewaehlteAlternativeIndex !== null && !p.manuellGeaendert
+        ? p.alternativen[p.gewaehlteAlternativeIndex]
+        : null;
+    return {
+      bezeichnung: alt ? alt.bezeichnung : p.bezeichnung,
+      beschreibung: alt ? alt.beschreibung : p.beschreibung,
+      menge: alt ? alt.menge : p.menge,
+      einheit: alt ? alt.einheit : p.einheit,
+      katalogProduktId: alt ? alt.katalogProduktId : p.katalogProduktId,
+    };
+  };
+
   /**
    * Baut den Angebotsentwurf für Fall 2 — exakt im selben Format, wie ihn das
    * Frontend zuvor vom offer-service erhalten hat ({@link OfferResponse}), nur
    * mit der vom Handwerker gewählten Reihenfolge bzw. eingesetzten Alternative.
    *
-   * Es wird KEIN Update an den offer-service geschickt; dieses Objekt geht direkt
-   * an die PE (siehe sendAngebotsentwurf). Deshalb wird das ursprüngliche
-   * offerData unverändert übernommen und lediglich das positions-Array neu
+   * Dieses Objekt geht direkt an die PE (siehe sendAngebotsentwurf). Parallel
+   * werden dieselben Positionen — ins OfferChangesRequest-Format gemappt — an den
+   * offer-service geschickt (siehe handleBestaetigen, Fall 2). Das ursprüngliche
+   * offerData wird unverändert übernommen und lediglich das positions-Array neu
    * aufgebaut:
    *   - MATERIAL-Positionen in der aktuellen UI-Reihenfolge; ist eine Alternative
    *     gewählt, ersetzen deren Werte (inkl. katalogProduktId/Preis) die Position.
@@ -884,11 +905,33 @@ export const ReviewPage = () => {
         });
       } else if (istReihenfolge) {
         // ── Fall 2: Reihenfolge / Alternative ──
-        // Der angepasste Angebotsentwurf geht DIREKT an die PE — im exakt
-        // selben Format, wie ihn das Frontend vom offer-service erhalten hat,
-        // nur mit neuer Reihenfolge bzw. eingesetzter Alternative. Es wird
-        // bewusst KEIN Update an den offer-service geschickt.
-        await sendAngebotsentwurf(businessKey, buildAngebotsentwurf());
+        // Der angepasste Angebotsentwurf (neue Reihenfolge / gewählte Alternative)
+        // geht PARALLEL an zwei Empfänger:
+        //   1) direkt an die PE — im OfferResponse-Format (Korrelation "angebotsentwurf")
+        //   2) an den offer-service über den bestehenden /positionen-Endpunkt —
+        //      dafür werden die effektiven Positionen ins OfferChangesRequest-Format
+        //      gemappt (Name + katalogProduktId der Alternative; Preis löst der
+        //      offer-service selbst über die katalogProduktId aus dem Katalog auf).
+        await Promise.all([
+          sendAngebotsentwurf(businessKey, buildAngebotsentwurf()),
+          updateOfferPositions(businessKey, {
+            strukturierteAngebotspositionen: {
+              leistungen: [],
+              material: materialien.map((p) => {
+                const e = effektivePosition(p);
+                return {
+                  bezeichnung: e.bezeichnung,
+                  beschreibung: e.beschreibung,
+                  menge: e.menge,
+                  einheit: e.einheit,
+                  katalogProduktId: e.katalogProduktId,
+                };
+              }),
+              notizen: [],
+            },
+            korrekturvorschlaege: [],
+          }),
+        ]);
         navigate("/laden", {
           state: { businessKey, offerId, mode: "versand-warten" },
         });
