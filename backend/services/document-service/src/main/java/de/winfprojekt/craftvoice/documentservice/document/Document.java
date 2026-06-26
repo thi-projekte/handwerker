@@ -38,6 +38,9 @@ public class Document extends PanacheEntity {
     @Column
     public String recipientName;
 
+    @Column
+    public String totalAmount;
+
     @Lob
     @Basic(fetch = FetchType.LAZY)
     @Column(nullable = false)
