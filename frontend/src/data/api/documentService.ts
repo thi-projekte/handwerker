@@ -62,7 +62,7 @@ export function getPdfDownloadUrl(documentId: string): string {
  * @param offerId  Numerische ID des Angebots aus dem offer-service
  */
 export async function getDocumentByOfferId(
-  businessKey: number,
+  businessKey: string,
 ): Promise<DocumentMetadata | null> {
   const res = await fetch(
     `${API_CONFIG.DOCUMENT_SERVICE_URL}/documents/offers/${businessKey}`,
@@ -109,7 +109,7 @@ export async function shareOfferByEmail(offerId: number): Promise<void> {
  * @param timeoutMs   Maximale Wartezeit in ms (default: 60000 = 1 min)
  */
 export async function pollUntilPdfReady(
-  offerId: number,
+  offerId: string,
   intervalMs = 2000,
   timeoutMs = 60_000,
 ): Promise<DocumentMetadata> {
