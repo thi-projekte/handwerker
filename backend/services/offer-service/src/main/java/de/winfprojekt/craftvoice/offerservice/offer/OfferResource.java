@@ -166,15 +166,15 @@ public class OfferResource {
      * einen Token.
      * Dieser Endpunkt ist öffentlich zugänglich.
      *
-     * @param token   Der eindeutige Annahme-Token des Angebots
+     * @param businessKey Den BusinessKey des Angebots, um dieses eindeutig zu identifizieren.
      * @param request Die Kundenentscheidung (angenommen / abgelehnt)
      * @return HTTP-Response 200 mit Bestätigungsantwort oder Fehlermeldung
      */
     @POST
-    @Path("/angebote/annahme/{token}")
+    @Path("/angebote/annahme/{businessKey}")
     @PermitAll
-    public Response acceptOrRejectOffer(@PathParam("token") String token, @Valid OfferAcceptanceRequest request) {
-        OfferAcceptanceResponse response = offerService.acceptOrRejectOffer(token, request);
+    public Response acceptOrRejectOffer(@PathParam("businessKey") String businessKey, @Valid OfferAcceptanceRequest request) {
+        OfferAcceptanceResponse response = offerService.acceptOrRejectOffer(businessKey, request);
         return Response.ok(response).build();
     }
 

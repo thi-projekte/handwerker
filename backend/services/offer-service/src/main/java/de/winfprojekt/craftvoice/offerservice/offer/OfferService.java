@@ -473,19 +473,19 @@ public class OfferService {
     /**
      * Nimmt ein Angebot über den Annahme-Token an oder lehnt es ab.
      *
-     * @param token   Der Annahme-Token des Angebots
+     * @param businessKey Der BusinessKey des Angebots, welches angenommen werden soll
      * @param request Die Entscheidung des Kunden ("angenommen" oder "abgelehnt")
      * @return DTO mit dem Ergebnis der Entscheidung
      */
     @Transactional
-    public OfferAcceptanceResponse acceptOrRejectOffer(String token, OfferAcceptanceRequest request) {
-        if (token == null || token.trim().isEmpty()) {
-            throw new WebApplicationException("Token darf nicht leer sein", 400);
+    public OfferAcceptanceResponse acceptOrRejectOffer(String businessKey, OfferAcceptanceRequest request) {
+        if (businessKey == null || businessKey.trim().isEmpty()) {
+            throw new WebApplicationException("BusinessKey darf nicht leer sein", 400);
         }
 
-        Offer offer = Offer.find("annahmeToken", token).firstResult();
+        Offer offer = Offer.find("businessKey", businessKey).firstResult();
         if (offer == null) {
-            throw new WebApplicationException("Angebot mit Token nicht gefunden", 404);
+            throw new WebApplicationException("Angebot mit BusinessKey " + businessKey + " nicht gefunden", 404);
         }
 
         if (!Offer.STATUS_VERSENDET.equals(offer.status)) {
