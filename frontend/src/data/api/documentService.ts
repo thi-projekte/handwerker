@@ -53,6 +53,26 @@ export function getPdfDownloadUrl(documentId: string): string {
 }
 
 /**
+ * Lädt das PDF als Blob und gibt eine Object-URL für die Inline-Vorschau zurück.
+ *
+ * Der PDF-Endpunkt ist öffentlich (kein Auth nötig), liefert das PDF aber mit
+ * `Content-Disposition: attachment` aus — eine rohe URL im <iframe> würde der
+ * Browser daher u.U. herunterladen statt anzuzeigen. Über den Umweg Blob →
+ * Object-URL entfällt der Disposition-Header, sodass das PDF zuverlässig inline
+ * gerendert wird. Der Aufrufer muss die URL später per URL.revokeObjectURL freigeben.
+ *
+ * @param documentId  UUID des Dokuments (aus DocumentMetadata.id)
+ */
+export async function fetchPdfObjectUrl(documentId: string): Promise<string> {
+  const res = await fetch(getPdfDownloadUrl(documentId));
+  if (!res.ok) {
+    throw new Error(`PDF konnte nicht geladen werden: ${res.status}`);
+  }
+  const blob = await res.blob();
+  return URL.createObjectURL(blob);
+}
+
+/**
  * Ruft die Dokument-Metadaten für ein Angebot ab.
  * Damit bekommt man die documentId, die für den PDF-Download benötigt wird.
  *
