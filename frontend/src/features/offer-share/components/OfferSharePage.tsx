@@ -4,7 +4,6 @@ import "@/assets/stylesheets/stylesheet.css";
 import "./OfferSharePage.css";
 import {
   getDocumentByOfferId,
-  shareOfferByEmail,
   getPdfDownloadUrl,
   type DocumentMetadata,
 } from "@/data/api/documentService";
