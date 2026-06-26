@@ -367,6 +367,14 @@ public class UserService {
             customer.email = data.email;
         }
 
+        // Allow updating address fields if provided
+        if (data.street != null) customer.street = data.street;
+        if (data.houseNumber != null) customer.houseNumber = data.houseNumber;
+        if (data.zipCode != null) customer.zipCode = data.zipCode;
+        if (data.city != null) customer.city = data.city;
+        if (data.state != null) customer.state = data.state;
+        if (data.country != null) customer.country = data.country;
+
         AuditLogEntity.log(
                 customer.id,
                 "CUSTOMER_UPDATED",
