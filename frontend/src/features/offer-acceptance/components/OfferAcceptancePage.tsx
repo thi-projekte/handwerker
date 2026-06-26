@@ -5,9 +5,21 @@ import { getPublicOffer, acceptPublicOffer } from "@/data/api/offerService";
 import "@/assets/stylesheets/stylesheet.css";
 import "./OfferAcceptancePage.css";
 
+interface OfferPosition {
+  bezeichnung: string;
+  beschreibung?: string;
+  hersteller?: string;
+  preis?: number;
+}
+
+interface OfferData {
+  positions: OfferPosition[];
+  gesamtPreis?: number;
+}
+
 export const OfferAcceptancePage = () => {
   const { token } = useParams<{ token: string }>();
-  const [offer, setOffer] = useState<any>(null);
+  const [offer, setOffer] = useState<OfferData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
@@ -33,8 +45,8 @@ export const OfferAcceptancePage = () => {
     try {
       await acceptPublicOffer(token, entscheidung);
       setSuccess(true);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError((err as Error).message);
     } finally {
       setIsSubmitting(false);
     }
@@ -80,7 +92,7 @@ export const OfferAcceptancePage = () => {
       <section className="card offer-acceptance-section">
         <h2>Positionen</h2>
         <div className="offer-acceptance-items">
-          {offer.positions?.map((pos: any, index: number) => (
+          {offer.positions?.map((pos: OfferPosition, index: number) => (
             <div key={index} className="offer-acceptance-item">
               <div className="offer-acceptance-item-info">
                 <span className="offer-acceptance-item-name">{pos.bezeichnung}</span>
