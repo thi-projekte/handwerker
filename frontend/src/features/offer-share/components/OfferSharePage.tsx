@@ -4,7 +4,6 @@ import "@/assets/stylesheets/stylesheet.css";
 import "./OfferSharePage.css";
 import {
   getDocumentByOfferId,
-  shareOfferByEmail,
   getPdfDownloadUrl,
   type DocumentMetadata,
 } from "@/data/api/documentService";
@@ -126,7 +125,6 @@ export const OfferSharePage = () => {
     setIsSending(true);
     setSendError(null);
     try {
-      await shareOfferByEmail(offerId);
       await sendAuftragVersenden(businessKey);
       setSentVia("E-Mail");
     } catch (err) {
