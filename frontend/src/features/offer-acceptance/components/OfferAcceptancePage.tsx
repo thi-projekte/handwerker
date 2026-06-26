@@ -79,6 +79,10 @@ export const OfferAcceptancePage = () => {
     );
   }
 
+  if (!offer) {
+    return null;
+  }
+
   return (
     <div className="offer-acceptance-page">
       <section className="card offer-acceptance-header">
