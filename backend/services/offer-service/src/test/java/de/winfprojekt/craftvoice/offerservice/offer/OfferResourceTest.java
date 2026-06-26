@@ -88,7 +88,7 @@ class OfferResourceTest {
     private Offer createTestOfferForHandwerker(String handwerkerId, String status) {
         return QuarkusTransaction.requiringNew().call(() -> {
             Offer offer = new Offer();
-            offer.customerId = "12345";
+            offer.customerId = "customer-" + UUID.randomUUID();
             offer.handwerkerId = handwerkerId;
             offer.businessKey = "angebot-" + UUID.randomUUID();
             offer.status = status;

@@ -81,13 +81,7 @@ public class InvoiceService {
         String rechnungsnummer = generiereRechnungsnummer();
 
         // 4. Kundendaten-Snapshot laden
-        Long customerId;
-        try {
-            customerId = Long.parseLong(offer.customerId);
-        } catch (NumberFormatException e) {
-            throw new WebApplicationException("Kunden-ID des Angebots ist ungültig (nicht-numerisch): " + offer.customerId, 400);
-        }
-        CustomerDTO customer = userServiceClient.getCustomer(customerId);
+        CustomerDTO customer = userServiceClient.getCustomer(Long.parseLong(offer.customerId));
         if (customer == null) {
             throw new WebApplicationException(
                     "Kundendaten für customerId " + offer.customerId + " nicht verfügbar", 422);
