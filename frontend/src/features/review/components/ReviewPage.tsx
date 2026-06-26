@@ -5,7 +5,6 @@ import "@/features/review/components/ReviewPage.css";
 import {
   getAngebotsentwurf,
   approveOffer,
-  updateOfferPositions,
   setArbeitsstunden,
   type OfferResponse,
   type OfferPosition,
@@ -13,6 +12,7 @@ import {
 import {
   sendGenehmigung,
   sendKorrekturschnipsel,
+  sendAngebotsentwurf,
 } from "@/data/api/processEngineService";
 import { searchMaterials } from "@/data/api/catalogService";
 import { getCurrentUser } from "@/services/userService";
@@ -712,22 +712,72 @@ export const ReviewPage = () => {
       },
     ]);
 
-  // Liefert die tatsächlich gewählten Werte einer Position: Ist eine Alternative
-  // gewählt (und nichts manuell überschrieben), wird deren Produkt inkl.
-  // katalogProduktId zurückgegeben — nur so kann der offer-service den Preis des
-  // neu gewählten Produkts aus dem catalog-service auflösen. Bei manueller
-  // Änderung bzw. ohne Alternative gelten die Originalwerte der Position.
-  const effektivePosition = (p: Position) => {
-    const alt =
-      p.gewaehlteAlternativeIndex !== null && !p.manuellGeaendert
-        ? p.alternativen[p.gewaehlteAlternativeIndex]
-        : null;
+  // ─── Angebotsentwurf für Fall 2 (Reihenfolge / Alternative) ────────────────
+
+  /**
+   * Baut den Angebotsentwurf für Fall 2 — exakt im selben Format, wie ihn das
+   * Frontend zuvor vom offer-service erhalten hat ({@link OfferResponse}), nur
+   * mit der vom Handwerker gewählten Reihenfolge bzw. eingesetzten Alternative.
+   *
+   * Es wird KEIN Update an den offer-service geschickt; dieses Objekt geht direkt
+   * an die PE (siehe sendAngebotsentwurf). Deshalb wird das ursprüngliche
+   * offerData unverändert übernommen und lediglich das positions-Array neu
+   * aufgebaut:
+   *   - MATERIAL-Positionen in der aktuellen UI-Reihenfolge; ist eine Alternative
+   *     gewählt, ersetzen deren Werte (inkl. katalogProduktId/Preis) die Position.
+   *   - Nicht-MATERIAL-Positionen (ARBEITSZEIT/ANFAHRT) bleiben unverändert und
+   *     werden hinten angehängt.
+   *   - reihenfolge wird durchgehend neu vergeben (1..n).
+   */
+  const buildAngebotsentwurf = (): OfferResponse => {
+    // offerData ist gesetzt — Fall 2 ist erst nach erfolgreichem Laden erreichbar.
+    const original = offerData!;
+
+    // Original-Positionen per id nachschlagen, um unveränderte Backend-Felder
+    // (createdAt, hersteller, …) zu erhalten.
+    const originalById = new Map(
+      original.positions.map((p) => [String(p.id), p]),
+    );
+
+    const materialPositionen: OfferPosition[] = materialien.map((pos, i) => {
+      const orig = originalById.get(pos.id);
+      const alt =
+        pos.gewaehlteAlternativeIndex !== null
+          ? pos.alternativen[pos.gewaehlteAlternativeIndex]
+          : null;
+      const bezeichnung = alt ? alt.bezeichnung : pos.bezeichnung;
+      const beschreibung = alt ? alt.beschreibung : pos.beschreibung;
+      const menge = alt ? alt.menge : pos.menge;
+      const einheit = alt ? alt.einheit : pos.einheit;
+      const katalogProduktId = alt
+        ? alt.katalogProduktId
+        : pos.katalogProduktId;
+      const einzelPreis = alt ? alt.preis : pos.preis;
+      return {
+        ...orig,
+        id: orig?.id ?? i + 1,
+        bezeichnung,
+        beschreibung,
+        menge,
+        einheit,
+        katalogProduktId,
+        einzelPreis,
+        positionsPreis: einzelPreis * menge,
+        reihenfolge: i + 1,
+        type: "MATERIAL",
+      } as OfferPosition;
+    });
+
+    const sonstigePositionen: OfferPosition[] = original.positions
+      .filter((p) => p.type !== "MATERIAL")
+      .map((p, i) => ({
+        ...p,
+        reihenfolge: materialPositionen.length + i + 1,
+      }));
+
     return {
-      bezeichnung: alt ? alt.bezeichnung : p.bezeichnung,
-      beschreibung: alt ? alt.beschreibung : p.beschreibung,
-      menge: alt ? alt.menge : p.menge,
-      einheit: alt ? alt.einheit : p.einheit,
-      katalogProduktId: alt ? alt.katalogProduktId : p.katalogProduktId,
+      ...original,
+      positions: [...materialPositionen, ...sonstigePositionen],
     };
   };
 
@@ -814,44 +864,18 @@ export const ReviewPage = () => {
     const istReihenfolge = hatReihenfolgeOderAlternative();
 
     // Die eingetragene Gesamt-Arbeitsdauer an den offer-service melden; daraus
-    // berechnet dieser die ARBEITSZEIT-Position neu.
+    // berechnet dieser die ARBEITSZEIT-Position neu (Fall 1 & 3).
     const gesamtStunden = maZeilen.reduce((sum, z) => sum + z.stunden, 0);
 
     try {
-      // In Fall 2 müssen die Positions-Änderungen VOR setArbeitsstunden ans Backend,
-      // damit der Offer-Service "angebotsentwurf" mit den aktuellen Positionen an
-      // die PE sendet.
-      if (istReihenfolge && !istManuell) {
-        await updateOfferPositions(businessKey, {
-          strukturierteAngebotspositionen: {
-            leistungen: [],
-            // Effektive Werte: bei gewählter Alternative deren Produkt inkl.
-            // katalogProduktId, damit der offer-service den richtigen Preis lädt.
-            material: materialien.map((p) => {
-              const e = effektivePosition(p);
-              return {
-                bezeichnung: e.bezeichnung,
-                beschreibung: e.beschreibung,
-                menge: e.menge,
-                einheit: e.einheit,
-                katalogProduktId: e.katalogProduktId,
-              };
-            }),
-            notizen: [],
-          },
-          korrekturvorschlaege: [],
-        });
-      }
-
-      // setArbeitsstunden triggert im Offer-Service die PE-Nachricht "angebotsentwurf".
-      // Erst danach kann die PE die fallspezifische Folge-Message (genehmigungAngebot /
-      // korrekturschnipsel) am nachgelagerten Event-Gateway korrelieren.
-      await setArbeitsstunden(businessKey, {
-        arbeitsdauerStunden: gesamtStunden,
-      });
-
       if (istManuell) {
         // ── Fall 3: Manuelle Änderung → neuer KI-Durchlauf ──
+        // setArbeitsstunden triggert im Offer-Service die PE-Nachricht
+        // "angebotsentwurf"; erst danach kann die PE den korrekturschnipsel
+        // am nachgelagerten Event-Gateway korrelieren.
+        await setArbeitsstunden(businessKey, {
+          arbeitsdauerStunden: gesamtStunden,
+        });
         // Konkrete Beschreibung der manuellen Änderungen an die KI senden,
         // damit sie weiß, WAS geändert werden soll (statt generischem Text).
         await sendKorrekturschnipsel(businessKey, buildKorrekturschnipsel());
@@ -860,13 +884,22 @@ export const ReviewPage = () => {
         });
       } else if (istReihenfolge) {
         // ── Fall 2: Reihenfolge / Alternative ──
-        // "angebotsentwurf" wurde bereits via setArbeitsstunden vom Offer-Service
-        // gesendet (mit den oben persistierten Positionen).
+        // Der angepasste Angebotsentwurf geht DIREKT an die PE — im exakt
+        // selben Format, wie ihn das Frontend vom offer-service erhalten hat,
+        // nur mit neuer Reihenfolge bzw. eingesetzter Alternative. Es wird
+        // bewusst KEIN Update an den offer-service geschickt.
+        await sendAngebotsentwurf(businessKey, buildAngebotsentwurf());
         navigate("/laden", {
           state: { businessKey, offerId, mode: "versand-warten" },
         });
       } else {
         // ── Fall 1: Genehmigung (keine Änderungen) ──
+        // setArbeitsstunden triggert im Offer-Service die PE-Nachricht
+        // "angebotsentwurf"; erst danach kann die PE die genehmigungAngebot
+        // am nachgelagerten Event-Gateway korrelieren.
+        await setArbeitsstunden(businessKey, {
+          arbeitsdauerStunden: gesamtStunden,
+        });
         await approveOffer(businessKey);
         await sendGenehmigung(businessKey);
         navigate("/laden", {

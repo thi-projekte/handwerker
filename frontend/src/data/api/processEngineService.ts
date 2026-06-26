@@ -17,6 +17,7 @@
 
 import { API_CONFIG } from "@/config/api";
 import { getToken } from "@/services/authService";
+import type { OfferResponse } from "@/data/api/offerService";
 
 // ─── Auth-Helper ────────────────────────────────────────────────────────────
 
@@ -76,52 +77,29 @@ export async function sendGenehmigung(businessKey: string): Promise<void> {
 
 // ─── Fall 2: Reihenfolge / Alternative geändert ──────────────────────────────
 
-export interface AngebotsentwurfPayload {
-  kundendaten: {
-    name: string;
-    adresse: string;
-    ort: string;
-  };
-  strukturierteAngebotspositionMitPreis: {
-    positionen: {
-      bezeichnung: string;
-      beschreibung: string;
-      menge: number;
-      einheit: string;
-      preis: number;
-    }[];
-  };
-  arbeitszeit: {
-    mitarbeiter: {
-      mitarbeiterId: string;
-      mitarbeiterName: string | undefined;
-      stundensatz: number | undefined;
-      stunden: number;
-    }[];
-    anfahrtspauschale: number;
-  };
-  stichpunkte: {
-    leistungen: string[];
-    materialien: string[];
-    arbeitszeit: string[];
-  };
-  notiz: string;
-}
-
 /**
- * Sendet "angebotsentwurf" direkt an die PE (Fall 2).
- * PE updated den offer-service und leitet den Versandprozess ein.
+ * Sendet "angebotsentwurf" direkt an die PE (Fall 2: Reihenfolge / Alternative).
+ *
+ * Der Payload ist exakt das {@link OfferResponse}-DTO, wie es das Frontend zuvor
+ * vom offer-service erhalten hat (siehe getAngebotsentwurf) — lediglich mit
+ * angepasster Positions-Reihenfolge bzw. eingesetzter Alternative. Es geht
+ * bewusst KEIN Update an den offer-service; die PE korreliert diesen Entwurf
+ * direkt am Event_10bgkb0 (gleiche Stelle, die sonst der offer-service in
+ * ProcessEngineClient.sendAngebotsentwurf bedient).
+ *
+ * Das Serialisierungsformat (processVariables.angebotsentwurf = { value:
+ * JSON-String, type: "Json" }) ist deckungsgleich mit der Backend-Variante.
  */
 export async function sendAngebotsentwurf(
   businessKey: string,
-  entwurf: AngebotsentwurfPayload,
+  angebotsentwurf: OfferResponse,
 ): Promise<void> {
   await sendPeMessage({
     messageName: "angebotsentwurf",
     businessKey,
     processVariables: {
       angebotsentwurf: {
-        value: JSON.stringify(entwurf),
+        value: JSON.stringify(angebotsentwurf),
         type: "Json",
       },
     },
