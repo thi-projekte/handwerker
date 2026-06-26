@@ -11,6 +11,7 @@ import com.lowagie.text.PageSize;
 import com.lowagie.text.Paragraph;
 import com.lowagie.text.Phrase;
 import com.lowagie.text.Rectangle;
+import com.lowagie.text.pdf.BaseFont;
 import com.lowagie.text.pdf.PdfContentByte;
 import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPageEventHelper;
@@ -41,7 +42,9 @@ public class PdfGenerator {
     private static final Color TEXT_SECONDARY = new Color(107, 114, 128);
     private static final Color BORDER_COLOR = new Color(229, 231, 235);
     private static final Color TABLE_ROW_ALTERNATE = new Color(248, 250, 252);
-    private static final String LOGO_RESOURCE = "branding/craftvoice-logo.png";
+    private static final Color ACCEPT_BUTTON_COLOR = new Color(74, 111, 165);
+    private static final Color ACCEPT_BUTTON_BORDER_COLOR = new Color(55, 82, 122);
+    private static final String LOGO_RESOURCE = "branding/denocke-elektrik-logo.png";
 
     private static final DateTimeFormatter INPUT_DATE_TIME =
             DateTimeFormatter.ISO_LOCAL_DATE_TIME;
@@ -83,6 +86,7 @@ public class PdfGenerator {
             addPositions(pdf, payload);
             addTotal(pdf, payload);
             addPaymentTerms(pdf, documentTitle, craftsman);
+            drawDecorativeAcceptanceButton(pdf, writer, documentTitle);
 
             pdf.close();
             return outputStream.toByteArray();
@@ -105,18 +109,13 @@ public class PdfGenerator {
 
         PdfPTable header = new PdfPTable(2);
         header.setWidthPercentage(100);
-        header.setWidths(new float[]{2.5f, 2.5f});
-        header.setSpacingAfter(8);
-
-        PdfPCell logoCell = borderlessCell();
-        logoCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
-        logoCell.addElement(loadLogo());
-        header.addCell(logoCell);
+        header.setWidths(new float[]{2.1f, 2.9f});
+        header.setSpacingAfter(2);
 
         PdfPCell contactCell = borderlessCell();
-        contactCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        contactCell.setHorizontalAlignment(Element.ALIGN_LEFT);
         contactCell.setVerticalAlignment(Element.ALIGN_TOP);
-        contactCell.addElement(rightAlignedParagraph(
+        contactCell.addElement(leftAlignedParagraph(
                 firstNonBlank(
                         craftsman != null ? craftsman.companyName : null,
                         craftsman != null ? craftsman.fullName() : null,
@@ -124,11 +123,17 @@ public class PdfGenerator {
                 ),
                 companyFont
         ));
-        contactCell.addElement(rightAlignedParagraph(
+        contactCell.addElement(leftAlignedParagraph(
                 buildCraftsmanContact(craftsman),
                 contactFont
         ));
         header.addCell(contactCell);
+
+        PdfPCell logoCell = borderlessCell();
+        logoCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        logoCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        logoCell.addElement(loadLogo());
+        header.addCell(logoCell);
 
         pdf.add(header);
         addAccentRule(pdf);
@@ -216,7 +221,7 @@ public class PdfGenerator {
         pdf.add(paragraph);
 
         PdfPTable accent = new PdfPTable(1);
-        accent.setWidthPercentage(22);
+        accent.setWidthPercentage(17.1f);
         accent.setHorizontalAlignment(Element.ALIGN_LEFT);
         accent.setSpacingAfter(16);
         PdfPCell accentCell = new PdfPCell();
@@ -328,7 +333,7 @@ public class PdfGenerator {
         );
 
         PdfPTable totalTable = new PdfPTable(1);
-        totalTable.setWidthPercentage(42);
+        totalTable.setWidthPercentage(34);
         totalTable.setHorizontalAlignment(Element.ALIGN_RIGHT);
         totalTable.setSpacingAfter(12);
 
@@ -338,6 +343,7 @@ public class PdfGenerator {
         totalCell.setBorderWidthTop(2);
         totalCell.setPaddingTop(8);
         totalCell.setPaddingBottom(8);
+        totalCell.setPaddingRight(0);
         totalCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
         totalCell.addElement(rightAlignedParagraph("GESAMTBETRAG", labelFont));
         totalCell.addElement(rightAlignedParagraph(
@@ -385,7 +391,47 @@ public class PdfGenerator {
         }
     }
 
-    private String buildCraftsmanContact(UserDto craftsman) {
+    private void drawDecorativeAcceptanceButton(
+            Document pdf,
+            PdfWriter writer,
+            String documentTitle
+    ) throws Exception {
+        if (!"Angebot".equals(documentTitle)) {
+            return;
+        }
+
+        PdfContentByte canvas = writer.getDirectContent();
+        float buttonWidth = 126f;
+        float buttonHeight = 34f;
+        float x = (pdf.getPageSize().getWidth() - buttonWidth) / 2f;
+        float y = 111f;
+
+        canvas.saveState();
+        canvas.setColorFill(ACCEPT_BUTTON_COLOR);
+        canvas.setColorStroke(ACCEPT_BUTTON_BORDER_COLOR);
+        canvas.setLineWidth(0.8f);
+        canvas.roundRectangle(x, y, buttonWidth, buttonHeight, 5.5f);
+        canvas.fillStroke();
+
+        BaseFont baseFont = BaseFont.createFont(
+                BaseFont.HELVETICA_BOLD,
+                BaseFont.WINANSI,
+                BaseFont.NOT_EMBEDDED
+        );
+        canvas.beginText();
+        canvas.setColorFill(Color.WHITE);
+        canvas.setFontAndSize(baseFont, 11.5f);
+        canvas.showTextAligned(
+                Element.ALIGN_CENTER,
+                "Annehmen",
+                x + buttonWidth / 2f,
+                y + 11.5f,
+                0
+        );
+        canvas.endText();
+        canvas.restoreState();
+    }
+private String buildCraftsmanContact(UserDto craftsman) {
         if (craftsman == null) {
             return "";
         }
@@ -395,7 +441,6 @@ public class PdfGenerator {
         appendLine(result, craftsman.fullAddress());
         appendLine(result, craftsman.businessEmail());
         appendLine(result, craftsman.companyPhoneNumber);
-        appendLine(result, craftsman.website);
         return result.toString().trim();
     }
 
@@ -539,11 +584,30 @@ public class PdfGenerator {
         }
 
         Image logo = Image.getInstance(logoUrl);
-        logo.scaleToFit(175, 52);
-        logo.setAlignment(Element.ALIGN_LEFT);
+        logo.scaleToFit(285, 92);
+        logo.setAlignment(Element.ALIGN_RIGHT);
         return logo;
     }
 
+    private Paragraph leftAlignedParagraph(String value, Font font) {
+        Paragraph paragraph = new Paragraph(
+                value != null ? value : "",
+                font
+        );
+        paragraph.setAlignment(Element.ALIGN_LEFT);
+        paragraph.setLeading(font.getSize() + 2);
+        return paragraph;
+    }
+
+    private Paragraph centerAlignedParagraph(String value, Font font) {
+        Paragraph paragraph = new Paragraph(
+                value != null ? value : "",
+                font
+        );
+        paragraph.setAlignment(Element.ALIGN_CENTER);
+        paragraph.setLeading(font.getSize() + 2);
+        return paragraph;
+    }
     private Paragraph rightAlignedParagraph(String value, Font font) {
         Paragraph paragraph = new Paragraph(
                 value != null ? value : "",

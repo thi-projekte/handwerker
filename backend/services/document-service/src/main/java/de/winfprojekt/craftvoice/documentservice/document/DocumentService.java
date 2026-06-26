@@ -156,6 +156,10 @@ public class DocumentService {
 
         document.recipientEmail = recipientEmail;
         document.recipientName = recipientName;
+        document.totalAmount = switch (type) {
+            case OFFER -> text(request.angebotsentwurf, "gesamtPreis");
+            case INVOICE -> text(request.rechnungsentwurf, "gesamtPreis");
+        };
 
         documentRepository.persist(document);
         documentRepository.flush();
@@ -200,10 +204,15 @@ public class DocumentService {
             throw new BadRequestException("Recipient email is missing for document");
         }
 
+        UserDto craftsman = authEnabled
+                ? userClient.getMe(requireAuthorizationHeader(authorizationHeader))
+                : createDevCraftsman();
+
         mailService.sendDocument(
                 document,
                 document.recipientEmail,
-                document.recipientName
+                document.recipientName,
+                craftsman
         );
     }
 
@@ -269,12 +278,7 @@ public class DocumentService {
     }
 
     private String buildFileName(DocumentType type, String referenceId) {
-        String prefix = switch (type) {
-            case OFFER -> "angebot";
-            case INVOICE -> "rechnung";
-        };
-
-        return prefix + "-" + referenceId + ".pdf";
+        return referenceId + ".pdf";
     }
 
     private UserDto createDevCraftsman() {
