@@ -63,6 +63,9 @@ public class OfferService {
     @Inject
     ObjectMapper objectMapper;
 
+    @Inject
+    org.eclipse.microprofile.context.ManagedExecutor managedExecutor;
+
     /**
      * Erstellt ein neues Angebot aus den übergebenen Request-Daten, persistiert
      * diese in die DB
@@ -329,12 +332,14 @@ public class OfferService {
         }
 
         // OS-5: PE-Fehler darf das persistierte Angebot nicht zurückrollen.
-        try {
-            processEngineClient.sendAngebotsentwurf(offer.businessKey, angebotsentwurfJson);
-        } catch (Exception e) {
-            LOG.errorf(e, "Angebot %s wurde gespeichert, aber die PE-Nachricht 'angebotsentwurf' konnte nicht zugestellt werden.",
-                    offer.businessKey);
-        }
+        managedExecutor.execute(() -> {
+            try {
+                processEngineClient.sendAngebotsentwurf(offer.businessKey, angebotsentwurfJson);
+            } catch (Exception e) {
+                LOG.errorf(e, "Angebot %s wurde gespeichert, aber die PE-Nachricht 'angebotsentwurf' konnte nicht zugestellt werden.",
+                        offer.businessKey);
+            }
+        });
     }
 
     /**
