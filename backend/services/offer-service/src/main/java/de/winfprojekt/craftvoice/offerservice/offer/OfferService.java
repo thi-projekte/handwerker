@@ -21,6 +21,7 @@ import de.winfprojekt.craftvoice.offerservice.routing.OsrmClient;
 import de.winfprojekt.craftvoice.offerservice.routing.RoutingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.WebApplicationException;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.OfferResponse;
@@ -413,13 +414,25 @@ public class OfferService {
         return response;
     }
 
+    private Long parseCustomerId(String customerId) {
+        if (customerId == null || customerId.isBlank()) {
+            throw new BadRequestException("Kunden-ID darf nicht leer sein");
+        }
+        try {
+            return Long.parseLong(customerId.trim());
+        } catch (NumberFormatException e) {
+            throw new BadRequestException("Kunden-ID muss numerisch sein");
+        }
+    }
+
     /**
      * Ermittelt die Kundenadresse anhand der customerId.
      * @param customerId ID des Kunden
      * @return Adresse als String für die Geocodierung
      */
     private String ermittleKundenadresse(String customerId) {
-        CustomerDTO customer = userServiceClient.getCustomer(Long.parseLong(customerId));
+        Long parsedId = parseCustomerId(customerId);
+        CustomerDTO customer = userServiceClient.getCustomer(parsedId);
         if (customer == null) {
             throw new IllegalArgumentException("Kunde mit ID " + customerId + " wurde nicht gefunden.");
         }
