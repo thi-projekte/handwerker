@@ -158,6 +158,7 @@ public class DocumentService {
         document.recipientName = recipientName;
 
         documentRepository.persist(document);
+        documentRepository.flush();
 
         return DocumentResponse.from(document);
     }
