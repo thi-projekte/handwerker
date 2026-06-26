@@ -32,16 +32,23 @@ public class DocumentResource {
             @HeaderParam(HttpHeaders.AUTHORIZATION) String authorizationHeader,
             GenerateDocumentRequest request
     ) {
-        DocumentResponse response = documentService.generateDocument(
-                DocumentType.OFFER,
-                businessKey,
-                authorizationHeader,
-                request
-        );
+        try {
+            DocumentResponse response = documentService.generateDocument(
+                    DocumentType.OFFER,
+                    businessKey,
+                    authorizationHeader,
+                    request
+            );
 
-        return Response.status(Response.Status.CREATED)
-                .entity(response)
-                .build();
+            System.out.println(response.toString());
+
+            return Response.status(Response.Status.CREATED)
+                    .entity(response)
+                    .build();
+        } catch (Throwable e) {
+            System.out.print(e.getMessage());
+            throw e;
+        }
     }
 
     @POST
