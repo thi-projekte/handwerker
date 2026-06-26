@@ -319,22 +319,13 @@ public class OfferService {
 
         offer.persist();
 
-        // Correlation: Prozess wartet an Event_10bgkb0 auf "angebotsentwurf"
-        OfferResponse response = OfferResponse.fromEntity(offer);
-        String angebotsentwurfJson;
-        try {
-            angebotsentwurfJson = objectMapper.writeValueAsString(response);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Serialisierung des Angebotsentwurfs fehlgeschlagen", e);
-        }
-
-        // OS-5: PE-Fehler darf das persistierte Angebot nicht zurückrollen.
-        try {
-            processEngineClient.sendAngebotsentwurf(offer.businessKey, angebotsentwurfJson);
-        } catch (Exception e) {
-            LOG.errorf(e, "Angebot %s wurde gespeichert, aber die PE-Nachricht 'angebotsentwurf' konnte nicht zugestellt werden.",
-                    offer.businessKey);
-        }
+        // Die PE-Korrelation "angebotsentwurf" wird NICHT hier ausgelöst.
+        // Grund: Diese Methode wird synchron aus dem Camunda-Service-Task /ki-ergebnis
+        // aufgerufen. Solange wir hier sind, hat der Service-Task noch kein 200 OK
+        // an die PE zurückgegeben - der Prozess steht also noch nicht am Message
+        // Catch Event und ein Correlate würde mit "Cannot correlate message" (HTTP 400)
+        // scheitern. Die Nachricht wird stattdessen in setArbeitsstunden() gesendet,
+        // sobald der Handwerker im Frontend bestätigt hat.
     }
 
     /**
@@ -399,7 +390,27 @@ public class OfferService {
         berechneGesamtpreis(offer);
 
         offer.persist();
-        return OfferResponse.fromEntity(offer);
+        OfferResponse response = OfferResponse.fromEntity(offer);
+
+        // Correlation: Prozess wartet an Event_10bgkb0 auf "angebotsentwurf".
+        // Aufruf erfolgt hier (und nicht im /ki-ergebnis-Flow), weil dieser Endpunkt
+        // vom Frontend ausgelöst wird - die PE steht garantiert am Message Catch Event.
+        String angebotsentwurfJson;
+        try {
+            angebotsentwurfJson = objectMapper.writeValueAsString(response);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Serialisierung des Angebotsentwurfs fehlgeschlagen", e);
+        }
+
+        // OS-5: PE-Fehler darf das persistierte Angebot nicht zurückrollen.
+        try {
+            processEngineClient.sendAngebotsentwurf(offer.businessKey, angebotsentwurfJson);
+        } catch (Exception e) {
+            LOG.errorf(e, "Angebot %s wurde gespeichert, aber die PE-Nachricht 'angebotsentwurf' konnte nicht zugestellt werden.",
+                    offer.businessKey);
+        }
+
+        return response;
     }
 
     /**
