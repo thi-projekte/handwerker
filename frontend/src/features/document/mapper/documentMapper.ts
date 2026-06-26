@@ -1,4 +1,4 @@
-import { Angebot } from "@/features/document/types/document.types";
+import type { Angebot, Rechnung, RechnungStatus } from "@/features/document/types/document.types";
 
 interface OfferDTO {
     id: number | string;
@@ -45,5 +45,51 @@ export function mapOfferDTOToAngebot(dto: OfferDTO): Angebot {
         datum: dto.createdAt?.split("T")[0] ?? "",
         status: mapStatus(dto.status),
         betrag: dto.gesamtPreis ?? 0,
+    };
+}
+interface RechnungDTO {
+    id: string;
+    rechnungsnummer: string;
+    vorname: string;
+    nachname: string;
+    strasse: string;
+    hausnummer: string;
+    plz: string;
+    ort: string;
+    erstelldatum: string;
+    faelligkeitsdatum: string;
+    status: string;
+    betrag: number;
+}
+
+const mapRechnungStatus = (status: string): RechnungStatus => {
+    switch (status) {
+        case "ERSTELLT":
+            return "Erstellt";
+        case "VERSENDET":
+            return "Versendet";
+        case "BEZAHLT":
+            return "Bezahlt";
+        case "IM_ZAHLUNGSVERZUG":
+            return "Im Zahlungsverzug";
+        default:
+            return "Erstellt";
+    }
+};
+
+export function mapRechnungDTOToRechnung(dto: RechnungDTO): Rechnung {
+    return {
+        id: dto.id,
+        rechnungsnummer: dto.rechnungsnummer,
+        vorname: dto.vorname,
+        nachname: dto.nachname,
+        strasse: dto.strasse,
+        hausnummer: dto.hausnummer,
+        plz: dto.plz,
+        ort: dto.ort,
+        erstelldatum: dto.erstelldatum?.split("T")[0] ?? "",
+        faelligkeitsdatum: dto.faelligkeitsdatum?.split("T")[0] ?? "",
+        status: mapRechnungStatus(dto.status),
+        betrag: dto.betrag ?? 0,
     };
 }

@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import "@/assets/stylesheets/stylesheet.css";
 import "@/features/document/components/DocumentPage.css";
+import { getRechnungen } from "@/data/api/documentApi";
+import { mapRechnungDTOToRechnung } from "@/features/document/mapper/documentMapper";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -211,6 +213,18 @@ export const DocumentPage = () => {
     };
     document.addEventListener("mousedown", handleOutsideClick);
     return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
+  useEffect(() => {
+    const loadRechnungen = async () => {
+      try {
+        const res = await getRechnungen();
+        setRechnungen(res.map(mapRechnungDTOToRechnung));
+      } catch (e) {
+        console.error("Failed to load invoices", e);
+      }
+    };
+
+    loadRechnungen();
   }, []);
 
   const resetFiltersAndSearch = () => {
