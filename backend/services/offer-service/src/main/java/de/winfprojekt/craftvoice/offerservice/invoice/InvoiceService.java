@@ -43,6 +43,9 @@ public class InvoiceService {
     @Inject
     ObjectMapper objectMapper;
 
+    @Inject
+    org.eclipse.microprofile.context.ManagedExecutor managedExecutor;
+
     /**
      * Erstellt eine neue Rechnung aus einem Angebot mit Status ANGENOMMEN.
      *
@@ -223,8 +226,13 @@ public class InvoiceService {
             throw new RuntimeException("Serialisierung des Rechnungsentwurfs fehlgeschlagen", e);
         }
 
-        processEngineClient.sendRechnungsentwurf(businessKey, rechnungsentwurfJson);
-
-        LOG.infof("Rechnungsentwurf für businessKey %s an PE übermittelt.", businessKey);
+        managedExecutor.execute(() -> {
+            try {
+                processEngineClient.sendRechnungsentwurf(businessKey, rechnungsentwurfJson);
+                LOG.infof("Rechnungsentwurf für businessKey %s an PE übermittelt.", businessKey);
+            } catch (Exception e) {
+                LOG.errorf(e, "Fehler beim Übermitteln des Rechnungsentwurfs für %s an die PE.", businessKey);
+            }
+        });
     }
 }
