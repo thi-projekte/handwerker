@@ -1,3 +1,5 @@
+import type { CustomerDTO } from "@/data/api/customerApi";
+
 export interface Customer {
   id: string;
   vorname: string;
@@ -8,7 +10,7 @@ export interface Customer {
   ort: string;
 }
 
-export function mapCustomerDTO(dto: any): Customer {
+export function mapCustomerDTO(dto: CustomerDTO): Customer {
   return {
     id: String(dto.id),
     vorname: dto.firstName ?? "",
