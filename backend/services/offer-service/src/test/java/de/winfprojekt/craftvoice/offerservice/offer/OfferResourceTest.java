@@ -315,16 +315,10 @@ class OfferResourceTest {
                     "Keine Arbeitszeit-Position bei ki-ergebnis erwartet");
         });
 
-        // sendAngebotsentwurf muss genau einmal aufgerufen werden
-        ArgumentCaptor<String> jsonCaptor = ArgumentCaptor.forClass(String.class);
-        verify(processEngineClient, times(1)).sendAngebotsentwurf(Mockito.eq(businessKey), jsonCaptor.capture());
-
-        // Korrekturvorschläge müssen im serialisierten JSON enthalten sein
-        String sentJson = jsonCaptor.getValue();
-        assertTrue(sentJson.contains("korrekturvorschlaege"),
-                "JSON muss das Feld korrekturvorschlaege enthalten");
-        assertTrue(sentJson.contains("Materialkosten prüfen"),
-                "JSON muss den Korrekturvorschlag 'Materialkosten prüfen' enthalten");
+        // sendAngebotsentwurf darf bei /ki-ergebnis NICHT aufgerufen werden -
+        // die PE wartet zu diesem Zeitpunkt noch im Service Task, nicht am Catch Event.
+        // Der Versand erfolgt erst aus /arbeitsstunden (siehe gesonderten Test).
+        verify(processEngineClient, never()).sendAngebotsentwurf(any(), any());
     }
 
     /**
@@ -892,7 +886,7 @@ class OfferResourceTest {
         });
 
         Mockito.verify(osrmClient, org.mockito.Mockito.never()).getDistanzKm(anyString(), anyString());
-        verify(processEngineClient, times(1)).sendAngebotsentwurf(Mockito.eq(businessKey), anyString());
+        verify(processEngineClient, never()).sendAngebotsentwurf(any(), any());
     }
 
     /**
@@ -950,7 +944,7 @@ class OfferResourceTest {
             assertNull(anfahrt.einzelPreis);
         });
 
-        verify(processEngineClient, times(1)).sendAngebotsentwurf(Mockito.eq(businessKey), anyString());
+        verify(processEngineClient, never()).sendAngebotsentwurf(any(), any());
     }
 
     /**
@@ -1007,7 +1001,7 @@ class OfferResourceTest {
             assertNull(anfahrt.einzelPreis);
         });
 
-        verify(processEngineClient, times(1)).sendAngebotsentwurf(Mockito.eq(businessKey), anyString());
+        verify(processEngineClient, never()).sendAngebotsentwurf(any(), any());
     }
 
     /**
@@ -1064,7 +1058,7 @@ class OfferResourceTest {
                     "Keine Anfahrtskosten-Position bei OSRM-Fehler");
         });
 
-        verify(processEngineClient, times(1)).sendAngebotsentwurf(Mockito.eq(businessKey), anyString());
+        verify(processEngineClient, never()).sendAngebotsentwurf(any(), any());
     }
 
     // =========================================================================
@@ -1198,6 +1192,7 @@ class OfferResourceTest {
         StundensatzResponse stundensatzResponse = new StundensatzResponse();
         stundensatzResponse.stundensatz = new BigDecimal("65.00");
         when(userServiceClient.getStundensatz()).thenReturn(stundensatzResponse);
+        Mockito.doNothing().when(processEngineClient).sendAngebotsentwurf(any(), any());
 
         // Erster Aufruf: 2 Stunden
         given()
@@ -1240,6 +1235,9 @@ class OfferResourceTest {
             assertEquals(new BigDecimal("195.00"), arbeit.positionsPreis);
             assertEquals(new BigDecimal("65.00"), arbeit.einzelPreis);
         });
+
+        // Pro /arbeitsstunden-Aufruf wird die PE einmal korreliert.
+        verify(processEngineClient, times(2)).sendAngebotsentwurf(Mockito.eq(businessKey), anyString());
     }
 
     /**
@@ -1264,6 +1262,7 @@ class OfferResourceTest {
         // user-service wirft eine Exception
         when(userServiceClient.getStundensatz())
                 .thenThrow(new RuntimeException("user-service nicht erreichbar"));
+        Mockito.doNothing().when(processEngineClient).sendAngebotsentwurf(any(), any());
 
         given()
                 .contentType(ContentType.JSON)
@@ -1283,6 +1282,57 @@ class OfferResourceTest {
                     .anyMatch(p -> "Arbeitszeit".equals(p.bezeichnung)),
                     "Keine Arbeitszeit-Position bei user-service-Ausfall erwartet");
         });
+
+        // Auch ohne Arbeitszeit-Position muss die PE korreliert werden -
+        // sonst wartet der Prozess ewig am Catch Event.
+        verify(processEngineClient, times(1)).sendAngebotsentwurf(Mockito.eq(businessKey), anyString());
+    }
+
+    /**
+     * Happy-Path-Test: /arbeitsstunden persistiert die Arbeitszeit-Position
+     * UND korreliert die PE-Nachricht "angebotsentwurf" mit dem serialisierten
+     * Angebot - inklusive zuvor gesetzter Korrekturvorschläge.
+     */
+    @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
+    void arbeitsstunden_shouldCorrelateAngebotsentwurfWithCompleteJson() {
+        Offer offer = new Offer();
+        offer.customerId = "1";
+        offer.handwerkerId = "99";
+        offer.businessKey = "angebot-" + UUID.randomUUID().toString();
+        offer.status = Offer.STATUS_KI_FERTIG;
+        offer.korrekturvorschlaege = new java.util.ArrayList<>(java.util.List.of("Materialkosten prüfen"));
+        QuarkusTransaction.requiringNew().run(() -> offer.persist());
+        final String businessKey = offer.businessKey;
+
+        StundensatzResponse stundensatzResponse = new StundensatzResponse();
+        stundensatzResponse.stundensatz = new BigDecimal("65.00");
+        when(userServiceClient.getStundensatz()).thenReturn(stundensatzResponse);
+        Mockito.doNothing().when(processEngineClient).sendAngebotsentwurf(any(), any());
+
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+                {
+                  "arbeitsdauerStunden": 2
+                }
+                """)
+                .when()
+                .post("/angebote/{businesskey}/arbeitsstunden", businessKey)
+                .then()
+                .statusCode(200);
+
+        ArgumentCaptor<String> jsonCaptor = ArgumentCaptor.forClass(String.class);
+        verify(processEngineClient, times(1)).sendAngebotsentwurf(Mockito.eq(businessKey), jsonCaptor.capture());
+
+        String sentJson = jsonCaptor.getValue();
+        assertTrue(sentJson.contains("korrekturvorschlaege"),
+                "JSON muss das Feld korrekturvorschlaege enthalten");
+        assertTrue(sentJson.contains("Materialkosten prüfen"),
+                "JSON muss den Korrekturvorschlag 'Materialkosten prüfen' enthalten");
     }
 
     @Test

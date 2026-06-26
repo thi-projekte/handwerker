@@ -319,13 +319,11 @@ public class OfferService {
 
         offer.persist();
 
-        // Die PE-Korrelation "angebotsentwurf" wird NICHT hier ausgelöst.
+        // Die PE-Korrelation "angebotsentwurf" wird hier NICHT ausgelöst.
         // Grund: Diese Methode wird synchron aus dem Camunda-Service-Task /ki-ergebnis
-        // aufgerufen. Solange wir hier sind, hat der Service-Task noch kein 200 OK
-        // an die PE zurückgegeben - der Prozess steht also noch nicht am Message
-        // Catch Event und ein Correlate würde mit "Cannot correlate message" (HTTP 400)
-        // scheitern. Die Nachricht wird stattdessen in setArbeitsstunden() gesendet,
-        // sobald der Handwerker im Frontend bestätigt hat.
+        // aufgerufen - der Service-Task hat noch kein 200 OK zurückgegeben, der Prozess
+        // steht also noch nicht am Catch Event. Der Versand erfolgt aus setArbeitsstunden(),
+        // weil der Endpunkt /arbeitsstunden vom Frontend ausgelöst wird.
     }
 
     /**
@@ -392,9 +390,11 @@ public class OfferService {
         offer.persist();
         OfferResponse response = OfferResponse.fromEntity(offer);
 
-        // Correlation: Prozess wartet an Event_10bgkb0 auf "angebotsentwurf".
-        // Aufruf erfolgt hier (und nicht im /ki-ergebnis-Flow), weil dieser Endpunkt
-        // vom Frontend ausgelöst wird - die PE steht garantiert am Message Catch Event.
+        // Die PE erwartet "angebotsentwurf" in jedem Fall - unabhängig davon, ob
+        // der Handwerker anschließend genehmigt, ändert oder korrigiert. Erst nach
+        // dieser Korrelation läuft der Prozess weiter zum Event-Gateway, an dem das
+        // Frontend den nächsten Schritt (genehmigungAngebot / korrekturschnipsel)
+        // auswählt.
         String angebotsentwurfJson;
         try {
             angebotsentwurfJson = objectMapper.writeValueAsString(response);

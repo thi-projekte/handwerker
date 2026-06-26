@@ -12,7 +12,6 @@ import {
 } from "@/data/api/offerService";
 import {
   sendGenehmigung,
-  sendAngebotsentwurf,
   sendKorrekturschnipsel,
 } from "@/data/api/processEngineService";
 import { searchMaterials } from "@/data/api/catalogService";
@@ -687,52 +686,6 @@ export const ReviewPage = () => {
     reihenfolgeGeaendert ||
     materialien.some((p) => p.gewaehlteAlternativeIndex !== null);
 
-  // ─── Payload-Builder ─────────────────────────────────────────────────────
-
-  const buildAngebotsentwurf = () => {
-    const allPositionen = materialien.map((p) => {
-      const ap =
-        p.gewaehlteAlternativeIndex !== null
-          ? p.alternativen[p.gewaehlteAlternativeIndex]
-          : p;
-      return {
-        bezeichnung: p.manuellGeaendert ? p.bezeichnung : ap.bezeichnung,
-        beschreibung: ap.beschreibung,
-        menge: p.manuellGeaendert ? p.menge : ap.menge,
-        einheit: ap.einheit,
-        preis: p.manuellGeaendert ? p.preis : ap.preis,
-      };
-    });
-
-    return {
-      // Kundendaten kommen noch nicht aus dem customer-service — wir reichen die
-      // vom offer-service gelieferte customerId weiter, Adresse/Ort als Platzhalter.
-      kundendaten: {
-        name: offerData ? String(offerData.customerId) : "",
-        adresse: "—",
-        ort: "—",
-      },
-      strukturierteAngebotspositionMitPreis: { positionen: allPositionen },
-      arbeitszeit: {
-        mitarbeiter: maZeilen.map((z) => ({
-          mitarbeiterId: "",
-          mitarbeiterName: z.name || undefined,
-          stundensatz: z.stundensatz ?? undefined,
-          stunden: z.stunden,
-        })),
-        anfahrtspauschale: anfahrt,
-      },
-      // Freitext-Stichpunkte gibt es in der entschlackten UI nicht mehr — die
-      // Felder bleiben im PE-Vertrag erhalten, werden aber leer gesendet.
-      stichpunkte: {
-        leistungen: [] as string[],
-        materialien: [] as string[],
-        arbeitszeit: [] as string[],
-      },
-      notiz: "",
-    };
-  };
-
   // ─── Bestätigen-Handler ──────────────────────────────────────────────────
 
   const handleBestaetigen = async () => {
@@ -749,24 +702,10 @@ export const ReviewPage = () => {
     const gesamtStunden = maZeilen.reduce((sum, z) => sum + z.stunden, 0);
 
     try {
-      await setArbeitsstunden(businessKey, {
-        arbeitsdauerStunden: gesamtStunden,
-      });
-
-      if (istManuell) {
-        // ── Fall 3: Manuelle Änderung → neuer KI-Durchlauf ──
-        // Hinweis: der offer-service-Korrektur-Endpunkt existiert noch nicht
-        // (offerService.sendKorrektur wirft bewusst) — der Flow läuft aktuell
-        // ausschließlich über die PE-Nachricht.
-        await sendKorrekturschnipsel(
-          businessKey,
-          kiHinweis || "Manuelle Änderung durch Handwerker",
-        );
-        navigate("/laden", {
-          state: { businessKey, offerId, mode: "ki-warten" },
-        });
-      } else if (istReihenfolge) {
-        // ── Fall 2: Reihenfolge / Alternative ──
+      // In Fall 2 müssen die Positions-Änderungen VOR setArbeitsstunden ans Backend,
+      // damit der Offer-Service "angebotsentwurf" mit den aktuellen Positionen an
+      // die PE sendet.
+      if (istReihenfolge && !istManuell) {
         await updateOfferPositions(businessKey, {
           strukturierteAngebotspositionen: {
             leistungen: [],
@@ -781,7 +720,28 @@ export const ReviewPage = () => {
           },
           korrekturvorschlaege: [],
         });
-        await sendAngebotsentwurf(businessKey, buildAngebotsentwurf());
+      }
+
+      // setArbeitsstunden triggert im Offer-Service die PE-Nachricht "angebotsentwurf".
+      // Erst danach kann die PE die fallspezifische Folge-Message (genehmigungAngebot /
+      // korrekturschnipsel) am nachgelagerten Event-Gateway korrelieren.
+      await setArbeitsstunden(businessKey, {
+        arbeitsdauerStunden: gesamtStunden,
+      });
+
+      if (istManuell) {
+        // ── Fall 3: Manuelle Änderung → neuer KI-Durchlauf ──
+        await sendKorrekturschnipsel(
+          businessKey,
+          kiHinweis || "Manuelle Änderung durch Handwerker",
+        );
+        navigate("/laden", {
+          state: { businessKey, offerId, mode: "ki-warten" },
+        });
+      } else if (istReihenfolge) {
+        // ── Fall 2: Reihenfolge / Alternative ──
+        // "angebotsentwurf" wurde bereits via setArbeitsstunden vom Offer-Service
+        // gesendet (mit den oben persistierten Positionen).
         navigate("/laden", {
           state: { businessKey, offerId, mode: "versand-warten" },
         });
