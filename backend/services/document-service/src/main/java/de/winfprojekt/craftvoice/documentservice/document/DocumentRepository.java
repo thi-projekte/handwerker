@@ -14,6 +14,10 @@ public class DocumentRepository implements PanacheRepository<Document> {
                 .firstResultOptional();
     }
 
+    public Optional<Document> findByBusinessKeyAndType(String businessKey, DocumentType type) {
+        return find("type = ?1 AND referenceId = ?2", type, businessKey).firstResultOptional();
+    }
+
     public Optional<Document> findByTypeAndReferenceIdAndOwnerId(
             DocumentType type,
             String referenceId,
