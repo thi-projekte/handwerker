@@ -51,7 +51,7 @@ export const OfferSharePage = () => {
    * Lädt das PDF-Dokument mit bis zu 5 Versuchen (30s Gesamtwartezeit).
    * Die PE triggert die PDF-Erstellung asynchron — kurze Wartezeit nötig.
    */
-  const ladePdf = useCallback(async (id: number, maxVersuche = 5) => {
+  const ladePdf = useCallback(async (id: string, maxVersuche = 5) => {
     setPdfLoading(true);
     for (let i = 0; i < maxVersuche; i++) {
       try {
