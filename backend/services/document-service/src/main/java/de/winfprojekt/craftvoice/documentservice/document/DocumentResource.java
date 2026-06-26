@@ -109,7 +109,7 @@ public class DocumentResource {
     }
 
     @GET
-    @Path("/offers/{businessKey}/metadata")
+    @Path("/offers/{businessKey}")
     public DocumentResponse getDocumentMetadata(@PathParam("businessKey") String businessKey) {
         Optional<Document> doc = documentRepository.findByBusinessKeyAndType(businessKey, DocumentType.OFFER);
         if (doc.isEmpty()) {

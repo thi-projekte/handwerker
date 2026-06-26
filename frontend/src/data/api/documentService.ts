@@ -62,10 +62,10 @@ export function getPdfDownloadUrl(documentId: string): string {
  * @param offerId  Numerische ID des Angebots aus dem offer-service
  */
 export async function getDocumentByOfferId(
-  offerId: number,
+  businessKey: number,
 ): Promise<DocumentMetadata | null> {
   const res = await fetch(
-    `${API_CONFIG.DOCUMENT_SERVICE_URL}/documents/offers/${offerId}`,
+    `${API_CONFIG.DOCUMENT_SERVICE_URL}/documents/offers/${businessKey}`,
     { headers: await getAuthHeaders() },
   );
 

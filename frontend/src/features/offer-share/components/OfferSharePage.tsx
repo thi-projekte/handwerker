@@ -82,8 +82,8 @@ export const OfferSharePage = () => {
           const offer = await getOfferByBusinessKey(businessKey);
           setOfferData(offer);
         }
-        if (offerId) {
-          await ladePdf(offerId);
+        if (businessKey) {
+          await ladePdf(businessKey);
         }
       } catch (err) {
         console.error("[OfferSharePage] Laden fehlgeschlagen:", err);
@@ -94,7 +94,7 @@ export const OfferSharePage = () => {
     };
 
     laden();
-  }, [businessKey, offerId, ladePdf]);
+  }, [businessKey, ladePdf]);
 
   // ─── Share-Aktionen ──────────────────────────────────────────────────────
 
@@ -324,7 +324,7 @@ export const OfferSharePage = () => {
                 PDF noch nicht verfügbar.{" "}
                 <button
                   className="offer-pdf-retry"
-                  onClick={() => offerId && ladePdf(offerId)}
+                  onClick={() => businessKey && ladePdf(businessKey)}
                 >
                   Erneut versuchen
                 </button>
