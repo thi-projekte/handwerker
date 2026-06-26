@@ -13,6 +13,7 @@ interface OfferPosition {
 }
 
 interface OfferData {
+  status?: string;
   positions: OfferPosition[];
   gesamtPreis?: number;
 }
@@ -120,24 +121,31 @@ export const OfferAcceptancePage = () => {
         </div>
       </section>
 
-      <section className="offer-acceptance-actions">
-        <button
-          className="btn btn-reject"
-          disabled={isSubmitting}
-          onClick={() => handleDecision("abgelehnt")}
-        >
-          <XCircle size={20} />
-          Angebot ablehnen
-        </button>
-        <button
-          className="btn btn-primary"
-          disabled={isSubmitting}
-          onClick={() => handleDecision("angenommen")}
-        >
-          <CheckCircle size={20} />
-          Zahlungspflichtig bestellen
-        </button>
-      </section>
+      {offer.status === "ANGENOMMEN" || offer.status === "ABGELEHNT" ? (
+        <section className="card offer-acceptance-section" style={{ textAlign: "center", marginTop: "2rem" }}>
+          <h3>Angebot wurde bereits {offer.status.toLowerCase()}</h3>
+          <p className="text-secondary">Dieses Angebot wurde bereits beantwortet und kann nicht mehr geändert werden.</p>
+        </section>
+      ) : (
+        <section className="offer-acceptance-actions">
+          <button
+            className="btn btn-reject"
+            disabled={isSubmitting}
+            onClick={() => handleDecision("abgelehnt")}
+          >
+            <XCircle size={20} />
+            Angebot ablehnen
+          </button>
+          <button
+            className="btn btn-primary"
+            disabled={isSubmitting}
+            onClick={() => handleDecision("angenommen")}
+          >
+            <CheckCircle size={20} />
+            Zahlungspflichtig bestellen
+          </button>
+        </section>
+      )}
     </div>
   );
 };

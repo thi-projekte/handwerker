@@ -488,8 +488,8 @@ public class OfferService {
             throw new WebApplicationException("Angebot mit Token nicht gefunden", 404);
         }
 
-        if (!Offer.STATUS_VERSENDET.equals(offer.status)) {
-            throw new WebApplicationException("Angebot befindet sich nicht im Status VERSENDET", 409);
+        if (Offer.STATUS_ANGENOMMEN.equals(offer.status) || Offer.STATUS_ABGELEHNT.equals(offer.status)) {
+            throw new WebApplicationException("Angebot wurde bereits beantwortet (angenommen oder abgelehnt)", 409);
         }
 
         String entscheidung = request.entscheidung;
@@ -704,9 +704,8 @@ public class OfferService {
             throw new WebApplicationException("Angebot mit Token nicht gefunden", 404);
         }
 
-        if (!Offer.STATUS_VERSENDET.equals(offer.status)) {
-            throw new WebApplicationException("Angebot befindet sich nicht im Status VERSENDET", 409);
-        }
+        // Wir erlauben das Abrufen immer (z.B. auch für die Vorschau),
+        // solange der Token stimmt.
 
         return OfferResponse.fromEntity(offer);
     }
