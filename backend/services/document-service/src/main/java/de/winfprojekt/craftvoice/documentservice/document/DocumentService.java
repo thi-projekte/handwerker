@@ -221,13 +221,22 @@ public class DocumentService {
     }
 
     public Document getPdfDocument(Long documentId) {
-        return findOwnedDocument(documentId);
+        return findDocument(documentId);
     }
 
     private Document findOwnedDocument(Long documentId) {
         String ownerId = resolveCurrentOwnerId();
 
         return documentRepository.findByIdAndOwnerId(documentId, ownerId)
+                .orElseThrow(() -> new DocumentNotFoundException(
+                        "Document not found: " + documentId
+                ));
+    }
+
+    private Document findDocument(Long documentId) {
+        //String ownerId = resolveCurrentOwnerId();
+
+        return documentRepository.findByIdOptional(documentId)
                 .orElseThrow(() -> new DocumentNotFoundException(
                         "Document not found: " + documentId
                 ));
