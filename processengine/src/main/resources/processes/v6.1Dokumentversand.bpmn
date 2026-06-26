@@ -4,11 +4,17 @@
     <bpmn:participant id="pool_06" name="Dokumentversandprozess" processRef="dokumentversand" />
     <bpmn:participant id="Participant_1g6mume" name="Backend" />
     <bpmn:messageFlow id="Flow_0kxurh5" name="Dokument" sourceRef="Activity_6.1" targetRef="Participant_1g6mume" />
+    <bpmn:messageFlow id="Flow_1761w2n" sourceRef="Activity_6.2" targetRef="Participant_1g6mume" />
   </bpmn:collaboration>
   <bpmn:process id="dokumentversand" isExecutable="true" camunda:historyTimeToLive="10">
     <bpmn:startEvent id="Event_1g2j0m2" name="Dokument muss verschickt werden">
       <bpmn:outgoing>Flow_14uke9r</bpmn:outgoing>
     </bpmn:startEvent>
+    <bpmn:endEvent id="Event_0wiueb8" name="Dokument erfolgreich versendet">
+      <bpmn:incoming>Flow_0nzzrbu</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_14uke9r" sourceRef="Event_1g2j0m2" targetRef="Activity_6.1" />
+    <bpmn:sequenceFlow id="Flow_0rjimwc" sourceRef="Activity_6.1" targetRef="Activity_6.2" />
     <bpmn:sendTask id="Activity_6.1" name="Dokument versenden">
       <bpmn:extensionElements>
         <camunda:connector>
@@ -47,11 +53,29 @@ JSON.stringify(payload);</camunda:script>
       <bpmn:incoming>Flow_14uke9r</bpmn:incoming>
       <bpmn:outgoing>Flow_0rjimwc</bpmn:outgoing>
     </bpmn:sendTask>
-    <bpmn:endEvent id="Event_0wiueb8" name="Dokument erfolgreich versendet">
+    <bpmn:sequenceFlow id="Flow_0nzzrbu" sourceRef="Activity_6.2" targetRef="Event_0wiueb8" />
+    <bpmn:serviceTask id="Activity_6.2" name="Verstand-bestätigung senden">
+      <bpmn:extensionElements>
+        <camunda:connector>
+          <camunda:connectorId>http-connector</camunda:connectorId>
+        </camunda:connector>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="url">http://offerservice-craftvoice.winfprojekt.de/angebote/{businessKey}/versendet</camunda:inputParameter>
+          <camunda:inputParameter name="method">POST</camunda:inputParameter>
+          <camunda:inputParameter name="payload">
+            <camunda:script scriptFormat="JavaScript">var customerId = execution.getVariable("customerId");
+var businessKey = execution.getProcessBusinessKey();
+
+JSON.stringify({
+  businessKey: businessKey,
+  customerId: customerId
+});</camunda:script>
+          </camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
       <bpmn:incoming>Flow_0rjimwc</bpmn:incoming>
-    </bpmn:endEvent>
-    <bpmn:sequenceFlow id="Flow_14uke9r" sourceRef="Event_1g2j0m2" targetRef="Activity_6.1" />
-    <bpmn:sequenceFlow id="Flow_0rjimwc" sourceRef="Activity_6.1" targetRef="Event_0wiueb8" />
+      <bpmn:outgoing>Flow_0nzzrbu</bpmn:outgoing>
+    </bpmn:serviceTask>
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_13w5r0a">
@@ -65,22 +89,30 @@ JSON.stringify(payload);</camunda:script>
           <dc:Bounds x="175" y="363" width="88" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_1d6osfx_di" bpmnElement="Activity_6.1">
-        <dc:Bounds x="408" y="298" width="100" height="80" />
-        <bpmndi:BPMNLabel />
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_0wiueb8_di" bpmnElement="Event_0wiueb8">
         <dc:Bounds x="680" y="320" width="36" height="36" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="672" y="363" width="52" height="40" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1d6osfx_di" bpmnElement="Activity_6.1">
+        <dc:Bounds x="340" y="298" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_03ifdzx_di" bpmnElement="Activity_6.2">
+        <dc:Bounds x="510" y="298" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_14uke9r_di" bpmnElement="Flow_14uke9r">
         <di:waypoint x="236" y="338" />
-        <di:waypoint x="408" y="338" />
+        <di:waypoint x="340" y="338" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0rjimwc_di" bpmnElement="Flow_0rjimwc">
-        <di:waypoint x="508" y="338" />
+        <di:waypoint x="440" y="338" />
+        <di:waypoint x="510" y="338" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0nzzrbu_di" bpmnElement="Flow_0nzzrbu">
+        <di:waypoint x="610" y="338" />
         <di:waypoint x="680" y="338" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="Participant_0hfqe7w_di" bpmnElement="Participant_1g6mume" isHorizontal="true">
@@ -88,11 +120,15 @@ JSON.stringify(payload);</camunda:script>
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_0kxurh5_di" bpmnElement="Flow_0kxurh5">
-        <di:waypoint x="458" y="298" />
-        <di:waypoint x="458" y="140" />
+        <di:waypoint x="390" y="298" />
+        <di:waypoint x="390" y="140" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="474" y="226" width="52" height="14" />
+          <dc:Bounds x="406" y="226" width="52" height="14" />
         </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1761w2n_di" bpmnElement="Flow_1761w2n">
+        <di:waypoint x="560" y="298" />
+        <di:waypoint x="560" y="140" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
