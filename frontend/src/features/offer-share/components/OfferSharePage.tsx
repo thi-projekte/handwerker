@@ -121,7 +121,7 @@ export const OfferSharePage = () => {
     };
 
     laden();
-  }, [businessKey, ladePdf]);
+  }, [businessKey, offerId, ladePdf]);
 
   // ─── Share-Aktionen ──────────────────────────────────────────────────────
 

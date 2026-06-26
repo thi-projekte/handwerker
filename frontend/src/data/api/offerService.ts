@@ -364,3 +364,34 @@ export async function updateOfferStatus(
     throw new Error(`Status-Update auf ${status} fehlgeschlagen: ${res.status}`);
   }
 }
+
+// ─── Öffentliche Endpunkte (ohne Auth) ──────────────────────────────────────
+
+/**
+ * Lädt ein Angebot über den öffentlichen Annahme-Token.
+ * (Benötigt keinen Login)
+ */
+export async function getPublicOffer(token: string) {
+  const response = await fetch(`${API_CONFIG.OFFER_SERVICE_URL}/angebote/annahme/${token}`);
+  if (!response.ok) {
+    throw new Error("Das Angebot konnte nicht gefunden werden oder ist nicht mehr gültig.");
+  }
+  return await response.json();
+}
+
+/**
+ * Nimmt ein Angebot über den Annahme-Token an oder lehnt es ab.
+ * (Benötigt keinen Login)
+ */
+export async function acceptPublicOffer(token: string, entscheidung: "angenommen" | "abgelehnt") {
+  const response = await fetch(`${API_CONFIG.OFFER_SERVICE_URL}/angebote/annahme/${token}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ entscheidung })
+  });
+
+  if (!response.ok) {
+    throw new Error("Fehler bei der Angebotsannahme.");
+  }
+  return await response.json();
+}

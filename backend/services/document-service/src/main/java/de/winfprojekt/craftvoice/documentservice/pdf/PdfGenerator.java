@@ -17,6 +17,8 @@ import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPageEventHelper;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
+import com.lowagie.text.pdf.PdfAnnotation;
+import com.lowagie.text.pdf.PdfAction;
 import de.winfprojekt.craftvoice.documentservice.client.user.UserDto;
 import jakarta.enterprise.context.ApplicationScoped;
 
@@ -85,8 +87,10 @@ public class PdfGenerator {
             addTitle(pdf, documentTitle);
             addPositions(pdf, payload);
             addTotal(pdf, payload);
+            if ("Angebot".equals(documentTitle)) {
+                addAcceptanceLink(pdf, payload);
+            }
             addPaymentTerms(pdf, documentTitle, craftsman);
-            drawDecorativeAcceptanceButton(pdf, writer, documentTitle);
 
             pdf.close();
             return outputStream.toByteArray();
@@ -391,45 +395,29 @@ public class PdfGenerator {
         }
     }
 
-    private void drawDecorativeAcceptanceButton(
-            Document pdf,
-            PdfWriter writer,
-            String documentTitle
-    ) throws Exception {
-        if (!"Angebot".equals(documentTitle)) {
+    private void addAcceptanceLink(Document pdf, JsonNode payload) throws Exception {
+        String annahmeToken = text(payload, "annahmeToken");
+        if (annahmeToken == null || annahmeToken.isBlank()) {
             return;
         }
 
-        PdfContentByte canvas = writer.getDirectContent();
-        float buttonWidth = 126f;
-        float buttonHeight = 34f;
-        float x = (pdf.getPageSize().getWidth() - buttonWidth) / 2f;
-        float y = 111f;
-
-        canvas.saveState();
-        canvas.setColorFill(ACCEPT_BUTTON_COLOR);
-        canvas.setColorStroke(ACCEPT_BUTTON_BORDER_COLOR);
-        canvas.setLineWidth(0.8f);
-        canvas.roundRectangle(x, y, buttonWidth, buttonHeight, 5.5f);
-        canvas.fillStroke();
-
-        BaseFont baseFont = BaseFont.createFont(
-                BaseFont.HELVETICA_BOLD,
-                BaseFont.WINANSI,
-                BaseFont.NOT_EMBEDDED
+        Font linkFont = FontFactory.getFont(
+                FontFactory.HELVETICA_BOLD,
+                11,
+                Font.UNDERLINE,
+                ACCENT_COLOR
         );
-        canvas.beginText();
-        canvas.setColorFill(Color.WHITE);
-        canvas.setFontAndSize(baseFont, 11.5f);
-        canvas.showTextAligned(
-                Element.ALIGN_CENTER,
-                "Annehmen",
-                x + buttonWidth / 2f,
-                y + 11.5f,
-                0
-        );
-        canvas.endText();
-        canvas.restoreState();
+
+        String frontendUrl = "https://cv.winfprojekt.de/angebot/" + annahmeToken;
+        Chunk linkChunk = new Chunk("Klicken Sie hier, um das Angebot direkt online anzunehmen oder abzulehnen.", linkFont);
+        linkChunk.setAnchor(frontendUrl);
+
+        Paragraph linkParagraph = new Paragraph(linkChunk);
+        linkParagraph.setSpacingBefore(30);
+        linkParagraph.setSpacingAfter(10);
+        linkParagraph.setAlignment(Element.ALIGN_CENTER);
+
+        pdf.add(linkParagraph);
     }
 private String buildCraftsmanContact(UserDto craftsman) {
         if (craftsman == null) {
@@ -543,6 +531,8 @@ private String buildCraftsmanContact(UserDto craftsman) {
             ));
         }
     }
+
+
 
     private PdfPCell borderlessCell() {
         PdfPCell cell = new PdfPCell();
