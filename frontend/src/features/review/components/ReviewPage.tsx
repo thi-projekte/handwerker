@@ -622,7 +622,9 @@ export const ReviewPage = () => {
         zeilenId: newId(),
         name: "",
         stundensatz: konfigStundensatz,
-        stunden: 8,
+        // Standard 0 h: zwingt den Handwerker zu einer bewussten Eingabe > 0,
+        // bevor er fortfahren kann (siehe arbeitszeitVollstaendig).
+        stunden: 0,
         manuellGeaendert: true,
       },
     ]);
