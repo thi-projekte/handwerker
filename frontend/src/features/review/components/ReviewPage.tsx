@@ -131,7 +131,9 @@ const PositionsKarte = ({
       : position;
 
   const istAlternativ = position.gewaehlteAlternativeIndex !== null;
-  const anzeigeBez = position.manuellGeaendert ? position.bezeichnung : ap.bezeichnung;
+  const anzeigeBez = position.manuellGeaendert
+    ? position.bezeichnung
+    : ap.bezeichnung;
   const anzeigeMenge = position.manuellGeaendert ? position.menge : ap.menge;
   const anzeigePreis = position.manuellGeaendert ? position.preis : ap.preis;
 
@@ -192,7 +194,8 @@ const PositionsKarte = ({
             onChange={(e) => setBezWert(e.target.value)}
             onBlur={() => {
               setEditBez(false);
-              if (bezWert !== position.bezeichnung) onBezeichnungAendern(bezWert);
+              if (bezWert !== position.bezeichnung)
+                onBezeichnungAendern(bezWert);
             }}
             onKeyDown={(e) => e.key === "Enter" && setEditBez(false)}
           />
@@ -328,7 +331,9 @@ const ArbeitszeitZeileCard = ({
   const satzFehlt = zeile.stundensatz == null || zeile.stundensatz <= 0;
 
   return (
-    <div className={`review-ma-zeile ${zeile.manuellGeaendert ? "manuell" : ""}`}>
+    <div
+      className={`review-ma-zeile ${zeile.manuellGeaendert ? "manuell" : ""}`}
+    >
       <span className="review-ma-index">{index + 1}</span>
 
       <div className="review-ma-select-wrap">
@@ -539,7 +544,10 @@ export const ReviewPage = () => {
         const profil = await getCurrentUser();
         stundensatzDefault = profil.hourlyRate ?? null;
       } catch (e) {
-        console.warn("[ReviewPage] Stundensatz konnte nicht geladen werden:", e);
+        console.warn(
+          "[ReviewPage] Stundensatz konnte nicht geladen werden:",
+          e,
+        );
       }
       setKonfigStundensatz(stundensatzDefault);
 
@@ -599,9 +607,7 @@ export const ReviewPage = () => {
   const updateMaStunden = (zeilenId: string, stunden: number) =>
     setMaZeilen((prev) =>
       prev.map((z) =>
-        z.zeilenId === zeilenId
-          ? { ...z, stunden, manuellGeaendert: true }
-          : z,
+        z.zeilenId === zeilenId ? { ...z, stunden, manuellGeaendert: true } : z,
       ),
     );
 
@@ -649,7 +655,11 @@ export const ReviewPage = () => {
     setMaterialien((list) =>
       list.map((p) =>
         p.id === id
-          ? { ...p, gewaehlteAlternativeIndex: altIndex, manuellGeaendert: false }
+          ? {
+              ...p,
+              gewaehlteAlternativeIndex: altIndex,
+              manuellGeaendert: false,
+            }
           : p,
       ),
     );
@@ -895,7 +905,9 @@ export const ReviewPage = () => {
     return (
       <div className="card review-header">
         <span className="review-eyebrow">Fehler</span>
-        <p style={{ color: "var(--color-accent)", marginTop: 8 }}>{loadError}</p>
+        <p style={{ color: "var(--color-accent)", marginTop: 8 }}>
+          {loadError}
+        </p>
         <button
           className="button-primary"
           style={{ marginTop: 16 }}
@@ -986,8 +998,8 @@ export const ReviewPage = () => {
         </div>
         <p className="text-secondary" style={{ fontSize: 12, marginBottom: 8 }}>
           {offerData?.geschaetzteArbeitsdauerStunden != null
-            ? "Die KI hat eine Arbeitsdauer übernommen — bitte prüfen und den Stundensatz ergänzen."
-            : "Bitte trage Stunden und Stundensatz ein."}
+            ? "Deine Arbeitsdauer wurde übernommen. Bitte prüfen!"
+            : "Bitte trage Stunden und/oder Stundensatz ein."}
         </p>
         <div className="review-ma-liste">
           {maZeilen.map((z, i) => (
@@ -999,7 +1011,9 @@ export const ReviewPage = () => {
               onStundensatzAendern={(stundensatz) =>
                 updateMaFeld(z.zeilenId, { stundensatz })
               }
-              onStundenAendern={(stunden) => updateMaStunden(z.zeilenId, stunden)}
+              onStundenAendern={(stunden) =>
+                updateMaStunden(z.zeilenId, stunden)
+              }
               onEntfernen={() => removeMaZeile(z.zeilenId)}
               kannEntfernen={maZeilen.length > 1}
             />
@@ -1040,9 +1054,11 @@ export const ReviewPage = () => {
         <div className="review-section-header">
           <h2>Hinweis an die KI</h2>
         </div>
-        <p className="text-secondary" style={{ fontSize: 13, marginBottom: 10 }}>
-          Nur relevant bei manuellen Änderungen (Fall 3). Beschreibe, was
-          angepasst werden soll.
+        <p
+          className="text-secondary"
+          style={{ fontSize: 13, marginBottom: 10 }}
+        >
+          Beschreibe der KI, was angepasst werden soll.
         </p>
         <textarea
           className="review-notiz-input"
@@ -1055,7 +1071,9 @@ export const ReviewPage = () => {
 
       {/* ── Gesamtpreis ── */}
       <div className="card review-gesamtpreis">
-        <span className="review-gesamtpreis-label">Gesamtpreis (geschätzt)</span>
+        <span className="review-gesamtpreis-label">
+          Voraussichtlicher Gesamtpreis (inkl. Arbeitszeit & Anfahrt)
+        </span>
         <span className="review-gesamtpreis-value">
           {formatEuro(gesamtpreis)} €
         </span>
@@ -1091,7 +1109,9 @@ export const ReviewPage = () => {
           disabled={bestaetigt || isSubmitting || !arbeitszeitVollstaendig}
           onClick={handleBestaetigen}
         >
-          {isSubmitting ? "Wird übermittelt…" : "Angebot bestätigen"}
+          {isSubmitting
+            ? "Wird übermittelt…"
+            : "Angebot bestätigen/überarbeiten"}
         </button>
         <button
           className="review-secondary-btn"
