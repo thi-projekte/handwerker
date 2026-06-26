@@ -1,18 +1,13 @@
 package de.winfprojekt.craftvoice.documentservice.document;
 
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.HeaderParam;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.transaction.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Path("/documents")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -20,9 +15,11 @@ import java.util.List;
 public class DocumentResource {
 
     private final DocumentService documentService;
+    private final DocumentRepository documentRepository;
 
-    public DocumentResource(DocumentService documentService) {
+    public DocumentResource(DocumentService documentService, DocumentRepository documentRepository) {
         this.documentService = documentService;
+        this.documentRepository = documentRepository;
     }
 
     @POST
@@ -112,11 +109,42 @@ public class DocumentResource {
     }
 
     @GET
+    @Path("/offers/{businessKey}")
+    public DocumentResponse getDocumentMetadata(@PathParam("businessKey") String businessKey) {
+        Optional<Document> doc = documentRepository.findByBusinessKeyAndType(businessKey, DocumentType.OFFER);
+        if (doc.isEmpty()) {
+            throw new WebApplicationException("DOCUMENT NOT FOUND", 404);
+        }
+        return documentService.getDocumentMetadata(doc.get().id);
+    }
+
+
+    @GET
     @Path("/{documentId}/pdf")
     @Produces("application/pdf")
     @Transactional
     public Response downloadPdf(@PathParam("documentId") Long documentId) {
         Document document = documentService.getPdfDocument(documentId);
+
+        return Response.ok(document.pdfContent)
+                .type("application/pdf")
+                .header(
+                        "Content-Disposition",
+                        "attachment; filename=\"" + document.fileName + "\""
+                )
+                .build();
+    }
+
+    @GET
+    @Path("/offers/{businessKey}/pdf")
+    @Produces("application/pdf")
+    @Transactional
+    public Response downloadPdf(@PathParam("businessKey") String businessKey) {
+        Optional<Document> doc = documentRepository.findByBusinessKeyAndType(businessKey, DocumentType.OFFER);
+        if (doc.isEmpty()) {
+            throw new WebApplicationException("DOCUMENT NOT FOUND", 404);
+        }
+        Document document = documentService.getPdfDocument(doc.get().id);
 
         return Response.ok(document.pdfContent)
                 .type("application/pdf")

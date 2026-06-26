@@ -51,7 +51,7 @@ export const OfferSharePage = () => {
    * Lädt das PDF-Dokument mit bis zu 5 Versuchen (30s Gesamtwartezeit).
    * Die PE triggert die PDF-Erstellung asynchron — kurze Wartezeit nötig.
    */
-  const ladePdf = useCallback(async (id: number, maxVersuche = 5) => {
+  const ladePdf = useCallback(async (id: string, maxVersuche = 5) => {
     setPdfLoading(true);
     for (let i = 0; i < maxVersuche; i++) {
       try {
@@ -82,8 +82,8 @@ export const OfferSharePage = () => {
           const offer = await getOfferByBusinessKey(businessKey);
           setOfferData(offer);
         }
-        if (offerId) {
-          await ladePdf(offerId);
+        if (businessKey) {
+          await ladePdf(businessKey);
         }
       } catch (err) {
         console.error("[OfferSharePage] Laden fehlgeschlagen:", err);
@@ -94,7 +94,7 @@ export const OfferSharePage = () => {
     };
 
     laden();
-  }, [businessKey, offerId, ladePdf]);
+  }, [businessKey, ladePdf]);
 
   // ─── Share-Aktionen ──────────────────────────────────────────────────────
 
@@ -324,7 +324,7 @@ export const OfferSharePage = () => {
                 PDF noch nicht verfügbar.{" "}
                 <button
                   className="offer-pdf-retry"
-                  onClick={() => offerId && ladePdf(offerId)}
+                  onClick={() => businessKey && ladePdf(businessKey)}
                 >
                   Erneut versuchen
                 </button>
