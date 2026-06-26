@@ -15,6 +15,7 @@ import {
   sendKorrekturschnipsel,
 } from "@/data/api/processEngineService";
 import { searchMaterials } from "@/data/api/catalogService";
+import { getCurrentUser } from "@/services/userService";
 
 // ─── Typen ───────────────────────────────────────────────────────────────────
 
@@ -40,9 +41,10 @@ interface Position {
 }
 
 /**
- * Eine Arbeitszeit-Zeile. Mitarbeiter-Stammdaten (Name/Stundensatz) liefert der
- * user-service noch nicht — daher werden Name und Stundensatz hier frei erfasst.
- * Der Name darf leer bleiben; der Stundensatz ist Pflicht zum Bestätigen.
+ * Eine Arbeitszeit-Zeile. Der Stundensatz wird mit dem im user-service
+ * konfigurierten Satz vorbelegt (überschreibbar); der Mitarbeitername wird
+ * mangels Stammdaten frei erfasst. Der Name darf leer bleiben; der Stundensatz
+ * ist Pflicht zum Bestätigen.
  */
 interface ArbeitszeitZeile {
   zeilenId: string;
@@ -445,6 +447,10 @@ export const ReviewPage = () => {
   const [maZeilen, setMaZeilen] = useState<ArbeitszeitZeile[]>([]);
   const [anfahrt, setAnfahrt] = useState(0);
   const [editAnfahrt, setEditAnfahrt] = useState(false);
+  // Im user-service konfigurierter Stundensatz (Vorbelegung neuer Zeilen).
+  const [konfigStundensatz, setKonfigStundensatz] = useState<number | null>(
+    null,
+  );
 
   // ─── UI-State ───
   const [kiHinweis, setKiHinweis] = useState("");
@@ -523,10 +529,24 @@ export const ReviewPage = () => {
       const anfahrtPos = offer.positions.find((p) => p.type === "ANFAHRT");
       setAnfahrt(anfahrtPos?.einzelPreis ?? anfahrtPos?.positionsPreis ?? 0);
 
+      // Konfigurierten Stundensatz des Handwerkers aus dem user-service holen —
+      // dieselbe Quelle, die der offer-service für die ARBEITSZEIT-Position nutzt.
+      // Dient als Vorbelegung, solange noch keine ARBEITSZEIT-Position mit eigenem
+      // einzelPreis existiert (die wird erst bei setArbeitsstunden angelegt).
+      // Fehlertolerant: schlägt der user-service fehl, bleibt das Feld leer.
+      let stundensatzDefault: number | null = null;
+      try {
+        const profil = await getCurrentUser();
+        stundensatzDefault = profil.hourlyRate ?? null;
+      } catch (e) {
+        console.warn("[ReviewPage] Stundensatz konnte nicht geladen werden:", e);
+      }
+      setKonfigStundensatz(stundensatzDefault);
+
       // Arbeitszeit: ARBEITSZEIT-Positionen der PE bevorzugen — sie liefern
-      // Stundensatz (einzelPreis) und Stunden (menge). Liefert die PE keine,
-      // aber die KI hat eine Dauer erkannt, wird diese als eine Zeile ohne
-      // Stundensatz vorbelegt (Stundensatz = Pflichteingabe). Sonst leer.
+      // Stundensatz (einzelPreis) und Stunden (menge). Fehlt der einzelPreis oder
+      // liegt (beim Erst-Laden) noch keine ARBEITSZEIT-Position vor, wird der
+      // konfigurierte Stundensatz aus dem user-service vorbelegt (überschreibbar).
       const arbeitszeitPos = offer.positions.filter(
         (p) => p.type === "ARBEITSZEIT",
       );
@@ -535,7 +555,7 @@ export const ReviewPage = () => {
           arbeitszeitPos.map((p) => ({
             zeilenId: newId(),
             name: p.bezeichnung ?? "",
-            stundensatz: p.einzelPreis,
+            stundensatz: p.einzelPreis ?? stundensatzDefault,
             stunden: p.menge ?? 0,
             manuellGeaendert: false,
           })),
@@ -548,7 +568,7 @@ export const ReviewPage = () => {
           {
             zeilenId: newId(),
             name: "",
-            stundensatz: null,
+            stundensatz: stundensatzDefault,
             stunden: offer.geschaetzteArbeitsdauerStunden,
             manuellGeaendert: false,
           },
@@ -601,8 +621,10 @@ export const ReviewPage = () => {
       {
         zeilenId: newId(),
         name: "",
-        stundensatz: null,
-        stunden: 8,
+        stundensatz: konfigStundensatz,
+        // Standard 0 h: zwingt den Handwerker zu einer bewussten Eingabe > 0,
+        // bevor er fortfahren kann (siehe arbeitszeitVollstaendig).
+        stunden: 0,
         manuellGeaendert: true,
       },
     ]);
