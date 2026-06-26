@@ -126,7 +126,6 @@ export const OfferSharePage = () => {
     setIsSending(true);
     setSendError(null);
     try {
-      await shareOfferByEmail(offerId);
       await sendAuftragVersenden(businessKey);
       setSentVia("E-Mail");
     } catch (err) {
