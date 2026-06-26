@@ -116,7 +116,7 @@ public class ProcessEngineClient {
                         false
                 );
 
-                int maxAttempts = 5;
+                int maxAttempts = 2;
 
                 for (int attempt = 1; attempt <= maxAttempts; attempt++) {
                         try {
