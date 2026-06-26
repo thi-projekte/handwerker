@@ -1,5 +1,5 @@
 import { useDocuments } from "@/features/document/hooks/useDocuments";
-import { updateOfferStatus } from "@/data/api/offerService";
+import { openDocumentPdf, updateOfferStatus } from "@/data/api/offerService";
 //import { Angebot } from "@/features/document/types/document.types";
 import { useState, useMemo, useEffect } from "react";
 import {
@@ -635,7 +635,12 @@ export const DocumentPage = () => {
                       >
                         <FileText size={15} />
                       </button>
-                      <button className="doc-detail-btn">Details →</button>
+                      <button
+                        className="doc-detail-btn"
+                        onClick={() => openDocumentPdf(angebot.angebotsnummer)}
+                      >
+                        Details →
+                      </button>
                     </div>
                   </div>
                 </div>
