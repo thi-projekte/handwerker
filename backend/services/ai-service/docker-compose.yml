@@ -33,7 +33,10 @@ services:
 
       # ---- Process Engine (Camunda / CIB seven) ----
       # Muss auf /engine-rest enden. Denselben Wert wie offer-service (PE_URL) verwenden.
-      CAMUNDA_ENGINE_URL: ${CAMUNDA_ENGINE_URL:-http://host.docker.internal:8081/engine-rest}
+      # WICHTIG: interner Container-Name + Port 8080 (PE). NICHT host.docker.internal:8081 -
+      # das war der eigene ai-service-Port und in Prod nicht aufloesbar -> ergebnisKI
+      # konnte nie an Camunda zurueckgestellt werden, Prozesse haengen still am receiveTask.
+      CAMUNDA_ENGINE_URL: ${CAMUNDA_ENGINE_URL:-http://craftvoice-processengine:8080/engine-rest}
 
       # ---- Catalog-Suche (LLM-Call 2) ----
       # Mock=true => kein catalog-service noetig (Default fuer den ersten Deploy).
