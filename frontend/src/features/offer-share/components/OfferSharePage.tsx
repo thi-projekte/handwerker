@@ -1,11 +1,11 @@
-import { useState, useEffect, useCallback, lazy, Suspense } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "@/assets/stylesheets/stylesheet.css";
 import "./OfferSharePage.css";
 import {
   getDocumentByOfferId,
   getPdfDownloadUrl,
-  fetchPdfData,
+  fetchPdfObjectUrl,
   type DocumentMetadata,
 } from "@/data/api/documentService";
 // pdf.js ist groß – nur laden, wenn die Vorschau tatsächlich gebraucht wird.
@@ -41,8 +41,9 @@ export const OfferSharePage = () => {
   // ─── State ───
   const [offerData, setOfferData] = useState<OfferResponse | null>(null);
   const [document, setDocument] = useState<DocumentMetadata | null>(null);
-  // Rohe PDF-Bytes für die clientseitig gerenderte Inline-Vorschau.
-  const [pdfData, setPdfData] = useState<ArrayBuffer | null>(null);
+  // Object-URL des als Blob geladenen PDFs für die Inline-Vorschau (<iframe>).
+  const [pdfObjectUrl, setPdfObjectUrl] = useState<string | null>(null);
+  const pdfObjectUrlRef = useRef<string | null>(null);
   const [isLoading, setIsLoading] = useState(!!(offerId || businessKey));
   const [pdfLoading, setPdfLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -64,12 +65,19 @@ export const OfferSharePage = () => {
         const doc = await getDocumentByOfferId(id);
         if (doc) {
           setDocument(doc);
-          // PDF-Bytes für die Inline-Vorschau (pdf.js) laden.
+          // PDF als Blob für die Inline-Vorschau laden (umgeht attachment).
           try {
-            const data = await fetchPdfData(doc.id);
-            setPdfData(data);
+            const url = await fetchPdfObjectUrl(doc.id);
+            if (pdfObjectUrlRef.current) {
+              URL.revokeObjectURL(pdfObjectUrlRef.current);
+            }
+            pdfObjectUrlRef.current = url;
+            setPdfObjectUrl(url);
           } catch (e) {
-            console.error("[OfferSharePage] PDF-Vorschau-Daten fehlten:", e);
+            console.error(
+              "[OfferSharePage] PDF-Vorschau konnte nicht geladen werden:",
+              e,
+            );
           }
           setPdfLoading(false);
           return;
@@ -82,6 +90,16 @@ export const OfferSharePage = () => {
     setPdfLoading(false);
     // Kein Fehler — PDF fehlt evtl. noch, User kann manuell neu laden
   }, []);
+
+  // Object-URL der PDF-Vorschau beim Verlassen der Seite freigeben.
+  useEffect(
+    () => () => {
+      if (pdfObjectUrlRef.current) {
+        URL.revokeObjectURL(pdfObjectUrlRef.current);
+      }
+    },
+    [],
+  );
 
   // ─── Daten laden ─────────────────────────────────────────────────────────
 
@@ -281,25 +299,7 @@ export const OfferSharePage = () => {
 
       {/* ── Angebots-Vorschau ── */}
       <section className="card offer-preview-card">
-        <div className="offer-preview-top">
-          <div>
-            <span className="offer-preview-label">Angebot</span>
-            <h2>{businessKey ?? "—"}</h2>
-          </div>
-          <span className="offer-preview-status">
-            {offerData?.status ?? "Entwurf"}
-          </span>
-        </div>
-
-        <div className="offer-preview-customer">
-          <span>Kunden-ID</span>
-          <strong>{offerData?.customerId ?? "—"}</strong>
-          <p className="text-secondary">
-            Adresse wird nach customer-service-Anbindung angezeigt.
-          </p>
-        </div>
-
-        {/* PDF-Vorschau ── */}
+        {/* PDF-Live-Vorschau ── */}
         <div className="offer-pdf-preview">
           {pdfLoading ? (
             <div className="offer-pdf-loading">
@@ -310,25 +310,16 @@ export const OfferSharePage = () => {
               </div>
               <p className="text-secondary">PDF wird erstellt…</p>
             </div>
-          ) : pdfData && pdfUrl ? (
+          ) : pdfObjectUrl ? (
             <div className="offer-pdf-viewer">
-              <Suspense
-                fallback={
-                  <div className="offer-pdf-loading">
-                    <div className="loader">
-                      <span></span>
-                      <span></span>
-                      <span></span>
-                    </div>
-                    <p className="text-secondary">Vorschau wird geladen…</p>
-                  </div>
-                }
-              >
-                <PdfPreview data={pdfData} />
-              </Suspense>
+              <iframe
+                src={pdfObjectUrl}
+                title="Angebots-PDF"
+                className="offer-pdf-frame"
+              />
               <div className="offer-pdf-bar">
                 <div className="offer-pdf-info">
-                  <strong>{document?.fileName ?? "Angebot.pdf"}</strong>
+                  <strong>Angebot (PDF)</strong>
                   <span className="text-secondary">
                     Erstellt am{" "}
                     {document?.createdAt
@@ -337,7 +328,7 @@ export const OfferSharePage = () => {
                   </span>
                 </div>
                 <a
-                  href={pdfUrl}
+                  href={pdfObjectUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="offer-pdf-open-btn"

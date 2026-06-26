@@ -45,56 +45,6 @@
   text-align: left;
 }
 
-.offer-preview-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-  margin-bottom: 18px;
-}
-
-.offer-preview-label {
-  display: block;
-  margin-bottom: 4px;
-  color: var(--color-text-secondary);
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.offer-preview-top h2 {
-  margin: 0;
-  text-align: left;
-}
-
-.offer-preview-status {
-  padding: 6px 12px;
-  border-radius: 999px;
-  background: rgba(255, 106, 0, 0.15);
-  color: var(--color-accent);
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.offer-preview-customer {
-  padding: 14px;
-  border: 1px solid var(--color-divider);
-  border-radius: 16px;
-  margin-bottom: 16px;
-}
-
-.offer-preview-customer span {
-  display: block;
-  margin-bottom: 5px;
-  color: var(--color-text-secondary);
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.offer-preview-customer strong {
-  display: block;
-  margin-bottom: 4px;
-}
-
 .offer-preview-list {
   display: flex;
   flex-direction: column;
@@ -240,36 +190,18 @@
   flex-direction: column;
 }
 
-/* Container für die gerenderten PDF-Seiten (pdf.js → canvas). */
-.offer-pdf-canvas-container {
-  max-height: 460px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 10px;
-  background: #525659;
+.offer-pdf-frame {
+  width: 100%;
+  height: 460px;
+  border: 0;
+  display: block;
+  background: #fff;
 }
 
 @media (min-width: 1024px) {
-  .offer-pdf-canvas-container {
-    max-height: 620px;
+  .offer-pdf-frame {
+    height: 560px;
   }
-}
-
-.offer-pdf-page {
-  width: 100%;
-  height: auto;
-  display: block;
-  background: #fff;
-  border-radius: 2px;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
-}
-
-.offer-pdf-render-error {
-  padding: 24px;
-  text-align: center;
 }
 
 .offer-pdf-info {

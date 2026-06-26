@@ -53,21 +53,23 @@ export function getPdfDownloadUrl(documentId: string): string {
 }
 
 /**
- * Lädt das PDF als rohe Bytes für die clientseitige Inline-Vorschau (pdf.js).
+ * Lädt das PDF als Blob und gibt eine Object-URL für die Inline-Vorschau zurück.
  *
- * Der PDF-Endpunkt ist öffentlich (kein Auth nötig). Wir holen die Bytes selbst,
- * statt die URL direkt in ein <iframe> zu hängen, weil mobile Browser PDFs in
- * einem iframe/embed nicht inline rendern, sondern nur eine Download-Karte
- * anzeigen. Die Bytes werden von pdf.js zu Bildern gerastert.
+ * Der PDF-Endpunkt ist öffentlich (kein Auth nötig), liefert das PDF aber mit
+ * `Content-Disposition: attachment` aus — eine rohe URL im <iframe> würde der
+ * Browser daher u.U. herunterladen statt anzuzeigen. Über den Umweg Blob →
+ * Object-URL entfällt der Disposition-Header, sodass das PDF zuverlässig inline
+ * gerendert wird. Der Aufrufer muss die URL später per URL.revokeObjectURL freigeben.
  *
  * @param documentId  UUID des Dokuments (aus DocumentMetadata.id)
  */
-export async function fetchPdfData(documentId: string): Promise<ArrayBuffer> {
+export async function fetchPdfObjectUrl(documentId: string): Promise<string> {
   const res = await fetch(getPdfDownloadUrl(documentId));
   if (!res.ok) {
     throw new Error(`PDF konnte nicht geladen werden: ${res.status}`);
   }
-  return res.arrayBuffer();
+  const blob = await res.blob();
+  return URL.createObjectURL(blob);
 }
 
 /**
