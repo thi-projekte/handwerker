@@ -7,14 +7,7 @@ interface OfferDTO {
     status: string;
     gesamtPreis?: number | null;
 
-    customer?: {
-        vorname?: string;
-        nachname?: string;
-        strasse?: string;
-        hausnummer?: string;
-        plz?: string;
-        ort?: string;
-    };
+    customerId?: number | string;
 }
 
 const mapStatus = (status: string): Angebot["status"] => {
@@ -36,12 +29,12 @@ export function mapOfferDTOToAngebot(dto: OfferDTO): Angebot {
     return {
         id: String(dto.id),
         angebotsnummer: dto.businessKey ?? "",
-        vorname: dto.customer?.vorname ?? "",
-        nachname: dto.customer?.nachname ?? "",
-        strasse: dto.customer?.strasse ?? "",
-        hausnummer: dto.customer?.hausnummer ?? "",
-        plz: dto.customer?.plz ?? "",
-        ort: dto.customer?.ort ?? "",
+        vorname: "",
+        nachname: "",
+        strasse: "",
+        hausnummer: "",
+        plz: "",
+        ort: "",
         datum: dto.createdAt?.split("T")[0] ?? "",
         status: mapStatus(dto.status),
         betrag: dto.gesamtPreis ?? 0,
@@ -50,12 +43,7 @@ export function mapOfferDTOToAngebot(dto: OfferDTO): Angebot {
 interface RechnungDTO {
     id: string;
     rechnungsnummer: string;
-    vorname: string;
-    nachname: string;
-    strasse: string;
-    hausnummer: string;
-    plz: string;
-    ort: string;
+    customerId: string;
     erstelldatum: string;
     faelligkeitsdatum: string;
     status: string;
@@ -81,12 +69,14 @@ export function mapRechnungDTOToRechnung(dto: RechnungDTO): Rechnung {
     return {
         id: dto.id,
         rechnungsnummer: dto.rechnungsnummer,
-        vorname: dto.vorname,
-        nachname: dto.nachname,
-        strasse: dto.strasse,
-        hausnummer: dto.hausnummer,
-        plz: dto.plz,
-        ort: dto.ort,
+
+        vorname: "",
+        nachname: "",
+        strasse: "",
+        hausnummer: "",
+        plz: "",
+        ort: "",
+
         erstelldatum: dto.erstelldatum?.split("T")[0] ?? "",
         faelligkeitsdatum: dto.faelligkeitsdatum?.split("T")[0] ?? "",
         status: mapRechnungStatus(dto.status),
