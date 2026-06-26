@@ -13,7 +13,7 @@
       <bpmn:extensionElements>
         <camunda:connector>
           <camunda:inputOutput>
-            <camunda:inputParameter name="url">http://documentservice-craftvoice.winfprojekt.de/documents/${documentType}/${execution.processBusinessKey}/share</camunda:inputParameter>
+            <camunda:inputParameter name="url">http://craftvoice-document.winfprojekt.de/documents/${documentType}/${execution.processBusinessKey}/share</camunda:inputParameter>
             <camunda:inputParameter name="method">POST</camunda:inputParameter>
             <camunda:inputParameter name="payload">
               <camunda:script scriptFormat="JavaScript">var customerId = execution.getVariable("customerId");
