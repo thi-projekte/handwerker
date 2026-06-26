@@ -708,6 +708,67 @@ export const ReviewPage = () => {
     reihenfolgeGeaendert ||
     materialien.some((p) => p.gewaehlteAlternativeIndex !== null);
 
+  // ─── Korrekturschnipsel (Fall 3) ─────────────────────────────────────────
+
+  /**
+   * Baut den Korrekturschnipsel aus den tatsächlichen manuellen Änderungen des
+   * Handwerkers, damit die KI weiß, WAS geändert werden soll — statt eines
+   * generischen "Manuelle Änderung durch Handwerker".
+   *
+   * Beschrieben werden KI-relevante Attribute (Bezeichnung, Menge, Einheit) sowie
+   * hinzugefügte/entfernte Positionen und Arbeitszeit-Anpassungen. Preise bleiben
+   * bewusst außen vor — die KI verarbeitet keine Preise. Der Freitext-Hinweis des
+   * Handwerkers wird, falls vorhanden, ergänzt.
+   */
+  const buildKorrekturschnipsel = (): string => {
+    const aenderungen: string[] = [];
+
+    // Manuell geänderte / neu hinzugefügte Material-Positionen.
+    materialien
+      .filter((p) => p.manuellGeaendert)
+      .forEach((p) =>
+        aenderungen.push(
+          `Position "${p.bezeichnung}": Menge ${p.menge} ${p.einheit}`,
+        ),
+      );
+
+    // Entfernte Positionen (im KI-Original vorhanden, jetzt nicht mehr).
+    const aktuelleIds = new Set(materialien.map((p) => p.id));
+    (offerData?.positions ?? [])
+      .filter((p) => p.type === "MATERIAL" && !aktuelleIds.has(String(p.id)))
+      .forEach((p) =>
+        aenderungen.push(`Position "${p.bezeichnung}" wurde entfernt`),
+      );
+
+    // Manuell geänderte Arbeitszeit.
+    maZeilen
+      .filter((z) => z.manuellGeaendert)
+      .forEach((z) =>
+        aenderungen.push(
+          `Arbeitszeit angepasst auf ${z.stunden} Stunden${
+            z.name ? ` (${z.name})` : ""
+          }`,
+        ),
+      );
+
+    const teile: string[] = [];
+    if (aenderungen.length > 0) {
+      teile.push(
+        "Der Handwerker hat das Angebot manuell angepasst. Bitte berücksichtige folgende Änderungen:\n- " +
+          aenderungen.join("\n- "),
+      );
+    }
+    const hinweis = kiHinweis.trim();
+    if (hinweis) {
+      teile.push(`Zusätzlicher Hinweis des Handwerkers: ${hinweis}`);
+    }
+
+    // Fallback nur, falls (theoretisch) nichts Konkretes ermittelbar ist.
+    return teile.length > 0
+      ? teile.join("\n\n")
+      : "Manuelle Änderung durch Handwerker";
+  };
+
   // ─── Bestätigen-Handler ──────────────────────────────────────────────────
 
   const handleBestaetigen = async () => {
@@ -753,10 +814,9 @@ export const ReviewPage = () => {
 
       if (istManuell) {
         // ── Fall 3: Manuelle Änderung → neuer KI-Durchlauf ──
-        await sendKorrekturschnipsel(
-          businessKey,
-          kiHinweis || "Manuelle Änderung durch Handwerker",
-        );
+        // Konkrete Beschreibung der manuellen Änderungen an die KI senden,
+        // damit sie weiß, WAS geändert werden soll (statt generischem Text).
+        await sendKorrekturschnipsel(businessKey, buildKorrekturschnipsel());
         navigate("/laden", {
           state: { businessKey, offerId, mode: "ki-warten" },
         });
