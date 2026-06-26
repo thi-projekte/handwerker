@@ -26,6 +26,7 @@ public class OfferResponse {
     public BigDecimal gesamtPreis;
     /** Von der KI geschätzte Arbeitsdauer in Stunden; {@code null}, wenn nicht ausgesprochen. */
     public BigDecimal geschaetzteArbeitsdauerStunden;
+    public String annahmeToken;
 
     public static OfferResponse fromEntity(Offer offer) {
         if (offer == null) {
@@ -37,6 +38,7 @@ public class OfferResponse {
         response.status = offer.status;
         response.customerId = offer.customerId;
         response.handwerkerId = offer.handwerkerId;
+        response.annahmeToken = offer.annahmeToken;
         response.speechSnippet = offer.speechSnippet;
         response.positions = offer.positions != null ? new java.util.ArrayList<>(offer.positions) : null;
         response.statusHistory = offer.statusHistory != null ? new java.util.ArrayList<>(offer.statusHistory) : null;

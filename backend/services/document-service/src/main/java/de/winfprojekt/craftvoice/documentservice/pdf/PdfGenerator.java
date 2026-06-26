@@ -82,6 +82,9 @@ public class PdfGenerator {
             addTitle(pdf, documentTitle);
             addPositions(pdf, payload);
             addTotal(pdf, payload);
+            if ("Angebot".equals(documentTitle)) {
+                addAcceptanceLink(pdf, payload);
+            }
             addPaymentTerms(pdf, documentTitle, craftsman);
 
             pdf.close();
@@ -497,6 +500,31 @@ public class PdfGenerator {
                     font
             ));
         }
+    }
+
+    private void addAcceptanceLink(Document pdf, JsonNode payload) throws Exception {
+        String annahmeToken = text(payload, "annahmeToken");
+        if (annahmeToken == null || annahmeToken.isBlank()) {
+            return;
+        }
+
+        Font linkFont = FontFactory.getFont(
+                FontFactory.HELVETICA_BOLD,
+                11,
+                Font.UNDERLINE,
+                ACCENT_COLOR
+        );
+
+        String frontendUrl = "https://cv.winfprojekt.de/angebot/" + annahmeToken;
+        Chunk linkChunk = new Chunk("Klicken Sie hier, um das Angebot direkt online anzunehmen oder abzulehnen.", linkFont);
+        linkChunk.setAnchor(frontendUrl);
+
+        Paragraph linkParagraph = new Paragraph(linkChunk);
+        linkParagraph.setSpacingBefore(30);
+        linkParagraph.setSpacingAfter(10);
+        linkParagraph.setAlignment(Element.ALIGN_CENTER);
+
+        pdf.add(linkParagraph);
     }
 
     private PdfPCell borderlessCell() {
