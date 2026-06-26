@@ -678,12 +678,12 @@ class OfferResourceTest {
     }
 
     @Test
-    void shouldReturn409WhenOfferNotVersendet() {
+    void shouldReturn409WhenOfferAlreadyAnswered() {
         Offer offer = new Offer();
         offer.customerId = "1";
         offer.handwerkerId = "99";
         offer.businessKey = "angebot-" + UUID.randomUUID().toString(); offer.annahmeToken = UUID.randomUUID().toString();
-        offer.status = Offer.STATUS_ERFASST;
+        offer.status = Offer.STATUS_ANGENOMMEN;
 
         QuarkusTransaction.requiringNew().run(() -> {
             offer.persist();
