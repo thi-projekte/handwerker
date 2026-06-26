@@ -23,6 +23,31 @@
 import { API_CONFIG } from "@/config/api";
 import { getToken } from "@/services/authService";
 
+// ─── PDF-Helper ─────────────────────────────────────────────────────────────
+export async function openDocumentPdf(businessKey: string) {
+  const token = await getToken();
+
+  const response = await fetch(
+    `${API_CONFIG.DOCUMENT_SERVICE_URL}/documents/offers/${businessKey}/pdf`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error("PDF konnte nicht geladen werden.");
+  }
+
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+
+  window.open(url, "_blank");
+
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 // ─── Auth-Helper ────────────────────────────────────────────────────────────
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
