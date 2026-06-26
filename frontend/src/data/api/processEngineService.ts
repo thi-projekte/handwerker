@@ -161,7 +161,7 @@ export async function sendKorrekturschnipsel(
  */
 export async function sendAuftragVersenden(businessKey: string): Promise<void> {
   await sendPeMessage({
-    messageName: "auftragVersenden",
+    messageName: "angebotVersenden",
     businessKey,
     resultEnabled: false,
   });
@@ -175,7 +175,7 @@ export async function sendAuftragNichtVersenden(
   businessKey: string,
 ): Promise<void> {
   await sendPeMessage({
-    messageName: "auftragNichtVersenden",
+    messageName: "angebotNichtVersenden",
     businessKey,
     resultEnabled: false,
   });
