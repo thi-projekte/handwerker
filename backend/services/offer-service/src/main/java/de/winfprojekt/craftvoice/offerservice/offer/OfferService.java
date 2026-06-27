@@ -342,9 +342,9 @@ public class OfferService {
     public OfferResponse setArbeitsstunden(String businessKey, String userId, SetArbeitsstundenRequest request) {
         Offer offer = findOwnOfferOrThrow(businessKey, userId);
         
-        if (!Offer.STATUS_KI_FERTIG.equals(offer.status) && !Offer.STATUS_IN_BEARBEITUNG.equals(offer.status)) {
+        if (!Offer.STATUS_KI_FERTIG.equals(offer.status)) {
             throw new WebApplicationException(
-                    "Angebot mit businessKey " + businessKey + " befindet sich nicht im Status KI_FERTIG oder IN_BEARBEITUNG", 409);
+                    "Angebot mit businessKey " + businessKey + " befindet sich nicht im Status KI_FERTIG", 409);
         }
 
         // Idempotenz: bestehende Arbeitszeit-Position entfernen (z. B. bei Korrektur).
@@ -510,14 +510,10 @@ public class OfferService {
         offer.persist();
 
         // PE benachrichtigen: Angebot angenommen oder abgelehnt
-        try {
-            if (Offer.STATUS_ANGENOMMEN.equals(newStatus)) {
-                processEngineClient.sendAngebotAngenommen(offer.businessKey);
-            } else {
-                processEngineClient.sendAngebotAbgelehnt(offer.businessKey);
-            }
-        } catch (Exception e) {
-            LOG.warnf("Process Engine konnte nicht benachrichtigt werden (Angebot %s, Status %s). Eventuell wurde das Angebot noch nicht formell über die PE versendet: %s", offer.businessKey, newStatus, e.getMessage());
+        if (Offer.STATUS_ANGENOMMEN.equals(newStatus)) {
+            processEngineClient.sendAngebotAngenommen(offer.businessKey);
+        } else {
+            processEngineClient.sendAngebotAbgelehnt(offer.businessKey);
         }
 
         return new OfferAcceptanceResponse(entscheidung);
