@@ -164,19 +164,34 @@ public class OfferResource {
     }
 
     /**
+     * Ruft die Daten für die öffentliche Angebotsansicht ab.
+     * Authentifizierung ist hier absichtlich deaktiviert (PermitAll).
+     *
+     * @param token Der sichere Annahme-Token
+     * @return Das Angebot als DTO
+     */
+    @GET
+    @Path("/angebote/annahme/{token}")
+    @PermitAll
+    public Response getPublicOffer(@PathParam("token") String token) {
+        OfferResponse response = offerService.getPublicOffer(token);
+        return Response.ok(response).build();
+    }
+
+    /**
      * Endpunkt zur Annahme oder Ablehnung eines Angebots durch den Kunden über
      * einen Token.
      * Dieser Endpunkt ist öffentlich zugänglich.
      *
-     * @param businessKey Den BusinessKey des Angebots, um dieses eindeutig zu identifizieren.
+     * @param token Der eindeutige Annahme-Token des Angebots
      * @param request Die Kundenentscheidung (angenommen / abgelehnt)
      * @return HTTP-Response 200 mit Bestätigungsantwort oder Fehlermeldung
      */
     @POST
-    @Path("/angebote/annahme/{businessKey}")
+    @Path("/angebote/annahme/{token}")
     @PermitAll
-    public Response acceptOrRejectOffer(@PathParam("businessKey") String businessKey, @Valid OfferAcceptanceRequest request) {
-        OfferAcceptanceResponse response = offerService.acceptOrRejectOffer(businessKey, request);
+    public Response acceptOrRejectOffer(@PathParam("token") String token, @Valid OfferAcceptanceRequest request) {
+        OfferAcceptanceResponse response = offerService.acceptOrRejectOffer(token, request);
         return Response.ok(response).build();
     }
 

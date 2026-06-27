@@ -473,23 +473,23 @@ public class OfferService {
     /**
      * Nimmt ein Angebot über den Annahme-Token an oder lehnt es ab.
      *
-     * @param businessKey Der BusinessKey des Angebots, welches angenommen werden soll
+     * @param token Der Annahme-Token des Angebots
      * @param request Die Entscheidung des Kunden ("angenommen" oder "abgelehnt")
      * @return DTO mit dem Ergebnis der Entscheidung
      */
     @Transactional
-    public OfferAcceptanceResponse acceptOrRejectOffer(String businessKey, OfferAcceptanceRequest request) {
-        if (businessKey == null || businessKey.trim().isEmpty()) {
-            throw new WebApplicationException("BusinessKey darf nicht leer sein", 400);
+    public OfferAcceptanceResponse acceptOrRejectOffer(String token, OfferAcceptanceRequest request) {
+        if (token == null || token.trim().isEmpty()) {
+            throw new WebApplicationException("Token darf nicht leer sein", 400);
         }
 
-        Offer offer = Offer.find("businessKey", businessKey).firstResult();
+        Offer offer = Offer.find("annahmeToken", token).firstResult();
         if (offer == null) {
-            throw new WebApplicationException("Angebot mit BusinessKey " + businessKey + " nicht gefunden", 404);
+            throw new WebApplicationException("Angebot mit Token nicht gefunden", 404);
         }
 
-        if (!Offer.STATUS_VERSENDET.equals(offer.status)) {
-            throw new WebApplicationException("Angebot befindet sich nicht im Status VERSENDET", 409);
+        if (Offer.STATUS_ANGENOMMEN.equals(offer.status) || Offer.STATUS_ABGELEHNT.equals(offer.status)) {
+            throw new WebApplicationException("Angebot wurde bereits beantwortet (angenommen oder abgelehnt)", 409);
         }
 
         String entscheidung = request.entscheidung;
@@ -685,5 +685,28 @@ public class OfferService {
         } else {
             processEngineClient.sendAngebotAbgelehnt(offer.businessKey);
         }
+    }
+
+    /**
+     * Ruft die Daten für die öffentliche Angebotsansicht ab.
+     *
+     * @param token Der sichere Annahme-Token
+     * @return Das Angebot als DTO
+     */
+    @Transactional
+    public OfferResponse getPublicOffer(String token) {
+        if (token == null || token.trim().isEmpty()) {
+            throw new WebApplicationException("Token darf nicht leer sein", 400);
+        }
+
+        Offer offer = Offer.find("annahmeToken", token).firstResult();
+        if (offer == null) {
+            throw new WebApplicationException("Angebot mit Token nicht gefunden", 404);
+        }
+
+        // Wir erlauben das Abrufen immer (z.B. auch für die Vorschau),
+        // solange der Token stimmt.
+
+        return OfferResponse.fromEntity(offer);
     }
 }

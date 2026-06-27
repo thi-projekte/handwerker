@@ -27,15 +27,10 @@ export interface AngebotDTO {
 export interface RechnungDTO {
     id: string;
     rechnungsnummer: string;
-    vorname: string;
-    nachname: string;
-    strasse: string;
-    hausnummer: string;
-    plz: string;
-    ort: string;
+    customerId: string;
     erstelldatum: string;
     faelligkeitsdatum: string;
-    status: RechnungStatus;
+    status: string;
     betrag: number;
 }
 
