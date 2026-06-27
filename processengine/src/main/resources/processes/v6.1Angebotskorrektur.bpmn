@@ -73,7 +73,6 @@ JSON.stringify(payload);</camunda:script>
         <camunda:executionListener event="start">
           <camunda:script scriptFormat="JavaScript">var ergebnisKI = execution.getVariable("ergebnisKI");
 
-
 var daten = {
   strukturierteAngebotspositionen: JSON.parse(
     ergebnisKI.prop("strukturierteAngebotspositionen").toString()
