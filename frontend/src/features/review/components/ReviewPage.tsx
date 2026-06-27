@@ -943,6 +943,7 @@ export const ReviewPage = () => {
         await setArbeitsstunden(businessKey, {
           arbeitsdauerStunden: gesamtStunden,
         });
+
         await approveOffer(businessKey);
         await sendGenehmigung(businessKey);
         navigate("/laden", {

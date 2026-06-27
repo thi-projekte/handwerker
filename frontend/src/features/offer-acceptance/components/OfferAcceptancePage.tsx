@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { CheckCircle, XCircle } from "lucide-react";
+import { CheckCircle } from "lucide-react";
 import { getPublicOffer, acceptPublicOffer } from "@/data/api/offerService";
+import { USER_SERVICE_URL } from "@/services/userService";
 import "@/assets/stylesheets/stylesheet.css";
 import "./OfferAcceptancePage.css";
 
@@ -18,9 +19,15 @@ interface OfferData {
   gesamtPreis?: number;
 }
 
+interface PublicProfile {
+  companyName: string;
+  profilePictureUrl?: string;
+}
+
 export const OfferAcceptancePage = () => {
   const { token } = useParams<{ token: string }>();
   const [offer, setOffer] = useState<OfferData | null>(null);
+  const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
@@ -29,8 +36,24 @@ export const OfferAcceptancePage = () => {
   useEffect(() => {
     if (token) {
       getPublicOffer(token)
-        .then((data) => {
+        .then(async (data) => {
           setOffer(data);
+          
+          if (data.handwerkerId) {
+            try {
+              // USER_SERVICE_URL (env-konfiguriert, HTTPS) statt hartkodierter
+              // http://-URL: Letztere wurde auf der HTTPS-Annahmeseite als
+              // Mixed-Content blockiert → Logo/Firmenname luden nie.
+              const userRes = await fetch(`${USER_SERVICE_URL}/public/${data.handwerkerId}`);
+              if (userRes.ok) {
+                const profileData = await userRes.json();
+                setProfile(profileData);
+              }
+            } catch (e) {
+              console.error("Failed to load company profile", e);
+            }
+          }
+          
           setLoading(false);
         })
         .catch((err) => {
@@ -87,8 +110,17 @@ export const OfferAcceptancePage = () => {
   return (
     <div className="offer-acceptance-page">
       <section className="card offer-acceptance-header">
+        {profile?.profilePictureUrl && (
+          <div className="mb-4 flex justify-center">
+            <img 
+              src={profile.profilePictureUrl} 
+              alt="Firmenlogo" 
+              style={{ maxHeight: '80px', maxWidth: '250px', objectFit: 'contain' }}
+            />
+          </div>
+        )}
         <span className="offer-acceptance-eyebrow">Angebotsprüfung</span>
-        <h1>Angebot von CraftVoice Handwerk</h1>
+        <h1>Angebot von {profile?.companyName || "CraftVoice Handwerk"}</h1>
         <p className="text-secondary">
           Bitte prüfen Sie das Angebot und bestätigen Sie die Annahme.
         </p>
@@ -127,22 +159,22 @@ export const OfferAcceptancePage = () => {
           <p className="text-secondary">Dieses Angebot wurde bereits beantwortet und kann nicht mehr geändert werden.</p>
         </section>
       ) : (
-        <section className="offer-acceptance-actions">
+        <section className="offer-acceptance-actions" style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
           <button
-            className="btn btn-reject"
-            disabled={isSubmitting}
-            onClick={() => handleDecision("abgelehnt")}
-          >
-            <XCircle size={20} />
-            Angebot ablehnen
-          </button>
-          <button
-            className="btn btn-primary"
+            className="btn button-primary"
+            style={{ backgroundColor: '#28a745', borderColor: '#28a745', color: '#fff', flex: 1 }}
             disabled={isSubmitting}
             onClick={() => handleDecision("angenommen")}
           >
-            <CheckCircle size={20} />
             Zahlungspflichtig bestellen
+          </button>
+          <button
+            className="btn button-secondary"
+            style={{ backgroundColor: '#dc3545', borderColor: '#dc3545', color: '#fff', flex: 1 }}
+            disabled={isSubmitting}
+            onClick={() => handleDecision("abgelehnt")}
+          >
+            Angebot ablehnen
           </button>
         </section>
       )}
