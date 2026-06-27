@@ -26,6 +26,8 @@ import jakarta.json.JsonObject;
 import jakarta.json.JsonValue;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 
+import java.util.Map;
+
 /**
  * REST-Ressource zur Verwaltung von Angeboten.
  *
@@ -253,13 +255,21 @@ public class OfferResource {
      */
     @PUT
     @Path("/offers/{businessKey}/status")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({"OWNER"})
     public Response updateOfferStatusManually(
             @PathParam("businessKey") String businessKey,
             @Valid UpdateOfferStatusRequest request) {
+
         String userId = jwt.getSubject();
         offerService.updateOfferStatusManually(businessKey, request.status, userId);
-        return Response.ok().build();
+
+        return Response.ok(Map.of(
+                "businessKey", businessKey,
+                "status", request.status,
+                "userId", userId
+        )).build();
     }
 
     /**
