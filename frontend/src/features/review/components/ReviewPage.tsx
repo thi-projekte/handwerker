@@ -9,6 +9,7 @@ import {
   updateOfferPositions,
   type OfferResponse,
   type OfferPosition,
+  type OfferChangesRequest,
 } from "@/data/api/offerService";
 import {
   sendGenehmigung,
@@ -713,7 +714,7 @@ export const ReviewPage = () => {
       },
     ]);
 
-  // ─── Angebotsentwurf für Fall 2 (Reihenfolge / Alternative) ────────────────
+  // ─── Positions-Änderungen für Fall 2 (Reihenfolge / Alternative) ───────────
 
   // Liefert die tatsächlich gewählten Werte einer Position: Ist eine Alternative
   // gewählt (und nichts manuell überschrieben), wird deren Produkt inkl.
@@ -735,72 +736,33 @@ export const ReviewPage = () => {
   };
 
   /**
-   * Baut den Angebotsentwurf für Fall 2 — exakt im selben Format, wie ihn das
-   * Frontend zuvor vom offer-service erhalten hat ({@link OfferResponse}), nur
-   * mit der vom Handwerker gewählten Reihenfolge bzw. eingesetzten Alternative.
+   * Baut die Positions-Änderungen für Fall 2 im {@link OfferChangesRequest}-Format
+   * — exakt dem Format, das der offer-service erwartet und das die PE entsprechend
+   * konsumiert (genau dieses Objekt geht an BEIDE; siehe handleBestaetigen).
    *
-   * Dieses Objekt geht direkt an die PE (siehe sendAngebotsentwurf). Parallel
-   * werden dieselben Positionen — ins OfferChangesRequest-Format gemappt — an den
-   * offer-service geschickt (siehe handleBestaetigen, Fall 2). Das ursprüngliche
-   * offerData wird unverändert übernommen und lediglich das positions-Array neu
-   * aufgebaut:
-   *   - MATERIAL-Positionen in der aktuellen UI-Reihenfolge; ist eine Alternative
-   *     gewählt, ersetzen deren Werte (inkl. katalogProduktId/Preis) die Position.
-   *   - Nicht-MATERIAL-Positionen (ARBEITSZEIT/ANFAHRT) bleiben unverändert und
-   *     werden hinten angehängt.
-   *   - reihenfolge wird durchgehend neu vergeben (1..n).
+   * Pro Material-Position werden die effektiven Werte genommen: bei gewählter
+   * Alternative deren Bezeichnung + katalogProduktId (den Preis löst der
+   * offer-service selbst über die katalogProduktId aus dem catalog-service auf).
+   * Die Reihenfolge ergibt sich aus der Array-Reihenfolge der Material-Liste.
+   * Leistungen/Notizen bleiben leer (das Angebot kennt nur Material).
    */
-  const buildAngebotsentwurf = (): OfferResponse => {
-    // offerData ist gesetzt — Fall 2 ist erst nach erfolgreichem Laden erreichbar.
-    const original = offerData!;
-
-    // Original-Positionen per id nachschlagen, um unveränderte Backend-Felder
-    // (createdAt, hersteller, …) zu erhalten.
-    const originalById = new Map(
-      original.positions.map((p) => [String(p.id), p]),
-    );
-
-    const materialPositionen: OfferPosition[] = materialien.map((pos, i) => {
-      const orig = originalById.get(pos.id);
-      const alt =
-        pos.gewaehlteAlternativeIndex !== null
-          ? pos.alternativen[pos.gewaehlteAlternativeIndex]
-          : null;
-      const bezeichnung = alt ? alt.bezeichnung : pos.bezeichnung;
-      const beschreibung = alt ? alt.beschreibung : pos.beschreibung;
-      const menge = alt ? alt.menge : pos.menge;
-      const einheit = alt ? alt.einheit : pos.einheit;
-      const katalogProduktId = alt
-        ? alt.katalogProduktId
-        : pos.katalogProduktId;
-      const einzelPreis = alt ? alt.preis : pos.preis;
-      return {
-        ...orig,
-        id: orig?.id ?? i + 1,
-        bezeichnung,
-        beschreibung,
-        menge,
-        einheit,
-        katalogProduktId,
-        einzelPreis,
-        positionsPreis: einzelPreis * menge,
-        reihenfolge: i + 1,
-        type: "MATERIAL",
-      } as OfferPosition;
-    });
-
-    const sonstigePositionen: OfferPosition[] = original.positions
-      .filter((p) => p.type !== "MATERIAL")
-      .map((p, i) => ({
-        ...p,
-        reihenfolge: materialPositionen.length + i + 1,
-      }));
-
-    return {
-      ...original,
-      positions: [...materialPositionen, ...sonstigePositionen],
-    };
-  };
+  const buildOfferChanges = (): OfferChangesRequest => ({
+    strukturierteAngebotspositionen: {
+      leistungen: [],
+      material: materialien.map((p) => {
+        const e = effektivePosition(p);
+        return {
+          bezeichnung: e.bezeichnung,
+          beschreibung: e.beschreibung,
+          menge: e.menge,
+          einheit: e.einheit,
+          katalogProduktId: e.katalogProduktId,
+        };
+      }),
+      notizen: [],
+    },
+    korrekturvorschlaege: [],
+  });
 
   // ─── Änderungs-Checks ────────────────────────────────────────────────────
 
@@ -905,32 +867,15 @@ export const ReviewPage = () => {
         });
       } else if (istReihenfolge) {
         // ── Fall 2: Reihenfolge / Alternative ──
-        // Der angepasste Angebotsentwurf (neue Reihenfolge / gewählte Alternative)
-        // geht PARALLEL an zwei Empfänger:
-        //   1) direkt an die PE — im OfferResponse-Format (Korrelation "angebotsentwurf")
-        //   2) an den offer-service über den bestehenden /positionen-Endpunkt —
-        //      dafür werden die effektiven Positionen ins OfferChangesRequest-Format
-        //      gemappt (Name + katalogProduktId der Alternative; Preis löst der
-        //      offer-service selbst über die katalogProduktId aus dem Katalog auf).
+        // Dasselbe OfferChangesRequest-Objekt (neue Reihenfolge / gewählte
+        // Alternative) geht PARALLEL an zwei Empfänger — beide erwarten genau
+        // dieses Format:
+        //   1) an die PE (Korrelation "angebotsentwurf")
+        //   2) an den offer-service über den bestehenden /positionen-Endpunkt
+        const aenderungen = buildOfferChanges();
         await Promise.all([
-          sendAngebotsentwurf(businessKey, buildAngebotsentwurf()),
-          updateOfferPositions(businessKey, {
-            strukturierteAngebotspositionen: {
-              leistungen: [],
-              material: materialien.map((p) => {
-                const e = effektivePosition(p);
-                return {
-                  bezeichnung: e.bezeichnung,
-                  beschreibung: e.beschreibung,
-                  menge: e.menge,
-                  einheit: e.einheit,
-                  katalogProduktId: e.katalogProduktId,
-                };
-              }),
-              notizen: [],
-            },
-            korrekturvorschlaege: [],
-          }),
+          sendAngebotsentwurf(businessKey, aenderungen),
+          updateOfferPositions(businessKey, aenderungen),
         ]);
         navigate("/laden", {
           state: { businessKey, offerId, mode: "versand-warten" },
