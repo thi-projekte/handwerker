@@ -17,6 +17,7 @@ import { LogoutPage } from "@/features/Logout/components/LogoutPage";
 import { OfferSharePage } from "@/features/offer-share/components/OfferSharePage";
 
 import { OfferResultPage } from "@/features/offer-result/components/OfferResultPage";
+import { OfferAcceptancePage } from "@/features/offer-acceptance/components/OfferAcceptancePage";
 import { PasswordChangePage } from "@/features/password-change/components/PasswordChangePage";
 
 import { LadenPage } from "@/features/Laden/components/LadenPage";
@@ -198,6 +199,16 @@ export function AppRoutes() {
         element={
           <AppLayout hideNav hideHeader>
             <AboPage />
+          </AppLayout>
+        }
+      />
+
+      {/* ── Öffentliche Angebotsannahme ── */}
+      <Route
+        path="/angebot/:token"
+        element={
+          <AppLayout hideNav hideHeader>
+            <OfferAcceptancePage />
           </AppLayout>
         }
       />

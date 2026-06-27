@@ -226,7 +226,7 @@ class OfferResourceTest {
         customer.zipCode = "80331";
         customer.city = "München";
 
-        Mockito.lenient().when(userServiceClient.getCustomer(any())).thenReturn(customer);
+        Mockito.lenient().when(userServiceClient.getCustomer(any())).thenReturn(customer); de.winfprojekt.craftvoice.offerservice.user.AnfahrtskostenKonfiguration konfig = new de.winfprojekt.craftvoice.offerservice.user.AnfahrtskostenKonfiguration(); konfig.modell = "PAUSCHALE"; Mockito.lenient().when(userServiceClient.getAnfahrtskostenKonfiguration()).thenReturn(konfig);
     }
 
     /**
@@ -242,7 +242,7 @@ class OfferResourceTest {
         Offer offer = new Offer();
         offer.customerId = "1";
         offer.handwerkerId = "99";
-        offer.businessKey = "angebot-" + UUID.randomUUID().toString();
+        offer.businessKey = "angebot-" + UUID.randomUUID().toString(); offer.annahmeToken = UUID.randomUUID().toString();
         offer.status = Offer.STATUS_IN_BEARBEITUNG;
 
         QuarkusTransaction.requiringNew().run(() -> {
@@ -335,7 +335,7 @@ class OfferResourceTest {
         Offer offer = new Offer();
         offer.customerId = "1";
         offer.handwerkerId = "99";
-        offer.businessKey = "angebot-" + UUID.randomUUID().toString();
+        offer.businessKey = "angebot-" + UUID.randomUUID().toString(); offer.annahmeToken = UUID.randomUUID().toString();
         offer.status = Offer.STATUS_IN_BEARBEITUNG;
 
         QuarkusTransaction.requiringNew().run(() -> {
@@ -402,7 +402,7 @@ class OfferResourceTest {
         Offer offer = new Offer();
         offer.customerId = "1";
         offer.handwerkerId = "99";
-        offer.businessKey = "angebot-" + UUID.randomUUID().toString();
+        offer.businessKey = "angebot-" + UUID.randomUUID().toString(); offer.annahmeToken = UUID.randomUUID().toString();
         offer.status = Offer.STATUS_KI_BEARBEITUNG_ABGESCHLOSSEN;
         
         QuarkusTransaction.requiringNew().run(() -> {
@@ -591,7 +591,7 @@ class OfferResourceTest {
         Offer offer = new Offer();
         offer.customerId = "1";
         offer.handwerkerId = "99";
-        offer.businessKey = "angebot-" + UUID.randomUUID().toString();
+        offer.businessKey = "angebot-" + UUID.randomUUID().toString(); offer.annahmeToken = UUID.randomUUID().toString();
         offer.status = Offer.STATUS_VERSENDET;
 
         QuarkusTransaction.requiringNew().run(() -> {
@@ -608,7 +608,7 @@ class OfferResourceTest {
                 }
                 """)
                 .when()
-                .post("/angebote/annahme/{businessKey}", offer.businessKey)
+                .post("/angebote/annahme/{token}", offer.annahmeToken)
                 .then()
                 .statusCode(200)
                 .body("ergebnis", equalTo("angenommen"));
@@ -629,7 +629,7 @@ class OfferResourceTest {
         Offer offer = new Offer();
         offer.customerId = "1";
         offer.handwerkerId = "99";
-        offer.businessKey = "angebot-" + UUID.randomUUID().toString();
+        offer.businessKey = "angebot-" + UUID.randomUUID().toString(); offer.annahmeToken = UUID.randomUUID().toString();
         offer.status = Offer.STATUS_VERSENDET;
 
         QuarkusTransaction.requiringNew().run(() -> {
@@ -646,7 +646,7 @@ class OfferResourceTest {
                 }
                 """)
                 .when()
-                .post("/angebote/annahme/{businessKey}", offer.businessKey)
+                .post("/angebote/annahme/{token}", offer.annahmeToken)
                 .then()
                 .statusCode(200)
                 .body("ergebnis", equalTo("abgelehnt"));
@@ -678,12 +678,12 @@ class OfferResourceTest {
     }
 
     @Test
-    void shouldReturn409WhenOfferNotVersendet() {
+    void shouldReturn409WhenOfferAlreadyAnswered() {
         Offer offer = new Offer();
         offer.customerId = "1";
         offer.handwerkerId = "99";
-        offer.businessKey = "angebot-" + UUID.randomUUID().toString();
-        offer.status = Offer.STATUS_ERFASST;
+        offer.businessKey = "angebot-" + UUID.randomUUID().toString(); offer.annahmeToken = UUID.randomUUID().toString();
+        offer.status = Offer.STATUS_ANGENOMMEN;
 
         QuarkusTransaction.requiringNew().run(() -> {
             offer.persist();
@@ -697,7 +697,7 @@ class OfferResourceTest {
                 }
                 """)
                 .when()
-                .post("/angebote/annahme/{businessKey}", offer.businessKey)
+                .post("/angebote/annahme/{token}", offer.annahmeToken)
                 .then()
                 .statusCode(409);
     }
@@ -707,7 +707,7 @@ class OfferResourceTest {
         Offer offer = new Offer();
         offer.customerId = "1";
         offer.handwerkerId = "99";
-        offer.businessKey = "angebot-" + UUID.randomUUID().toString();
+        offer.businessKey = "angebot-" + UUID.randomUUID().toString(); offer.annahmeToken = UUID.randomUUID().toString();
         offer.status = Offer.STATUS_VERSENDET;
 
         QuarkusTransaction.requiringNew().run(() -> {
@@ -722,7 +722,7 @@ class OfferResourceTest {
                 }
                 """)
                 .when()
-                .post("/angebote/annahme/{businessKey}", offer.businessKey)
+                .post("/angebote/annahme/{token}", offer.annahmeToken)
                 .then()
                 .statusCode(400);
     }
@@ -744,7 +744,7 @@ class OfferResourceTest {
         Offer offer = new Offer();
         offer.customerId = "1";
         offer.handwerkerId = "99";
-        offer.businessKey = "angebot-" + UUID.randomUUID().toString();
+        offer.businessKey = "angebot-" + UUID.randomUUID().toString(); offer.annahmeToken = UUID.randomUUID().toString();
         offer.status = Offer.STATUS_KI_FERTIG;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
         final String businessKey = offer.businessKey;
@@ -795,7 +795,7 @@ class OfferResourceTest {
         Offer offer = new Offer();
         offer.customerId = "1";
         offer.handwerkerId = "99";
-        offer.businessKey = "angebot-" + UUID.randomUUID().toString();
+        offer.businessKey = "angebot-" + UUID.randomUUID().toString(); offer.annahmeToken = UUID.randomUUID().toString();
         offer.status = Offer.STATUS_KI_FERTIG;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
         final String businessKey = offer.businessKey;
@@ -838,7 +838,7 @@ class OfferResourceTest {
         Offer offer = new Offer();
         offer.customerId = "1";
         offer.handwerkerId = "99";
-        offer.businessKey = "angebot-" + UUID.randomUUID().toString();
+        offer.businessKey = "angebot-" + UUID.randomUUID().toString(); offer.annahmeToken = UUID.randomUUID().toString();
         offer.status = Offer.STATUS_IN_BEARBEITUNG;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
         final Long offerId = offer.id;
@@ -895,7 +895,7 @@ class OfferResourceTest {
         Offer offer = new Offer();
         offer.customerId = "1";
         offer.handwerkerId = "99";
-        offer.businessKey = "angebot-" + UUID.randomUUID().toString();
+        offer.businessKey = "angebot-" + UUID.randomUUID().toString(); offer.annahmeToken = UUID.randomUUID().toString();
         offer.status = Offer.STATUS_IN_BEARBEITUNG;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
         final Long offerId = offer.id;
@@ -953,7 +953,7 @@ class OfferResourceTest {
         Offer offer = new Offer();
         offer.customerId = "1";
         offer.handwerkerId = "99";
-        offer.businessKey = "angebot-" + UUID.randomUUID().toString();
+        offer.businessKey = "angebot-" + UUID.randomUUID().toString(); offer.annahmeToken = UUID.randomUUID().toString();
         offer.status = Offer.STATUS_IN_BEARBEITUNG;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
         final Long offerId = offer.id;
@@ -1011,7 +1011,7 @@ class OfferResourceTest {
         Offer offer = new Offer();
         offer.customerId = "1";
         offer.handwerkerId = "99";
-        offer.businessKey = "angebot-" + UUID.randomUUID().toString();
+        offer.businessKey = "angebot-" + UUID.randomUUID().toString(); offer.annahmeToken = UUID.randomUUID().toString();
         offer.status = Offer.STATUS_IN_BEARBEITUNG;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
         final Long offerId = offer.id;
@@ -1093,7 +1093,7 @@ class OfferResourceTest {
         Offer offer = new Offer();
         offer.customerId = "1";
         offer.handwerkerId = "99";
-        offer.businessKey = "angebot-" + UUID.randomUUID().toString();
+        offer.businessKey = "angebot-" + UUID.randomUUID().toString(); offer.annahmeToken = UUID.randomUUID().toString();
         offer.status = Offer.STATUS_ERFASST;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
 
@@ -1123,7 +1123,7 @@ class OfferResourceTest {
         Offer offer = new Offer();
         offer.customerId = "1";
         offer.handwerkerId = "99";
-        offer.businessKey = "angebot-" + UUID.randomUUID().toString();
+        offer.businessKey = "angebot-" + UUID.randomUUID().toString(); offer.annahmeToken = UUID.randomUUID().toString();
         offer.status = Offer.STATUS_KI_FERTIG;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
 
@@ -1148,7 +1148,7 @@ class OfferResourceTest {
         Offer offer = new Offer();
         offer.customerId = "1";
         offer.handwerkerId = "99";
-        offer.businessKey = "angebot-" + UUID.randomUUID().toString();
+        offer.businessKey = "angebot-" + UUID.randomUUID().toString(); offer.annahmeToken = UUID.randomUUID().toString();
         offer.status = Offer.STATUS_KI_FERTIG;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
 
@@ -1177,7 +1177,7 @@ class OfferResourceTest {
         Offer offer = new Offer();
         offer.customerId = "1";
         offer.handwerkerId = "99";
-        offer.businessKey = "angebot-" + UUID.randomUUID().toString();
+        offer.businessKey = "angebot-" + UUID.randomUUID().toString(); offer.annahmeToken = UUID.randomUUID().toString();
         offer.status = Offer.STATUS_KI_FERTIG;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
         final String businessKey = offer.businessKey;
@@ -1247,7 +1247,7 @@ class OfferResourceTest {
         Offer offer = new Offer();
         offer.customerId = "1";
         offer.handwerkerId = "99";
-        offer.businessKey = "angebot-" + UUID.randomUUID().toString();
+        offer.businessKey = "angebot-" + UUID.randomUUID().toString(); offer.annahmeToken = UUID.randomUUID().toString();
         offer.status = Offer.STATUS_KI_FERTIG;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
         final String businessKey = offer.businessKey;
@@ -1296,7 +1296,7 @@ class OfferResourceTest {
         Offer offer = new Offer();
         offer.customerId = "1";
         offer.handwerkerId = "99";
-        offer.businessKey = "angebot-" + UUID.randomUUID().toString();
+        offer.businessKey = "angebot-" + UUID.randomUUID().toString(); offer.annahmeToken = UUID.randomUUID().toString();
         offer.status = Offer.STATUS_KI_FERTIG;
         offer.korrekturvorschlaege = new java.util.ArrayList<>(java.util.List.of("Materialkosten prüfen"));
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
@@ -1805,7 +1805,7 @@ class OfferResourceTest {
         Offer offer = new Offer();
         offer.customerId = "1";
         offer.handwerkerId = "99";
-        offer.businessKey = "angebot-" + UUID.randomUUID().toString();
+        offer.businessKey = "angebot-" + UUID.randomUUID().toString(); offer.annahmeToken = UUID.randomUUID().toString();
         offer.status = Offer.STATUS_KI_FERTIG;
         QuarkusTransaction.requiringNew().run(() -> offer.persist());
         final String businessKey = offer.businessKey;
