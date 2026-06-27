@@ -6,18 +6,18 @@
 export const API_CONFIG = {
   OFFER_SERVICE_URL:
     import.meta.env.VITE_OFFER_SERVICE_URL ??
-    "https://craftvoice-offer.winfprojekt.de",
+    "http://craftvoice-offer.winfprojekt.de",
   USER_SERVICE_URL:
     import.meta.env.VITE_USER_SERVICE_URL ??
-    "https://craftvoice-user.winfprojekt.de",
+    "http://craftvoice-user.winfprojekt.de",
 
   DOCUMENT_SERVICE_URL:
     import.meta.env.VITE_DOCUMENT_SERVICE_URL ??
-    "https://craftvoice-document.winfprojekt.de",
+    "http://craftvoice-document.winfprojekt.de",
 
   PE_URL:
     import.meta.env.VITE_PE_URL ??
-    "https://pe-craftvoice.winfprojekt.de/engine-rest",
+    "http://pe-craftvoice.winfprojekt.de/engine-rest",
 
   CATALOG_SERVICE_URL:
     import.meta.env.VITE_CATALOG_SERVICE_URL ??

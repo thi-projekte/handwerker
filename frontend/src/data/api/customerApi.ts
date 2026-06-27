@@ -1,5 +1,4 @@
 import { getToken } from "@/services/authService";
-import { USER_SERVICE_URL } from "@/services/userService";
 
 export interface CustomerDTO {
     id: number;
@@ -13,9 +12,7 @@ export interface CustomerDTO {
 
 export async function getCustomer(id: number | string): Promise<CustomerDTO> {
     const token = await getToken();
-    // USER_SERVICE_URL statt hartkodierter http://-URL: Letztere löste auf der
-    // HTTPS-Seite einen Mixed-Content-Block aus → "Fehler beim Laden der Dokumente".
-    const res = await fetch(`${USER_SERVICE_URL}/customers/${id}`, {
+    const res = await fetch(`http://user-craftvoice.winfprojekt.de/api/users/customers/${id}`, {
         method: "GET",
         headers: {
             ...(token && {

@@ -200,22 +200,6 @@ public class UserResource {
         return Response.ok().build();
     }
 
-    @GET
-    @Path("/public/{id}")
-    @PermitAll
-    public Response getPublicProfile(@PathParam("id") Long id) {
-        UserEntity user = UserEntity.findById(id);
-        if (user == null) {
-            return Response.status(Response.Status.NOT_FOUND).build();
-        }
-        
-        Map<String, Object> response = new HashMap<>();
-        response.put("companyName", user.companyName != null && !user.companyName.isEmpty() ? user.companyName : user.firstName + " " + user.lastName);
-        response.put("profilePictureUrl", user.profilePictureUrl);
-        
-        return Response.ok(response).build();
-    }
-
     private Long getUserId() {
         UserEntity user = userService.syncUserWithDatabase();
 
