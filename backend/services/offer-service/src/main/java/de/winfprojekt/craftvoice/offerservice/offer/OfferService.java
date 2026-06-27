@@ -679,11 +679,5 @@ public class OfferService {
 
         offer.persist();
 
-        // Process Engine benachrichtigen
-        if (Offer.STATUS_ANGENOMMEN.equals(targetStatus)) {
-            processEngineClient.sendAngebotAngenommen(offer.businessKey);
-        } else {
-            processEngineClient.sendAngebotAbgelehnt(offer.businessKey);
-        }
     }
 }
