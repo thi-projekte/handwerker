@@ -263,6 +263,7 @@ public class OfferResource {
             @Valid UpdateOfferStatusRequest request) {
 
         String userId = jwt.getSubject();
+        offerService.updateOfferStatusManually(businessKey, request.status, userId);
 
         return Response.ok(Map.of(
                 "businessKey", businessKey,
