@@ -41,7 +41,11 @@ public class Call2PromptBuilder {
 
     private static final Pattern FENCE_START = Pattern.compile("(?s)^\\s*```(?:json)?\\s*");
     private static final Pattern FENCE_END = Pattern.compile("(?s)\\s*```\\s*$");
-    private static final Pattern ARTICLE = Pattern.compile("[A-Z]{2,5}-\\d+");
+    // Artikelnummern des echten catalog-service sind LETTERS-SEGMENT(-SEGMENT)*, z.B.
+    // SCH-JUNG-SD, KAB-NYM315, INS-KAI-GD2-25 (nicht nur das Mock-Format ELE-3004). Das
+    // alte Muster "[A-Z]{2,5}-\\d+" matchte NUR Mock-Nummern -> bei echten Nummern im
+    // JSON-Fallback/der Normalisierung wurde nichts erkannt.
+    private static final Pattern ARTICLE = Pattern.compile("[A-Z]{2,6}(?:-[A-Z0-9]+)+");
     private static final Pattern KEIN_TREFFER_TEXT =
             Pattern.compile("^(kein[_\\s-]?treffer|none|null|keiner?)$", Pattern.CASE_INSENSITIVE);
 
