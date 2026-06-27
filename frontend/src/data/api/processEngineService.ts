@@ -17,7 +17,7 @@
 
 import { API_CONFIG } from "@/config/api";
 import { getToken } from "@/services/authService";
-import type { OfferResponse } from "@/data/api/offerService";
+import type { OfferChangesRequest } from "@/data/api/offerService";
 
 // ─── Auth-Helper ────────────────────────────────────────────────────────────
 
@@ -80,19 +80,18 @@ export async function sendGenehmigung(businessKey: string): Promise<void> {
 /**
  * Sendet "angebotsentwurf" direkt an die PE (Fall 2: Reihenfolge / Alternative).
  *
- * Der Payload ist exakt das {@link OfferResponse}-DTO, wie es das Frontend zuvor
- * vom offer-service erhalten hat (siehe getAngebotsentwurf) — lediglich mit
- * angepasster Positions-Reihenfolge bzw. eingesetzter Alternative. Es geht
- * bewusst KEIN Update an den offer-service; die PE korreliert diesen Entwurf
- * direkt am Event_10bgkb0 (gleiche Stelle, die sonst der offer-service in
- * ProcessEngineClient.sendAngebotsentwurf bedient).
+ * Der Payload ist das {@link OfferChangesRequest}-DTO — exakt das Format, das
+ * auch der offer-service am /positionen-Endpunkt erwartet
+ * ({@code strukturierteAngebotspositionen.material} mit Bezeichnung + Menge +
+ * Einheit + katalogProduktId der gewählten Alternative). Im Fall 2 wird dasselbe
+ * Objekt parallel an PE und offer-service geschickt.
  *
- * Das Serialisierungsformat (processVariables.angebotsentwurf = { value:
- * JSON-String, type: "Json" }) ist deckungsgleich mit der Backend-Variante.
+ * Serialisierung: processVariables.angebotsentwurf = { value: JSON-String,
+ * type: "Json" }.
  */
 export async function sendAngebotsentwurf(
   businessKey: string,
-  angebotsentwurf: OfferResponse,
+  angebotsentwurf: OfferChangesRequest,
 ): Promise<void> {
   await sendPeMessage({
     messageName: "angebotsentwurf",
