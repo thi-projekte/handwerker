@@ -685,5 +685,6 @@ public class OfferService {
         } else {
             processEngineClient.sendAngebotAbgelehnt(offer.businessKey);
         }
+
     }
 }
