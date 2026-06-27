@@ -214,14 +214,20 @@ export const OfferSharePage = () => {
 
   // ─── Positionen für Vorschau ─────────────────────────────────────────────
 
+  // Alle Positionen anzeigen — Material, Arbeitszeit UND Anfahrt (sortiert nach
+  // Reihenfolge). Vorher wurde hart auf MATERIAL gefiltert, wodurch Arbeitszeit
+  // und Anfahrt in der Aufzählung fehlten, obwohl sie im Gesamtpreis stecken.
   const vorschauPositionen =
     offerData?.positions
-      .filter((p) => p.type === "MATERIAL")
+      .slice()
+      .sort((a, b) => (a.reihenfolge ?? 0) - (b.reihenfolge ?? 0))
       .map((p) => ({
+        id: p.id,
         title: p.bezeichnung,
-        amount: p.positionsPreis
-          ? `${p.positionsPreis.toFixed(2).replace(".", ",")} €`
-          : "—",
+        amount:
+          p.positionsPreis != null
+            ? `${p.positionsPreis.toFixed(2).replace(".", ",")} €`
+            : "—",
       })) ?? [];
 
   const gesamtPreisFormatiert = offerData?.gesamtPreis
@@ -354,7 +360,7 @@ export const OfferSharePage = () => {
           <>
             <div className="offer-preview-list">
               {vorschauPositionen.map((position) => (
-                <div className="offer-preview-row" key={position.title}>
+                <div className="offer-preview-row" key={position.id}>
                   <span>{position.title}</span>
                   <strong>{position.amount}</strong>
                 </div>

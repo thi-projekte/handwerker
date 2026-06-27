@@ -847,7 +847,7 @@ export const ReviewPage = () => {
     const istReihenfolge = hatReihenfolgeOderAlternative();
 
     // Die eingetragene Gesamt-Arbeitsdauer an den offer-service melden; daraus
-    // berechnet dieser die ARBEITSZEIT-Position neu (Fall 1 & 3).
+    // berechnet dieser die ARBEITSZEIT-Position neu (Fall 1, 2 & 3).
     const gesamtStunden = maZeilen.reduce((sum, z) => sum + z.stunden, 0);
 
     try {
@@ -867,16 +867,20 @@ export const ReviewPage = () => {
         });
       } else if (istReihenfolge) {
         // ── Fall 2: Reihenfolge / Alternative ──
-        // Dasselbe OfferChangesRequest-Objekt (neue Reihenfolge / gewählte
-        // Alternative) geht PARALLEL an zwei Empfänger — beide erwarten genau
-        // dieses Format:
-        //   1) an die PE (Korrelation "angebotsentwurf")
-        //   2) an den offer-service über den bestehenden /positionen-Endpunkt
         const aenderungen = buildOfferChanges();
-        await Promise.all([
-          sendAngebotsentwurf(businessKey, aenderungen),
-          updateOfferPositions(businessKey, aenderungen),
-        ]);
+        // 1) Material/Anfahrt im offer-service aktualisieren (neue Reihenfolge /
+        //    gewählte Alternative) über den bestehenden /positionen-Endpunkt.
+        await updateOfferPositions(businessKey, aenderungen);
+        // 2) Arbeitsstunden setzen: legt die ARBEITSZEIT-Position an (Stunden ×
+        //    Stundensatz). Ohne diesen Schritt fehlt die Arbeitszeit komplett im
+        //    Angebot, PDF und Gesamtpreis. Der offer-service sendet dabei selbst
+        //    "angebotsentwurf" (OfferResponse-Format) an die PE.
+        await setArbeitsstunden(businessKey, {
+          arbeitsdauerStunden: gesamtStunden,
+        });
+        // 3) Zusätzlich den Entwurf direkt im OfferChangesRequest-Format an die
+        //    PE korrelieren (bewusst akzeptierter Doppelversand neben Schritt 2).
+        await sendAngebotsentwurf(businessKey, aenderungen);
         navigate("/laden", {
           state: { businessKey, offerId, mode: "versand-warten" },
         });
