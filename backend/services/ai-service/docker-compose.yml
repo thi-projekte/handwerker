@@ -39,9 +39,11 @@ services:
       CAMUNDA_ENGINE_URL: ${CAMUNDA_ENGINE_URL:-http://craftvoice-processengine:8080/engine-rest}
 
       # ---- Catalog-Suche (LLM-Call 2) ----
-      # Mock=true => kein catalog-service noetig (Default fuer den ersten Deploy).
-      # Auf false setzen, sobald der echte catalog-service erreichbar ist.
-      CATALOG_MOCK_ENABLED: ${CATALOG_MOCK_ENABLED:-true}
+      # Mock=true matcht gegen 30 hartcodierte Artikel mit NUMERISCHEN IDs (z.B. 3004) -
+      # der echte catalog-service vergibt aber UUIDs => offer-service-Preis-Lookup scheitert,
+      # keine Preise im Frontend. Default daher false (echter Katalog ist live). Mock nur
+      # noch fuer lokale Demo ohne catalog-service via Env-Override aktivierbar.
+      CATALOG_MOCK_ENABLED: ${CATALOG_MOCK_ENABLED:-false}
       CATALOG_SERVICE_URL: ${CATALOG_SERVICE_URL:-http://catalog-service:8080}
 
     extra_hosts:
