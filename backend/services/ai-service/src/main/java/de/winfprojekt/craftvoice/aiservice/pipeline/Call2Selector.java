@@ -92,8 +92,12 @@ public class Call2Selector {
 
     /** Waehlt fuer eine einzelne Materialposition das Katalogprodukt. */
     Position selectFor(Position position, String handwerkerId) {
-        String query = ((position.bezeichnung() == null ? "" : position.bezeichnung()) + " "
-                + (position.beschreibung() == null ? "" : position.beschreibung())).trim();
+        // Suche NUR mit bezeichnung: Die catalog-Suche ist token-restriktiv - eine verbose
+        // beschreibung (Fuellwoerter wie "inklusive Rahmen und Abdeckung aus dem gefuehrten
+        // Katalogsortiment") treibt die Trefferzahl auf 0 -> kein Kandidat -> kein Produkt ->
+        // kein Preis. Die bezeichnung allein liefert die relevanten Treffer (empirisch belegt
+        // gegen den echten Katalog). Die beschreibung dient dem LLM weiterhin als Auswahlkontext.
+        String query = position.bezeichnung() == null ? "" : position.bezeichnung().trim();
 
         List<CatalogCandidate> candidates = catalogSearch.search(query, CANDIDATE_LIMIT, handwerkerId);
         if (candidates.isEmpty()) {
