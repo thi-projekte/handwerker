@@ -858,15 +858,18 @@ export const ReviewPage = () => {
         navigate("/laden", {
           state: { businessKey, offerId, mode: "ki-warten" },
         });
-      } else if (istReihenfolge) {
-        // ── Fall 2: Reihenfolge / Alternative ──
-        // "angebotsentwurf" wurde bereits via setArbeitsstunden vom Offer-Service
-        // gesendet (mit den oben persistierten Positionen).
-        navigate("/laden", {
-          state: { businessKey, offerId, mode: "versand-warten" },
-        });
       } else {
-        // ── Fall 1: Genehmigung (keine Änderungen) ──
+        // ── Fall 1 (keine Änderung) UND Fall 2 (Alternative/Reihenfolge) ──
+        // Beide sind FINALE Auswahlen ohne KI-Re-Run und müssen daher genau
+        // gleich abgeschlossen werden: genehmigen → PE-Event "genehmigungAngebot"
+        // → Dokumenterstellung. Bei Fall 2 wurden die geänderten Positionen oben
+        // bereits via updateOfferPositions persistiert und mit setArbeitsstunden
+        // als "angebotsentwurf" an die PE gesendet; die Genehmigung läuft danach
+        // identisch zu Fall 1.
+        //
+        // Früher fehlte für Fall 2 dieser Genehmigungsschritt: der Prozess blieb
+        // am Event-Gateway stehen, es wurde nie ein Dokument erzeugt und die
+        // OfferSharePage pollte endlos ein nicht existierendes PDF (404).
         await approveOffer(businessKey);
         await sendGenehmigung(businessKey);
         navigate("/laden", {

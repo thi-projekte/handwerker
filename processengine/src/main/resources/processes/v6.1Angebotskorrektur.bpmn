@@ -73,13 +73,21 @@ JSON.stringify(payload);</camunda:script>
         <camunda:executionListener event="start">
           <camunda:script scriptFormat="JavaScript">var ergebnisKI = execution.getVariable("ergebnisKI");
 
+// Die KI liefert geschaetzteArbeitsdauerStunden bewusst als null, wenn der
+// Handwerker keine Dauer ausgesprochen hat. Ein direktes .numberValue() auf
+// einen JSON-null-Knoten bricht mit "Expected 'Number', got 'NULL'" ab und
+// liess jede manuelle Korrektur (Fall 3) komplett fehlschlagen. Daher hier
+// null-sicher lesen und null als gueltigen Wert weiterreichen.
+var hatDauer = ergebnisKI.hasProp("geschaetzteArbeitsdauerStunden")
+  &amp;&amp; !ergebnisKI.prop("geschaetzteArbeitsdauerStunden").isNull();
+
 var daten = {
   strukturierteAngebotspositionen: JSON.parse(
     ergebnisKI.prop("strukturierteAngebotspositionen").toString()
   ),
-  geschaetzteArbeitsdauerStunden: ergebnisKI
-    .prop("geschaetzteArbeitsdauerStunden")
-    .numberValue()
+  geschaetzteArbeitsdauerStunden: hatDauer
+    ? ergebnisKI.prop("geschaetzteArbeitsdauerStunden").numberValue()
+    : null
 };
 
 execution.setVariable(
