@@ -866,14 +866,24 @@ export const ReviewPage = () => {
         await updateOfferPositions(businessKey, aenderungen);
         // 2) Arbeitsstunden setzen: legt die ARBEITSZEIT-Position an (Stunden ×
         //    Stundensatz). Ohne diesen Schritt fehlt die Arbeitszeit komplett im
-        //    Angebot, PDF und Gesamtpreis. Der offer-service sendet dabei selbst
-        //    "angebotsentwurf" (OfferResponse-Format) an die PE.
-        await setArbeitsstunden(businessKey, {
+        //    Angebot, PDF und Gesamtpreis. Der offer-service liefert hier das
+        //    fertig bepreiste Angebot (OfferResponse: positions + gesamtPreis)
+        //    zurück und sendet es zugleich als "angebotsentwurf" an die PE.
+        const aktualisiertesAngebot = await setArbeitsstunden(businessKey, {
           arbeitsdauerStunden: gesamtStunden,
         });
-        // 3) Zusätzlich den Entwurf direkt im OfferChangesRequest-Format an die
-        //    PE korrelieren (bewusst akzeptierter Doppelversand neben Schritt 2).
-        await sendAngebotsentwurf(businessKey, aenderungen);
+        // 3) Entwurf an die PE korrelieren (Event "Ausgewählter Angebotsentwurf").
+        //    Wir senden ein KOMBINIERTES Objekt: die OfferResponse-Felder
+        //    (positions + gesamtPreis) braucht der document-service, um die
+        //    PDF-Positionstabelle zu füllen; strukturierteAngebotspositionen +
+        //    korrekturvorschlaege braucht der nachgelagerte PE-/positionen-Schritt.
+        //    Reihenfolge des Spreads ist wichtig: `aenderungen` muss zuletzt
+        //    stehen, damit strukturierteAngebotspositionen/korrekturvorschlaege
+        //    exakt das vom /positionen-Schritt erwartete Format behalten.
+        await sendAngebotsentwurf(businessKey, {
+          ...aktualisiertesAngebot,
+          ...aenderungen,
+        });
         navigate("/laden", {
           state: { businessKey, offerId, mode: "versand-warten" },
         });
