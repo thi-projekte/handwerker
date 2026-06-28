@@ -155,13 +155,13 @@ export const OfferSharePage = () => {
     setIsSending(true);
     setSendError(null);
     try {
+      // Die PE empfängt die Message, führt Activity_6.1 (Mail-Versand via document-service)
+      // und Activity_6.2 (POST /versendet am offer-service) selbst aus.
+      // markOfferVersendet() wird hier NICHT mehr aufgerufen, damit der Endpunkt
+      // nicht doppelt getroffen wird.
       await sendAuftragVersenden(businessKey);
-      await markOfferVersendet(businessKey);
       setSentVia("E-Mail");
     } catch (err) {
-      // Kein mailto-Fallback mehr: Die Mail verschickt am Ende das Backend
-      // (PE-Versandprozess → document-service). Wir öffnen daher NICHT den lokalen
-      // Mail-Client, sondern zeigen nur einen Fehler an.
       console.error("[OfferSharePage] E-Mail-Versand fehlgeschlagen:", err);
       setSendError(
         "Angebot konnte nicht versendet werden. Bitte erneut versuchen.",
