@@ -5,6 +5,7 @@ import { useState, useMemo, useEffect } from "react";
 import {
   MapPin,
   Calendar,
+  Clock,
   ChevronDown,
   X,
   Filter,
@@ -30,6 +31,7 @@ interface Rechnung {
   ort: string;
   erstelldatum: string;
   faelligkeitsdatum: string;
+  erstelltAm: string;
   betrag: number;
 }
 
@@ -65,6 +67,25 @@ function formatDatum(iso?: string | null) {
   if (!y || !m || !d) return iso;
 
   return `${d}.${m}.${y}`;
+}
+
+// Die vom Backend gelieferte Zeit entspricht nicht unserer Zeitzone,
+// daher werden 2 Stunden aufgerechnet. Anzeige im 24h-Format (HH:MM).
+function formatUhrzeit(iso?: string | null) {
+  if (!iso) return null;
+
+  const timePart = iso.split("T")[1];
+  if (!timePart) return null;
+
+  const [hStr, mStr] = timePart.split(":");
+  const h = Number(hStr);
+  const m = Number(mStr);
+  if (Number.isNaN(h) || Number.isNaN(m)) return null;
+
+  const adjustedH = (h + 2) % 24;
+  const pad = (n: number) => n.toString().padStart(2, "0");
+
+  return `${pad(adjustedH)}:${pad(m)}`;
 }
 
 function formatBetrag(n?: number | null) {
@@ -587,6 +608,12 @@ export const DocumentPage = () => {
                       <Calendar size={13} className="doc-icon-inline" />
                       {formatDatum(angebot.datum)}
                     </span>
+                    {formatUhrzeit(angebot.erstelltAm) && (
+                      <span className="text-secondary doc-meta-item">
+                        <Clock size={13} className="doc-icon-inline" />
+                        {formatUhrzeit(angebot.erstelltAm)} Uhr
+                      </span>
+                    )}
                   </div>
 
                   <hr className="divider" />
@@ -640,6 +667,12 @@ export const DocumentPage = () => {
                     <Calendar size={13} className="doc-icon-inline" />
                     Erstellt: {formatDatum(rechnung.erstelldatum)}
                   </span>
+                  {formatUhrzeit(rechnung.erstelltAm) && (
+                    <span className="text-secondary doc-meta-item">
+                      <Clock size={13} className="doc-icon-inline" />
+                      {formatUhrzeit(rechnung.erstelltAm)} Uhr
+                    </span>
+                  )}
                   <span className="text-secondary doc-meta-item">
                     <Calendar size={13} className="doc-icon-inline" />
                     Fällig: {formatDatum(rechnung.faelligkeitsdatum)}
