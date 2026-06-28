@@ -363,7 +363,30 @@ export async function updateOfferStatus(
   );
 
   if (!res.ok) {
-    throw new Error(`Status-Update auf ${status} fehlgeschlagen: ${res.status}`);
+    throw new Error(
+      `Status-Update auf ${status} fehlgeschlagen: ${res.status}`,
+    );
+  }
+}
+
+/**
+ * Markiert ein Angebot als versendet (Status → VERSENDET).
+ * Wird ausgelöst, sobald der Handwerker das Angebot auf der Teilen-Seite über
+ * einen der Versand-Buttons (WhatsApp / E-Mail / Sonstiges) verschickt.
+ *
+ * Backend: POST /angebote/{businessKey}/versendet (kein Body).
+ */
+export async function markOfferVersendet(businessKey: string): Promise<void> {
+  const res = await fetch(
+    `${API_CONFIG.OFFER_SERVICE_URL}/angebote/${businessKey}/versendet`,
+    {
+      method: "POST",
+      headers: await getAuthHeaders(),
+    },
+  );
+
+  if (!res.ok) {
+    throw new Error(`Status auf VERSENDET setzen fehlgeschlagen: ${res.status}`);
   }
 }
 
@@ -374,9 +397,13 @@ export async function updateOfferStatus(
  * (Benötigt keinen Login)
  */
 export async function getPublicOffer(token: string) {
-  const response = await fetch(`${API_CONFIG.OFFER_SERVICE_URL}/angebote/annahme/${token}`);
+  const response = await fetch(
+    `${API_CONFIG.OFFER_SERVICE_URL}/angebote/annahme/${token}`,
+  );
   if (!response.ok) {
-    throw new Error("Das Angebot konnte nicht gefunden werden oder ist nicht mehr gültig.");
+    throw new Error(
+      "Das Angebot konnte nicht gefunden werden oder ist nicht mehr gültig.",
+    );
   }
   return await response.json();
 }
@@ -385,12 +412,18 @@ export async function getPublicOffer(token: string) {
  * Nimmt ein Angebot über den Annahme-Token an oder lehnt es ab.
  * (Benötigt keinen Login)
  */
-export async function acceptPublicOffer(token: string, entscheidung: "angenommen" | "abgelehnt") {
-  const response = await fetch(`${API_CONFIG.OFFER_SERVICE_URL}/angebote/annahme/${token}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ entscheidung })
-  });
+export async function acceptPublicOffer(
+  token: string,
+  entscheidung: "angenommen" | "abgelehnt",
+) {
+  const response = await fetch(
+    `${API_CONFIG.OFFER_SERVICE_URL}/angebote/annahme/${token}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ entscheidung }),
+    },
+  );
 
   if (!response.ok) {
     throw new Error("Fehler bei der Angebotsannahme.");

@@ -884,6 +884,9 @@ export const ReviewPage = () => {
           ...aktualisiertesAngebot,
           ...aenderungen,
         });
+        // 4) Angebot im offer-service als geprüft markieren (/review/approve),
+        //    analog zu Fall 1 — schließt den Review-Schritt serverseitig ab.
+        await approveOffer(businessKey);
         navigate("/laden", {
           state: { businessKey, offerId, mode: "versand-warten" },
         });
