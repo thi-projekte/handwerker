@@ -247,7 +247,7 @@ export async function updateOfferPositions(
   request: OfferChangesRequest,
 ): Promise<void> {
   const res = await fetch(
-    `${API_CONFIG.OFFER_SERVICE_URL}/offers/${businessKey}/review/approve`,
+    `${API_CONFIG.OFFER_SERVICE_URL}/angebote/${businessKey}/positionen`,
     {
       method: "POST",
       headers: await getAuthHeaders(),
