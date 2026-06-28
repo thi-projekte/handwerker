@@ -247,7 +247,7 @@ export async function updateOfferPositions(
   request: OfferChangesRequest,
 ): Promise<void> {
   const res = await fetch(
-    `${API_CONFIG.OFFER_SERVICE_URL}/angebote/${businessKey}/positionen`,
+    `${API_CONFIG.OFFER_SERVICE_URL}/offers/${businessKey}/review/approve`,
     {
       method: "POST",
       headers: await getAuthHeaders(),
@@ -363,7 +363,9 @@ export async function updateOfferStatus(
   );
 
   if (!res.ok) {
-    throw new Error(`Status-Update auf ${status} fehlgeschlagen: ${res.status}`);
+    throw new Error(
+      `Status-Update auf ${status} fehlgeschlagen: ${res.status}`,
+    );
   }
 }
 
@@ -374,9 +376,13 @@ export async function updateOfferStatus(
  * (Benötigt keinen Login)
  */
 export async function getPublicOffer(token: string) {
-  const response = await fetch(`${API_CONFIG.OFFER_SERVICE_URL}/angebote/annahme/${token}`);
+  const response = await fetch(
+    `${API_CONFIG.OFFER_SERVICE_URL}/angebote/annahme/${token}`,
+  );
   if (!response.ok) {
-    throw new Error("Das Angebot konnte nicht gefunden werden oder ist nicht mehr gültig.");
+    throw new Error(
+      "Das Angebot konnte nicht gefunden werden oder ist nicht mehr gültig.",
+    );
   }
   return await response.json();
 }
@@ -385,12 +391,18 @@ export async function getPublicOffer(token: string) {
  * Nimmt ein Angebot über den Annahme-Token an oder lehnt es ab.
  * (Benötigt keinen Login)
  */
-export async function acceptPublicOffer(token: string, entscheidung: "angenommen" | "abgelehnt") {
-  const response = await fetch(`${API_CONFIG.OFFER_SERVICE_URL}/angebote/annahme/${token}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ entscheidung })
-  });
+export async function acceptPublicOffer(
+  token: string,
+  entscheidung: "angenommen" | "abgelehnt",
+) {
+  const response = await fetch(
+    `${API_CONFIG.OFFER_SERVICE_URL}/angebote/annahme/${token}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ entscheidung }),
+    },
+  );
 
   if (!response.ok) {
     throw new Error("Fehler bei der Angebotsannahme.");
