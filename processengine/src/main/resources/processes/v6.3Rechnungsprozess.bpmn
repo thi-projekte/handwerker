@@ -38,10 +38,7 @@
       <bpmn:extensionElements>
         <camunda:connector>
           <camunda:inputOutput>
-            <camunda:inputParameter name="url">
-              <camunda:script scriptFormat="JavaScript">var businessKey = execution.getProcessBusinessKey();
-"http://offerservice-craftvoice.winfprojekt.de/rechnungen/" + businessKey + "/erstellen";</camunda:script>
-            </camunda:inputParameter>
+            <camunda:inputParameter name="url">http://offerservice-craftvoice.winfprojekt.de/rechnungen/${execution.processBusinessKey}/erstellen</camunda:inputParameter>
             <camunda:inputParameter name="method">POST</camunda:inputParameter>
           </camunda:inputOutput>
           <camunda:connectorId>http-connector</camunda:connectorId>
