@@ -10,6 +10,7 @@ import {
 } from "@/data/api/documentService";
 import {
   getOfferByBusinessKey,
+  markOfferVersendet,
   type OfferResponse,
 } from "@/data/api/offerService";
 import {
