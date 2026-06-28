@@ -369,6 +369,27 @@ export async function updateOfferStatus(
   }
 }
 
+/**
+ * Markiert ein Angebot als versendet (Status → VERSENDET).
+ * Wird ausgelöst, sobald der Handwerker das Angebot auf der Teilen-Seite über
+ * einen der Versand-Buttons (WhatsApp / E-Mail / Sonstiges) verschickt.
+ *
+ * Backend: POST /angebote/{businessKey}/versendet (kein Body).
+ */
+export async function markOfferVersendet(businessKey: string): Promise<void> {
+  const res = await fetch(
+    `${API_CONFIG.OFFER_SERVICE_URL}/angebote/${businessKey}/versendet`,
+    {
+      method: "POST",
+      headers: await getAuthHeaders(),
+    },
+  );
+
+  if (!res.ok) {
+    throw new Error(`Status auf VERSENDET setzen fehlgeschlagen: ${res.status}`);
+  }
+}
+
 // ─── Öffentliche Endpunkte (ohne Auth) ──────────────────────────────────────
 
 /**

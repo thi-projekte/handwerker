@@ -10,6 +10,7 @@ import {
 } from "@/data/api/documentService";
 import {
   getOfferByBusinessKey,
+  markOfferVersendet,
   type OfferResponse,
 } from "@/data/api/offerService";
 import {
@@ -133,6 +134,7 @@ export const OfferSharePage = () => {
     setSendError(null);
     try {
       await sendAuftragVersenden(businessKey);
+      await markOfferVersendet(businessKey);
       const nachricht = encodeURIComponent(
         `Guten Tag, anbei finden Sie Ihr Angebot:\n${pdfUrl}`,
       );
@@ -154,6 +156,7 @@ export const OfferSharePage = () => {
     setSendError(null);
     try {
       await sendAuftragVersenden(businessKey);
+      await markOfferVersendet(businessKey);
       setSentVia("E-Mail");
     } catch (err) {
       console.error("[OfferSharePage] E-Mail-Versand fehlgeschlagen:", err);
@@ -180,11 +183,13 @@ export const OfferSharePage = () => {
           url: pdfUrl,
         });
         await sendAuftragVersenden(businessKey);
+        await markOfferVersendet(businessKey);
         setSentVia("Sonstiges");
       } else {
         await navigator.clipboard.writeText(pdfUrl);
         setSentVia("Link kopiert");
         await sendAuftragVersenden(businessKey);
+        await markOfferVersendet(businessKey);
       }
     } catch (err) {
       if ((err as Error).name !== "AbortError") {
