@@ -486,7 +486,7 @@ private String buildCraftsmanContact(UserDto craftsman) {
             phrase.add(new Chunk("Hersteller: " + manufacturer, manufacturerFont));
         }
 
-        if (!isMaterialPosition(position) && !description.isBlank()) {
+        if (!description.isBlank()) {
             phrase.add(Chunk.NEWLINE);
             phrase.add(new Chunk(description, titleFont));
         }

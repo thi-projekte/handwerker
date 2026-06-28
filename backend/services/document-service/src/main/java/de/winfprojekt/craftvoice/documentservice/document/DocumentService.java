@@ -1,5 +1,6 @@
 package de.winfprojekt.craftvoice.documentservice.document;
 
+import de.winfprojekt.craftvoice.documentservice.client.offer.OfferClient;
 import de.winfprojekt.craftvoice.documentservice.client.user.UserClient;
 import de.winfprojekt.craftvoice.documentservice.client.user.UserDto;
 import de.winfprojekt.craftvoice.documentservice.exception.DocumentNotFoundException;
@@ -23,6 +24,7 @@ public class DocumentService {
     private final PdfGenerator pdfGenerator;
     private final MailService mailService;
     private final UserClient userClient;
+    private final OfferClient offerClient;
     private final JsonWebToken jwt;
 
     @ConfigProperty(name = "document.auth.enabled", defaultValue = "true")
@@ -36,12 +38,14 @@ public class DocumentService {
             PdfGenerator pdfGenerator,
             MailService mailService,
             @RestClient UserClient userClient,
+            @RestClient OfferClient offerClient,
             JsonWebToken jwt
     ) {
         this.documentRepository = documentRepository;
         this.pdfGenerator = pdfGenerator;
         this.mailService = mailService;
         this.userClient = userClient;
+        this.offerClient = offerClient;
         this.jwt = jwt;
     }
 
@@ -163,6 +167,15 @@ public class DocumentService {
 
         documentRepository.persist(document);
         documentRepository.flush();
+
+        if (type == DocumentType.OFFER) {
+            try {
+                offerClient.setStatusVersandbereit(businessKey, requireAuthorizationHeader(authorizationHeader));
+            } catch (Exception e) {
+                // Log and ignore to not fail the document creation if offer-service is down or fails
+                System.err.println("Failed to set status versandbereit for offer " + businessKey + ": " + e.getMessage());
+            }
+        }
 
         return DocumentResponse.from(document);
     }
