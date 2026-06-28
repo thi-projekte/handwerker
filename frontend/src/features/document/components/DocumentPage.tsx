@@ -49,6 +49,13 @@ const ANGEBOT_STATUS_OPTIONS: AngebotStatus[] = [
   "Abgelehnt",
 ];
 
+// Manuell darf der Handwerker ein Angebot nur auf "Angenommen" oder
+// "Abgelehnt" setzen (möglich, solange der Status "Versendet" ist).
+const ANGEBOT_MANUAL_STATUS_OPTIONS: AngebotStatus[] = [
+  "Angenommen",
+  "Abgelehnt",
+];
+
 // ── Helpers ────────────────────────────────────────────────────────────────
 
 function formatDatum(iso?: string | null) {
@@ -551,7 +558,7 @@ export const DocumentPage = () => {
                     <span className="doc-nummer">{angebot.angebotsnummer}</span>
                     <StatusDropdown
                       currentStatus={currentStatus}
-                      options={ANGEBOT_STATUS_OPTIONS}
+                      options={ANGEBOT_MANUAL_STATUS_OPTIONS}
                       styleMap={ANGEBOT_STATUS_STYLES}
                       onSelect={(status) => handleAngebotStatusChange(angebot.id, status)}
                       isOpen={activeStatusDropdownId === angebot.id}
