@@ -17,7 +17,27 @@
 
 import { API_CONFIG } from "@/config/api";
 import { getToken } from "@/services/authService";
-import type { OfferChangesRequest } from "@/data/api/offerService";
+import type {
+  OfferChangesRequest,
+  OfferResponse,
+} from "@/data/api/offerService";
+
+/**
+ * Payload der "angebotsentwurf"-Nachricht im Fall 2.
+ *
+ * Bewusst ein **kombiniertes** Format: Es enthält gleichzeitig
+ *   - die OfferResponse-Felder (positions, gesamtPreis, businessKey, customerId,
+ *     createdAt …) → der document-service/PdfGenerator rendert daraus die
+ *     Positionstabelle inkl. Preise, und
+ *   - strukturierteAngebotspositionen + korrekturvorschlaege → der PE-Task
+ *     "Angebotsentwurf aktualisieren" (Activity_4.4) reicht genau diese Felder
+ *     unverändert an /positionen weiter.
+ *
+ * Beide Consumer ignorieren die jeweils fremden Felder (Jackson auf der
+ * Backend-Seite verwirft unbekannte Properties), sodass ein einziges Objekt
+ * beide Schritte bedient.
+ */
+export type AngebotsentwurfPayload = OfferChangesRequest & Partial<OfferResponse>;
 
 // ─── Auth-Helper ────────────────────────────────────────────────────────────
 
@@ -80,18 +100,20 @@ export async function sendGenehmigung(businessKey: string): Promise<void> {
 /**
  * Sendet "angebotsentwurf" direkt an die PE (Fall 2: Reihenfolge / Alternative).
  *
- * Der Payload ist das {@link OfferChangesRequest}-DTO — exakt das Format, das
- * auch der offer-service am /positionen-Endpunkt erwartet
- * ({@code strukturierteAngebotspositionen.material} mit Bezeichnung + Menge +
- * Einheit + katalogProduktId der gewählten Alternative). Im Fall 2 wird dasselbe
- * Objekt parallel an PE und offer-service geschickt.
+ * Der Payload ist das {@link AngebotsentwurfPayload}-Kombiformat: Es enthält
+ * sowohl {@code strukturierteAngebotspositionen.material} (Bezeichnung + Menge +
+ * Einheit + katalogProduktId der gewählten Alternative — für den PE-/positionen-
+ * Schritt) als auch die OfferResponse-Felder mit {@code positions} und
+ * {@code gesamtPreis} (für den document-service, der die PDF-Positionstabelle
+ * ausschließlich aus {@code positions} aufbaut). Ohne die OfferResponse-Felder
+ * bliebe die Positionstabelle im PDF leer.
  *
  * Serialisierung: processVariables.angebotsentwurf = { value: JSON-String,
  * type: "Json" }.
  */
 export async function sendAngebotsentwurf(
   businessKey: string,
-  angebotsentwurf: OfferChangesRequest,
+  angebotsentwurf: AngebotsentwurfPayload,
 ): Promise<void> {
   await sendPeMessage({
     messageName: "angebotsentwurf",
