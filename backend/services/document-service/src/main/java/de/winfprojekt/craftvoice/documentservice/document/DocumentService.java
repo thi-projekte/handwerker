@@ -335,7 +335,7 @@ public class DocumentService {
 
         customer.firstName = "Erika";
         customer.lastName = "Musterfrau";
-        customer.email = "mip0006@thi.de";
+        customer.email = "mak2868@thi.de";
         customer.street = "Kundenweg";
         customer.houseNumber = "5";
         customer.zipCode = "14467";
