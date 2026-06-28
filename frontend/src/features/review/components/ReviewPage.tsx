@@ -64,10 +64,6 @@ const newId = () => `pos_${Date.now()}_${_idCounter++}`;
 
 const formatEuro = (v: number) => v.toFixed(2).replace(".", ",");
 
-// Fest hinterlegte Anfahrtspauschale in € — wird unverändert als Teil des
-// Gesamtpreises ausgewiesen (kein Abruf/keine Berechnung im Frontend).
-const ANFAHRTSPAUSCHALE = 25;
-
 /**
  * Konvertiert eine OfferPosition (Backend-Format) in das Frontend-Position-Format.
  * Alternativen werden – sofern die PE sie im angebotsentwurf mitliefert – direkt
@@ -537,9 +533,6 @@ export const ReviewPage = () => {
       // KI-Hinweise (korrekturvorschlaege)
       setKiHinweise(offer.korrekturvorschlaege ?? []);
 
-      // Anfahrt wird nicht mehr aus der PE übernommen — sie ist fest auf
-      // ANFAHRTSPAUSCHALE (25 €) hinterlegt (siehe Gesamtpreis-Berechnung).
-
       // Konfigurierten Stundensatz des Handwerkers aus dem user-service holen —
       // dieselbe Quelle, die der offer-service für die ARBEITSZEIT-Position nutzt.
       // Dient als Vorbelegung, solange noch keine ARBEITSZEIT-Position mit eigenem
@@ -919,9 +912,10 @@ export const ReviewPage = () => {
       (z) => z.stunden > 0 && z.stundensatz != null && z.stundensatz > 0,
     );
 
-  const arbeitskosten =
-    maZeilen.reduce((sum, z) => sum + (z.stundensatz ?? 0) * z.stunden, 0) +
-    ANFAHRTSPAUSCHALE;
+  const arbeitskosten = maZeilen.reduce(
+    (sum, z) => sum + (z.stundensatz ?? 0) * z.stunden,
+    0,
+  );
 
   const gesamtpreis =
     materialien.reduce((sum, p) => {
@@ -981,7 +975,7 @@ export const ReviewPage = () => {
         <div className="review-header-top">
           <div>
             <span className="review-eyebrow">Angebotsentwurf</span>
-            <h1>Überprüfe Material, Arbeitszeit und Anfahrt</h1>
+            <h1>Überprüfe Material und Arbeitszeit</h1>
           </div>
           <span className="review-badge">Entwurf</span>
         </div>
@@ -1075,14 +1069,6 @@ export const ReviewPage = () => {
         <button className="review-add-btn" onClick={addMaZeile}>
           + Mitarbeiter hinzufügen
         </button>
-
-        {/* Anfahrtspauschale — fest auf 25 € (nicht editierbar) */}
-        <div className="review-stunden-row" style={{ marginTop: 12 }}>
-          <span className="review-stunden-label">Anfahrtspauschale</span>
-          <span className="review-stunden-value">
-            {formatEuro(ANFAHRTSPAUSCHALE)} €
-          </span>
-        </div>
       </div>
 
       {/* ── Hinweis an die KI (Fall 3) ── */}
@@ -1108,7 +1094,7 @@ export const ReviewPage = () => {
       {/* ── Gesamtpreis ── */}
       <div className="card review-gesamtpreis">
         <span className="review-gesamtpreis-label">
-          Voraussichtlicher Gesamtpreis (inkl. Arbeitszeit & Anfahrt)
+          Voraussichtlicher Gesamtpreis (inkl. Arbeitszeit)
         </span>
         <span className="review-gesamtpreis-value">
           {formatEuro(gesamtpreis)} €
