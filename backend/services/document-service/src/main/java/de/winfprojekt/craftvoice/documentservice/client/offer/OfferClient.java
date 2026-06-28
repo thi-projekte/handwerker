@@ -7,11 +7,9 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.core.MediaType;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
-import io.quarkus.oidc.token.propagation.common.AccessToken;
 
 @Path("/")
 @RegisterRestClient(configKey = "offer-service")
-@AccessToken
 public interface OfferClient {
 
     @POST
