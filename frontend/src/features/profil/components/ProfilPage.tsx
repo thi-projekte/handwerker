@@ -371,15 +371,7 @@ export const ProfilPage = () => {
             <div className="profile-overview-header">
               <div className="profile-image-wrapper">
                 <div className="profile-avatar large">
-                  {profileImage ? (
-                    <img
-                      className="profile-avatar-image"
-                      src={profileImage}
-                      alt="Profilbild"
-                    />
-                  ) : (
-                    initials || "CV"
-                  )}
+                  {initials}
                 </div>
 
                 <input

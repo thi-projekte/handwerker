@@ -1,7 +1,6 @@
 import {
   useCallback,
   useEffect,
-  useMemo,
   useRef,
   useState,
   type ChangeEvent,
@@ -139,7 +138,7 @@ export const UnternehmenPage = () => {
   const [companySuccessMessage, setCompanySuccessMessage] = useState("");
   const [currentUserRoles, setCurrentUserRoles] = useState<string[]>([]);
 
-  const [logo, setLogo] = useState<string | null>(null);
+
 
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [showEmployeeForm, setShowEmployeeForm] = useState(false);
@@ -233,17 +232,6 @@ export const UnternehmenPage = () => {
   const isOwner = currentUserRoles.includes("OWNER");
   const companyFieldsDisabled = !isOwner || isSavingCompany;
 
-  const initials = useMemo(() => {
-    const value = companyData.firmenname
-      .split(" ")
-      .filter(Boolean)
-      .map((word) => word[0])
-      .join("")
-      .slice(0, 2)
-      .toUpperCase();
-
-    return value || "CV";
-  }, [companyData.firmenname]);
 
   const handleTabChange = (tab: Tab) => {
     setActiveTab(tab);
@@ -512,7 +500,6 @@ const loadCustomers = async () => {
       return;
     }
 
-    setLogo(URL.createObjectURL(file));
   };
 
   const handleCustomerImageUpload = (
@@ -710,17 +697,11 @@ const loadCustomers = async () => {
           <section className="card company-overview-card">
             <div className="company-overview-header">
               <div className="company-logo-wrapper">
-                {logo ? (
-                  <img
-                    src={logo}
-                    alt="Firmenlogo"
-                    className="company-logo-preview"
-                  />
-                ) : (
-                  <div className="company-logo-placeholder">
-                    {initials}
-                  </div>
-                )}
+                <img
+                  src="/src/assets/logos/Denocke Elektrik.png"
+                  alt="Firmenlogo"
+                  className="company-logo-preview"
+                />
 
                 <label
                   htmlFor="logo-upload"
