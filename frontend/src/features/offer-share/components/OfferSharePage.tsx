@@ -159,13 +159,13 @@ export const OfferSharePage = () => {
       await markOfferVersendet(businessKey);
       setSentVia("E-Mail");
     } catch (err) {
+      // Kein mailto-Fallback mehr: Die Mail verschickt am Ende das Backend
+      // (PE-Versandprozess → document-service). Wir öffnen daher NICHT den lokalen
+      // Mail-Client, sondern zeigen nur einen Fehler an.
       console.error("[OfferSharePage] E-Mail-Versand fehlgeschlagen:", err);
-      const subject = encodeURIComponent("Ihr Angebot von CraftVoice");
-      const body = encodeURIComponent(
-        `Guten Tag,\n\nanbei finden Sie Ihr Angebot:\n${pdfUrl ?? "—"}\n\nMit freundlichen Grüßen`,
+      setSendError(
+        "Angebot konnte nicht versendet werden. Bitte erneut versuchen.",
       );
-      window.open(`mailto:?subject=${subject}&body=${body}`, "_blank");
-      setSentVia("E-Mail");
     } finally {
       setIsSending(false);
     }
