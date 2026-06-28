@@ -380,9 +380,9 @@ export const OfferSharePage = () => {
 
         {sentVia ? (
           <div className="share-success">
-            <span className="share-success-icon">✅</span>
+            <span className="share-success-icon"></span>
             <p>
-              Angebot wurde über <strong>{sentVia}</strong> geteilt.
+              Angebot wurde über erfolgreich <strong>{sentVia}</strong> geteilt.
             </p>
           </div>
         ) : (

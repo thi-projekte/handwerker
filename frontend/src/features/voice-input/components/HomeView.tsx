@@ -16,9 +16,7 @@ export const HomeView = () => {
   const [mode, setMode] = useState<"voice" | "text">("voice");
   const [customerCollapsed, setCustomerCollapsed] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<number | null>(null);
-  const selectedCustomerData = customers.find(
-    (c) => c.id === selectedCustomer,
-  );
+  const selectedCustomerData = customers.find((c) => c.id === selectedCustomer);
   const [search, setSearch] = useState("");
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [transcribeError, setTranscribeError] = useState<string | null>(null);
@@ -50,9 +48,7 @@ export const HomeView = () => {
         if (!cancelled) {
           const message =
             err instanceof Error ? err.message : "Unbekannter Fehler";
-          setCustomersError(
-            `Kunden konnten nicht geladen werden: ${message}`,
-          );
+          setCustomersError(`Kunden konnten nicht geladen werden: ${message}`);
         }
       } finally {
         if (!cancelled) setCustomersLoading(false);
@@ -215,7 +211,7 @@ export const HomeView = () => {
                 </button>
 
                 <button onClick={handleVoiceWeiter} disabled={isTranscribing}>
-                  {isTranscribing ? "⏳ Wird transkribiert…" : "➜ Weiter"}
+                  {isTranscribing ? "Wird transkribiert…" : "➜ Weiter"}
                 </button>
               </div>
             </div>
@@ -246,7 +242,7 @@ export const HomeView = () => {
                 onClick={handleTextWeiter}
                 disabled={isTranscribing}
               >
-                {isTranscribing ? "⏳ Angebot wird erstellt…" : "➜ Weiter"}
+                {isTranscribing ? "Angebot wird erstellt…" : "➜ Weiter"}
               </button>
             </div>
           </div>
@@ -317,7 +313,9 @@ export const HomeView = () => {
 
               <div className="customer-list">
                 {customersLoading && (
-                  <div className="customer-list-hint">Kunden werden geladen…</div>
+                  <div className="customer-list-hint">
+                    Kunden werden geladen…
+                  </div>
                 )}
                 {customersError && (
                   <div className="customer-error">{customersError}</div>
