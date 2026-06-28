@@ -710,17 +710,11 @@ const loadCustomers = async () => {
           <section className="card company-overview-card">
             <div className="company-overview-header">
               <div className="company-logo-wrapper">
-                {logo ? (
-                  <img
-                    src={logo}
-                    alt="Firmenlogo"
-                    className="company-logo-preview"
-                  />
-                ) : (
-                  <div className="company-logo-placeholder">
-                    {initials}
-                  </div>
-                )}
+                <img
+                  src="/src/assets/logos/Denocke Elektrik.png"
+                  alt="Firmenlogo"
+                  className="company-logo-preview"
+                />
 
                 <label
                   htmlFor="logo-upload"
