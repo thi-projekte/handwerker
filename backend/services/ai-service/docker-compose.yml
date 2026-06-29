@@ -30,6 +30,10 @@ services:
       MEGALLM_API_KEY: ${MEGALLM_API_KEY}
       MEGALLM_API_URL: ${MEGALLM_API_URL:-https://ai.megallm.io/v1}
       MEGALLM_MODEL: ${MEGALLM_MODEL:-gemini-3-flash-preview}
+      # Fallback-Modell: greift, wenn das Primaermodell endgueltig fehlschlaegt (z.B. die ganze
+      # Gemini-Familie liefert 503 "Resource overloaded"). Andere Modellfamilie -> von der
+      # Ueberlast unabhaengig. Explizit gesetzt, damit der Fallback garantiert aktiv ist.
+      MEGALLM_MODEL_FALLBACK: ${MEGALLM_MODEL_FALLBACK:-google-gemma-4-26b}
 
       # ---- Process Engine (Camunda / CIB seven) ----
       # Muss auf /engine-rest enden. Denselben Wert wie offer-service (PE_URL) verwenden.
@@ -45,6 +49,17 @@ services:
       # noch fuer lokale Demo ohne catalog-service via Env-Override aktivierbar.
       CATALOG_MOCK_ENABLED: ${CATALOG_MOCK_ENABLED:-false}
       CATALOG_SERVICE_URL: ${CATALOG_SERVICE_URL:-http://catalog-service:8080}
+
+      # ---- Keycloak / OIDC (technisches client_credentials-Token fuer die catalog-Suche) ----
+      # Der catalog-service verlangt ein JWT; der ai-service holt es sich als Keycloak-Client
+      # "ai-service". Das Secret ist ZWINGEND als Portainer-Stack-Variable zu setzen (geheim,
+      # NIE committen). Ohne gueltiges Secret: Token-Holen schlaegt fehl (unauthorized_client)
+      # -> catalog-Suche scheitert -> die async KI-Verarbeitung bricht ab -> Angebot haengt.
+      AI_SERVICE_OIDC_SECRET: ${AI_SERVICE_OIDC_SECRET}
+      # Defaults stimmen (modernes Keycloak OHNE /auth-Praefix). Nur bei abweichender Topologie
+      # ueberschreiben. Mit /auth liefert der Token-Endpoint 404.
+      KEYCLOAK_AUTH_SERVER_URL: ${KEYCLOAK_AUTH_SERVER_URL:-https://id-craftvoice.winfprojekt.de/realms/handwerker-realm}
+      AI_SERVICE_OIDC_CLIENT_ID: ${AI_SERVICE_OIDC_CLIENT_ID:-ai-service}
 
     extra_hosts:
       # Erlaubt host.docker.internal auch auf Linux-Hosts (Portainer-Server).

@@ -5,6 +5,7 @@ import de.winfprojekt.craftvoice.aiservice.client.ChatResponse;
 import de.winfprojekt.craftvoice.aiservice.client.MegaLlmClient;
 import de.winfprojekt.craftvoice.aiservice.client.MegaLlmException;
 
+import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
 import org.junit.jupiter.api.Test;
@@ -65,6 +66,33 @@ class MegaLlmServiceTest {
         assertEquals("OK vom Fallback", out);
         // Erst Primaer, dann genau einmal das Fallback-Modell.
         assertEquals(List.of("primaer-kaputt", "gemma-fallback"), requestedModels);
+    }
+
+    @Test
+    void primaer503WebApplicationException_nutztFallback() {
+        // Reproduziert den ECHTEN Prod-Fall: bei HTTP 503 wirft der Quarkus-REST-Client eine
+        // WebApplicationException (KEINE MegaLlmException) — schon vor unserer Status-Pruefung.
+        // Der Fallback muss trotzdem greifen.
+        List<String> requestedModels = new ArrayList<>();
+        Response fallbackOk = ok("OK vom Fallback");
+        MegaLlmClient client = Mockito.mock(MegaLlmClient.class);
+        Mockito.when(client.complete(Mockito.anyString(), Mockito.any(ChatRequest.class)))
+                .thenAnswer(inv -> {
+                    ChatRequest req = inv.getArgument(1);
+                    requestedModels.add(req.model());
+                    if ("primaer-503".equals(req.model())) {
+                        throw new WebApplicationException("Service Unavailable", 503);
+                    }
+                    return fallbackOk;
+                });
+
+        MegaLlmService service = new MegaLlmService(
+                client, Optional.of("test-key"), Optional.of("gemma-fallback"));
+
+        String out = service.complete("primaer-503", "sys", "user");
+
+        assertEquals("OK vom Fallback", out);
+        assertEquals(List.of("primaer-503", "gemma-fallback"), requestedModels);
     }
 
     @Test
