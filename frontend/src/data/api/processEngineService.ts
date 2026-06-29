@@ -37,7 +37,8 @@ import type {
  * Backend-Seite verwirft unbekannte Properties), sodass ein einziges Objekt
  * beide Schritte bedient.
  */
-export type AngebotsentwurfPayload = OfferChangesRequest & Partial<OfferResponse>;
+export type AngebotsentwurfPayload = OfferChangesRequest &
+  Partial<OfferResponse>;
 
 // ─── Auth-Helper ────────────────────────────────────────────────────────────
 
@@ -135,35 +136,33 @@ export async function sendAngebotsentwurf(
  * Die PE triggert daraufhin einen neuen KI-Durchlauf.
  * Das Frontend landet wieder auf /laden → /review.
  *
- * Es werden ZWEI Prozessvariablen mitgegeben:
- *   - `korrekturschnipsel` (String): WAS geändert werden soll (Freitext/Hinweis).
- *   - `strukturierteAngebotspositionen` (Json): der AKTUELLE Stand der Positionen
- *     ({ leistungen, material, notizen }) inkl. der manuellen Änderungen des
- *     Handwerkers — die "aktuellen Informationen" als Basis für die KI-Korrektur.
+ * Übergeben werden zwei Prozessvariablen:
+ *   - `korrekturschnipsel` (String): der Wunsch des Handwerkers an die KI.
+ *   - `ergebnisKI` (Json, optional): der AKTUELLE, vollständige Stand der
+ *     Positionen im ErgebnisKi-Format. Damit überschreibt das Frontend die
+ *     `ergebnisKI`-Prozessvariable der PE, sodass der Korrektur-Durchlauf auf dem
+ *     vom Handwerker bearbeiteten Stand basiert (statt auf dem letzten KI-Stand).
+ *     So bleiben auch neu hinzugefügte Positionen erhalten — unabhängig davon, wie
+ *     das LLM den Text interpretiert.
  *
- * ⚠️ Damit die KI diese Basis tatsächlich nutzt, muss die Process Engine sie
- * an den ai-service durchreichen (siehe Hinweis zur PE: Activity_4.1 in
- * Angebotskorrektur.bpmn überschreibt `strukturierteAngebotspositionen` aktuell
- * noch aus `ergebnisKI` und verschachtelt es zudem falsch).
+ * Hinweis: `ergebnisKI` wird als `Json` gesendet, weil der PE-Start-Listener in
+ * Activity_4.1 darauf `.prop(...)` aufruft (Spin-JSON-Objekt, kein String).
  */
 export async function sendKorrekturschnipsel(
   businessKey: string,
   korrekturschnipsel: string,
-  strukturierteAngebotspositionen?: OfferChangesRequest["strukturierteAngebotspositionen"],
+  ergebnisKI?: unknown,
 ): Promise<void> {
-  const processVariables: Record<
-    string,
-    { value: unknown; type: string }
-  > = {
+  const processVariables: Record<string, { value: unknown; type: string }> = {
     korrekturschnipsel: {
       value: korrekturschnipsel,
       type: "String",
     },
   };
 
-  if (strukturierteAngebotspositionen) {
-    processVariables.strukturierteAngebotspositionen = {
-      value: JSON.stringify(strukturierteAngebotspositionen),
+  if (ergebnisKI !== undefined) {
+    processVariables.ergebnisKI = {
+      value: JSON.stringify(ergebnisKI),
       type: "Json",
     };
   }

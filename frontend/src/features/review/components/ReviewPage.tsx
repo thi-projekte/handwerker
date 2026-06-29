@@ -805,62 +805,28 @@ export const ReviewPage = () => {
   // ─── Korrekturschnipsel (Fall 3) ─────────────────────────────────────────
 
   /**
-   * Baut den Korrekturschnipsel aus den tatsächlichen manuellen Änderungen des
-   * Handwerkers, damit die KI weiß, WAS geändert werden soll — statt eines
-   * generischen "Manuelle Änderung durch Handwerker".
+   * Baut den Korrekturschnipsel-TEXT für die KI (Fall 3).
    *
-   * Beschrieben werden KI-relevante Attribute (Bezeichnung, Menge, Einheit) sowie
-   * hinzugefügte/entfernte Positionen und Arbeitszeit-Anpassungen. Preise bleiben
-   * bewusst außen vor — die KI verarbeitet keine Preise. Der Freitext-Hinweis des
-   * Handwerkers wird, falls vorhanden, ergänzt.
+   * Der VOLLSTÄNDIGE aktuelle Stand wird der KI separat als Basis übergeben
+   * (siehe ergebnisKI in handleBestaetigen). Der Text muss die einzelnen
+   * Positions-Änderungen daher NICHT mehr aufzählen — das würde sie nur doppelt
+   * beschreiben (z.B. neue Position einmal in der Basis + einmal im Text → Gefahr
+   * von Duplikaten). Er weist die KI nur an, den übergebenen Stand vollständig zu
+   * übernehmen, und ergänzt den Freitext-Wunsch des Handwerkers.
    */
   const buildKorrekturschnipsel = (): string => {
-    const aenderungen: string[] = [];
+    const teile: string[] = [
+      "Die übergebenen strukturierten Angebotspositionen sind der aktuelle, vom " +
+        "Handwerker manuell angepasste Stand. Übernimm sie VOLLSTÄNDIG als Basis " +
+        "(keine davon weglassen) und gib den kompletten Stand zurück.",
+    ];
 
-    // Manuell geänderte / neu hinzugefügte Material-Positionen.
-    materialien
-      .filter((p) => p.manuellGeaendert)
-      .forEach((p) =>
-        aenderungen.push(
-          `Position "${p.bezeichnung}": Menge ${p.menge} ${p.einheit}`,
-        ),
-      );
-
-    // Entfernte Positionen (im KI-Original vorhanden, jetzt nicht mehr).
-    const aktuelleIds = new Set(materialien.map((p) => p.id));
-    (offerData?.positions ?? [])
-      .filter((p) => p.type === "MATERIAL" && !aktuelleIds.has(String(p.id)))
-      .forEach((p) =>
-        aenderungen.push(`Position "${p.bezeichnung}" wurde entfernt`),
-      );
-
-    // Manuell geänderte Arbeitszeit.
-    maZeilen
-      .filter((z) => z.manuellGeaendert)
-      .forEach((z) =>
-        aenderungen.push(
-          `Arbeitszeit angepasst auf ${z.stunden} Stunden${
-            z.name ? ` (${z.name})` : ""
-          }`,
-        ),
-      );
-
-    const teile: string[] = [];
-    if (aenderungen.length > 0) {
-      teile.push(
-        "Der Handwerker hat das Angebot manuell angepasst. Bitte berücksichtige folgende Änderungen:\n- " +
-          aenderungen.join("\n- "),
-      );
-    }
     const hinweis = kiHinweis.trim();
     if (hinweis) {
-      teile.push(`Zusätzlicher Hinweis des Handwerkers: ${hinweis}`);
+      teile.push(`Zusätzlicher Wunsch des Handwerkers: ${hinweis}`);
     }
 
-    // Fallback nur, falls (theoretisch) nichts Konkretes ermittelbar ist.
-    return teile.length > 0
-      ? teile.join("\n\n")
-      : "Manuelle Änderung durch Handwerker";
+    return teile.join("\n\n");
   };
 
   // ─── Bestätigen-Handler ──────────────────────────────────────────────────
@@ -894,16 +860,29 @@ export const ReviewPage = () => {
         // Dieser GET läuft VOR sendKorrekturschnipsel, der Re-Run hat also noch
         // nicht geschrieben; der gelesene Stand ist exakt der Vor-Re-Run-Stand.
         const vorReRun = await getOfferByBusinessKey(businessKey);
-        // An die PE gehen ZWEI Dinge:
-        //  1) korrekturschnipsel: konkrete Beschreibung WAS geändert werden soll
-        //     (manuelle Änderungen + Freitext-Hinweis), damit die KI es umsetzt.
-        //  2) strukturierteAngebotspositionen: der AKTUELLE Positionsstand inkl.
-        //     der manuellen Änderungen — die "aktuellen Informationen" als Basis,
-        //     damit die KI bestehende Positionen behält und nicht verwirft.
+        // Den AKTUELLEN, vollständigen Stand als ergebnisKI an die PE schicken.
+        // Damit überschreibt das Frontend die ergebnisKI-Prozessvariable der PE;
+        // der Start-Listener in Activity_4.1 baut die KI-Basis aus GENAU diesem
+        // Stand (statt aus dem letzten KI-Stand). So sind manuell hinzugefügte/
+        // geänderte/gelöschte Positionen bereits in der Basis und können beim
+        // Re-Run nicht verloren gehen — unabhängig davon, wie das LLM den Text
+        // deutet. Format = ErgebnisKi-Schema (strukturierteAngebotspositionen +
+        // korrekturvorschlaege + geschaetzteArbeitsdauerStunden).
+        const aktuellerStand = {
+          strukturierteAngebotspositionen:
+            buildOfferChanges().strukturierteAngebotspositionen,
+          korrekturvorschlaege: [],
+          // Im Korrektur-Pfad nicht ausgewertet, MUSS aber eine Zahl sein: der
+          // PE-Start-Listener ruft .numberValue() darauf auf (null/fehlen würde werfen).
+          geschaetzteArbeitsdauerStunden:
+            offerData?.geschaetzteArbeitsdauerStunden ?? 0,
+        };
+        // Der Korrekturschnipsel-Text trägt nur noch den Freitext-Wunsch + die
+        // Anweisung, den übergebenen Stand vollständig zu übernehmen.
         await sendKorrekturschnipsel(
           businessKey,
           buildKorrekturschnipsel(),
-          buildOfferChanges().strukturierteAngebotspositionen,
+          aktuellerStand,
         );
         // sinceUpdatedAt mitgeben: das Angebot ist bereits "KI_FERTIG", erst ein
         // NACH diesem Zeitstempel aktualisiertes Ergebnis ist das frische
