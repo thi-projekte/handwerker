@@ -1,149 +1,246 @@
+/* =========================
+   OfferAcceptancePage
+   ========================= */
+
 .offer-acceptance-page {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  max-width: 800px;
-  margin: 40px auto;
-  padding: 0 20px;
+  gap: clamp(18px, 2vw, 28px);
+  text-align: left;
 }
 
+/* Tablet */
+@media (min-width: 768px) {
+  .offer-acceptance-header,
+  .offer-acceptance-section {
+    max-width: min(720px, 100%);
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+  .offer-acceptance-header,
+  .offer-acceptance-section,
+  .offer-acceptance-actions {
+    max-width: 860px;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+  }
+}
+
+/* -------------------------
+   Header
+------------------------- */
+
 .offer-acceptance-header {
-  text-align: center;
-  padding: 40px 20px;
+  text-align: left;
+  padding: clamp(18px, 2vw, 28px);
 }
 
 .offer-acceptance-eyebrow {
-  color: var(--accent);
-  font-weight: 600;
-  font-size: 0.9rem;
+  display: inline-block;
+  margin-bottom: 6px;
+  color: var(--color-accent);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .08em;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 8px;
-  display: block;
 }
 
 .offer-acceptance-header h1 {
-  margin-bottom: 16px;
-  font-size: 2rem;
+  margin: 0 0 10px;
+  font-size: clamp(22px, 3vw, 34px);
 }
+
+.offer-acceptance-header p {
+  margin: 0;
+}
+
+/* -------------------------
+   Angebot
+------------------------- */
 
 .offer-acceptance-section {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }
 
-.offer-acceptance-info-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
+.offer-acceptance-section h2 {
+  margin: 0;
 }
+
+/* -------------------------
+   Positionen
+------------------------- */
 
 .offer-acceptance-items {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
 .offer-acceptance-item {
   display: flex;
   justify-content: space-between;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--border);
+  align-items: flex-start;
+  gap: 18px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--color-divider);
 }
 
 .offer-acceptance-item:last-child {
   border-bottom: none;
-  padding-bottom: 0;
 }
 
 .offer-acceptance-item-info {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
+  min-width: 0;
 }
 
 .offer-acceptance-item-name {
-  font-weight: 600;
-  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text-primary);
 }
 
 .offer-acceptance-item-desc {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
 }
 
 .offer-acceptance-item-price {
-  font-weight: 600;
-  color: var(--text-primary);
+  flex-shrink: 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--color-accent);
   white-space: nowrap;
 }
+
+/* -------------------------
+   Gesamtpreis
+------------------------- */
 
 .offer-acceptance-total {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 2px solid var(--border);
+  padding-top: 18px;
+  border-top: 2px solid var(--color-divider);
 }
 
-.offer-acceptance-total span {
-  font-size: 1.1rem;
-  font-weight: 600;
+.offer-acceptance-total span:first-child {
+  color: var(--color-text-secondary);
+  font-weight: 700;
 }
 
-.offer-acceptance-total .total-price {
-  font-size: 1.5rem;
-  color: var(--accent);
+.total-price {
+  font-size: clamp(22px, 3vw, 30px);
+  font-weight: 800;
+  color: var(--color-accent);
 }
+
+/* -------------------------
+   Buttons
+------------------------- */
 
 .offer-acceptance-actions {
   display: flex;
   gap: 16px;
-  margin-top: 24px;
 }
 
 .offer-acceptance-actions .btn {
   flex: 1;
   justify-content: center;
-  padding: 16px;
-  font-size: 1.1rem;
+  min-height: 58px;
+  font-size: 15px;
 }
 
 .btn-reject {
-  background-color: transparent;
-  border: 1px solid var(--border);
-  color: var(--text-primary);
+  background: transparent;
+  border: 1px solid var(--color-divider);
+  color: var(--color-text-primary);
 }
 
 .btn-reject:hover {
-  background-color: var(--card-bg-hover);
+  border-color: var(--color-accent);
+}
+
+/* -------------------------
+   Success / Error
+------------------------- */
+
+.offer-acceptance-success,
+.offer-error {
+  max-width: min(700px, 100%);
+  margin: 40px auto;
+  text-align: center;
 }
 
 .offer-acceptance-success {
-  text-align: center;
-  padding: 60px 20px;
+  padding: 50px 20px;
 }
 
 .offer-acceptance-success h1 {
-  color: #10b981;
-  margin-bottom: 16px;
+  margin: 18px 0 12px;
+  color: #64c878;
 }
 
 .offer-acceptance-success p {
-  font-size: 1.1rem;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
 }
 
 .offer-error {
-  text-align: center;
-  padding: 60px 20px;
-  color: #ef4444;
+  padding: 50px 20px;
+  color: #ff6b6b;
 }
+
+/* -------------------------
+   Loading
+------------------------- */
 
 .loader-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 50vh;
+  min-height: 45vh;
+  color: var(--color-text-secondary);
+}
+
+/* -------------------------
+   Mobile
+------------------------- */
+
+@media (max-width: 700px) {
+
+  .offer-acceptance-item {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .offer-acceptance-item-price {
+    align-self: flex-end;
+  }
+
+  .offer-acceptance-total {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .offer-acceptance-actions {
+    flex-direction: column;
+  }
+
+  .offer-acceptance-actions .btn {
+    width: 100%;
+  }
 }

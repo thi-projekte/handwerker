@@ -84,6 +84,7 @@ export interface OfferPosition {
   einheit: string;
   einzelPreis: number | null;
   positionsPreis: number | null;
+  hersteller?: string | null;
   // Sortier-Reihenfolge der Position im Angebot (Backend: OfferPosition.reihenfolge).
   reihenfolge: number | null;
   // Feldname und Werte exakt wie im Backend (Entity OfferPosition.type,
