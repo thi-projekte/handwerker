@@ -37,7 +37,7 @@ class LlmCall1GeneratorTest {
         ObjectMapper objectMapper = new ObjectMapper();
         client = Mockito.mock(MegaLlmClient.class);
         // Kein API-Key (leeres Optional) -> isConfigured() == false -> Stub-Fallback
-        MegaLlmService megaLlm = new MegaLlmService(client, Optional.empty());
+        MegaLlmService megaLlm = new MegaLlmService(client, Optional.empty(), Optional.empty());
         generator = new LlmCall1Generator(
                 megaLlm,
                 new Call1PromptBuilder(objectMapper),

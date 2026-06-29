@@ -34,7 +34,7 @@ class Call2SelectorTest {
     void setUp() {
         catalogSearch = Mockito.mock(CatalogSearchService.class);
         // Kein API-Key -> Baseline-Pfad
-        MegaLlmService megaLlm = new MegaLlmService(Mockito.mock(MegaLlmClient.class), Optional.empty());
+        MegaLlmService megaLlm = new MegaLlmService(Mockito.mock(MegaLlmClient.class), Optional.empty(), Optional.empty());
         selector = new Call2Selector(
                 megaLlm, catalogSearch, new Call2PromptBuilder(new ObjectMapper()),
                 null, "gemini-3-flash-preview");
