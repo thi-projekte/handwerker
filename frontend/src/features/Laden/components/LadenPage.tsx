@@ -10,6 +10,10 @@ interface LadenState {
   offerId?: number;
   mode?: "ki-warten" | "versand-warten";
   nextRoute?: string; // Ziel-Route nach Polling (default: /review)
+  // Bei einer KI-Korrektur (Fall 3) der Server-Zeitstempel des Angebots VOR dem
+  // Re-Run. Das Polling wartet dann auf ein echt neueres KI-Ergebnis, statt
+  // sofort das bereits vorhandene "KI_FERTIG" zurückzugeben.
+  sinceUpdatedAt?: string;
 }
 
 export const LadenPage = () => {
@@ -17,7 +21,13 @@ export const LadenPage = () => {
   const location = useLocation();
   const state = (location.state ?? {}) as LadenState;
 
-  const { businessKey, offerId, mode = "ki-warten", nextRoute } = state;
+  const {
+    businessKey,
+    offerId,
+    mode = "ki-warten",
+    nextRoute,
+    sinceUpdatedAt,
+  } = state;
 
   // Verhindert doppeltes Starten des Pollings bei StrictMode-Remounts
   const pollingStarted = useRef(false);
@@ -65,6 +75,9 @@ export const LadenPage = () => {
         (status) => {
           console.log(`[LadenPage] Angebot ${businessKey}: Status = ${status}`);
         },
+        // Bei Fall 3 gesetzt: erst ein NACH diesem Zeitstempel aktualisiertes
+        // Angebot gilt als fertig (sonst würde das alte KI_FERTIG sofort matchen).
+        sinceUpdatedAt,
       )
         .then((offer) => {
           // KI-Ergebnis bereit → zur ReviewPage mit allen nötigen Infos
@@ -93,7 +106,7 @@ export const LadenPage = () => {
         });
       }, 3000);
     }
-  }, [businessKey, mode, navigate, nextRoute, offerId]);
+  }, [businessKey, mode, navigate, nextRoute, offerId, sinceUpdatedAt]);
 
   return (
     <div className="ai-loading-page">

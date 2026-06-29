@@ -134,20 +134,44 @@ export async function sendAngebotsentwurf(
  * Sendet "korrekturschnipsel" direkt an die PE (Fall 3).
  * Die PE triggert daraufhin einen neuen KI-Durchlauf.
  * Das Frontend landet wieder auf /laden → /review.
+ *
+ * Es werden ZWEI Prozessvariablen mitgegeben:
+ *   - `korrekturschnipsel` (String): WAS geändert werden soll (Freitext/Hinweis).
+ *   - `strukturierteAngebotspositionen` (Json): der AKTUELLE Stand der Positionen
+ *     ({ leistungen, material, notizen }) inkl. der manuellen Änderungen des
+ *     Handwerkers — die "aktuellen Informationen" als Basis für die KI-Korrektur.
+ *
+ * ⚠️ Damit die KI diese Basis tatsächlich nutzt, muss die Process Engine sie
+ * an den ai-service durchreichen (siehe Hinweis zur PE: Activity_4.1 in
+ * Angebotskorrektur.bpmn überschreibt `strukturierteAngebotspositionen` aktuell
+ * noch aus `ergebnisKI` und verschachtelt es zudem falsch).
  */
 export async function sendKorrekturschnipsel(
   businessKey: string,
   korrekturschnipsel: string,
+  strukturierteAngebotspositionen?: OfferChangesRequest["strukturierteAngebotspositionen"],
 ): Promise<void> {
+  const processVariables: Record<
+    string,
+    { value: unknown; type: string }
+  > = {
+    korrekturschnipsel: {
+      value: korrekturschnipsel,
+      type: "String",
+    },
+  };
+
+  if (strukturierteAngebotspositionen) {
+    processVariables.strukturierteAngebotspositionen = {
+      value: JSON.stringify(strukturierteAngebotspositionen),
+      type: "Json",
+    };
+  }
+
   await sendPeMessage({
     messageName: "korrekturschnipsel",
     businessKey,
-    processVariables: {
-      korrekturschnipsel: {
-        value: korrekturschnipsel,
-        type: "String",
-      },
-    },
+    processVariables,
     resultEnabled: false,
   });
 }
