@@ -10,7 +10,7 @@ import logo from "/src/assets/logos/CraftVoice_Logo_white_text.png"
 import socketImg from "/src/assets/logos/Denocke Elektrik.png";
 
 
-const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
 
 interface OfferData {
   status?: string;
@@ -24,6 +24,7 @@ export const OfferAcceptancePage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (token) {
@@ -144,31 +145,46 @@ export const OfferAcceptancePage = () => {
       </section>
 
       {offer.status === "ANGENOMMEN" || offer.status === "ABGELEHNT" ? (
-        <section className="card offer-acceptance-section" style={{ textAlign: "center", marginTop: "2rem" }}>
-          <h3>Angebot wurde bereits {offer.status.toLowerCase()}</h3>
-          <p className="text-secondary">Dieses Angebot wurde bereits beantwortet und kann nicht mehr geändert werden.</p>
-        </section>
-      ) : (
-        <section className="offer-acceptance-actions">
-  <button
-    className="btn btn-primary btn-accept"
-    disabled={isSubmitting}
-    onClick={() => handleDecision("angenommen")}
+  <section
+    className="card offer-acceptance-section"
+    style={{ textAlign: "center", marginTop: "2rem" }}
   >
-    <CheckCircle size={20} />
-    Zahlungspflichtig bestellen
-  </button>
+    <h3>Angebot wurde bereits {offer.status.toLowerCase()}</h3>
+    <p className="text-secondary">
+      Dieses Angebot wurde bereits beantwortet und kann nicht mehr geändert werden.
+    </p>
+  </section>
+) : (
+  <>
+    <section className="offer-acceptance-actions">
+      <button
+        className="btn btn-primary btn-accept"
+        disabled={isSubmitting}
+        onClick={() => handleDecision("angenommen")}
+      >
+        <CheckCircle size={20} />
+        Zahlungspflichtig bestellen
+      </button>
 
-  <button
-    className="btn btn-reject"
-    disabled={isSubmitting}
-    onClick={() => handleDecision("abgelehnt")}
-  >
-    <XCircle size={20} />
-    Angebot ablehnen
-  </button>
-</section>
-      )}
+      <button
+        className="btn btn-reject"
+        disabled={isSubmitting}
+        onClick={() => handleDecision("abgelehnt")}
+      >
+        <XCircle size={20} />
+        Angebot ablehnen
+      </button>
+    </section>
+
+    {successMessage && (
+      <div className="offer-success-message">
+        {successMessage}
+      </div>
+    )}
+  </>
+)}
     </div>
   );
 };
+
+

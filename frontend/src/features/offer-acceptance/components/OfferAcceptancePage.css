@@ -129,6 +129,7 @@
 ------------------------- */
 
 .offer-acceptance-total {
+  font-size: 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -309,4 +310,12 @@
   height: auto;
   object-fit: contain;
   opacity: 0.95;
+}
+.offer-success-message {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 8px;
+  background: #e6ffed;
+  color: #1a7f37;
+  font-weight: 500;
 }
