@@ -9,6 +9,7 @@ import de.winfprojekt.craftvoice.offerservice.user.CustomerDTO;
 import de.winfprojekt.craftvoice.offerservice.user.UserServiceClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.WebApplicationException;
@@ -211,10 +212,12 @@ public class InvoiceService {
      */
     @Transactional
     public void createInvoiceAndNotifyPe(String businessKey) {
+        Log.info("createInvoiceAndNotifyPe wurde aufgerufen und gestartet mit BK " + businessKey);
         CreateInvoiceRequest request = new CreateInvoiceRequest();
         request.businessKey = businessKey;
 
         InvoiceResponse invoice = createInvoice(request);
+        Log.info("createInvoice wurde aufgerufen");
 
         String rechnungsentwurfJson;
         try {
