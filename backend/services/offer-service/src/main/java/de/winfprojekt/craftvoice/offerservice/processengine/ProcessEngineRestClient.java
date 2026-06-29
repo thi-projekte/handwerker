@@ -15,7 +15,6 @@ import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
  */
 @Path("/message")
 @RegisterRestClient
-@AccessToken
 public interface ProcessEngineRestClient {
 
     /**
