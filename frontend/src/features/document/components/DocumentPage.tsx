@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import "@/assets/stylesheets/stylesheet.css";
 import "@/features/document/components/DocumentPage.css";
-import { getRechnungen, openDocumentPdfRechnung } from "@/data/api/documentApi";
+import { getRechnungen } from "@/data/api/documentApi";
 import { mapRechnungDTOToRechnung } from "@/features/document/mapper/documentMapper";
 
 // ── Types ──────────────────────────────────────────────────────────────────

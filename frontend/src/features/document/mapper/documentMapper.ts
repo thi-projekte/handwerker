@@ -1,4 +1,4 @@
-import type { Angebot, Rechnung, RechnungStatus } from "@/features/document/types/document.types";
+import type { Angebot, Rechnung } from "@/features/document/types/document.types";
 
 interface OfferDTO {
     id: number | string;
