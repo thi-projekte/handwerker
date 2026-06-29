@@ -480,9 +480,17 @@ export const ReviewPage = () => {
         positionen.map(async (pos) => {
           if (pos.alternativen.length > 0) return pos; // von der PE geliefert
           try {
-            const kandidaten = await searchMaterials(pos.bezeichnung, 5);
+            const kandidaten = await searchMaterials(pos.bezeichnung, 8);
+            // Echten Katalog-Produktnamen für das "Original" verwenden: die KI liefert nur
+            // eine generische Bezeichnung (z.B. "Wallbox"), angezeigt werden soll aber der
+            // konkrete Treffer (z.B. "Wallbox 11kW Typ 2 mit FI"). Fallback: KI-Bezeichnung,
+            // falls der gewählte Treffer nicht in den Suchergebnissen auftaucht.
+            const treffer = pos.katalogProduktId
+              ? kandidaten.find((c) => c.id === pos.katalogProduktId)
+              : undefined;
             const alternativen = kandidaten
               .filter((c) => c.id !== pos.katalogProduktId)
+              .slice(0, 4)
               .map((c) => ({
                 bezeichnung: c.name,
                 beschreibung: c.description,
@@ -491,7 +499,11 @@ export const ReviewPage = () => {
                 preis: c.price,
                 katalogProduktId: c.id,
               }));
-            return { ...pos, alternativen };
+            return {
+              ...pos,
+              bezeichnung: treffer ? treffer.name : pos.bezeichnung,
+              alternativen,
+            };
           } catch (e) {
             console.error("[ReviewPage] Alternativen-Suche fehlgeschlagen:", e);
             return pos;
