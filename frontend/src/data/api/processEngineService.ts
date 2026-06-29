@@ -37,7 +37,8 @@ import type {
  * Backend-Seite verwirft unbekannte Properties), sodass ein einziges Objekt
  * beide Schritte bedient.
  */
-export type AngebotsentwurfPayload = OfferChangesRequest & Partial<OfferResponse>;
+export type AngebotsentwurfPayload = OfferChangesRequest &
+  Partial<OfferResponse>;
 
 // ─── Auth-Helper ────────────────────────────────────────────────────────────
 
@@ -134,20 +135,42 @@ export async function sendAngebotsentwurf(
  * Sendet "korrekturschnipsel" direkt an die PE (Fall 3).
  * Die PE triggert daraufhin einen neuen KI-Durchlauf.
  * Das Frontend landet wieder auf /laden → /review.
+ *
+ * Übergeben werden zwei Prozessvariablen:
+ *   - `korrekturschnipsel` (String): der Wunsch des Handwerkers an die KI.
+ *   - `ergebnisKI` (Json, optional): der AKTUELLE, vollständige Stand der
+ *     Positionen im ErgebnisKi-Format. Damit überschreibt das Frontend die
+ *     `ergebnisKI`-Prozessvariable der PE, sodass der Korrektur-Durchlauf auf dem
+ *     vom Handwerker bearbeiteten Stand basiert (statt auf dem letzten KI-Stand).
+ *     So bleiben auch neu hinzugefügte Positionen erhalten — unabhängig davon, wie
+ *     das LLM den Text interpretiert.
+ *
+ * Hinweis: `ergebnisKI` wird als `Json` gesendet, weil der PE-Start-Listener in
+ * Activity_4.1 darauf `.prop(...)` aufruft (Spin-JSON-Objekt, kein String).
  */
 export async function sendKorrekturschnipsel(
   businessKey: string,
   korrekturschnipsel: string,
+  ergebnisKI?: unknown,
 ): Promise<void> {
+  const processVariables: Record<string, { value: unknown; type: string }> = {
+    korrekturschnipsel: {
+      value: korrekturschnipsel,
+      type: "String",
+    },
+  };
+
+  if (ergebnisKI !== undefined) {
+    processVariables.ergebnisKI = {
+      value: JSON.stringify(ergebnisKI),
+      type: "Json",
+    };
+  }
+
   await sendPeMessage({
     messageName: "korrekturschnipsel",
     businessKey,
-    processVariables: {
-      korrekturschnipsel: {
-        value: korrekturschnipsel,
-        type: "String",
-      },
-    },
+    processVariables,
     resultEnabled: false,
   });
 }

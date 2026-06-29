@@ -4,6 +4,7 @@ import "@/assets/stylesheets/stylesheet.css";
 import "@/features/review/components/ReviewPage.css";
 import {
   getAngebotsentwurf,
+  getOfferByBusinessKey,
   approveOffer,
   setArbeitsstunden,
   updateOfferPositions,
@@ -775,9 +776,27 @@ export const ReviewPage = () => {
 
   // ─── Änderungs-Checks ────────────────────────────────────────────────────
 
+  // Wurde eine ursprünglich von der KI gelieferte Material-Position entfernt?
+  // Löschen setzt kein manuellGeaendert-Flag (die Position ist ja weg), wäre
+  // also sonst unsichtbar. Frisch hinzugefügte und wieder gelöschte Positionen
+  // zählen korrekt NICHT, da nur die ursprünglich geladenen IDs verglichen werden.
+  const hatEntfernteOriginalposition = () => {
+    const aktuelleIds = new Set(materialien.map((p) => p.id));
+    return (offerData?.positions ?? []).some(
+      (p) => p.type === "MATERIAL" && !aktuelleIds.has(String(p.id)),
+    );
+  };
+
+  // Fall 3 liegt vor, sobald der Handwerker inhaltlich eingreift: Position
+  // hinzugefügt/gelöscht, Bezeichnung/Menge/Preis bzw. Arbeitszeit manuell
+  // geändert ODER der KI per Freitext neue Infos mitgegeben. Auch ein reines
+  // Löschen bzw. ein reiner KI-Hinweis (ohne weitere Änderung) muss einen neuen
+  // KI-Durchlauf auslösen — sonst ginge die Änderung verloren.
   const hatManuelleAenderung = () =>
     materialien.some((p) => p.manuellGeaendert) ||
-    maZeilen.some((z) => z.manuellGeaendert);
+    maZeilen.some((z) => z.manuellGeaendert) ||
+    hatEntfernteOriginalposition() ||
+    kiHinweis.trim().length > 0;
 
   const hatReihenfolgeOderAlternative = () =>
     reihenfolgeGeaendert ||
@@ -786,62 +805,28 @@ export const ReviewPage = () => {
   // ─── Korrekturschnipsel (Fall 3) ─────────────────────────────────────────
 
   /**
-   * Baut den Korrekturschnipsel aus den tatsächlichen manuellen Änderungen des
-   * Handwerkers, damit die KI weiß, WAS geändert werden soll — statt eines
-   * generischen "Manuelle Änderung durch Handwerker".
+   * Baut den Korrekturschnipsel-TEXT für die KI (Fall 3).
    *
-   * Beschrieben werden KI-relevante Attribute (Bezeichnung, Menge, Einheit) sowie
-   * hinzugefügte/entfernte Positionen und Arbeitszeit-Anpassungen. Preise bleiben
-   * bewusst außen vor — die KI verarbeitet keine Preise. Der Freitext-Hinweis des
-   * Handwerkers wird, falls vorhanden, ergänzt.
+   * Der VOLLSTÄNDIGE aktuelle Stand wird der KI separat als Basis übergeben
+   * (siehe ergebnisKI in handleBestaetigen). Der Text muss die einzelnen
+   * Positions-Änderungen daher NICHT mehr aufzählen — das würde sie nur doppelt
+   * beschreiben (z.B. neue Position einmal in der Basis + einmal im Text → Gefahr
+   * von Duplikaten). Er weist die KI nur an, den übergebenen Stand vollständig zu
+   * übernehmen, und ergänzt den Freitext-Wunsch des Handwerkers.
    */
   const buildKorrekturschnipsel = (): string => {
-    const aenderungen: string[] = [];
+    const teile: string[] = [
+      "Die übergebenen strukturierten Angebotspositionen sind der aktuelle, vom " +
+        "Handwerker manuell angepasste Stand. Übernimm sie VOLLSTÄNDIG als Basis " +
+        "(keine davon weglassen) und gib den kompletten Stand zurück.",
+    ];
 
-    // Manuell geänderte / neu hinzugefügte Material-Positionen.
-    materialien
-      .filter((p) => p.manuellGeaendert)
-      .forEach((p) =>
-        aenderungen.push(
-          `Position "${p.bezeichnung}": Menge ${p.menge} ${p.einheit}`,
-        ),
-      );
-
-    // Entfernte Positionen (im KI-Original vorhanden, jetzt nicht mehr).
-    const aktuelleIds = new Set(materialien.map((p) => p.id));
-    (offerData?.positions ?? [])
-      .filter((p) => p.type === "MATERIAL" && !aktuelleIds.has(String(p.id)))
-      .forEach((p) =>
-        aenderungen.push(`Position "${p.bezeichnung}" wurde entfernt`),
-      );
-
-    // Manuell geänderte Arbeitszeit.
-    maZeilen
-      .filter((z) => z.manuellGeaendert)
-      .forEach((z) =>
-        aenderungen.push(
-          `Arbeitszeit angepasst auf ${z.stunden} Stunden${
-            z.name ? ` (${z.name})` : ""
-          }`,
-        ),
-      );
-
-    const teile: string[] = [];
-    if (aenderungen.length > 0) {
-      teile.push(
-        "Der Handwerker hat das Angebot manuell angepasst. Bitte berücksichtige folgende Änderungen:\n- " +
-          aenderungen.join("\n- "),
-      );
-    }
     const hinweis = kiHinweis.trim();
     if (hinweis) {
-      teile.push(`Zusätzlicher Hinweis des Handwerkers: ${hinweis}`);
+      teile.push(`Zusätzlicher Wunsch des Handwerkers: ${hinweis}`);
     }
 
-    // Fallback nur, falls (theoretisch) nichts Konkretes ermittelbar ist.
-    return teile.length > 0
-      ? teile.join("\n\n")
-      : "Manuelle Änderung durch Handwerker";
+    return teile.join("\n\n");
   };
 
   // ─── Bestätigen-Handler ──────────────────────────────────────────────────
@@ -868,11 +853,48 @@ export const ReviewPage = () => {
         await setArbeitsstunden(businessKey, {
           arbeitsdauerStunden: gesamtStunden,
         });
-        // Konkrete Beschreibung der manuellen Änderungen an die KI senden,
-        // damit sie weiß, WAS geändert werden soll (statt generischem Text).
-        await sendKorrekturschnipsel(businessKey, buildKorrekturschnipsel());
+        // Baseline fürs Polling: der TATSÄCHLICH persistierte updatedAt-Stand
+        // nach setArbeitsstunden. Achtung: die Response von setArbeitsstunden
+        // trägt noch den ALTEN Zeitstempel (updatedAt wird erst beim Commit via
+        // @PreUpdate gesetzt, das DTO entsteht davor) — deshalb ein frischer GET.
+        // Dieser GET läuft VOR sendKorrekturschnipsel, der Re-Run hat also noch
+        // nicht geschrieben; der gelesene Stand ist exakt der Vor-Re-Run-Stand.
+        const vorReRun = await getOfferByBusinessKey(businessKey);
+        // Den AKTUELLEN, vollständigen Stand als ergebnisKI an die PE schicken.
+        // Damit überschreibt das Frontend die ergebnisKI-Prozessvariable der PE;
+        // der Start-Listener in Activity_4.1 baut die KI-Basis aus GENAU diesem
+        // Stand (statt aus dem letzten KI-Stand). So sind manuell hinzugefügte/
+        // geänderte/gelöschte Positionen bereits in der Basis und können beim
+        // Re-Run nicht verloren gehen — unabhängig davon, wie das LLM den Text
+        // deutet. Format = ErgebnisKi-Schema (strukturierteAngebotspositionen +
+        // korrekturvorschlaege + geschaetzteArbeitsdauerStunden).
+        const aktuellerStand = {
+          strukturierteAngebotspositionen:
+            buildOfferChanges().strukturierteAngebotspositionen,
+          korrekturvorschlaege: [],
+          // Im Korrektur-Pfad nicht ausgewertet, MUSS aber eine Zahl sein: der
+          // PE-Start-Listener ruft .numberValue() darauf auf (null/fehlen würde werfen).
+          geschaetzteArbeitsdauerStunden:
+            offerData?.geschaetzteArbeitsdauerStunden ?? 0,
+        };
+        // Der Korrekturschnipsel-Text trägt nur noch den Freitext-Wunsch + die
+        // Anweisung, den übergebenen Stand vollständig zu übernehmen.
+        await sendKorrekturschnipsel(
+          businessKey,
+          buildKorrekturschnipsel(),
+          aktuellerStand,
+        );
+        // sinceUpdatedAt mitgeben: das Angebot ist bereits "KI_FERTIG", erst ein
+        // NACH diesem Zeitstempel aktualisiertes Ergebnis ist das frische
+        // KI-Resultat. Ohne diesen Wert kehrte das Laden-Polling sofort mit den
+        // alten Daten zur Review zurück.
         navigate("/laden", {
-          state: { businessKey, offerId, mode: "ki-warten" },
+          state: {
+            businessKey,
+            offerId,
+            mode: "ki-warten",
+            sinceUpdatedAt: vorReRun.updatedAt,
+          },
         });
       } else if (istReihenfolge) {
         // ── Fall 2: Reihenfolge / Alternative ──

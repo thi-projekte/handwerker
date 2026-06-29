@@ -113,6 +113,10 @@ export interface OfferResponse {
   geschaetzteArbeitsdauerStunden: number | null;
   positions: OfferPosition[];
   createdAt: string;
+  // Server-Zeitstempel der letzten Änderung (BaseEntity.@PreUpdate). Wird vom
+  // Fall-3-Polling genutzt, um ein FRISCHES KI-Ergebnis von einem bereits
+  // vorhandenen KI_FERTIG zu unterscheiden (siehe pollUntilKiFertig).
+  updatedAt: string;
 }
 
 export interface CreateOfferRequest {
@@ -315,24 +319,38 @@ export async function sendKorrektur(
 /**
  * Polling-Hilfsfunktion: Wartet, bis das Angebot den Status "KI_FERTIG" hat.
  *
- * @param businessKey  businessKey des Angebots
- * @param intervalMs   Polling-Intervall in ms (default: 2500)
- * @param timeoutMs    Maximale Wartezeit in ms (default: 120000 = 2 min)
- * @param onStatus     Optional: Callback bei jedem Poll mit aktuellem Status
+ * @param businessKey    businessKey des Angebots
+ * @param intervalMs     Polling-Intervall in ms (default: 2500)
+ * @param timeoutMs      Maximale Wartezeit in ms (default: 120000 = 2 min)
+ * @param onStatus       Optional: Callback bei jedem Poll mit aktuellem Status
+ * @param sinceUpdatedAt Optional: nur als fertig werten, wenn das Angebot NACH
+ *   diesem Server-Zeitstempel aktualisiert wurde. Nötig bei einer KI-Korrektur
+ *   (Fall 3): das Angebot ist beim Absenden bereits "KI_FERTIG", und der
+ *   KI-Re-Run wechselt Status nur innerhalb EINER Transaktion
+ *   (KI_FERTIG → IN_BEARBEITUNG → KI_FERTIG), ist also extern nicht sichtbar.
+ *   Ohne diesen Wert würde das Polling sofort das ALTE Ergebnis zurückgeben.
  */
 export async function pollUntilKiFertig(
   businessKey: string,
   intervalMs = 2500,
   timeoutMs = 120_000,
   onStatus?: (status: string) => void,
+  sinceUpdatedAt?: string | null,
 ): Promise<OfferResponse> {
   const deadline = Date.now() + timeoutMs;
+
+  // Ein Ergebnis gilt als "frisch", wenn kein Referenzzeitpunkt vorgegeben ist
+  // (Erstdurchlauf) ODER der updatedAt-Zeitstempel echt neuer ist (Korrektur).
+  const istFrisch = (offer: OfferResponse) =>
+    !sinceUpdatedAt ||
+    (offer.updatedAt != null &&
+      new Date(offer.updatedAt).getTime() > new Date(sinceUpdatedAt).getTime());
 
   while (Date.now() < deadline) {
     const offer = await getOfferByBusinessKey(businessKey);
     onStatus?.(offer.status);
 
-    if (offer.status === "KI_FERTIG") {
+    if (offer.status === "KI_FERTIG" && istFrisch(offer)) {
       return offer;
     }
 
