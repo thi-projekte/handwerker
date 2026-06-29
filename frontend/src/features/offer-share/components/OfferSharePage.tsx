@@ -387,7 +387,7 @@ export const OfferSharePage = () => {
           <div className="share-success">
             <span className="share-success-icon"></span>
             <p>
-              Angebot wurde über erfolgreich <strong>{sentVia}</strong> geteilt.
+              Angebot wurde erfolgreich über <strong>{sentVia}</strong> geteilt.
             </p>
           </div>
         ) : (

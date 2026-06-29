@@ -5,6 +5,7 @@ import { useState, useMemo, useEffect } from "react";
 import {
   MapPin,
   Calendar,
+  Clock,
   ChevronDown,
   X,
   Filter,
@@ -18,11 +19,6 @@ import { mapRechnungDTOToRechnung } from "@/features/document/mapper/documentMap
 // ── Types ──────────────────────────────────────────────────────────────────
 
 type AngebotStatus = "Erstellt" | "Versendet" | "Angenommen" | "Abgelehnt";
-type RechnungStatus =
-  | "Erstellt"
-  | "Versendet"
-  | "Bezahlt"
-  | "Im Zahlungsverzug";
 
 interface Rechnung {
   id: string;
@@ -35,7 +31,7 @@ interface Rechnung {
   ort: string;
   erstelldatum: string;
   faelligkeitsdatum: string;
-  status: RechnungStatus;
+  erstelltAm: string;
   betrag: number;
 }
 
@@ -48,24 +44,18 @@ const ANGEBOT_STATUS_STYLES: Record<AngebotStatus, string> = {
   Abgelehnt: "status-abgelehnt",
 };
 
-const RECHNUNG_STATUS_STYLES: Record<RechnungStatus, string> = {
-  Erstellt: "status-erstellt",
-  Versendet: "status-versendet",
-  Bezahlt: "status-bezahlt",
-  "Im Zahlungsverzug": "status-verzug",
-};
-
 const ANGEBOT_STATUS_OPTIONS: AngebotStatus[] = [
   "Erstellt",
   "Versendet",
   "Angenommen",
   "Abgelehnt",
 ];
-const RECHNUNG_STATUS_OPTIONS: RechnungStatus[] = [
-  "Erstellt",
-  "Versendet",
-  "Bezahlt",
-  "Im Zahlungsverzug",
+
+// Manuell darf der Handwerker ein Angebot nur auf "Angenommen" oder
+// "Abgelehnt" setzen (möglich, solange der Status "Versendet" ist).
+const ANGEBOT_MANUAL_STATUS_OPTIONS: AngebotStatus[] = [
+  "Angenommen",
+  "Abgelehnt",
 ];
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -77,6 +67,25 @@ function formatDatum(iso?: string | null) {
   if (!y || !m || !d) return iso;
 
   return `${d}.${m}.${y}`;
+}
+
+// Die vom Backend gelieferte Zeit entspricht nicht unserer Zeitzone,
+// daher werden 2 Stunden aufgerechnet. Anzeige im 24h-Format (HH:MM).
+function formatUhrzeit(iso?: string | null) {
+  if (!iso) return null;
+
+  const timePart = iso.split("T")[1];
+  if (!timePart) return null;
+
+  const [hStr, mStr] = timePart.split(":");
+  const h = Number(hStr);
+  const m = Number(mStr);
+  if (Number.isNaN(h) || Number.isNaN(m)) return null;
+
+  const adjustedH = (h + 2) % 24;
+  const pad = (n: number) => n.toString().padStart(2, "0");
+
+  return `${pad(adjustedH)}:${pad(m)}`;
 }
 
 function formatBetrag(n?: number | null) {
@@ -181,8 +190,6 @@ export const DocumentPage = () => {
 
   const [filterAngebotStatus, setFilterAngebotStatus] =
     useState<AngebotStatus | null>(null);
-  const [filterRechnungStatus, setFilterRechnungStatus] =
-    useState<RechnungStatus | null>(null);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
@@ -230,7 +237,6 @@ export const DocumentPage = () => {
   const resetFiltersAndSearch = () => {
     setSearch("");
     setFilterAngebotStatus(null);
-    setFilterRechnungStatus(null);
     setStartDate("");
     setEndDate("");
     setShowFilterMenu(false);
@@ -275,26 +281,14 @@ export const DocumentPage = () => {
     setActiveStatusDropdownId(null);
   };
 
-  const handleRechnungStatusChange = (
-    id: string,
-    newStatus: RechnungStatus,
-  ) => {
-    setRechnungen((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, status: newStatus } : r)),
-    );
-    setActiveStatusDropdownId(null);
-  };
-
   const handleResetFilters = () => {
     setFilterAngebotStatus(null);
-    setFilterRechnungStatus(null);
     setStartDate("");
     setEndDate("");
   };
 
   const hasActiveFilters =
     filterAngebotStatus !== null ||
-    filterRechnungStatus !== null ||
     startDate !== "" ||
     endDate !== "";
 
@@ -360,9 +354,6 @@ export const DocumentPage = () => {
         fullName.includes(q) ||
         adresse.includes(q);
 
-      const matchesStatus =
-        !filterRechnungStatus || r.status === filterRechnungStatus;
-
       let matchesDate = true;
 
       if (startDate) {
@@ -373,17 +364,15 @@ export const DocumentPage = () => {
         matchesDate = matchesDate && r.erstelldatum <= endDate;
       }
 
-      return matchesSearch && matchesStatus && matchesDate;
+      return matchesSearch && matchesDate;
     });
-  }, [rechnungen, search, filterRechnungStatus, startDate, endDate]);
+  }, [rechnungen, search, startDate, endDate]);
 
   const sortedRechnungen = useMemo(() => {
     const mult = sortDir === "asc" ? 1 : -1;
     return [...filteredRechnungen].sort((a, b) => {
       if (sortKey === "datum")
         return mult * a.erstelldatum.localeCompare(b.erstelldatum);
-      if (sortKey === "status")
-        return mult * (a.status ?? "").localeCompare(b.status ?? "");
       if (sortKey === "name")
         return mult * (a.nachname ?? "").localeCompare(b.nachname ?? "");
       return 0;
@@ -399,17 +388,12 @@ export const DocumentPage = () => {
         ? "↑ A–Z"
         : "↓ Z–A";
 
-  const currentStatusOptions =
-    activeTab === "angebote" ? ANGEBOT_STATUS_OPTIONS : RECHNUNG_STATUS_OPTIONS;
+  const currentStatusOptions = ANGEBOT_STATUS_OPTIONS;
 
-  const currentFilterStatus =
-    activeTab === "angebote" ? filterAngebotStatus : filterRechnungStatus;
+  const currentFilterStatus = filterAngebotStatus;
 
-  const setCurrentFilterStatus =
-    activeTab === "angebote"
-      ? (v: string | null) => setFilterAngebotStatus(v as AngebotStatus | null)
-      : (v: string | null) =>
-        setFilterRechnungStatus(v as RechnungStatus | null);
+  const setCurrentFilterStatus = (v: string | null) =>
+    setFilterAngebotStatus(v as AngebotStatus | null);
 
   if (loading) {
     return (
@@ -476,45 +460,47 @@ export const DocumentPage = () => {
         {showFilterMenu && (
           <div className="doc-filter-inline-panel">
             <div className="doc-filter-grid">
-              <div className="doc-filter-section">
-                <label className="doc-filter-label-text">Status</label>
-                <div className="doc-custom-dropdown-container">
-                  <div
-                    className="doc-custom-dropdown-trigger"
-                    onClick={() =>
-                      setShowFilterStatusDropdown(!showFilterStatusDropdown)
-                    }
-                  >
-                    <span>{currentFilterStatus ?? "Alle"}</span>
-                    <ChevronDown size={13} />
-                  </div>
-                  {showFilterStatusDropdown && (
-                    <div className="doc-custom-dropdown-options">
-                      <div
-                        className={`doc-custom-dropdown-option ${!currentFilterStatus ? "selected" : ""}`}
-                        onClick={() => {
-                          setCurrentFilterStatus(null);
-                          setShowFilterStatusDropdown(false);
-                        }}
-                      >
-                        Alle
-                      </div>
-                      {currentStatusOptions.map((opt) => (
+              {activeTab === "angebote" && (
+                <div className="doc-filter-section">
+                  <label className="doc-filter-label-text">Status</label>
+                  <div className="doc-custom-dropdown-container">
+                    <div
+                      className="doc-custom-dropdown-trigger"
+                      onClick={() =>
+                        setShowFilterStatusDropdown(!showFilterStatusDropdown)
+                      }
+                    >
+                      <span>{currentFilterStatus ?? "Alle"}</span>
+                      <ChevronDown size={13} />
+                    </div>
+                    {showFilterStatusDropdown && (
+                      <div className="doc-custom-dropdown-options">
                         <div
-                          key={opt}
-                          className={`doc-custom-dropdown-option ${currentFilterStatus === opt ? "selected" : ""}`}
+                          className={`doc-custom-dropdown-option ${!currentFilterStatus ? "selected" : ""}`}
                           onClick={() => {
-                            setCurrentFilterStatus(opt);
+                            setCurrentFilterStatus(null);
                             setShowFilterStatusDropdown(false);
                           }}
                         >
-                          {opt}
+                          Alle
                         </div>
-                      ))}
-                    </div>
-                  )}
+                        {currentStatusOptions.map((opt) => (
+                          <div
+                            key={opt}
+                            className={`doc-custom-dropdown-option ${currentFilterStatus === opt ? "selected" : ""}`}
+                            onClick={() => {
+                              setCurrentFilterStatus(opt);
+                              setShowFilterStatusDropdown(false);
+                            }}
+                          >
+                            {opt}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="doc-filter-section">
                 <label className="doc-filter-label-text">Zeitraum</label>
@@ -550,7 +536,9 @@ export const DocumentPage = () => {
         {/* Sort Row */}
         <div className="doc-sort-row">
           <span className="text-secondary doc-sort-label">Sortieren:</span>
-          {(["datum", "name", "status"] as SortKey[]).map((key) => (
+          {((activeTab === "angebote"
+            ? ["datum", "name", "status"]
+            : ["datum", "name"]) as SortKey[]).map((key) => (
             <button
               key={key}
               className={`doc-sort-btn ${sortKey === key ? "active" : ""}`}
@@ -591,7 +579,7 @@ export const DocumentPage = () => {
                     <span className="doc-nummer">{angebot.angebotsnummer}</span>
                     <StatusDropdown
                       currentStatus={currentStatus}
-                      options={ANGEBOT_STATUS_OPTIONS}
+                      options={ANGEBOT_MANUAL_STATUS_OPTIONS}
                       styleMap={ANGEBOT_STATUS_STYLES}
                       onSelect={(status) => handleAngebotStatusChange(angebot.id, status)}
                       isOpen={activeStatusDropdownId === angebot.id}
@@ -620,6 +608,12 @@ export const DocumentPage = () => {
                       <Calendar size={13} className="doc-icon-inline" />
                       {formatDatum(angebot.datum)}
                     </span>
+                    {formatUhrzeit(angebot.erstelltAm) && (
+                      <span className="text-secondary doc-meta-item">
+                        <Clock size={13} className="doc-icon-inline" />
+                        {formatUhrzeit(angebot.erstelltAm)} Uhr
+                      </span>
+                    )}
                   </div>
 
                   <hr className="divider" />
@@ -657,20 +651,6 @@ export const DocumentPage = () => {
               <div key={rechnung.id} className="card doc-card">
                 <div className="doc-card-top">
                   <span className="doc-nummer">{rechnung.rechnungsnummer}</span>
-                  <StatusDropdown
-                    currentStatus={rechnung.status}
-                    options={RECHNUNG_STATUS_OPTIONS}
-                    styleMap={RECHNUNG_STATUS_STYLES}
-                    onSelect={(s) => handleRechnungStatusChange(rechnung.id, s)}
-                    isOpen={activeStatusDropdownId === rechnung.id}
-                    onToggle={() =>
-                      setActiveStatusDropdownId(
-                        activeStatusDropdownId === rechnung.id
-                          ? null
-                          : rechnung.id,
-                      )
-                    }
-                  />
                 </div>
 
                 <div className="doc-card-name">
@@ -687,6 +667,12 @@ export const DocumentPage = () => {
                     <Calendar size={13} className="doc-icon-inline" />
                     Erstellt: {formatDatum(rechnung.erstelldatum)}
                   </span>
+                  {formatUhrzeit(rechnung.erstelltAm) && (
+                    <span className="text-secondary doc-meta-item">
+                      <Clock size={13} className="doc-icon-inline" />
+                      {formatUhrzeit(rechnung.erstelltAm)} Uhr
+                    </span>
+                  )}
                   <span className="text-secondary doc-meta-item">
                     <Calendar size={13} className="doc-icon-inline" />
                     Fällig: {formatDatum(rechnung.faelligkeitsdatum)}

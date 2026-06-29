@@ -36,6 +36,7 @@ export function mapOfferDTOToAngebot(dto: OfferDTO): Angebot {
         plz: "",
         ort: "",
         datum: dto.createdAt?.split("T")[0] ?? "",
+        erstelltAm: dto.createdAt ?? "",
         status: mapStatus(dto.status),
         betrag: dto.gesamtPreis ?? 0,
     };
@@ -79,6 +80,7 @@ export function mapRechnungDTOToRechnung(dto: RechnungDTO): Rechnung {
 
         erstelldatum: dto.erstelldatum?.split("T")[0] ?? "",
         faelligkeitsdatum: dto.faelligkeitsdatum?.split("T")[0] ?? "",
+        erstelltAm: dto.erstelldatum ?? "",
         status: mapRechnungStatus(dto.status),
         betrag: dto.betrag ?? 0,
     };
