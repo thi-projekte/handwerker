@@ -15,6 +15,7 @@ import "@/assets/stylesheets/stylesheet.css";
 import "@/features/document/components/DocumentPage.css";
 import { getRechnungen, openDocumentPdfRechnung } from "@/data/api/documentApi";
 import { mapRechnungDTOToRechnung } from "@/features/document/mapper/documentMapper";
+import { sendAuftragNichtVersenden } from "@/data/api/processEngineService";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -542,19 +543,19 @@ export const DocumentPage = () => {
           {((activeTab === "angebote"
             ? ["datum", "name", "status"]
             : ["datum", "name"]) as SortKey[]).map((key) => (
-            <button
-              key={key}
-              className={`doc-sort-btn ${sortKey === key ? "active" : ""}`}
-              onClick={() => handleSortKey(key)}
-            >
-              {SORT_LABELS[key]}
-              {sortKey === key && (
-                <span className="doc-sort-arrow">
-                  {sortDir === "asc" ? " ↑" : " ↓"}
-                </span>
-              )}
-            </button>
-          ))}
+              <button
+                key={key}
+                className={`doc-sort-btn ${sortKey === key ? "active" : ""}`}
+                onClick={() => handleSortKey(key)}
+              >
+                {SORT_LABELS[key]}
+                {sortKey === key && (
+                  <span className="doc-sort-arrow">
+                    {sortDir === "asc" ? " ↑" : " ↓"}
+                  </span>
+                )}
+              </button>
+            ))}
           <button
             className="doc-dir-btn"
             onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}
@@ -689,7 +690,17 @@ export const DocumentPage = () => {
                     {formatBetrag(rechnung.betrag)}
                   </span>
                   <div className="doc-card-actions">
-                    <button className="doc-detail-btn" onClick={() => openDocumentPdfRechnung(rechnung.offerBusinessKey)}>
+                    <button
+                      className="doc-detail-btn"
+                      onClick={async () => {
+                        try {
+                          await sendAuftragNichtVersenden(rechnung.offerBusinessKey);
+                          await openDocumentPdfRechnung(rechnung.offerBusinessKey);
+                        } catch (err) {
+                          console.error("PE message failed:", err);
+                        }
+                      }}
+                    >
                       Details →
                     </button>
                   </div>
