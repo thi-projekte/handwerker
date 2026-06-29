@@ -40,6 +40,11 @@ export const DashboardActivity = ({ data }: Props) => {
     if (diffDays < 7) return `vor ${diffDays} Tage${diffDays !== 1 ? "n" : ""}`;
     return date.toLocaleDateString("de-DE");
   };
+  const visibleActivities = data.letzteAktivitaeten.filter(
+    (activity) =>
+      activity.status !== "KI_FERTIG" &&
+      activity.status !== "KI_BEARBEITUNG_ABGESCHLOSSEN"
+  );
 
   return (
     <div className="dashboard-activity">
@@ -47,10 +52,13 @@ export const DashboardActivity = ({ data }: Props) => {
         <h2>Letzte Aktivitäten</h2>
       </div>
 
-      {data.letzteAktivitaeten.length > 0 ? (
+      {visibleActivities.length > 0 ? (
         <div className="activity-list">
-          {data.letzteAktivitaeten.map((activity) => (
-            <div className="activity-item" key={`${activity.offerId}-${activity.zeitpunkt}`}>
+          {visibleActivities.map((activity) => (
+            <div
+              className="activity-item"
+              key={`${activity.offerId}-${activity.zeitpunkt}`}
+            >
               <div className="activity-icon">
                 {STATUS_ICONS[activity.status] || "📌"}
               </div>

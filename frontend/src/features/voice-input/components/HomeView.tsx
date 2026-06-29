@@ -329,12 +329,11 @@ export const HomeView = () => {
                         : "Keine Kunden gefunden."}
                     </div>
                   )}
-                {filteredCustomers.map((customer) => (
+                {filteredCustomers.slice(0, 2).map((customer) => (
                   <button
                     key={customer.id}
-                    className={`customer-item ${
-                      selectedCustomer === customer.id ? "selected" : ""
-                    }`}
+                    className={`customer-item ${selectedCustomer === customer.id ? "selected" : ""
+                      }`}
                     onClick={() => {
                       setSelectedCustomer(customer.id);
                       setCustomerCollapsed(true);
