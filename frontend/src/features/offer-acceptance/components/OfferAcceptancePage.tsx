@@ -6,8 +6,11 @@ import { getPublicOffer,
   OfferPosition } from "@/data/api/offerService";
 import "@/assets/stylesheets/stylesheet.css";
 import "./OfferAcceptancePage.css";
+import logo from "/src/assets/logos/CraftVoice_Logo_white_text.png"
+import socketImg from "/src/assets/logos/Denocke Elektrik.png";
 
 
+const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
 interface OfferData {
   status?: string;
@@ -36,24 +39,33 @@ export const OfferAcceptancePage = () => {
     }
   }, [token]);
 
-  const handleDecision = async (
+ const handleDecision = async (
   entscheidung: "angenommen" | "abgelehnt"
 ) => {
   if (!token || !offer) return;
 
   setIsSubmitting(true);
+  setSuccessMessage(null);
 
   try {
     await acceptPublicOffer(token, entscheidung);
 
     setOffer((prev) =>
-  prev
-    ? {
-        ...prev,
-        status: entscheidung.toUpperCase(),
-      }
-    : prev
-);
+      prev
+        ? {
+            ...prev,
+            status: entscheidung.toUpperCase(),
+          }
+        : prev
+    );
+
+    if (entscheidung === "angenommen") {
+      setSuccessMessage(
+        "Danke! Das Angebot wurde erfolgreich angenommen. Wir melden uns zur weiteren Abstimmung."
+      );
+    } else {
+      setSuccessMessage("Das Angebot wurde abgelehnt.");
+    }
   } catch (err) {
     setError((err as Error).message);
   } finally {
@@ -84,13 +96,25 @@ export const OfferAcceptancePage = () => {
 
   return (
     <div className="offer-acceptance-page">
-      <section className="card offer-acceptance-header">
-        <span className="offer-acceptance-eyebrow">Angebotsprüfung</span>
-        <h1>Angebot von CraftVoice Handwerk</h1>
-        <p className="text-secondary">
-          Bitte prüfen Sie das Angebot und bestätigen Sie die Annahme.
-        </p>
-      </section>
+      <section className="card offer-acceptance-header offer-header-layout">
+  
+  <div className="offer-header-top">
+    <img src={logo} alt="Company Logo" className="offer-header-logo" />
+  </div>
+
+  <div className="offer-header-content">
+    <span className="offer-acceptance-eyebrow">Angebotsprüfung</span>
+    <h1>Angebot von Denocke Elektrik</h1>
+    <p className="text-secondary">
+      Bitte prüfen Sie das Angebot und bestätigen Sie die Annahme.
+    </p>
+  </div>
+
+  <div className="offer-header-side">
+    <img src={socketImg} alt="Steckdose" className="offer-header-image" />
+  </div>
+
+</section>
 
       <section className="card offer-acceptance-section">
         <h2>Positionen</h2>
@@ -107,14 +131,14 @@ export const OfferAcceptancePage = () => {
                 )}
               </div>
                <span className="offer-acceptance-item-price">
-                {pos.positionsPreis?.toFixed(2).replace(".", ",")} €
+                {(pos.positionsPreis ?? 0).toFixed(2).replace(".", ",")} €
               </span>
             </div>
           ))}
         </div>
 
         <div className="offer-acceptance-total">
-          <span>Gesamtbetrag (netto)</span>
+          <span>Gesamtbetrag (brutto)</span>
           <span className="total-price">{offer.gesamtPreis?.toFixed(2).replace(".", ",")} €</span>
         </div>
       </section>
@@ -126,23 +150,24 @@ export const OfferAcceptancePage = () => {
         </section>
       ) : (
         <section className="offer-acceptance-actions">
-          <button
-            className="btn btn-reject"
-            disabled={isSubmitting}
-            onClick={() => handleDecision("abgelehnt")}
-          >
-            <XCircle size={20} />
-            Angebot ablehnen
-          </button>
-          <button
-            className="btn btn-primary"
-            disabled={isSubmitting}
-            onClick={() => handleDecision("angenommen")}
-          >
-            <CheckCircle size={20} />
-            Zahlungspflichtig bestellen
-          </button>
-        </section>
+  <button
+    className="btn btn-primary btn-accept"
+    disabled={isSubmitting}
+    onClick={() => handleDecision("angenommen")}
+  >
+    <CheckCircle size={20} />
+    Zahlungspflichtig bestellen
+  </button>
+
+  <button
+    className="btn btn-reject"
+    disabled={isSubmitting}
+    onClick={() => handleDecision("abgelehnt")}
+  >
+    <XCircle size={20} />
+    Angebot ablehnen
+  </button>
+</section>
       )}
     </div>
   );
