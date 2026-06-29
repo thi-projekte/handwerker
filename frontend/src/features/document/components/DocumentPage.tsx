@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import "@/assets/stylesheets/stylesheet.css";
 import "@/features/document/components/DocumentPage.css";
-import { getRechnungen } from "@/data/api/documentApi";
+import { getRechnungen, openDocumentPdfRechnung } from "@/data/api/documentApi";
 import { mapRechnungDTOToRechnung } from "@/features/document/mapper/documentMapper";
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -23,12 +23,15 @@ type AngebotStatus = "Erstellt" | "Versendet" | "Angenommen" | "Abgelehnt";
 interface Rechnung {
   id: string;
   rechnungsnummer: string;
+  offerBusinessKey: string;
+
   vorname: string;
   nachname: string;
   strasse: string;
   hausnummer: string;
   plz: string;
   ort: string;
+
   erstelldatum: string;
   faelligkeitsdatum: string;
   erstelltAm: string;
@@ -686,7 +689,9 @@ export const DocumentPage = () => {
                     {formatBetrag(rechnung.betrag)}
                   </span>
                   <div className="doc-card-actions">
-                    <button className="doc-detail-btn">Details →</button>
+                    <button className="doc-detail-btn" onClick={() => openDocumentPdfRechnung(rechnung.offerBusinessKey)}>
+                      Details →
+                    </button>
                   </div>
                 </div>
               </div>

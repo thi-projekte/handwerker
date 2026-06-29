@@ -1,4 +1,5 @@
-import type { Angebot, Rechnung, RechnungStatus } from "@/features/document/types/document.types";
+import type { Angebot, Rechnung } from "@/features/document/types/document.types";
+import type { RechnungDTO } from "@/data/api/documentApi";
 
 interface OfferDTO {
     id: number | string;
@@ -41,47 +42,31 @@ export function mapOfferDTOToAngebot(dto: OfferDTO): Angebot {
         betrag: dto.gesamtPreis ?? 0,
     };
 }
-interface RechnungDTO {
-    id: string;
-    rechnungsnummer: string;
-    customerId: string;
-    erstelldatum: string;
-    faelligkeitsdatum: string;
-    status: string;
-    betrag: number;
-}
-
-const mapRechnungStatus = (status: string): RechnungStatus => {
-    switch (status) {
-        case "ERSTELLT":
-            return "Erstellt";
-        case "VERSENDET":
-            return "Versendet";
-        case "BEZAHLT":
-            return "Bezahlt";
-        case "IM_ZAHLUNGSVERZUG":
-            return "Im Zahlungsverzug";
-        default:
-            return "Erstellt";
-    }
-};
 
 export function mapRechnungDTOToRechnung(dto: RechnungDTO): Rechnung {
     return {
-        id: dto.id,
+        id: String(dto.id),
         rechnungsnummer: dto.rechnungsnummer,
+        offerBusinessKey: dto.offerBusinessKey,
 
-        vorname: "",
-        nachname: "",
-        strasse: "",
-        hausnummer: "",
-        plz: "",
-        ort: "",
+        vorname: dto.kundendaten.vorname,
+        nachname: dto.kundendaten.nachname,
 
-        erstelldatum: dto.erstelldatum?.split("T")[0] ?? "",
-        faelligkeitsdatum: dto.faelligkeitsdatum?.split("T")[0] ?? "",
-        erstelltAm: dto.erstelldatum ?? "",
-        status: mapRechnungStatus(dto.status),
-        betrag: dto.betrag ?? 0,
+        strasse: dto.kundendaten.strasse,
+        hausnummer: dto.kundendaten.hausnummer,
+        plz: dto.kundendaten.plz,
+        ort: dto.kundendaten.ort,
+
+        erstelldatum: dto.createdAt.split("T")[0],
+
+        // Das Backend liefert aktuell kein Fälligkeitsdatum
+        faelligkeitsdatum: "",
+
+        erstelltAm: dto.createdAt,
+
+        // Das Backend liefert aktuell keinen Status
+        status: "Erstellt",
+
+        betrag: dto.gesamtPreis,
     };
 }

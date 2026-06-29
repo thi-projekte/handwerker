@@ -14,29 +14,47 @@ export type RechnungStatus =
     | "Im Zahlungsverzug";
 
 export interface AngebotDTO {
-  id: number;
-  businessKey: string;
-  status: string;
-  customerId: string;
-  handwerkerId: string;
-  speechSnippet: string;
-  createdAt: string;
-  gesamtPreis: number | null;
+    id: number;
+    businessKey: string;
+    status: string;
+    customerId: string;
+    handwerkerId: string;
+    speechSnippet: string;
+    createdAt: string;
+    gesamtPreis: number | null;
 }
 
 export interface RechnungDTO {
-    id: string;
+    id: number;
     rechnungsnummer: string;
-    customerId: string;
-    erstelldatum: string;
-    faelligkeitsdatum: string;
-    status: string;
-    betrag: number;
+    offerBusinessKey: string;
+
+    gesamtPreis: number;
+
+    createdAt: string;
+    updatedAt: string;
+
+    kundendaten: {
+        vorname: string;
+        nachname: string;
+        email: string;
+        strasse: string;
+        hausnummer: string;
+        plz: string;
+        ort: string;
+    };
 }
 
 export type DocumentResponse = AngebotDTO[];
 //   rechnungen: RechnungDTO[];
 
+export interface DocumentMetadata {
+    id: string; // documentId (UUID)
+    offerId: number;
+    fileName: string;
+    createdAt: string;
+    documentType: "ANGEBOT" | "RECHNUNG";
+}
 
 const API_BASE_URL = API_CONFIG.OFFER_SERVICE_URL;
 
@@ -83,4 +101,45 @@ export const getRechnungen = async (): Promise<RechnungDTO[]> => {
     }
 
     return response.json();
+};
+
+export const generateInvoiceDocument = async (
+    invoiceId: string,
+): Promise<DocumentMetadata | null> => {
+    const token = await getToken();
+
+    const res = await fetch(
+        `https://craftvoice-document.winfprojekt.de/documents/invoices/${invoiceId}/generate`,
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                ...(token && { Authorization: `Bearer ${token}` }),
+            },
+        },
+    );
+
+    if (res.status === 404) return null;
+
+    if (!res.ok) {
+        throw new Error(`Failed to generate invoice document: ${res.status}`);
+    }
+
+    return res.json();
+};
+export const getPdfDownloadUrl = (documentId: string): string => {
+    return `https://craftvoice-document.winfprojekt.de/documents/${documentId}/pdf`;
+};
+export const openDocumentPdfRechnung = async (invoiceId: string) => {
+    const doc = await generateInvoiceDocument(invoiceId);
+
+    if (!doc) {
+        alert("Rechnung wird noch erstellt");
+        return;
+    }
+
+    window.open(
+        `https://craftvoice-document.winfprojekt.de/documents/${doc.id}/pdf`,
+        "_blank",
+    );
 };
