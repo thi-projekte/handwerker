@@ -26,6 +26,7 @@ import jakarta.ws.rs.WebApplicationException;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.OfferResponse;
 import de.winfprojekt.craftvoice.offerservice.common.OfferPositionType;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
 import jakarta.transaction.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -48,6 +49,12 @@ public class OfferService {
 
     @Inject
     ProcessEngineClient processEngineClient;
+
+    @Inject
+    Event<OfferStatusPeEvents.AngebotAngenommen> angebotAngenommenEvent;
+
+    @Inject
+    Event<OfferStatusPeEvents.AngebotAbgelehnt> angebotAbgelehntEvent;
 
     @Inject
     @RestClient
@@ -517,11 +524,12 @@ public class OfferService {
 
         offer.persist();
 
-        // PE benachrichtigen: Angebot angenommen oder abgelehnt
+        // PE benachrichtigen nach Transaktions-Commit (AFTER_SUCCESS),
+        // damit der neue Status bereits in der DB sichtbar ist, wenn die PE zurückruft.
         if (Offer.STATUS_ANGENOMMEN.equals(newStatus)) {
-            processEngineClient.sendAngebotAngenommen(offer.businessKey);
+            angebotAngenommenEvent.fire(new OfferStatusPeEvents.AngebotAngenommen(offer.businessKey));
         } else {
-            processEngineClient.sendAngebotAbgelehnt(offer.businessKey);
+            angebotAbgelehntEvent.fire(new OfferStatusPeEvents.AngebotAbgelehnt(offer.businessKey));
         }
 
         return new OfferAcceptanceResponse(entscheidung);
@@ -687,11 +695,12 @@ public class OfferService {
 
         offer.persist();
 
-        // Process Engine benachrichtigen 
+        // PE benachrichtigen nach Transaktions-Commit (AFTER_SUCCESS),
+        // damit der neue Status bereits in der DB sichtbar ist, wenn die PE zurückruft.
         if (Offer.STATUS_ANGENOMMEN.equals(targetStatus)) {
-            processEngineClient.sendAngebotAngenommen(offer.businessKey); 
-        } else { 
-            processEngineClient.sendAngebotAbgelehnt(offer.businessKey); 
+            angebotAngenommenEvent.fire(new OfferStatusPeEvents.AngebotAngenommen(offer.businessKey));
+        } else {
+            angebotAbgelehntEvent.fire(new OfferStatusPeEvents.AngebotAbgelehnt(offer.businessKey));
         }
 
     }
