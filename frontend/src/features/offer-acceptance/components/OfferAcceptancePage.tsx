@@ -1,16 +1,13 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { CheckCircle, XCircle } from "lucide-react";
-import { getPublicOffer, acceptPublicOffer } from "@/data/api/offerService";
+import { getPublicOffer,
+  acceptPublicOffer,
+  OfferPosition } from "@/data/api/offerService";
 import "@/assets/stylesheets/stylesheet.css";
 import "./OfferAcceptancePage.css";
 
-interface OfferPosition {
-  bezeichnung: string;
-  beschreibung?: string;
-  hersteller?: string;
-  preis?: number;
-}
+
 
 interface OfferData {
   status?: string;
@@ -23,7 +20,6 @@ export const OfferAcceptancePage = () => {
   const [offer, setOffer] = useState<OfferData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -40,18 +36,30 @@ export const OfferAcceptancePage = () => {
     }
   }, [token]);
 
-  const handleDecision = async (entscheidung: "angenommen" | "abgelehnt") => {
-    if (!token) return;
-    setIsSubmitting(true);
-    try {
-      await acceptPublicOffer(token, entscheidung);
-      setSuccess(true);
-    } catch (err: unknown) {
-      setError((err as Error).message);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  const handleDecision = async (
+  entscheidung: "angenommen" | "abgelehnt"
+) => {
+  if (!token || !offer) return;
+
+  setIsSubmitting(true);
+
+  try {
+    await acceptPublicOffer(token, entscheidung);
+
+    setOffer((prev) =>
+  prev
+    ? {
+        ...prev,
+        status: entscheidung.toUpperCase(),
+      }
+    : prev
+);
+  } catch (err) {
+    setError((err as Error).message);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   if (loading) {
     return (
@@ -66,16 +74,6 @@ export const OfferAcceptancePage = () => {
       <div className="offer-error">
         <h2>Ein Fehler ist aufgetreten</h2>
         <p>{error}</p>
-      </div>
-    );
-  }
-
-  if (success) {
-    return (
-      <div className="offer-acceptance-success">
-        <CheckCircle size={64} className="mx-auto text-success" />
-        <h1>Vielen Dank!</h1>
-        <p>Ihre Entscheidung wurde erfolgreich übermittelt. Der Handwerker wird in Kürze informiert.</p>
       </div>
     );
   }
@@ -108,8 +106,8 @@ export const OfferAcceptancePage = () => {
                   <span className="offer-acceptance-item-desc">Hersteller: {pos.hersteller}</span>
                 )}
               </div>
-              <span className="offer-acceptance-item-price">
-                {pos.preis?.toFixed(2).replace(".", ",")} €
+               <span className="offer-acceptance-item-price">
+                {pos.positionsPreis?.toFixed(2).replace(".", ",")} €
               </span>
             </div>
           ))}
