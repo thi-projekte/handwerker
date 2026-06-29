@@ -16,7 +16,7 @@ import {
   sendKorrekturschnipsel,
   sendAngebotsentwurf,
 } from "@/data/api/processEngineService";
-import { searchMaterials } from "@/data/api/catalogService";
+import { searchMaterials, getMaterial } from "@/data/api/catalogService";
 import { getCurrentUser } from "@/services/userService";
 
 // ─── Typen ───────────────────────────────────────────────────────────────────
@@ -480,14 +480,7 @@ export const ReviewPage = () => {
         positionen.map(async (pos) => {
           if (pos.alternativen.length > 0) return pos; // von der PE geliefert
           try {
-            const kandidaten = await searchMaterials(pos.bezeichnung, 8);
-            // Echten Katalog-Produktnamen für das "Original" verwenden: die KI liefert nur
-            // eine generische Bezeichnung (z.B. "Wallbox"), angezeigt werden soll aber der
-            // konkrete Treffer (z.B. "Wallbox 11kW Typ 2 mit FI"). Fallback: KI-Bezeichnung,
-            // falls der gewählte Treffer nicht in den Suchergebnissen auftaucht.
-            const treffer = pos.katalogProduktId
-              ? kandidaten.find((c) => c.id === pos.katalogProduktId)
-              : undefined;
+            const kandidaten = await searchMaterials(pos.bezeichnung, 5);
             const alternativen = kandidaten
               .filter((c) => c.id !== pos.katalogProduktId)
               .slice(0, 4)
@@ -499,11 +492,22 @@ export const ReviewPage = () => {
                 preis: c.price,
                 katalogProduktId: c.id,
               }));
-            return {
-              ...pos,
-              bezeichnung: treffer ? treffer.name : pos.bezeichnung,
-              alternativen,
-            };
+            // Echten Katalog-Produktnamen für das "Original" anzeigen: die KI liefert nur
+            // eine generische Bezeichnung (z.B. "Wallbox"), gezeigt werden soll aber der
+            // konkrete Treffer (z.B. "Wallbox 11kW Typ 2 mit FI"). Direkter ID-Lookup =
+            // garantiert korrekt. Fallback: KI-Bezeichnung, falls der Lookup fehlschlägt.
+            let bezeichnung = pos.bezeichnung;
+            if (pos.katalogProduktId) {
+              try {
+                bezeichnung = (await getMaterial(pos.katalogProduktId)).name;
+              } catch (lookupErr) {
+                console.error(
+                  "[ReviewPage] Katalogname-Lookup fehlgeschlagen:",
+                  lookupErr,
+                );
+              }
+            }
+            return { ...pos, bezeichnung, alternativen };
           } catch (e) {
             console.error("[ReviewPage] Alternativen-Suche fehlgeschlagen:", e);
             return pos;
