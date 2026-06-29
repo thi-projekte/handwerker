@@ -68,6 +68,8 @@ public class InvoiceService {
         if (offer == null) {
             throw new WebApplicationException(
                     "Angebot mit businessKey " + request.businessKey + " nicht gefunden", 404);
+        } else {
+            Log.info("Angebot " + request.businessKey + " erfolgreich geladen.");
         }
 
         // 2. Status-Prüfung
@@ -76,22 +78,28 @@ public class InvoiceService {
                     "Angebot mit businessKey " + request.businessKey
                     + " befindet sich nicht im Status ANGENOMMEN (aktuell: " + offer.status + ")",
                     409);
+        } else {
+            Log.info("Angebot " + request.businessKey + " in Status " + offer.status);
         }
 
         // 3. Rechnungsnummer generieren
         String rechnungsnummer = generiereRechnungsnummer();
+        Log.info("Rechnungsnummer " + rechnungsnummer + " generiert.");
 
         // 4. Kundendaten-Snapshot laden
         CustomerDTO customer = userServiceClient.getCustomer(Long.parseLong(offer.customerId));
         if (customer == null) {
             throw new WebApplicationException(
                     "Kundendaten für customerId " + offer.customerId + " nicht verfügbar", 422);
+        } else {
+            Log.info("Kundendaten erfolgreich geladen.");
         }
 
         // 5. Invoice anlegen
         Invoice invoice = new Invoice();
         invoice.rechnungsnummer = rechnungsnummer;
         invoice.offerBusinessKey = offer.businessKey;
+        Log.info("Invoice erfolgreich angelegt.");
 
         // Kundendaten-Snapshot
         invoice.kundeVorname = customer.firstName;
@@ -101,6 +109,7 @@ public class InvoiceService {
         invoice.kundeHausnummer = customer.houseNumber;
         invoice.kundePlz = customer.zipCode;
         invoice.kundeOrt = customer.city;
+        Log.info("Kundendaten-Snapshot erfolgreich initialisiert.");
 
         // 6. InvoicePosition-Einträge aus OfferPosition kopieren
         for (OfferPosition offerPos : offer.positions) {
@@ -117,12 +126,14 @@ public class InvoiceService {
             invoicePos.type = offerPos.type;
             invoice.positions.add(invoicePos);
         }
+        Log.info("Invoice-Positions erfolgreich initialisiert.");
 
         // Gesamtpreis berechnen
         invoice.gesamtPreis = invoice.positions.stream()
                 .map(p -> p.positionsPreis)
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+        Log.info("Gesamtpreis mit der Summe " + invoice.gesamtPreis + " € berechnet.");
 
         invoice.persist();
 
