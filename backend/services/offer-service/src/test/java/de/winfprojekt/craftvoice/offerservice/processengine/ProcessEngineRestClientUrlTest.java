@@ -57,7 +57,7 @@ class ProcessEngineRestClientWireMockTest {
                 false
         );
 
-        client.sendMessage(payload);
+        client.sendMessage(null, payload);
 
         wireMockServer.verify(
                 postRequestedFor(urlEqualTo("/engine-rest/message"))
