@@ -24,6 +24,11 @@ import java.util.Optional;
  * <ul>
  *   <li>HTTP 429 / 5xx und Timeouts/Netzwerkfehler → bis zu {@value #MAX_RETRIES} Retries
  *       mit exponentiellem Backoff (1s, 2s, 4s).</li>
+ *   <li><b>Modell-Fallback:</b> Schlaegt das Primaermodell auch nach allen Retries endgueltig
+ *       fehl (z.B. MegaLLM-seitiges {@code 503 "Resource overloaded"}, das eine ganze
+ *       Modellfamilie treffen kann), wird der Aufruf einmalig mit dem konfigurierten
+ *       Fallback-Modell ({@code megallm.model.fallback}, Default {@code google-gemma-4-26b})
+ *       wiederholt. Erst wenn auch das scheitert, faellt der Aufrufer auf den Stub zurueck.</li>
  *   <li>leere Antwort → {@link MegaLlmException} (der Aufrufer faellt dann auf den Stub
  *       zurueck).</li>
  * </ul>
@@ -43,11 +48,14 @@ public class MegaLlmService {
 
     private final MegaLlmClient client;
     private final Optional<String> apiKey;
+    private final Optional<String> fallbackModel;
 
     public MegaLlmService(@RestClient MegaLlmClient client,
-                          @ConfigProperty(name = "megallm.api.key") Optional<String> apiKey) {
+                          @ConfigProperty(name = "megallm.api.key") Optional<String> apiKey,
+                          @ConfigProperty(name = "megallm.model.fallback") Optional<String> fallbackModel) {
         this.client = client;
         this.apiKey = apiKey;
+        this.fallbackModel = fallbackModel;
     }
 
     /**
@@ -61,11 +69,33 @@ public class MegaLlmService {
 
     /**
      * Fuehrt einen Chat-Completion-Aufruf aus und gibt den rohen Textinhalt der Antwort
-     * zurueck (noch nicht geparst).
+     * zurueck (noch nicht geparst). Schlaegt das {@code model} endgueltig fehl und ist ein
+     * davon abweichendes Fallback-Modell konfiguriert, wird der Aufruf einmalig damit
+     * wiederholt (siehe Klassen-Javadoc).
      *
-     * @throws MegaLlmException bei HTTP-Fehler (nach Retries), Timeout oder leerer Antwort
+     * @throws MegaLlmException bei HTTP-Fehler (nach Retries), Timeout oder leerer Antwort —
+     *         auch das Fallback-Modell eingerechnet
      */
     public String complete(String model, String systemPrompt, String userContent) {
+        try {
+            return completeOnce(model, systemPrompt, userContent);
+        } catch (MegaLlmException primaryFailure) {
+            String fallback = fallbackModel.filter(m -> !m.isBlank()).orElse(null);
+            if (fallback == null || fallback.equals(model)) {
+                throw primaryFailure;
+            }
+            LOG.warnf("Primaermodell %s endgueltig fehlgeschlagen (%s) — Fallback auf %s.",
+                    model, primaryFailure.getMessage(), fallback);
+            return completeOnce(fallback, systemPrompt, userContent);
+        }
+    }
+
+    /**
+     * Ein einzelner Aufruf gegen genau ein Modell — inklusive Retry/Backoff fuer transiente
+     * Fehler (429/5xx, Timeout). Der Modell-Fallback liegt bewusst eine Ebene hoeher in
+     * {@link #complete(String, String, String)}.
+     */
+    private String completeOnce(String model, String systemPrompt, String userContent) {
         ChatRequest request = new ChatRequest(
                 model,
                 List.of(
