@@ -276,7 +276,8 @@
 .offer-header-layout {
   display: flex;
   flex-direction: column;
-  position: relative;
+  gap: 14px;
+  padding: clamp(18px, 2vw, 28px);
   overflow: hidden;
 }
 
@@ -284,7 +285,6 @@
 .offer-header-top {
   display: flex;
   justify-content: center;
-  margin-bottom: 1rem;
 }
 
 .offer-header-logo {
@@ -294,15 +294,16 @@
 
 /* Text bleibt normal */
 .offer-header-content {
-  z-index: 2;
+  flex: 1;
+  z-index: 1;
 }
 
-/* "2" rechts im Header */
+
 .offer-header-side {
-  position: absolute;
-  right: 24px;
-  top: 50%;
-  transform: translateY(-50%);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .offer-header-image {
@@ -318,4 +319,10 @@
   background: #e6ffed;
   color: #1a7f37;
   font-weight: 500;
+}
+.offer-header-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
 }

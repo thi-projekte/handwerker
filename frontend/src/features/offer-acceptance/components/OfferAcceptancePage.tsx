@@ -96,13 +96,12 @@ export const OfferAcceptancePage = () => {
   }
 
   return (
+    
     <div className="offer-acceptance-page">
-      <section className="card offer-acceptance-header offer-header-layout">
+      <div className="offer-header-top"> <img src={logo} alt="Company Logo" className="offer-header-logo" /> </div>
+      <section className="card offer-acceptance-header">
   
-  <div className="offer-header-top">
-    <img src={logo} alt="Company Logo" className="offer-header-logo" />
-  </div>
-
+  <div className="offer-header-body">
   <div className="offer-header-content">
     <span className="offer-acceptance-eyebrow">Angebotsprüfung</span>
     <h1>Angebot von Denocke Elektrik</h1>
@@ -112,8 +111,9 @@ export const OfferAcceptancePage = () => {
   </div>
 
   <div className="offer-header-side">
-    <img src={socketImg} alt="Steckdose" className="offer-header-image" />
+    <img src={socketImg} alt="Denocke Elektrik" className="offer-header-image" />
   </div>
+</div>
 
 </section>
 
