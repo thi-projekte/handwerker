@@ -1,4 +1,5 @@
 import type { Angebot, Rechnung } from "@/features/document/types/document.types";
+import type { RechnungDTO } from "@/data/api/documentApi";
 
 interface OfferDTO {
     id: number | string;
@@ -39,26 +40,6 @@ export function mapOfferDTOToAngebot(dto: OfferDTO): Angebot {
         erstelltAm: dto.createdAt ?? "",
         status: mapStatus(dto.status),
         betrag: dto.gesamtPreis ?? 0,
-    };
-}
-interface RechnungDTO {
-    id: number;
-    rechnungsnummer: string;
-    offerBusinessKey: string;
-
-    gesamtPreis: number;
-
-    createdAt: string;
-    updatedAt: string;
-
-    kundendaten: {
-        vorname: string;
-        nachname: string;
-        email: string;
-        strasse: string;
-        hausnummer: string;
-        plz: string;
-        ort: string;
     };
 }
 

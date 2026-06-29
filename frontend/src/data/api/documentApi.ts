@@ -24,14 +24,25 @@ export interface AngebotDTO {
     gesamtPreis: number | null;
 }
 
-interface RechnungDTO {
-    id: string;
+export interface RechnungDTO {
+    id: number;
     rechnungsnummer: string;
-    customerId: string;
-    erstelldatum: string;
-    faelligkeitsdatum: string;
-    status: string;
-    betrag: number;
+    offerBusinessKey: string;
+
+    gesamtPreis: number;
+
+    createdAt: string;
+    updatedAt: string;
+
+    kundendaten: {
+        vorname: string;
+        nachname: string;
+        email: string;
+        strasse: string;
+        hausnummer: string;
+        plz: string;
+        ort: string;
+    };
 }
 
 export type DocumentResponse = AngebotDTO[];
