@@ -42,10 +42,12 @@ export function mapOfferDTOToAngebot(dto: OfferDTO): Angebot {
     };
 }
 interface RechnungDTO {
-    id: number | string;
+    id: number;
     rechnungsnummer: string;
     offerBusinessKey: string;
+
     gesamtPreis: number;
+
     createdAt: string;
     updatedAt: string;
 

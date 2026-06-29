@@ -23,12 +23,15 @@ type AngebotStatus = "Erstellt" | "Versendet" | "Angenommen" | "Abgelehnt";
 interface Rechnung {
   id: string;
   rechnungsnummer: string;
+  offerBusinessKey: string;
+
   vorname: string;
   nachname: string;
   strasse: string;
   hausnummer: string;
   plz: string;
   ort: string;
+
   erstelldatum: string;
   faelligkeitsdatum: string;
   erstelltAm: string;
