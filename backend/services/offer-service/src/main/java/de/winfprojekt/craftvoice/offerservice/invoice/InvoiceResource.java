@@ -16,6 +16,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.jwt.JsonWebToken;
+import org.jboss.logging.Logger;
 
 import java.util.List;
 
@@ -39,6 +40,8 @@ public class InvoiceResource {
 
     @Inject
     JsonWebToken jwt;
+
+    private static final Logger LOG = Logger.getLogger(InvoiceService.class);
 
     /**
      * Erstellt eine neue Rechnung aus einem Angebot mit Status ANGENOMMEN.
@@ -126,7 +129,9 @@ public class InvoiceResource {
     @Consumes(MediaType.WILDCARD)
     @RolesAllowed({"OWNER"})
     public Response createInvoiceForPe(@PathParam("businessKey") String businessKey) {
+        LOG.info("Endpunkt /rechnungen/" + businessKey + "/erstellen wurde aufgerufen");
         invoiceService.createInvoiceAndNotifyPe(businessKey);
+        LOG.info("createInvoiceAndNotifyPe wurde abgeschlossen");
         return Response.noContent().build();
     }
 }
