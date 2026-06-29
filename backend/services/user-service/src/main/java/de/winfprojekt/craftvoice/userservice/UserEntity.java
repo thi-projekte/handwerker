@@ -98,6 +98,10 @@ public class UserEntity extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     public String paymentTerms;
 
+    // Owner tracking for customers (null for OWNER/EMPLOYEE roles)
+    // Stores the ID of the craftsman who created this customer
+    public Long ownerId;
+
     public static UserEntity findByEmail(String email) {
         return find("email", email).firstResult();
     }

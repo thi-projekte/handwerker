@@ -23,6 +23,8 @@ export interface Angebot {
   ort: string;
 
   datum: string;
+  /** Volle ISO-Datetime der Erstellung (für die Uhrzeit-Anzeige). */
+  erstelltAm: string;
   status: AngebotStatus;
   betrag: number;
 }
@@ -41,6 +43,8 @@ export interface Rechnung {
 
   erstelldatum: string;
   faelligkeitsdatum: string;
+  /** Volle ISO-Datetime der Erstellung (für die Uhrzeit-Anzeige). */
+  erstelltAm: string;
 
   status: RechnungStatus;
   betrag: number;

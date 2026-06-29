@@ -15,6 +15,7 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.eclipse.microprofile.context.ManagedExecutor;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.jboss.logging.Logger;
 
@@ -40,6 +41,9 @@ public class InvoiceResource {
 
     @Inject
     JsonWebToken jwt;
+
+    @Inject
+    ManagedExecutor managedExecutor;
 
     private static final Logger LOG = Logger.getLogger(InvoiceService.class);
 
@@ -127,11 +131,17 @@ public class InvoiceResource {
     @POST
     @Path("/{businessKey}/erstellen")
     @Consumes(MediaType.WILDCARD)
-    @RolesAllowed({"OWNER"})
+    @Authenticated
     public Response createInvoiceForPe(@PathParam("businessKey") String businessKey) {
         LOG.info("Endpunkt /rechnungen/" + businessKey + "/erstellen wurde aufgerufen");
-        invoiceService.createInvoiceAndNotifyPe(businessKey);
-        LOG.info("createInvoiceAndNotifyPe wurde abgeschlossen");
+        managedExecutor.runAsync(() -> {
+            try {
+                invoiceService.createInvoiceAndNotifyPe(businessKey);
+            } catch (Exception e) {
+                LOG.error("Fehler bei der asynchronen Rechnungserstellung und PE-Benachrichtigung für businessKey " + businessKey, e);
+            }
+        });
+        LOG.info("createInvoiceAndNotifyPe wurde asynchron gestartet");
         return Response.noContent().build();
     }
 }

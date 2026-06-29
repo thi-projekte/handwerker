@@ -26,6 +26,7 @@ import jakarta.ws.rs.WebApplicationException;
 import de.winfprojekt.craftvoice.offerservice.offer.dto.OfferResponse;
 import de.winfprojekt.craftvoice.offerservice.common.OfferPositionType;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
 import jakarta.transaction.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -48,6 +49,12 @@ public class OfferService {
 
     @Inject
     ProcessEngineClient processEngineClient;
+
+    @Inject
+    Event<OfferStatusPeEvents.AngebotAngenommen> angebotAngenommenEvent;
+
+    @Inject
+    Event<OfferStatusPeEvents.AngebotAbgelehnt> angebotAbgelehntEvent;
 
     @Inject
     @RestClient
@@ -200,6 +207,12 @@ public class OfferService {
                         : java.util.List.of();
         for (StructuredOfferPositionDTO posDto : materialPositionen) {
             BigDecimal preis = BigDecimal.ZERO;
+            // Hersteller UND Beschreibung stammen aus dem Katalogprodukt. Der Hersteller faellt
+            // mangels Alternative auf das (i.d.R. leere) DTO zurueck; die Beschreibung bewusst
+            // NICHT: ohne Katalogtreffer bleibt sie leer, damit auf dem Angebot sichtbar ist,
+            // dass die Position keinen Treffer hat — statt eine KI-Beschreibung vorzutaeuschen.
+            String hersteller = posDto.hersteller;
+            String beschreibung = null;
             if (posDto.katalogProduktId != null) {
                 try {
                     UUID materialId = UUID.fromString(posDto.katalogProduktId);
@@ -207,8 +220,20 @@ public class OfferService {
                     // mit process-engine-Token kommt (catalog ermittelt den Owner dann aus dem Header).
                     // Im User-Flow ignoriert der catalog-service den Header.
                     MaterialResponse material = catalogServiceClient.getMaterial(materialId, offer.handwerkerId);
-                    if (material != null && material.price != null) {
-                        preis = material.price;
+                    if (material != null) {
+                        if (material.price != null) {
+                            preis = material.price;
+                        }
+                        if (material.manufacturer != null && !material.manufacturer.isBlank()) {
+                            hersteller = material.manufacturer;
+                        }
+                        if (material.description != null && !material.description.isBlank()) {
+                            // "Art.-Nr. XXX - "-Praefix aus der Katalog-Beschreibung entfernen
+                            // (technische Vorsilbe gehoert nicht auf ein Kunden-Angebot).
+                            String d = material.description;
+                            int sep = d.startsWith("Art.-Nr.") ? d.indexOf(" - ") : -1;
+                            beschreibung = (sep >= 0 ? d.substring(sep + 3) : d).trim();
+                        }
                     }
                 } catch (jakarta.ws.rs.NotFoundException e) {
                     LOG.warnf("Material mit ID %s nicht im Catalog gefunden, Preis wird auf 0 gesetzt",
@@ -225,9 +250,9 @@ public class OfferService {
             OfferPosition position = new OfferPosition();
             position.type = OfferPositionType.MATERIAL;
             position.offer = offer;
-            position.hersteller = posDto.hersteller;
+            position.hersteller = hersteller;
             position.bezeichnung = posDto.bezeichnung;
-            position.beschreibung = posDto.beschreibung;
+            position.beschreibung = beschreibung;
             position.menge = posDto.menge;
             position.einheit = posDto.einheit;
             position.katalogProduktId = posDto.katalogProduktId;
@@ -509,11 +534,12 @@ public class OfferService {
 
         offer.persist();
 
-        // PE benachrichtigen: Angebot angenommen oder abgelehnt
+        // PE benachrichtigen nach Transaktions-Commit (AFTER_SUCCESS),
+        // damit der neue Status bereits in der DB sichtbar ist, wenn die PE zurückruft.
         if (Offer.STATUS_ANGENOMMEN.equals(newStatus)) {
-            processEngineClient.sendAngebotAngenommen(offer.businessKey);
+            angebotAngenommenEvent.fire(new OfferStatusPeEvents.AngebotAngenommen(offer.businessKey));
         } else {
-            processEngineClient.sendAngebotAbgelehnt(offer.businessKey);
+            angebotAbgelehntEvent.fire(new OfferStatusPeEvents.AngebotAbgelehnt(offer.businessKey));
         }
 
         return new OfferAcceptanceResponse(entscheidung);
@@ -679,11 +705,12 @@ public class OfferService {
 
         offer.persist();
 
-        // Process Engine benachrichtigen 
+        // PE benachrichtigen nach Transaktions-Commit (AFTER_SUCCESS),
+        // damit der neue Status bereits in der DB sichtbar ist, wenn die PE zurückruft.
         if (Offer.STATUS_ANGENOMMEN.equals(targetStatus)) {
-            processEngineClient.sendAngebotAngenommen(offer.businessKey); 
-        } else { 
-            processEngineClient.sendAngebotAbgelehnt(offer.businessKey); 
+            angebotAngenommenEvent.fire(new OfferStatusPeEvents.AngebotAngenommen(offer.businessKey));
+        } else {
+            angebotAbgelehntEvent.fire(new OfferStatusPeEvents.AngebotAbgelehnt(offer.businessKey));
         }
 
     }

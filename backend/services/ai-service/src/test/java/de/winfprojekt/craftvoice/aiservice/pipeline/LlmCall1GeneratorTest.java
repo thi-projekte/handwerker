@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.verifyNoInteractions;
 
@@ -51,14 +52,16 @@ class LlmCall1GeneratorTest {
         ProcessRequest request = new ProcessRequest(
                 "BK-1", "prompt",
                 new Vorlage(List.of(), List.of(), List.of()),
-                "Im Bad Fliesen verlegen.", null, null);
+                "Eine Wallbox installieren.", null, null);
 
         ErgebnisKi result = generator.forErstangebot(request);
 
         assertNotNull(result);
-        assertEquals(1, result.strukturierteAngebotspositionen().leistungen().size());
-        assertEquals("Fliesen verlegen",
-                result.strukturierteAngebotspositionen().leistungen().get(0).bezeichnung());
+        // Stub-Inhalt: Wallbox-Installationsangebot (erste Materialposition = Wallbox).
+        assertFalse(result.strukturierteAngebotspositionen().material().isEmpty());
+        assertEquals("Wallbox",
+                result.strukturierteAngebotspositionen().material().get(0).bezeichnung());
+        assertEquals(4.0, result.geschaetzteArbeitsdauerStunden(), 0.0);
         verifyNoInteractions(client);
     }
 
@@ -71,8 +74,8 @@ class LlmCall1GeneratorTest {
 
         ErgebnisKi result = generator.forKorrektur(request);
 
-        // Stub-Korrektur ergaenzt eine zweite Leistung (Sockelleisten).
-        assertEquals(2, result.strukturierteAngebotspositionen().leistungen().size());
+        // Stub-Korrektur liefert die Wallbox-Materialpositionen (inkl. ergaenztem FI Typ B).
+        assertFalse(result.strukturierteAngebotspositionen().material().isEmpty());
         verifyNoInteractions(client);
     }
 }

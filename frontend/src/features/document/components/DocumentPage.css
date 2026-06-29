@@ -402,7 +402,7 @@
 .doc-card-top {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
 }
 
@@ -412,6 +412,11 @@
   letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--color-text-secondary);
+  /* Lange Angebots-/Rechnungsnummern dürfen umbrechen, statt aus dem
+     Kasten zu laufen oder das Status-Badge zu verschieben. */
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 /* Customer Name */
@@ -515,6 +520,8 @@
 
 .doc-status-dropdown-wrapper {
   position: relative;
+  /* Badge behält seine Breite und bleibt oben rechts fixiert. */
+  flex-shrink: 0;
 }
 
 /* The badge/trigger button */

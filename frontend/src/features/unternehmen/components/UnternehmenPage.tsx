@@ -26,6 +26,7 @@ import {
 } from "@/data/api/catalogService";
 import "./UnternehmenPage.css";
 import "./UnternehmenPage-additions.css";
+import logo from "/src/assets/logos/Denocke Elektrik.png";
 
 type Tab = "allgemein" | "kunde" | "stundensatz" | "preisliste";
 
@@ -698,7 +699,7 @@ const loadCustomers = async () => {
             <div className="company-overview-header">
               <div className="company-logo-wrapper">
                 <img
-                  src="/src/assets/logos/Denocke Elektrik.png"
+                  src={logo}
                   alt="Firmenlogo"
                   className="company-logo-preview"
                 />

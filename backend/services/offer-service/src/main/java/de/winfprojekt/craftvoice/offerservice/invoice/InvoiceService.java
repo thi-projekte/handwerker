@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.control.ActivateRequestContext;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.WebApplicationException;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
@@ -68,30 +69,39 @@ public class InvoiceService {
         if (offer == null) {
             throw new WebApplicationException(
                     "Angebot mit businessKey " + request.businessKey + " nicht gefunden", 404);
+        } else {
+            Log.info("Angebot " + request.businessKey + " erfolgreich geladen.");
         }
 
+        Log.info("Angebot " + request.businessKey + " ist vor der Statusprüfung in Status " + offer.status);
         // 2. Status-Prüfung
         if (!Offer.STATUS_ANGENOMMEN.equals(offer.status)) {
             throw new WebApplicationException(
                     "Angebot mit businessKey " + request.businessKey
                     + " befindet sich nicht im Status ANGENOMMEN (aktuell: " + offer.status + ")",
                     409);
+        } else {
+            Log.info("Angebot " + request.businessKey + " in Status " + offer.status);
         }
 
         // 3. Rechnungsnummer generieren
         String rechnungsnummer = generiereRechnungsnummer();
+        Log.info("Rechnungsnummer " + rechnungsnummer + " generiert.");
 
         // 4. Kundendaten-Snapshot laden
         CustomerDTO customer = userServiceClient.getCustomer(Long.parseLong(offer.customerId));
         if (customer == null) {
             throw new WebApplicationException(
                     "Kundendaten für customerId " + offer.customerId + " nicht verfügbar", 422);
+        } else {
+            Log.info("Kundendaten erfolgreich geladen.");
         }
 
         // 5. Invoice anlegen
         Invoice invoice = new Invoice();
         invoice.rechnungsnummer = rechnungsnummer;
         invoice.offerBusinessKey = offer.businessKey;
+        Log.info("Invoice erfolgreich angelegt.");
 
         // Kundendaten-Snapshot
         invoice.kundeVorname = customer.firstName;
@@ -101,6 +111,7 @@ public class InvoiceService {
         invoice.kundeHausnummer = customer.houseNumber;
         invoice.kundePlz = customer.zipCode;
         invoice.kundeOrt = customer.city;
+        Log.info("Kundendaten-Snapshot erfolgreich initialisiert.");
 
         // 6. InvoicePosition-Einträge aus OfferPosition kopieren
         for (OfferPosition offerPos : offer.positions) {
@@ -117,12 +128,14 @@ public class InvoiceService {
             invoicePos.type = offerPos.type;
             invoice.positions.add(invoicePos);
         }
+        Log.info("Invoice-Positions erfolgreich initialisiert.");
 
         // Gesamtpreis berechnen
         invoice.gesamtPreis = invoice.positions.stream()
                 .map(p -> p.positionsPreis)
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+        Log.info("Gesamtpreis mit der Summe " + invoice.gesamtPreis + " € berechnet.");
 
         invoice.persist();
 
@@ -211,6 +224,7 @@ public class InvoiceService {
      * @param businessKey businessKey des Angebots
      */
     @Transactional
+    @ActivateRequestContext
     public void createInvoiceAndNotifyPe(String businessKey) {
         Log.info("createInvoiceAndNotifyPe wurde aufgerufen und gestartet mit BK " + businessKey);
         CreateInvoiceRequest request = new CreateInvoiceRequest();

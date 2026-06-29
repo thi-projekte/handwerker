@@ -32,13 +32,16 @@ var payload = {};
 
 payload.businessKey = businessKey;
 
-if (korrekturschnipsel !== null &amp;&amp; strukturierteAngebotspositionen !== null) {
+if (korrekturschnipsel !== null && strukturierteAngebotspositionen !== null) {
 
   payload.prompt = "Überarbeite die strukturierten Angebotspositionen anhand des Korrekturschnipsels.";
 
-  payload.strukturierteAngebotspositionen = JSON.parse(
+  var parsedStrukturierteAngebotspositionen = JSON.parse(
     strukturierteAngebotspositionen.toString()
   );
+
+  payload.strukturierteAngebotspositionen =
+    parsedStrukturierteAngebotspositionen.strukturierteAngebotspositionen;
 
   payload.korrekturschnipsel = korrekturschnipsel.toString();
 

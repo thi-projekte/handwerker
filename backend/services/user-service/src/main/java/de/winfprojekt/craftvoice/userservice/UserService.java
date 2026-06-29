@@ -333,14 +333,21 @@ public class UserService {
             throw new BadRequestException("User with this email already exists");
         }
 
+        // Track which craftsman created this customer
+        UserEntity owner = syncUserWithDatabase();
+        if (owner == null) {
+            throw new BadRequestException("Could not determine current user");
+        }
+
         customerData.status = UserStatus.ACTIVE;
         customerData.roles.add(UserRole.CUSTOMER);
+        customerData.ownerId = owner.id;
         customerData.persist();
 
         AuditLogEntity.log(
                 customerData.id,
                 "CUSTOMER_CREATED",
-                "Customer profile created by craftsman"
+                "Customer profile created by craftsman " + owner.id
         );
 
         return customerData;
@@ -351,6 +358,12 @@ public class UserService {
         UserEntity customer = UserEntity.findById(id);
 
         if (customer == null || !customer.roles.contains(UserRole.CUSTOMER)) {
+            throw new NotFoundException("Customer not found");
+        }
+
+        // Verify ownership - only the craftsman who created the customer can update it
+        UserEntity owner = syncUserWithDatabase();
+        if (owner == null || !owner.id.equals(customer.ownerId)) {
             throw new NotFoundException("Customer not found");
         }
 
@@ -378,7 +391,7 @@ public class UserService {
         AuditLogEntity.log(
                 customer.id,
                 "CUSTOMER_UPDATED",
-                "Customer data updated by craftsman"
+                "Customer data updated by craftsman " + owner.id
         );
 
         return customer;
@@ -389,6 +402,12 @@ public class UserService {
         UserEntity customer = UserEntity.findById(id);
 
         if (customer == null || !customer.roles.contains(UserRole.CUSTOMER)) {
+            throw new NotFoundException("Customer not found");
+        }
+
+        // Verify ownership - only the craftsman who created the customer can delete it
+        UserEntity owner = syncUserWithDatabase();
+        if (owner == null || !owner.id.equals(customer.ownerId)) {
             throw new NotFoundException("Customer not found");
         }
 
@@ -404,14 +423,20 @@ public class UserService {
         AuditLogEntity.log(
                 customer.id,
                 "CUSTOMER_DELETED",
-                "Customer deleted/anonymized by craftsman"
+                "Customer deleted/anonymized by craftsman " + owner.id
         );
     }
 
     public List<UserEntity> listCustomers() {
+        UserEntity owner = syncUserWithDatabase();
+        if (owner == null) {
+            throw new BadRequestException("Could not determine current user");
+        }
+
         return UserEntity.list(
-                "from UserEntity u join u.roles r where r = ?1",
-                UserRole.CUSTOMER
+                "from UserEntity u join u.roles r where r = ?1 and u.ownerId = ?2",
+                UserRole.CUSTOMER,
+                owner.id
         );
     }
 
@@ -419,6 +444,12 @@ public class UserService {
         UserEntity customer = UserEntity.findById(id);
 
         if (customer == null || !customer.roles.contains(UserRole.CUSTOMER)) {
+            throw new NotFoundException("Customer not found");
+        }
+
+        // Verify ownership - only the craftsman who created the customer can view it
+        UserEntity owner = syncUserWithDatabase();
+        if (owner == null || !owner.id.equals(customer.ownerId)) {
             throw new NotFoundException("Customer not found");
         }
 
