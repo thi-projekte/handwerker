@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.control.ActivateRequestContext;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.WebApplicationException;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
@@ -223,6 +224,7 @@ public class InvoiceService {
      * @param businessKey businessKey des Angebots
      */
     @Transactional
+    @ActivateRequestContext
     public void createInvoiceAndNotifyPe(String businessKey) {
         Log.info("createInvoiceAndNotifyPe wurde aufgerufen und gestartet mit BK " + businessKey);
         CreateInvoiceRequest request = new CreateInvoiceRequest();
