@@ -214,25 +214,14 @@ public class InvoiceService {
     }
 
     /**
-     * Erstellt einen Rechnungsentwurf für ein angenommenes Angebot und sendet ihn
-     * direkt an die Process Engine zurück.
-     *
-     * <p>Wird von der PE nach dem Empfang von "angebotAngenommen" aufgerufen.
-     * Die PE wartet anschließend auf die Nachricht "rechnungsentwurf", um dann
-     * den Document Service zur PDF-Generierung anzusteuern.
+     * Sendet den erstellten Rechnungsentwurf asynchron an die Process Engine.
      *
      * @param businessKey businessKey des Angebots
+     * @param invoice     das erstellte InvoiceResponse-DTO
+     * @param authHeader  Authorization-Header des Original-Requests
      */
-    @Transactional
     @ActivateRequestContext
-    public void createInvoiceAndNotifyPe(String businessKey) {
-        Log.info("createInvoiceAndNotifyPe wurde aufgerufen und gestartet mit BK " + businessKey);
-        CreateInvoiceRequest request = new CreateInvoiceRequest();
-        request.businessKey = businessKey;
-
-        InvoiceResponse invoice = createInvoice(request);
-        Log.info("createInvoice wurde aufgerufen");
-
+    public void notifyPe(String businessKey, InvoiceResponse invoice, String authHeader) {
         String rechnungsentwurfJson;
         try {
             rechnungsentwurfJson = objectMapper.writeValueAsString(invoice);
@@ -240,7 +229,7 @@ public class InvoiceService {
             throw new RuntimeException("Serialisierung des Rechnungsentwurfs fehlgeschlagen", e);
         }
 
-        processEngineClient.sendRechnungsentwurf(businessKey, rechnungsentwurfJson);
+        processEngineClient.sendRechnungsentwurf(businessKey, rechnungsentwurfJson, authHeader);
 
         LOG.infof("Rechnungsentwurf für businessKey %s an PE übermittelt.", businessKey);
     }

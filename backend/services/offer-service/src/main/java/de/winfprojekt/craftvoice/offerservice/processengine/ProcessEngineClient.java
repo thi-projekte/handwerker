@@ -22,15 +22,36 @@ public class ProcessEngineClient {
         @RestClient
         ProcessEngineRestClient client;
 
+        @Inject
+        jakarta.ws.rs.core.HttpHeaders httpHeaders;
+
+        private String getActiveAuthHeader() {
+                try {
+                        return httpHeaders.getHeaderString(jakarta.ws.rs.core.HttpHeaders.AUTHORIZATION);
+                } catch (Exception e) {
+                        return null;
+                }
+        }
+
         /**
          * Methode, die für das Aufrufen des ProcessEngineRestClients zuständig ist und auch dessen Fehlerbehandlug übernimmt.
          *
          * @param payload Inhalt, der an die PE geschickt wird
          */
         public void sendMessage(PeMessagePayload payload) {
+                sendMessage(null, payload);
+        }
 
+        /**
+         * Methode, die für das Aufrufen des ProcessEngineRestClients mit manuellem Auth-Header zuständig ist.
+         *
+         * @param authHeader manueller Authorization-Header (z.B. Bearer Token)
+         * @param payload Inhalt, der an die PE geschickt wird
+         */
+        public void sendMessage(String authHeader, PeMessagePayload payload) {
                 try {
-                        Response response = client.sendMessage(payload);
+                        String auth = authHeader != null ? authHeader : getActiveAuthHeader();
+                        Response response = client.sendMessage(auth, payload);
 
                         if (response.getStatus() >= 400) {
                                 throw new ProcessEngineException(
@@ -41,7 +62,7 @@ public class ProcessEngineClient {
                         throw e;
                 } catch (Exception e) {
                         throw new ProcessEngineException(
-                                "Kommunikation mit der Process Engine fehlgeschlagen",
+                                "Kommunikation mit der Process Engine failed",
                                 e);
                 }
         }
@@ -184,8 +205,9 @@ public class ProcessEngineClient {
          *
          * @param businessKey         businessKey des Angebots
          * @param rechnungsentwurfJson das serialisierte InvoiceResponse-DTO als JSON-String
+         * @param authHeader          Authorization-Header der PE-Anfrage
          */
-        public void sendRechnungsentwurf(String businessKey, String rechnungsentwurfJson) {
+        public void sendRechnungsentwurf(String businessKey, String rechnungsentwurfJson, String authHeader) {
 
                 Log.infof(
                         "Sende PE-Nachricht: messageName=%s, businessKey=%s",
@@ -209,7 +231,7 @@ public class ProcessEngineClient {
 
                 for (int attempt = 1; attempt <= maxAttempts; attempt++) {
                         try {
-                                sendMessage(payload);
+                                sendMessage(authHeader, payload);
                                 return;
                         } catch (ProcessEngineException exception) {
                                 if (attempt == maxAttempts) {
