@@ -1,7 +1,7 @@
-﻿package de.winfprojekt.craftvoice.offerservice.offer;
+package de.winfprojekt.craftvoice.offerservice.offer;
 
 /**
- * CDI-Events für die Benachrichtigung der Process Engine nach einem
+ * CDI-Events fuer die Benachrichtigung der Process Engine nach einem
  * erfolgreichen Transaktions-Commit.
  *
  * <p>Durch {@code @Observes(during = TransactionPhase.AFTER_SUCCESS)} wird
@@ -12,9 +12,9 @@ public final class OfferStatusPeEvents {
 
     private OfferStatusPeEvents() {}
 
-    /** Wird gefeuert, wenn ein Angebot den Status ANGENOMMEN erhält. */
+    /** Wird gefeuert, wenn ein Angebot den Status ANGENOMMEN erhaelt. */
     public record AngebotAngenommen(String businessKey) {}
 
-    /** Wird gefeuert, wenn ein Angebot den Status ABGELEHNT erhält. */
+    /** Wird gefeuert, wenn ein Angebot den Status ABGELEHNT erhaelt. */
     public record AngebotAbgelehnt(String businessKey) {}
 }

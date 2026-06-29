@@ -1,4 +1,4 @@
-﻿package de.winfprojekt.craftvoice.offerservice.offer;
+package de.winfprojekt.craftvoice.offerservice.offer;
 
 import de.winfprojekt.craftvoice.offerservice.processengine.ProcessEngineClient;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -8,12 +8,12 @@ import jakarta.inject.Inject;
 import org.jboss.logging.Logger;
 
 /**
- * Beobachtet CDI-Events für Angebotsstatusänderungen und benachrichtigt
+ * Beobachtet CDI-Events fuer Angebotsstatusaenderungen und benachrichtigt
  * die Process Engine erst nach erfolgreichem Transaktions-Commit.
  *
  * <p>Durch {@code TransactionPhase.AFTER_SUCCESS} ist garantiert, dass der
- * neue Status in der Datenbank sichtbar ist, bevor die PE den Rückruf
- * (z.B. POST /rechnungen/{businessKey}/erstellen) auslöst.
+ * neue Status in der Datenbank sichtbar ist, bevor die PE den Rueckruf
+ * (z.B. POST /rechnungen/{businessKey}/erstellen) ausloest.
  */
 @ApplicationScoped
 public class OfferStatusPeEventHandler {
@@ -30,7 +30,7 @@ public class OfferStatusPeEventHandler {
             @Observes(during = TransactionPhase.AFTER_SUCCESS)
             OfferStatusPeEvents.AngebotAngenommen event) {
 
-        LOG.infof("Transaktion committed – sende angebotAngenommen an PE für businessKey %s",
+        LOG.infof("Transaktion committed - sende angebotAngenommen an PE fuer businessKey %s",
                 event.businessKey());
         processEngineClient.sendAngebotAngenommen(event.businessKey());
     }
@@ -42,7 +42,7 @@ public class OfferStatusPeEventHandler {
             @Observes(during = TransactionPhase.AFTER_SUCCESS)
             OfferStatusPeEvents.AngebotAbgelehnt event) {
 
-        LOG.infof("Transaktion committed – sende angebotAbgelehnt an PE für businessKey %s",
+        LOG.infof("Transaktion committed - sende angebotAbgelehnt an PE fuer businessKey %s",
                 event.businessKey());
         processEngineClient.sendAngebotAbgelehnt(event.businessKey());
     }
