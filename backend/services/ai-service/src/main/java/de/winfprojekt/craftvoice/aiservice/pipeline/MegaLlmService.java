@@ -79,7 +79,12 @@ public class MegaLlmService {
     public String complete(String model, String systemPrompt, String userContent) {
         try {
             return completeOnce(model, systemPrompt, userContent);
-        } catch (MegaLlmException primaryFailure) {
+        } catch (RuntimeException primaryFailure) {
+            // Bewusst breit gefangen: Das Primaermodell kann auf verschiedene Arten scheitern —
+            // {@link MegaLlmException} (leere Antwort/Backoff), aber bei MegaLLM-HTTP-Fehlern
+            // (z.B. 503 "overloaded") wirft der Quarkus-REST-Client schon VOR unserer Status-
+            // Pruefung eine ClientWebApplicationException. Ein Modell-Fallback muss bei JEDEM
+            // dieser Faelle greifen, sonst landet ein 503 direkt im Stub statt bei gemma.
             String fallback = fallbackModel.filter(m -> !m.isBlank()).orElse(null);
             if (fallback == null || fallback.equals(model)) {
                 throw primaryFailure;
