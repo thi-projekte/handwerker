@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import "@/assets/stylesheets/stylesheet.css";
 import "@/features/document/components/DocumentPage.css";
-import { getRechnungen } from "@/data/api/documentApi";
+import { getRechnungen, openDocumentPdfRechnung } from "@/data/api/documentApi";
 import { mapRechnungDTOToRechnung } from "@/features/document/mapper/documentMapper";
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -686,7 +686,7 @@ export const DocumentPage = () => {
                     {formatBetrag(rechnung.betrag)}
                   </span>
                   <div className="doc-card-actions">
-                    <button className="doc-detail-btn" onClick={() => openDocumentPdf(rechnung.offerBusinessKey)}>
+                    <button className="doc-detail-btn" onClick={() => openDocumentPdfRechnung(rechnung.offerBusinessKey)}>
                       Details →
                     </button>
                   </div>

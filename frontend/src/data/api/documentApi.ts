@@ -92,15 +92,15 @@ export const getRechnungen = async (): Promise<RechnungDTO[]> => {
     return response.json();
 };
 
-export const getDocumentByOfferId = async (
-    businessKey: string,
+export const generateInvoiceDocument = async (
+    invoiceId: string,
 ): Promise<DocumentMetadata | null> => {
     const token = await getToken();
 
     const res = await fetch(
-        `https://craftvoice-document.winfprojekt.de/documents/offers/${businessKey}/generate`,
+        `https://craftvoice-document.winfprojekt.de/documents/invoices/${invoiceId}/generate`,
         {
-            method: "POST", // 🔥 WICHTIG
+            method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 ...(token && { Authorization: `Bearer ${token}` }),
@@ -111,7 +111,7 @@ export const getDocumentByOfferId = async (
     if (res.status === 404) return null;
 
     if (!res.ok) {
-        throw new Error(`Failed to generate document: ${res.status}`);
+        throw new Error(`Failed to generate invoice document: ${res.status}`);
     }
 
     return res.json();
@@ -119,12 +119,16 @@ export const getDocumentByOfferId = async (
 export const getPdfDownloadUrl = (documentId: string): string => {
     return `https://craftvoice-document.winfprojekt.de/documents/${documentId}/pdf`;
 };
-export const openDocumentPdfRechnung = async (businessKey: string) => {
-    const doc = await getDocumentByOfferId(businessKey);
+export const openDocumentPdfRechnung = async (invoiceId: string) => {
+    const doc = await generateInvoiceDocument(invoiceId);
 
     if (!doc) {
-        throw new Error("Document not ready yet");
+        alert("Rechnung wird noch erstellt");
+        return;
     }
 
-    window.open(getPdfDownloadUrl(doc.id), "_blank");
+    window.open(
+        `https://craftvoice-document.winfprojekt.de/documents/${doc.id}/pdf`,
+        "_blank",
+    );
 };
