@@ -42,13 +42,24 @@ export function mapOfferDTOToAngebot(dto: OfferDTO): Angebot {
     };
 }
 interface RechnungDTO {
-    id: string;
+    id: number;
     rechnungsnummer: string;
-    customerId: string;
-    erstelldatum: string;
-    faelligkeitsdatum: string;
-    status: string;
-    betrag: number;
+    offerBusinessKey: string;
+
+    gesamtPreis: number;
+
+    createdAt: string;
+    updatedAt: string;
+
+    kundendaten: {
+        vorname: string;
+        nachname: string;
+        email: string;
+        strasse: string;
+        hausnummer: string;
+        plz: string;
+        ort: string;
+    };
 }
 
 const mapRechnungStatus = (status: string): RechnungStatus => {
@@ -68,20 +79,27 @@ const mapRechnungStatus = (status: string): RechnungStatus => {
 
 export function mapRechnungDTOToRechnung(dto: RechnungDTO): Rechnung {
     return {
-        id: dto.id,
+        id: String(dto.id),
         rechnungsnummer: dto.rechnungsnummer,
 
-        vorname: "",
-        nachname: "",
-        strasse: "",
-        hausnummer: "",
-        plz: "",
-        ort: "",
+        vorname: dto.kundendaten.vorname,
+        nachname: dto.kundendaten.nachname,
 
-        erstelldatum: dto.erstelldatum?.split("T")[0] ?? "",
-        faelligkeitsdatum: dto.faelligkeitsdatum?.split("T")[0] ?? "",
-        erstelltAm: dto.erstelldatum ?? "",
-        status: mapRechnungStatus(dto.status),
-        betrag: dto.betrag ?? 0,
+        strasse: dto.kundendaten.strasse,
+        hausnummer: dto.kundendaten.hausnummer,
+        plz: dto.kundendaten.plz,
+        ort: dto.kundendaten.ort,
+
+        erstelldatum: dto.createdAt.split("T")[0],
+
+        // Das Backend liefert aktuell kein Fälligkeitsdatum
+        faelligkeitsdatum: "",
+
+        erstelltAm: dto.createdAt,
+
+        // Das Backend liefert aktuell keinen Status
+        status: "Erstellt",
+
+        betrag: dto.gesamtPreis,
     };
 }
