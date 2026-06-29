@@ -255,6 +255,7 @@ class OfferResourceTest {
         // Stub des Catalog-Clients
         MaterialResponse materialResponse = new MaterialResponse();
         materialResponse.price = new BigDecimal("49.99");
+        materialResponse.description = "Art.-Nr. MAT-42 - Komplettsanierung Bad";
         when(catalogServiceClient.getMaterial(any(UUID.class), any())).thenReturn(materialResponse);
 
         // Stub der Process Engine
@@ -297,7 +298,9 @@ class OfferResourceTest {
                     .filter(p -> "Badrenovierung".equals(p.bezeichnung))
                     .findFirst().orElseThrow();
             assertEquals("Knauf", materialPosition.hersteller);
-            assertEquals("Komplette Sanierung", materialPosition.beschreibung);
+            // Beschreibung kommt AUS DEM KATALOG (KI-Text "Komplette Sanierung" wird NICHT
+            // uebernommen), und das "Art.-Nr. MAT-42 - "-Praefix wird entfernt.
+            assertEquals("Komplettsanierung Bad", materialPosition.beschreibung);
             assertEquals(new BigDecimal("2").setScale(0), materialPosition.menge.setScale(0));
             assertEquals("Pauschal", materialPosition.einheit);
             assertEquals("00000000-0000-0000-0000-000000000042", materialPosition.katalogProduktId);
@@ -348,6 +351,7 @@ class OfferResourceTest {
         // Stub des Catalog-Clients
         MaterialResponse materialResponse = new MaterialResponse();
         materialResponse.price = new BigDecimal("49.99");
+        materialResponse.description = "Art.-Nr. MAT-42 - Komplettsanierung Bad";
         when(catalogServiceClient.getMaterial(any(UUID.class), any())).thenReturn(materialResponse);
 
         // Stub der Process Engine
