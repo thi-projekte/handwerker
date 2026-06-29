@@ -200,6 +200,9 @@ public class OfferService {
                         : java.util.List.of();
         for (StructuredOfferPositionDTO posDto : materialPositionen) {
             BigDecimal preis = BigDecimal.ZERO;
+            // Hersteller stammt aus dem Katalogprodukt — die KI/ergebnisKI liefert keinen
+            // (das DTO-Feld ist i.d.R. null). Fallback bleibt das DTO.
+            String hersteller = posDto.hersteller;
             if (posDto.katalogProduktId != null) {
                 try {
                     UUID materialId = UUID.fromString(posDto.katalogProduktId);
@@ -207,8 +210,13 @@ public class OfferService {
                     // mit process-engine-Token kommt (catalog ermittelt den Owner dann aus dem Header).
                     // Im User-Flow ignoriert der catalog-service den Header.
                     MaterialResponse material = catalogServiceClient.getMaterial(materialId, offer.handwerkerId);
-                    if (material != null && material.price != null) {
-                        preis = material.price;
+                    if (material != null) {
+                        if (material.price != null) {
+                            preis = material.price;
+                        }
+                        if (material.manufacturer != null && !material.manufacturer.isBlank()) {
+                            hersteller = material.manufacturer;
+                        }
                     }
                 } catch (jakarta.ws.rs.NotFoundException e) {
                     LOG.warnf("Material mit ID %s nicht im Catalog gefunden, Preis wird auf 0 gesetzt",
@@ -225,7 +233,7 @@ public class OfferService {
             OfferPosition position = new OfferPosition();
             position.type = OfferPositionType.MATERIAL;
             position.offer = offer;
-            position.hersteller = posDto.hersteller;
+            position.hersteller = hersteller;
             position.bezeichnung = posDto.bezeichnung;
             position.beschreibung = posDto.beschreibung;
             position.menge = posDto.menge;
