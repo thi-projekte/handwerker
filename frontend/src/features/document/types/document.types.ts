@@ -32,6 +32,7 @@ export interface Angebot {
 export interface Rechnung {
   id: string;
   rechnungsnummer: string;
+  offerBusinessKey: string;
 
   vorname: string;
   nachname: string;

@@ -62,25 +62,11 @@ interface RechnungDTO {
     };
 }
 
-const mapRechnungStatus = (status: string): RechnungStatus => {
-    switch (status) {
-        case "ERSTELLT":
-            return "Erstellt";
-        case "VERSENDET":
-            return "Versendet";
-        case "BEZAHLT":
-            return "Bezahlt";
-        case "IM_ZAHLUNGSVERZUG":
-            return "Im Zahlungsverzug";
-        default:
-            return "Erstellt";
-    }
-};
-
 export function mapRechnungDTOToRechnung(dto: RechnungDTO): Rechnung {
     return {
         id: String(dto.id),
         rechnungsnummer: dto.rechnungsnummer,
+        offerBusinessKey: dto.offerBusinessKey,
 
         vorname: dto.kundendaten.vorname,
         nachname: dto.kundendaten.nachname,
