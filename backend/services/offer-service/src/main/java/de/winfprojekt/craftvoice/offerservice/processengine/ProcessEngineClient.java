@@ -196,7 +196,7 @@ public class ProcessEngineClient {
                         "rechnungsentwurf",
                         businessKey,
                         processVariables,
-                        false
+                        true
                 );
 
                 sendMessage(payload);
