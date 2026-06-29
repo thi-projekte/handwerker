@@ -124,6 +124,7 @@ public class InvoiceResource {
     @POST
     @Path("/{businessKey}/erstellen")
     @Consumes(MediaType.WILDCARD)
+    @RolesAllowed({"OWNER"})
     public Response createInvoiceForPe(@PathParam("businessKey") String businessKey) {
         invoiceService.createInvoiceAndNotifyPe(businessKey);
         return Response.noContent().build();
