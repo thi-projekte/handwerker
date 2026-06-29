@@ -72,6 +72,7 @@ public class InvoiceService {
             Log.info("Angebot " + request.businessKey + " erfolgreich geladen.");
         }
 
+        Log.info("Angebot " + request.businessKey + " ist vor der Statusprüfung in Status " + offer.status);
         // 2. Status-Prüfung
         if (!Offer.STATUS_ANGENOMMEN.equals(offer.status)) {
             throw new WebApplicationException(
