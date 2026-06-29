@@ -169,6 +169,7 @@
   border: 1px solid var(--color-divider);
   color: var(--color-text-primary);
   transition: all 0.25s ease;
+  border-radius: 10px;
 }
 
 .btn-reject:hover {
@@ -256,6 +257,7 @@
   border: none;
   box-shadow: 0 6px 18px rgba(255, 122, 24, 0.25);
   transition: all 0.25s ease;
+  border-radius: 10px;
 }
 
 .btn-accept:hover {
