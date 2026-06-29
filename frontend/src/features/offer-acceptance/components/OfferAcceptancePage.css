@@ -129,6 +129,7 @@
 ------------------------- */
 
 .offer-acceptance-total {
+  font-size: 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -167,11 +168,16 @@
   background: transparent;
   border: 1px solid var(--color-divider);
   color: var(--color-text-primary);
+  transition: all 0.25s ease;
 }
 
 .btn-reject:hover {
-  border-color: var(--color-accent);
+  border-color: #ff6b6b;
+  color: #ff6b6b;
+  transform: translateY(-2px);
+  background: rgba(255, 107, 107, 0.06);
 }
+
 
 /* -------------------------
    Success / Error
@@ -243,4 +249,73 @@
   .offer-acceptance-actions .btn {
     width: 100%;
   }
+}
+.btn-accept {
+  background: linear-gradient(135deg, #ff9f43, #ff7a18);
+  color: white;
+  border: none;
+  box-shadow: 0 6px 18px rgba(255, 122, 24, 0.25);
+  transition: all 0.25s ease;
+}
+
+.btn-accept:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(255, 122, 24, 0.35);
+  filter: brightness(1.05);
+}
+
+.offer-acceptance-success-inline {
+  margin-top: 18px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: rgba(100, 200, 120, 0.12);
+  border: 1px solid rgba(100, 200, 120, 0.35);
+  color: #64c878;
+  font-weight: 600;
+}
+.offer-header-layout {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+/* "1" oben mittig */
+.offer-header-top {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.offer-header-logo {
+  height: 60px;
+  object-fit: contain;
+}
+
+/* Text bleibt normal */
+.offer-header-content {
+  z-index: 2;
+}
+
+/* "2" rechts im Header */
+.offer-header-side {
+  position: absolute;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.offer-header-image {
+  width: 90px;
+  height: auto;
+  object-fit: contain;
+  opacity: 0.95;
+}
+.offer-success-message {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 8px;
+  background: #e6ffed;
+  color: #1a7f37;
+  font-weight: 500;
 }
