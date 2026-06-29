@@ -694,8 +694,8 @@ export const DocumentPage = () => {
                       className="doc-detail-btn"
                       onClick={async () => {
                         try {
-                          await sendAuftragNichtVersenden(rechnung.offerBusinessKey);
                           await openDocumentPdfRechnung(rechnung.offerBusinessKey);
+                          await sendAuftragNichtVersenden(rechnung.offerBusinessKey);
                         } catch (err) {
                           console.error("PE message failed:", err);
                         }
