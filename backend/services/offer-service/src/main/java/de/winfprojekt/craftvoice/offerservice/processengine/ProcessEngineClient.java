@@ -187,6 +187,12 @@ public class ProcessEngineClient {
          */
         public void sendRechnungsentwurf(String businessKey, String rechnungsentwurfJson) {
 
+                Log.infof(
+                        "Sende PE-Nachricht: messageName=%s, businessKey=%s",
+                        "rechnungsentwurf",
+                        businessKey
+                );
+
                 Map<String, Object> processVariables = Map.of(
                         "rechnungsentwurf", Map.of(
                                 "value", rechnungsentwurfJson,
@@ -199,6 +205,27 @@ public class ProcessEngineClient {
                         false
                 );
 
-                sendMessage(payload);
+                int maxAttempts = 2;
+
+                for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+                        try {
+                                sendMessage(payload);
+                                return;
+                        } catch (ProcessEngineException exception) {
+                                if (attempt == maxAttempts) {
+                                        throw exception;
+                                }
+
+                                try {
+                                        TimeUnit.SECONDS.sleep(2);
+                                } catch (InterruptedException interruptedException) {
+                                        Thread.currentThread().interrupt();
+                                        throw new ProcessEngineException(
+                                                "Retry wurde unterbrochen",
+                                                interruptedException
+                                        );
+                                }
+                        }
+                }
         }
 }
