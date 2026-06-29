@@ -24,7 +24,7 @@ export interface AngebotDTO {
     gesamtPreis: number | null;
 }
 
-export interface RechnungDTO {
+interface RechnungDTO {
     id: string;
     rechnungsnummer: string;
     customerId: string;
