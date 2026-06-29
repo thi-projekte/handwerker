@@ -200,9 +200,12 @@ public class OfferService {
                         : java.util.List.of();
         for (StructuredOfferPositionDTO posDto : materialPositionen) {
             BigDecimal preis = BigDecimal.ZERO;
-            // Hersteller stammt aus dem Katalogprodukt — die KI/ergebnisKI liefert keinen
-            // (das DTO-Feld ist i.d.R. null). Fallback bleibt das DTO.
+            // Hersteller UND Beschreibung stammen aus dem Katalogprodukt. Der Hersteller faellt
+            // mangels Alternative auf das (i.d.R. leere) DTO zurueck; die Beschreibung bewusst
+            // NICHT: ohne Katalogtreffer bleibt sie leer, damit auf dem Angebot sichtbar ist,
+            // dass die Position keinen Treffer hat — statt eine KI-Beschreibung vorzutaeuschen.
             String hersteller = posDto.hersteller;
+            String beschreibung = null;
             if (posDto.katalogProduktId != null) {
                 try {
                     UUID materialId = UUID.fromString(posDto.katalogProduktId);
@@ -216,6 +219,13 @@ public class OfferService {
                         }
                         if (material.manufacturer != null && !material.manufacturer.isBlank()) {
                             hersteller = material.manufacturer;
+                        }
+                        if (material.description != null && !material.description.isBlank()) {
+                            // "Art.-Nr. XXX - "-Praefix aus der Katalog-Beschreibung entfernen
+                            // (technische Vorsilbe gehoert nicht auf ein Kunden-Angebot).
+                            String d = material.description;
+                            int sep = d.startsWith("Art.-Nr.") ? d.indexOf(" - ") : -1;
+                            beschreibung = (sep >= 0 ? d.substring(sep + 3) : d).trim();
                         }
                     }
                 } catch (jakarta.ws.rs.NotFoundException e) {
@@ -235,7 +245,7 @@ public class OfferService {
             position.offer = offer;
             position.hersteller = hersteller;
             position.bezeichnung = posDto.bezeichnung;
-            position.beschreibung = posDto.beschreibung;
+            position.beschreibung = beschreibung;
             position.menge = posDto.menge;
             position.einheit = posDto.einheit;
             position.katalogProduktId = posDto.katalogProduktId;
