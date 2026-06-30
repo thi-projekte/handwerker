@@ -38,6 +38,7 @@
 .offer-acceptance-header {
   text-align: left;
   padding: clamp(18px, 2vw, 28px);
+  margin-top:-50px;
 }
 
 .offer-acceptance-eyebrow {
@@ -159,24 +160,33 @@
 
 .offer-acceptance-actions .btn {
   flex: 1;
-  justify-content: center;
   min-height: 58px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   font-size: 15px;
+  font-weight: 600;
+  border-radius: 14px;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 }
 
 .btn-reject {
   background: transparent;
   border: 1px solid var(--color-divider);
-  color: var(--color-text-primary);
-  transition: all 0.25s ease;
-  border-radius: 10px;
+  color: #fff;
 }
 
 .btn-reject:hover {
-  border-color: #ff6b6b;
-  color: #ff6b6b;
+  background: rgba(255, 106, 0, 0.06);
+  border-color: rgba(255, 106, 0, 0.3);
+  color: #fff;
   transform: translateY(-2px);
-  background: rgba(255, 107, 107, 0.06);
 }
 
 
@@ -252,18 +262,15 @@
   }
 }
 .btn-accept {
-  background: linear-gradient(135deg, #ff9f43, #ff7a18);
-  color: white;
+  background: var(--color-accent-gradient);
+  color: #fff;
   border: none;
-  box-shadow: 0 6px 18px rgba(255, 122, 24, 0.25);
-  transition: all 0.25s ease;
-  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(255, 106, 0, 0.35);
 }
 
 .btn-accept:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 24px rgba(255, 122, 24, 0.35);
-  filter: brightness(1.05);
+  box-shadow: 0 10px 24px rgba(255, 106, 0, 0.45);
 }
 
 .offer-acceptance-success-inline {
@@ -290,8 +297,9 @@
 }
 
 .offer-header-logo {
-  height: 60px;
+  height: 150px;
   object-fit: contain;
+  margin-top: -30px;
 }
 
 /* Text bleibt normal */

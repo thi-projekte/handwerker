@@ -149,10 +149,7 @@ export const OfferAcceptancePage = () => {
     className="card offer-acceptance-section"
     style={{ textAlign: "center", marginTop: "2rem" }}
   >
-    <h3>Angebot wurde bereits {offer.status.toLowerCase()}</h3>
-    <p className="text-secondary">
-      Dieses Angebot wurde bereits beantwortet und kann nicht mehr geändert werden.
-    </p>
+    <h3>Angebot wurde {offer.status.toLowerCase()}</h3>
   </section>
 ) : (
   <>
@@ -162,7 +159,6 @@ export const OfferAcceptancePage = () => {
         disabled={isSubmitting}
         onClick={() => handleDecision("angenommen")}
       >
-        <CheckCircle size={20} />
         Zahlungspflichtig bestellen
       </button>
 
@@ -171,7 +167,6 @@ export const OfferAcceptancePage = () => {
         disabled={isSubmitting}
         onClick={() => handleDecision("abgelehnt")}
       >
-        <XCircle size={20} />
         Angebot ablehnen
       </button>
     </section>

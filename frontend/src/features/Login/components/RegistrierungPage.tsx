@@ -73,7 +73,17 @@ export const RegistrierungPage = () => {
           />
 
           <label htmlFor="privacyConsent">
-            Ich stimme den Datenschutzbedingungen zu.
+            Ich stimme den{" "}
+            <a
+              href="/datenschutz"
+              className="privacy-link"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+            >
+              Datenschutzbedingungen
+            </a>{" "}
+            zu.
           </label>
         </div>
 
