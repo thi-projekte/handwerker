@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { CheckCircle, XCircle } from "lucide-react";
 import { getPublicOffer,
   acceptPublicOffer,
   OfferPosition } from "@/data/api/offerService";
