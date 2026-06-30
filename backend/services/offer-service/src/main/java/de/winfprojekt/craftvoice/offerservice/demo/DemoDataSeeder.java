@@ -2,6 +2,7 @@ package de.winfprojekt.craftvoice.offerservice.demo;
 
 import de.winfprojekt.craftvoice.offerservice.offer.Offer;
 import io.quarkus.narayana.jta.QuarkusTransaction;
+import io.quarkus.runtime.LaunchMode;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
@@ -20,9 +21,8 @@ import java.nio.charset.StandardCharsets;
  * damit Dashboard, Monatsdiagramm und Rechnungsliste ueber mehrere Monate
  * gefuellt aussehen.
  *
- * <p><b>Idempotent:</b> Es wird nur geseedet, wenn noch keine Angebote mit
- * {@code businessKey LIKE 'angebot-demo-%'} existieren. Mehrfaches Deployen ist
- * also gefahrlos.
+ * <p><b>Idempotent:</b> Es wird nur geseedet, wenn das Seed-Angebot mit
+ * {@code id = 9001} noch nicht existiert. Mehrfaches Deployen ist also gefahrlos.
  *
  * <p><b>Robust:</b> Schlaegt der Seed fehl, wird der Fehler nur geloggt und
  * <b>nie</b> geworfen — der Service startet immer normal weiter.
@@ -36,7 +36,14 @@ public class DemoDataSeeder {
     @Inject
     EntityManager em;
 
+    /** Erste Offer-ID des Seeds — dient zugleich als Idempotenz-Marker. */
+    private static final long SEED_MARKER_OFFER_ID = 9001L;
+
     void onStart(@Observes StartupEvent ev) {
+        // Nur im echten Deployment seeden — NICHT in Tests (@QuarkusTest) oder Dev-Mode.
+        if (LaunchMode.current() != LaunchMode.NORMAL) {
+            return;
+        }
         try {
             QuarkusTransaction.requiringNew().run(this::seedIfEmpty);
         } catch (Exception e) {
@@ -45,9 +52,8 @@ public class DemoDataSeeder {
     }
 
     private void seedIfEmpty() {
-        long vorhanden = Offer.count("businessKey like ?1", "angebot-demo-%");
-        if (vorhanden > 0) {
-            LOG.infof("Demo-Seed uebersprungen (%d Demo-Angebote bereits vorhanden).", vorhanden);
+        if (Offer.findById(SEED_MARKER_OFFER_ID) != null) {
+            LOG.info("Demo-Seed uebersprungen (Seed-Daten bereits vorhanden).");
             return;
         }
 

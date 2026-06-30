@@ -1,6 +1,6 @@
 -- Demo-Seed (Denocke): historische Angebote + Rechnungen ueber Jan-Mai 2026.
 -- Wird vom DemoDataSeeder beim Start EINMALIG ausgefuehrt (idempotenter Guard
--- ueber businesskey LIKE 'angebot-demo-%'). KEIN BEGIN/COMMIT: die Transaktion
+-- ueber die Seed-Offer-IDs 9001-9013). KEIN BEGIN/COMMIT: die Transaktion
 -- steuert der Seeder. Statements sind durch ';' getrennt; Werte enthalten keine
 -- Semikolons. Spaltennamen exakt nach DB-Schema (businesskey/einzelpreis/... klein).
 -- handwerker_id (Denocke): c7b384fc-d787-4e49-a021-23c7c0b4a569 , Stundensatz 100 EUR/h.
@@ -9,19 +9,19 @@ INSERT INTO offer
   (id, created_at, updated_at, annahmetoken, businesskey, customer_id,
    gesamt_preis, geschaetzte_arbeitsdauer_stunden, handwerker_id, speech_snippet, status)
 VALUES
-  (9001, '2026-01-13 09:20:00', '2026-01-15 14:00:00', NULL, 'angebot-demo-9001', '51', 0, 3,   'c7b384fc-d787-4e49-a021-23c7c0b4a569', 'Im Wohnzimmer brauche ich fuenf neue Steckdosen mit Leitung und Dosen, ungefaehr drei Stunden Arbeit.', 'ANGENOMMEN'),
-  (9002, '2026-01-22 10:10:00', '2026-01-24 11:00:00', NULL, 'angebot-demo-9002', '53', 0, 1.5, 'c7b384fc-d787-4e49-a021-23c7c0b4a569', 'Fuer den Flur zwei Dimmer und zwei Schalter einbauen.', 'ABGELEHNT'),
-  (9003, '2026-02-04 08:40:00', '2026-02-06 16:30:00', NULL, 'angebot-demo-9003', '52', 0, 4,   'c7b384fc-d787-4e49-a021-23c7c0b4a569', 'Die Unterverteilung im Keller erneuern, neuer Kleinverteiler mit Sicherungen und FI.', 'ANGENOMMEN'),
-  (9004, '2026-02-17 13:15:00', '2026-02-18 09:00:00', NULL, 'angebot-demo-9004', '55', 0, 2.5, 'c7b384fc-d787-4e49-a021-23c7c0b4a569', 'Auf der Terrasse zwei Aussensteckdosen setzen, Zuleitung dazu.', 'VERSENDET'),
-  (9005, '2026-02-26 11:50:00', '2026-02-28 10:20:00', NULL, 'angebot-demo-9005', '54', 0, 3,   'c7b384fc-d787-4e49-a021-23c7c0b4a569', 'In der Kueche acht LED-Spots mit Dimmer installieren.', 'ANGENOMMEN'),
-  (9006, '2026-03-09 07:55:00', '2026-03-12 15:40:00', NULL, 'angebot-demo-9006', '51', 0, 5,   'c7b384fc-d787-4e49-a021-23c7c0b4a569', 'Wallbox in der Garage anschliessen, mit FI Typ B und Zuleitung.', 'ANGENOMMEN'),
-  (9007, '2026-03-23 14:05:00', '2026-03-25 09:30:00', NULL, 'angebot-demo-9007', '52', 0, 3,   'c7b384fc-d787-4e49-a021-23c7c0b4a569', 'Smart-Home Beleuchtung mit vier Dimmern und Schaltern.', 'ABGELEHNT'),
-  (9008, '2026-04-07 09:10:00', '2026-04-08 12:00:00', NULL, 'angebot-demo-9008', '53', 0, 8,   'c7b384fc-d787-4e49-a021-23c7c0b4a569', 'Altbauwohnung, Leitungen komplett erneuern, acht Steckdosen neu.', 'VERSENDET'),
-  (9009, '2026-04-15 10:25:00', '2026-04-17 14:10:00', NULL, 'angebot-demo-9009', '54', 0, 4.5, 'c7b384fc-d787-4e49-a021-23c7c0b4a569', 'Zaehlerschrank erweitern, mehr Sicherungen und zweiter FI.', 'ANGENOMMEN'),
-  (9010, '2026-04-28 08:30:00', '2026-04-30 17:00:00', NULL, 'angebot-demo-9010', '52', 0, 5,   'c7b384fc-d787-4e49-a021-23c7c0b4a569', 'Im Buero zehn Steckdosen und Netzwerkverkabelung.', 'ANGENOMMEN'),
-  (9011, '2026-05-12 09:45:00', '2026-05-14 13:20:00', NULL, 'angebot-demo-9011', '51', 0, 4,   'c7b384fc-d787-4e49-a021-23c7c0b4a569', 'Bad renoviert, drei Steckdosen, sechs Einbaustrahler, FI nachruesten.', 'ANGENOMMEN'),
-  (9012, '2026-05-21 15:30:00', '2026-05-22 10:15:00', NULL, 'angebot-demo-9012', '55', 0, 4,   'c7b384fc-d787-4e49-a021-23c7c0b4a569', 'Gartenhaus mit Strom versorgen, Erdkabel und Aussensteckdose.', 'VERSENDET'),
-  (9013, '2026-05-29 11:20:00', '2026-05-31 09:50:00', NULL, 'angebot-demo-9013', '54', 0, 2,   'c7b384fc-d787-4e49-a021-23c7c0b4a569', 'Carport mit vier Strahlern beleuchten, Schalter dazu.', 'ABGELEHNT');
+  (9001, '2026-01-13 09:20:00', '2026-01-15 14:00:00', NULL, 'angebot-8068e94b-480e-4aae-b458-6a5f1e7c8181', '51', 0, 3,   'c7b384fc-d787-4e49-a021-23c7c0b4a569', 'Im Wohnzimmer brauche ich fuenf neue Steckdosen mit Leitung und Dosen, ungefaehr drei Stunden Arbeit.', 'ANGENOMMEN'),
+  (9002, '2026-01-22 10:10:00', '2026-01-24 11:00:00', NULL, 'angebot-b56f7493-94df-4168-b9ef-aed2ed908b8f', '53', 0, 1.5, 'c7b384fc-d787-4e49-a021-23c7c0b4a569', 'Fuer den Flur zwei Dimmer und zwei Schalter einbauen.', 'ABGELEHNT'),
+  (9003, '2026-02-04 08:40:00', '2026-02-06 16:30:00', NULL, 'angebot-a5dd35d3-3500-4436-b19f-89bcd0169398', '52', 0, 4,   'c7b384fc-d787-4e49-a021-23c7c0b4a569', 'Die Unterverteilung im Keller erneuern, neuer Kleinverteiler mit Sicherungen und FI.', 'ANGENOMMEN'),
+  (9004, '2026-02-17 13:15:00', '2026-02-18 09:00:00', NULL, 'angebot-faeba9a5-b2d3-49e6-acdc-84bf2fc7f0b8', '55', 0, 2.5, 'c7b384fc-d787-4e49-a021-23c7c0b4a569', 'Auf der Terrasse zwei Aussensteckdosen setzen, Zuleitung dazu.', 'VERSENDET'),
+  (9005, '2026-02-26 11:50:00', '2026-02-28 10:20:00', NULL, 'angebot-1107f4a0-b378-4886-b362-4852d3e1cc61', '54', 0, 3,   'c7b384fc-d787-4e49-a021-23c7c0b4a569', 'In der Kueche acht LED-Spots mit Dimmer installieren.', 'ANGENOMMEN'),
+  (9006, '2026-03-09 07:55:00', '2026-03-12 15:40:00', NULL, 'angebot-5635c580-c0f1-4eea-9625-2a4c64eeb3c2', '51', 0, 5,   'c7b384fc-d787-4e49-a021-23c7c0b4a569', 'Wallbox in der Garage anschliessen, mit FI Typ B und Zuleitung.', 'ANGENOMMEN'),
+  (9007, '2026-03-23 14:05:00', '2026-03-25 09:30:00', NULL, 'angebot-5d238f9c-388f-4ef8-b756-9bfb18c985c9', '52', 0, 3,   'c7b384fc-d787-4e49-a021-23c7c0b4a569', 'Smart-Home Beleuchtung mit vier Dimmern und Schaltern.', 'ABGELEHNT'),
+  (9008, '2026-04-07 09:10:00', '2026-04-08 12:00:00', NULL, 'angebot-1dc1a16f-3340-46ad-ad63-b64c1a4c6831', '53', 0, 8,   'c7b384fc-d787-4e49-a021-23c7c0b4a569', 'Altbauwohnung, Leitungen komplett erneuern, acht Steckdosen neu.', 'VERSENDET'),
+  (9009, '2026-04-15 10:25:00', '2026-04-17 14:10:00', NULL, 'angebot-b1ecfd75-8fac-461a-96d6-ff84226c0b36', '54', 0, 4.5, 'c7b384fc-d787-4e49-a021-23c7c0b4a569', 'Zaehlerschrank erweitern, mehr Sicherungen und zweiter FI.', 'ANGENOMMEN'),
+  (9010, '2026-04-28 08:30:00', '2026-04-30 17:00:00', NULL, 'angebot-f5a5bcf4-1fc9-433d-8886-6cc73191c756', '52', 0, 5,   'c7b384fc-d787-4e49-a021-23c7c0b4a569', 'Im Buero zehn Steckdosen und Netzwerkverkabelung.', 'ANGENOMMEN'),
+  (9011, '2026-05-12 09:45:00', '2026-05-14 13:20:00', NULL, 'angebot-cb3f812c-8f02-4dad-9545-ebfb5a869fff', '51', 0, 4,   'c7b384fc-d787-4e49-a021-23c7c0b4a569', 'Bad renoviert, drei Steckdosen, sechs Einbaustrahler, FI nachruesten.', 'ANGENOMMEN'),
+  (9012, '2026-05-21 15:30:00', '2026-05-22 10:15:00', NULL, 'angebot-d2a3e231-91e2-4a83-a8c3-709be3327eff', '55', 0, 4,   'c7b384fc-d787-4e49-a021-23c7c0b4a569', 'Gartenhaus mit Strom versorgen, Erdkabel und Aussensteckdose.', 'VERSENDET'),
+  (9013, '2026-05-29 11:20:00', '2026-05-31 09:50:00', NULL, 'angebot-bafe7852-137a-45ca-9912-514f19f7befe', '54', 0, 2,   'c7b384fc-d787-4e49-a021-23c7c0b4a569', 'Carport mit vier Strahlern beleuchten, Schalter dazu.', 'ABGELEHNT');
 
 INSERT INTO offer_position
   (id, created_at, updated_at, beschreibung, bezeichnung, einheit, einzelpreis,
@@ -113,13 +113,13 @@ INSERT INTO invoice
    kunde_vorname, kunde_nachname, kunde_email, kunde_strasse, kunde_hausnummer, kunde_plz, kunde_ort,
    offer_business_key, rechnungsnummer)
 VALUES
-  (9001, '2026-01-16 09:00:00', '2026-01-16 09:00:00', 0, 'Lennart','Moog',  'moog@example.de',   'Hans-Kuhn-Str.',   '24', '85051','Ingolstadt','angebot-demo-9001','RE-2026-007'),
-  (9002, '2026-02-07 09:00:00', '2026-02-07 09:00:00', 0, 'Emanuel','Mrazek','mrazek@example.de', 'Muenchnerstrasse', '132','85051','Ingolstadt','angebot-demo-9003','RE-2026-008'),
-  (9003, '2026-03-01 09:00:00', '2026-03-01 09:00:00', 0, 'Felix',  'Bartel','bartel@example.de', 'Nuernbergerstrasse','21', '85054','Ingolstadt','angebot-demo-9005','RE-2026-009'),
-  (9004, '2026-03-13 09:00:00', '2026-03-13 09:00:00', 0, 'Lennart','Moog',  'moog@example.de',   'Hans-Kuhn-Str.',   '24', '85051','Ingolstadt','angebot-demo-9006','RE-2026-010'),
-  (9005, '2026-04-18 09:00:00', '2026-04-18 09:00:00', 0, 'Felix',  'Bartel','bartel@example.de', 'Nuernbergerstrasse','21', '85054','Ingolstadt','angebot-demo-9009','RE-2026-011'),
-  (9006, '2026-05-01 09:00:00', '2026-05-01 09:00:00', 0, 'Emanuel','Mrazek','mrazek@example.de', 'Muenchnerstrasse', '132','85051','Ingolstadt','angebot-demo-9010','RE-2026-012'),
-  (9007, '2026-05-15 09:00:00', '2026-05-15 09:00:00', 0, 'Lennart','Moog',  'moog@example.de',   'Hans-Kuhn-Str.',   '24', '85051','Ingolstadt','angebot-demo-9011','RE-2026-013');
+  (9001, '2026-01-16 09:00:00', '2026-01-16 09:00:00', 0, 'Lennart','Moog',  'moog@example.de',   'Hans-Kuhn-Str.',   '24', '85051','Ingolstadt','angebot-8068e94b-480e-4aae-b458-6a5f1e7c8181','RE-2026-007'),
+  (9002, '2026-02-07 09:00:00', '2026-02-07 09:00:00', 0, 'Emanuel','Mrazek','mrazek@example.de', 'Muenchnerstrasse', '132','85051','Ingolstadt','angebot-a5dd35d3-3500-4436-b19f-89bcd0169398','RE-2026-008'),
+  (9003, '2026-03-01 09:00:00', '2026-03-01 09:00:00', 0, 'Felix',  'Bartel','bartel@example.de', 'Nuernbergerstrasse','21', '85054','Ingolstadt','angebot-1107f4a0-b378-4886-b362-4852d3e1cc61','RE-2026-009'),
+  (9004, '2026-03-13 09:00:00', '2026-03-13 09:00:00', 0, 'Lennart','Moog',  'moog@example.de',   'Hans-Kuhn-Str.',   '24', '85051','Ingolstadt','angebot-5635c580-c0f1-4eea-9625-2a4c64eeb3c2','RE-2026-010'),
+  (9005, '2026-04-18 09:00:00', '2026-04-18 09:00:00', 0, 'Felix',  'Bartel','bartel@example.de', 'Nuernbergerstrasse','21', '85054','Ingolstadt','angebot-b1ecfd75-8fac-461a-96d6-ff84226c0b36','RE-2026-011'),
+  (9006, '2026-05-01 09:00:00', '2026-05-01 09:00:00', 0, 'Emanuel','Mrazek','mrazek@example.de', 'Muenchnerstrasse', '132','85051','Ingolstadt','angebot-f5a5bcf4-1fc9-433d-8886-6cc73191c756','RE-2026-012'),
+  (9007, '2026-05-15 09:00:00', '2026-05-15 09:00:00', 0, 'Lennart','Moog',  'moog@example.de',   'Hans-Kuhn-Str.',   '24', '85051','Ingolstadt','angebot-cb3f812c-8f02-4dad-9545-ebfb5a869fff','RE-2026-013');
 
 INSERT INTO invoice_position
   (id, created_at, updated_at, bezeichnung, einheit, einzelpreis, hersteller,
