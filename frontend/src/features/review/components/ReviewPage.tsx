@@ -15,7 +15,6 @@ import {
 import {
   sendGenehmigung,
   sendKorrekturschnipsel,
-  sendAngebotsentwurf,
 } from "@/data/api/processEngineService";
 import { searchMaterials, getMaterial } from "@/data/api/catalogService";
 import { getCurrentUser } from "@/services/userService";
@@ -837,16 +836,31 @@ export const ReviewPage = () => {
     setSubmitError(null);
     setBestaetigt(true);
 
-    const istManuell = hatManuelleAenderung();
-    const istReihenfolge = hatReihenfolgeOderAlternative();
+    // Routing der Bestätigung:
+    //  - Freitext an die KI  → KI-Re-Run (zurück zur Review)
+    //  - sonst               → deterministisch → Versand (Genehmigungs-Pfad).
+    //    Bei Positions-Änderungen (Stückzahl/Bezeichnung/hinzufügen/löschen/
+    //    Reihenfolge/Alternative) werden die Positionen dabei vorher direkt über
+    //    /positionen ins Angebot geschrieben.
+    //
+    // Hintergrund: Der KI-Re-Run baut MATERIAL aus dem KI-Ergebnis neu auf und
+    // übernimmt manuelle Positions-Edits NICHT zuverlässig (anders als die
+    // ARBEITSZEIT, die direkt geschrieben wird und den Re-Run überlebt). Deshalb
+    // gehen deterministische Positions-Edits über den /positionen-Endpunkt.
+    const hatFreitext = kiHinweis.trim().length > 0;
+    const hatPositionsAenderung =
+      materialien.some((p) => p.manuellGeaendert) ||
+      hatEntfernteOriginalposition() ||
+      hatReihenfolgeOderAlternative();
 
     // Die eingetragene Gesamt-Arbeitsdauer an den offer-service melden; daraus
     // berechnet dieser die ARBEITSZEIT-Position neu (Fall 1, 2 & 3).
     const gesamtStunden = maZeilen.reduce((sum, z) => sum + z.stunden, 0);
 
     try {
-      if (istManuell) {
-        // ── Fall 3: Manuelle Änderung → neuer KI-Durchlauf ──
+      if (hatFreitext) {
+        // ── Fall 3: Freitext-Wunsch an die KI → neuer KI-Durchlauf ──
+        // Nur noch bei echtem Freitext, denn nur dafür wird die KI gebraucht.
         // setArbeitsstunden triggert im Offer-Service die PE-Nachricht
         // "angebotsentwurf"; erst danach kann die PE den korrekturschnipsel
         // am nachgelagerten Event-Gateway korrelieren.
@@ -896,46 +910,30 @@ export const ReviewPage = () => {
             sinceUpdatedAt: vorReRun.updatedAt,
           },
         });
-      } else if (istReihenfolge) {
-        // ── Fall 2: Reihenfolge / Alternative ──
-        const aenderungen = buildOfferChanges();
-        // 1) Material/Anfahrt im offer-service aktualisieren (neue Reihenfolge /
-        //    gewählte Alternative) über den bestehenden /positionen-Endpunkt.
-        await updateOfferPositions(businessKey, aenderungen);
-        // 2) Arbeitsstunden setzen: legt die ARBEITSZEIT-Position an (Stunden ×
-        //    Stundensatz). Ohne diesen Schritt fehlt die Arbeitszeit komplett im
-        //    Angebot, PDF und Gesamtpreis. Der offer-service liefert hier das
-        //    fertig bepreiste Angebot (OfferResponse: positions + gesamtPreis)
-        //    zurück und sendet es zugleich als "angebotsentwurf" an die PE.
-        const aktualisiertesAngebot = await setArbeitsstunden(businessKey, {
-          arbeitsdauerStunden: gesamtStunden,
-        });
-        // 3) Entwurf an die PE korrelieren (Event "Ausgewählter Angebotsentwurf").
-        //    Wir senden ein KOMBINIERTES Objekt: die OfferResponse-Felder
-        //    (positions + gesamtPreis) braucht der document-service, um die
-        //    PDF-Positionstabelle zu füllen; strukturierteAngebotspositionen +
-        //    korrekturvorschlaege braucht der nachgelagerte PE-/positionen-Schritt.
-        //    Reihenfolge des Spreads ist wichtig: `aenderungen` muss zuletzt
-        //    stehen, damit strukturierteAngebotspositionen/korrekturvorschlaege
-        //    exakt das vom /positionen-Schritt erwartete Format behalten.
-        await sendAngebotsentwurf(businessKey, {
-          ...aktualisiertesAngebot,
-          ...aenderungen,
-        });
-        // 4) Angebot im offer-service als geprüft markieren (/review/approve),
-        //    analog zu Fall 1 — schließt den Review-Schritt serverseitig ab.
-        await approveOffer(businessKey);
-        navigate("/laden", {
-          state: { businessKey, offerId, mode: "versand-warten" },
-        });
       } else {
-        // ── Fall 1: Genehmigung (keine Änderungen) ──
-        // setArbeitsstunden triggert im Offer-Service die PE-Nachricht
-        // "angebotsentwurf"; erst danach kann die PE die genehmigungAngebot
-        // am nachgelagerten Event-Gateway korrelieren.
+        // ── Deterministischer Pfad → Versand (Genehmigungs-Pfad, wie Fall 1) ──
+        // Deckt Positions-Änderungen (Stückzahl/Bezeichnung/hinzufügen/löschen/
+        // Reihenfolge/Alternative) UND den reinen Genehmigungsfall ab.
+        //
+        // WICHTIG ist die Reihenfolge: approve VOR der genehmigungAngebot-Nachricht.
+        // Der frühere Fall-2-Weg sendete den "angebotsentwurf" VOR dem approve —
+        // dadurch startete die PE die Dokumentenerstellung, solange das Angebot
+        // noch KI_FERTIG war. Der document-service-Callback /versandbereit verlangt
+        // aber KI_BEARBEITUNG_ABGESCHLOSSEN, schlug also fehl: Das Angebot erreichte
+        // nie VERSANDBEREIT und ließ sich danach nicht auf VERSENDET setzen.
+        if (hatPositionsAenderung) {
+          // Positions-Änderungen DETERMINISTISCH ins Angebot schreiben, solange es
+          // noch KI_FERTIG ist (das verlangt der /positionen-Endpunkt). Danach steht
+          // der neue Stand (inkl. Stückzahl) fest im Angebot — ohne KI.
+          await updateOfferPositions(businessKey, buildOfferChanges());
+        }
+        // Arbeitszeit setzen (legt die ARBEITSZEIT-Position an) und meldet zugleich
+        // den "angebotsentwurf" an die PE — Inhalt = der bereits aktualisierte
+        // Angebotsstand, den der document-service für die PDF-Positionstabelle nutzt.
         await setArbeitsstunden(businessKey, {
           arbeitsdauerStunden: gesamtStunden,
         });
+        // approve VOR der Genehmigungs-Nachricht (siehe Kommentar oben).
         await approveOffer(businessKey);
         await sendGenehmigung(businessKey);
         navigate("/laden", {
