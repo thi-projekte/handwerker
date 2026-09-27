@@ -18,7 +18,7 @@ public class AufmerksamkeitDTO {
     public String businessKey;
 
     /** Kunden-ID des Angebots. */
-    public Long customerId;
+    public String customerId;
 
     /** Zeitpunkt, seit dem das Angebot im Status VERSENDET ist (= updatedAt des Angebots). */
     public LocalDateTime versendetAm;

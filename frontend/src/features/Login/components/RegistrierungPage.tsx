@@ -2,144 +2,98 @@ import "../Login.css";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import logo from "/src/assets/logos/CraftVoice_Logo_white_text.png";
-import { registerUser } from "@/services/userService";
+import { initKeycloak } from "@/services/authService";
+import keycloak from "@/core/keycloak";
 
 export const RegistrierungPage = () => {
   const navigate = useNavigate();
 
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [repeatPassword, setRepeatPassword] = useState("");
-
   const [error, setError] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
 
-  const validateEmail = (emailValue: string): boolean => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue);
-  };
 
   const handleRegister = async () => {
-    setError("");
-    setSuccessMessage("");
+    if (isLoading) return;
 
-    if (!firstName.trim()) return setError("Vorname ist erforderlich.");
-    if (!lastName.trim()) return setError("Nachname ist erforderlich.");
-    if (!email.trim()) return setError("E-Mail ist erforderlich.");
-    if (!password) return setError("Passwort ist erforderlich.");
-    if (!repeatPassword) return setError("Bitte wiederhole dein Passwort.");
-    if (!validateEmail(email.trim())) {
-      return setError("Bitte gib eine gültige E-Mail-Adresse ein.");
-    }
-    if (password.length < 8) {
-      return setError("Das Passwort muss mindestens 8 Zeichen haben.");
-    }
-    if (password !== repeatPassword) {
-      return setError("Die Passwörter stimmen nicht überein.");
+    if (!acceptedPrivacy) {
+      setError("Bitte stimme den Datenschutzbedingungen zu.");
+      return;
     }
 
     try {
       setIsLoading(true);
 
-      await registerUser({
-        email: email.trim(),
-        password,
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-      });
+      await initKeycloak();
 
-      setSuccessMessage(
-        "Registrierung erfolgreich. Bitte prüfe deine E-Mails und bestätige deinen Account.",
-      );
-    } catch {
-      setError("Registrierung fehlgeschlagen. Bitte versuche es erneut.");
+      await keycloak.register({
+        redirectUri: `${window.location.origin}/login`,
+      });
+    } catch (error) {
+      console.error(error);
+      setError("Registrierung konnte nicht gestartet werden.");
     } finally {
       setIsLoading(false);
     }
-    navigate("/home");
   };
 
   useEffect(() => {
-    if (error) {
-      const timer = setTimeout(() => setError(""), 5000);
-      return () => clearTimeout(timer);
+    if (!error) {
+      return;
     }
+
+    const timer = window.setTimeout(() => {
+      setError("");
+    }, 8000);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
   }, [error]);
 
   return (
     <div className="app">
       <div className="card register-card">
         <div className="logo-container">
-          <img src={logo} alt="Logo" className="logo" />
+          <img src={logo} alt="CraftVoice Logo" className="logo" />
         </div>
 
         <h1>Registrieren</h1>
-        <p className="text-secondary">Erstelle deinen CraftVoice Account</p>
 
-        <div className="divider"></div>
+        <p className="text-secondary">
+          Erstelle deinen CraftVoice Account
+        </p>
 
-        {error && (
-          <div className="error-banner">
-            <span className="error-icon">⚠️</span>
-            <span>{error}</span>
-          </div>
-        )}
+        <div className="privacy-consent">
+          <input
+            type="checkbox"
+            id="privacyConsent"
+            checked={acceptedPrivacy}
+            onChange={(e) => setAcceptedPrivacy(e.target.checked)}
+          />
 
-        {successMessage && (
-          <div className="success-banner">
-            <span>✅</span>
-            <span>{successMessage}</span>
-          </div>
-        )}
-
-        <input
-          className="input-field"
-          type="text"
-          placeholder="Vorname"
-          value={firstName}
-          onChange={(event) => setFirstName(event.target.value)}
-        />
-
-        <input
-          className="input-field"
-          type="text"
-          placeholder="Nachname"
-          value={lastName}
-          onChange={(event) => setLastName(event.target.value)}
-        />
-
-        <input
-          className="input-field"
-          type="email"
-          placeholder="E-Mail-Adresse"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-        />
-
-        <input
-          className="input-field"
-          type="password"
-          placeholder="Passwort"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-        />
-
-        <input
-          className="input-field"
-          type="password"
-          placeholder="Passwort wiederholen"
-          value={repeatPassword}
-          onChange={(event) => setRepeatPassword(event.target.value)}
-        />
+          <label htmlFor="privacyConsent">
+            Ich stimme den{" "}
+            <a
+              href="/datenschutz"
+              className="privacy-link"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+            >
+              Datenschutzbedingungen
+            </a>{" "}
+            zu.
+          </label>
+        </div>
 
         <button
           className="button-primary register-btn"
+          type="button"
           onClick={handleRegister}
           disabled={isLoading}
         >
-          {isLoading ? "Registrierung läuft..." : "Registrieren"}
+          Registrieren
         </button>
 
         <div className="register-footer">
@@ -147,9 +101,19 @@ export const RegistrierungPage = () => {
             className="button-secondary"
             type="button"
             onClick={() => navigate("/login")}
+            disabled={isLoading}
           >
             Bereits ein Konto? Einloggen
           </button>
+          <footer className="landing-footer sticky-footer">
+
+            <div className="footer-center">
+              <a onClick={() => navigate("/kontakt")}>Kontakt</a>
+              <a onClick={() => navigate("/impressum")}>Impressum</a>
+
+            </div>
+
+          </footer>
         </div>
       </div>
     </div>

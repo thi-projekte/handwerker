@@ -7,10 +7,7 @@ import jakarta.validation.constraints.NotNull;
  */
 public class CreateOfferRequest {
     @NotNull
-    public Long customerId;
-
-    @NotNull
-    public Long handwerkerId;
+    public String customerId;
 
     @NotNull
     public String speechSnippet;

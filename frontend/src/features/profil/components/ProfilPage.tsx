@@ -1,9 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "@/assets/stylesheets/stylesheet.css";
+import { logoutFromKeycloak } from "@/services/authService";
+import {
+  getCurrentUser,
+  getProfilePictureUrl,
+  updateProfile,
+  uploadProfilePicture,
+} from "@/services/userService";
 import "../ProfilePage.css";
 
-type Tab = "profil" | "darstellung" | "benachrichtigungen";
+type Tab = "profil" | "darstellung";
 
 type ProfileFormData = {
   vorname: string;
@@ -26,9 +33,35 @@ const setCookieValue = (name: string, value: string) => {
   document.cookie = `${name}=${value}; path=/; max-age=2592000; SameSite=Lax`;
 };
 
+const getRoleLabel = (roles: string[]) => {
+  const role = roles[0];
+
+  switch (role) {
+    case "OWNER":
+      return "Inhaber";
+    case "EMPLOYEE":
+      return "Mitarbeiter";
+    case "ACCOUNTANT":
+      return "Buchhaltung";
+    case "CUSTOMER":
+      return "Kunde";
+    default:
+      return role || "Keine Rolle";
+  }
+};
+
+const getErrorMessage = (error: unknown) => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return "Ein unbekannter Fehler ist aufgetreten.";
+};
+
 export const ProfilPage = () => {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const feedbackTimeoutRef = useRef<number | null>(null);
 
   const [activeTab, setActiveTab] = useState<Tab>("profil");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -40,21 +73,39 @@ export const ProfilPage = () => {
     return savedTheme === "light";
   });
 
-  const [profileImage, setProfileImage] = useState<string | null>(() => {
-    return localStorage.getItem("profileImage");
-  });
-
-  const [showSaveSuccess, setShowSaveSuccess] = useState(false);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<ProfileFormData>({
-    vorname: "Christian",
-    nachname: "Huber",
-    email: "christian.huber@craftvoice.de",
-    telefon: "+49 841 123456",
-    rolle: "Inhaber",
+    vorname: "",
+    nachname: "",
+    email: "",
+    telefon: "",
+    rolle: "",
   });
 
-  const initials = `${formData.vorname.charAt(0)}${formData.nachname.charAt(0)}`;
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const initials =
+    `${formData.vorname.charAt(0)}${formData.nachname.charAt(0)}`.toUpperCase();
+
+  const showTemporarySuccess = (message: string) => {
+    setSuccessMessage(message);
+
+    if (feedbackTimeoutRef.current !== null) {
+      window.clearTimeout(feedbackTimeoutRef.current);
+    }
+
+    feedbackTimeoutRef.current = window.setTimeout(() => {
+      setSuccessMessage("");
+      feedbackTimeoutRef.current = null;
+    }, 3000);
+  };
 
   useEffect(() => {
     const theme = isLightMode ? "light" : "dark";
@@ -63,6 +114,55 @@ export const ProfilPage = () => {
     localStorage.setItem("theme", theme);
     setCookieValue(THEME_COOKIE_NAME, theme);
   }, [isLightMode]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadProfile = async () => {
+      setIsLoading(true);
+      setErrorMessage("");
+
+      try {
+        const user = await getCurrentUser();
+
+        if (!isMounted) {
+          return;
+        }
+
+        setFormData({
+          vorname: user.firstName ?? "",
+          nachname: user.lastName ?? "",
+          email: user.email ?? "",
+          telefon: user.phoneNumber ?? "",
+          rolle: getRoleLabel(user.roles ?? []),
+        });
+
+        setProfileImage(getProfilePictureUrl(user.profilePictureUrl));
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        setErrorMessage(
+          `Profildaten konnten nicht geladen werden: ${getErrorMessage(error)}`,
+        );
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    void loadProfile();
+
+    return () => {
+      isMounted = false;
+
+      if (feedbackTimeoutRef.current !== null) {
+        window.clearTimeout(feedbackTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleTabChange = (tab: Tab) => {
     setActiveTab(tab);
@@ -75,27 +175,80 @@ export const ProfilPage = () => {
   };
 
   const getActiveTabLabel = () => {
-    if (activeTab === "profil") return "Profil";
-    if (activeTab === "darstellung") return "Darstellung";
-    return "Benachrichtigungen";
+    if (activeTab === "profil") {
+      return "Profil";
+    }
+
+    return "Darstellung";
   };
 
   const handleInputChange = (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const { name, value } = event.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    setFormData((previousData) => ({
+      ...previousData,
+      [name]: value,
+    }));
   };
 
-  const handleSaveChanges = () => {
-    setShowSaveSuccess(true);
+  const handleSaveChanges = async () => {
+    if (!formData.vorname.trim() || !formData.nachname.trim()) {
+      setErrorMessage("Vorname und Nachname dürfen nicht leer sein.");
+      return;
+    }
 
-    window.setTimeout(() => {
-      setShowSaveSuccess(false);
-    }, 2500);
+    setIsSaving(true);
+    setErrorMessage("");
+    setSuccessMessage("");
+
+    try {
+      const updatedUser = await updateProfile({
+        firstName: formData.vorname.trim(),
+        lastName: formData.nachname.trim(),
+        phoneNumber: formData.telefon.trim(),
+      });
+
+      if (updatedUser) {
+        setFormData((previousData) => ({
+          ...previousData,
+          vorname: updatedUser.firstName ?? previousData.vorname,
+          nachname: updatedUser.lastName ?? previousData.nachname,
+          email: updatedUser.email ?? previousData.email,
+          telefon: updatedUser.phoneNumber ?? previousData.telefon,
+          rolle: getRoleLabel(updatedUser.roles ?? []),
+        }));
+
+        setProfileImage(
+          getProfilePictureUrl(updatedUser.profilePictureUrl) ?? profileImage,
+        );
+      }
+
+      showTemporarySuccess("Änderungen wurden erfolgreich gespeichert.");
+    } catch (error) {
+      setErrorMessage(
+        `Änderungen konnten nicht gespeichert werden: ${getErrorMessage(error)}`,
+      );
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleProfileImageChange = (
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    setErrorMessage("");
+
+    try {
+      await logoutFromKeycloak();
+    } catch (error) {
+      console.error("Logout fehlgeschlagen:", error);
+      setErrorMessage("Logout fehlgeschlagen. Bitte versuche es erneut.");
+      setIsLoggingOut(false);
+    }
+  };
+
+  const handleProfileImageChange = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = event.target.files?.[0];
@@ -105,27 +258,31 @@ export const ProfilPage = () => {
     }
 
     if (!file.type.startsWith("image/")) {
-      alert("Bitte eine Bilddatei auswählen.");
+      setErrorMessage("Bitte wähle eine gültige Bilddatei aus.");
+      event.target.value = "";
       return;
     }
 
-    const reader = new FileReader();
+    setIsUploadingImage(true);
+    setErrorMessage("");
+    setSuccessMessage("");
 
-    reader.onload = () => {
-      const imageUrl = reader.result as string;
+    try {
+      const response = await uploadProfilePicture(file);
+      const imageUrl = getProfilePictureUrl(response.url);
+
       setProfileImage(imageUrl);
-      localStorage.setItem("profileImage", imageUrl);
-    };
+      showTemporarySuccess("Profilbild wurde erfolgreich hochgeladen.");
+    } catch (error) {
+      setErrorMessage(
+        `Profilbild konnte nicht hochgeladen werden: ${getErrorMessage(error)}`,
+      );
+    } finally {
+      setIsUploadingImage(false);
 
-    reader.readAsDataURL(file);
-  };
-
-  const handleRemoveProfileImage = () => {
-    setProfileImage(null);
-    localStorage.removeItem("profileImage");
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     }
   };
 
@@ -140,7 +297,7 @@ export const ProfilPage = () => {
         <button
           className="mobile-section-menu-button"
           type="button"
-          onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+          onClick={() => setIsMobileMenuOpen((previousValue) => !previousValue)}
         >
           <span>☰ {getActiveTabLabel()}</span>
           <span>{isMobileMenuOpen ? "▲" : "▼"}</span>
@@ -163,14 +320,6 @@ export const ProfilPage = () => {
             >
               Darstellung
             </button>
-
-            <button
-              className={activeTab === "benachrichtigungen" ? "active" : ""}
-              type="button"
-              onClick={() => handleTabChange("benachrichtigungen")}
-            >
-              Benachrichtigungen
-            </button>
           </div>
         )}
       </section>
@@ -178,6 +327,7 @@ export const ProfilPage = () => {
       <section className="card profile-tab-card desktop-section-tabs">
         <button
           className={`profile-tab ${activeTab === "profil" ? "active" : ""}`}
+          type="button"
           onClick={() => handleTabChange("profil")}
         >
           Profil
@@ -187,63 +337,59 @@ export const ProfilPage = () => {
           className={`profile-tab ${
             activeTab === "darstellung" ? "active" : ""
           }`}
+          type="button"
           onClick={() => handleTabChange("darstellung")}
         >
           Darstellung
         </button>
-
-        <button
-          className={`profile-tab ${
-            activeTab === "benachrichtigungen" ? "active" : ""
-          }`}
-          onClick={() => handleTabChange("benachrichtigungen")}
-        >
-          Benachrichtigungen
-        </button>
       </section>
 
-      {activeTab === "profil" && (
+      {errorMessage && (
+        <div className="profile-feedback profile-feedback-error" role="alert">
+          {errorMessage}
+        </div>
+      )}
+
+      {successMessage && (
+        <div
+          className="profile-feedback profile-feedback-success"
+          role="status"
+        >
+          {successMessage}
+        </div>
+      )}
+
+      {isLoading && activeTab === "profil" && (
+        <section className="card profile-content-card profile-load-state">
+          <strong>Profildaten werden geladen …</strong>
+        </section>
+      )}
+
+      {!isLoading && activeTab === "profil" && (
         <>
           <section className="card profile-overview-card">
             <div className="profile-overview-header">
               <div className="profile-image-wrapper">
                 <div className="profile-avatar large">
-                  {profileImage ? (
-                    <img
-                      className="profile-avatar-image"
-                      src={profileImage}
-                      alt="Profilbild"
-                    />
-                  ) : (
-                    initials
-                  )}
+                  {initials}
                 </div>
 
                 <input
                   ref={fileInputRef}
                   className="profile-image-input"
                   type="file"
-                  accept="image/png, image/jpeg, image/jpg"
+                  accept="image/png, image/jpeg, image/jpg, image/webp"
                   onChange={handleProfileImageChange}
                 />
 
                 <button
                   className="profile-image-button"
                   type="button"
+                  disabled={isUploadingImage}
                   onClick={() => fileInputRef.current?.click()}
                 >
-                  Bild ändern
+                  {isUploadingImage ? "Wird hochgeladen …" : "Bild ändern"}
                 </button>
-
-                {profileImage && (
-                  <button
-                    className="profile-image-remove-button"
-                    type="button"
-                    onClick={handleRemoveProfileImage}
-                  >
-                    Bild entfernen
-                  </button>
-                )}
               </div>
 
               <div className="profile-main-info">
@@ -266,6 +412,7 @@ export const ProfilPage = () => {
                   name="vorname"
                   value={formData.vorname}
                   onChange={handleInputChange}
+                  disabled={isSaving || isLoggingOut}
                 />
               </label>
 
@@ -276,18 +423,16 @@ export const ProfilPage = () => {
                   name="nachname"
                   value={formData.nachname}
                   onChange={handleInputChange}
+                  disabled={isSaving || isLoggingOut}
                 />
               </label>
 
               <label className="profile-field">
                 <span>E-Mail</span>
-                <input
-                  className="input-field"
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                />
+                <div className="profile-readonly-field">{formData.email}</div>
+                <p className="profile-field-hint">
+                  Die E-Mail-Adresse wird über das Benutzerkonto verwaltet.
+                </p>
               </label>
 
               <label className="profile-field">
@@ -298,6 +443,7 @@ export const ProfilPage = () => {
                   type="tel"
                   value={formData.telefon}
                   onChange={handleInputChange}
+                  disabled={isSaving || isLoggingOut}
                 />
               </label>
 
@@ -309,29 +455,46 @@ export const ProfilPage = () => {
                   nicht geändert werden.
                 </p>
               </label>
+
+              <label className="profile-field">
+                <span>Mitgliedschaft verwalten</span>
+                <button
+                  className="profile-password-button"
+                  type="button"
+                  onClick={() => navigate("/abo")}
+                  disabled={isLoggingOut}
+                >
+                  Abo verwalten
+                </button>
+              </label>
             </div>
 
             <div className="profile-actions">
               <button
                 className="button-primary profile-save-button"
                 type="button"
+                disabled={isSaving || isLoggingOut}
                 onClick={handleSaveChanges}
               >
-                Änderungen speichern
+                {isSaving ? "Wird gespeichert …" : "Änderungen speichern"}
               </button>
-
-              {showSaveSuccess && (
-                <p className="profile-save-success">
-                  Wurde erfolgreich gespeichert
-                </p>
-              )}
 
               <button
                 className="profile-password-button"
                 type="button"
                 onClick={() => navigate("/passwortAendern")}
+                disabled={isLoggingOut}
               >
                 Passwort ändern
+              </button>
+
+              <button
+                className="profile-logout-button"
+                type="button"
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+              >
+                {isLoggingOut ? "Wird ausgeloggt …" : "Ausloggen"}
               </button>
             </div>
           </section>
@@ -354,36 +517,15 @@ export const ProfilPage = () => {
 
             <button
               className="theme-switch"
-              onClick={() => setIsLightMode(!isLightMode)}
+              type="button"
+              onClick={() => setIsLightMode((previousValue) => !previousValue)}
               aria-label="Darstellung wechseln"
+              disabled={isLoggingOut}
             >
               <span
                 className={isLightMode ? "switch-dot light" : "switch-dot"}
               />
             </button>
-          </div>
-        </section>
-      )}
-
-      {activeTab === "benachrichtigungen" && (
-        <section className="card profile-content-card">
-          <h2>Benachrichtigungen</h2>
-
-          <div className="notification-list">
-            <label className="notification-item">
-              <input type="checkbox" defaultChecked />
-              <span>E-Mail bei neuem Angebot</span>
-            </label>
-
-            <label className="notification-item">
-              <input type="checkbox" defaultChecked />
-              <span>E-Mail bei fehlenden Pflichtdaten</span>
-            </label>
-
-            <label className="notification-item">
-              <input type="checkbox" />
-              <span>Wöchentliche Zusammenfassung</span>
-            </label>
           </div>
         </section>
       )}

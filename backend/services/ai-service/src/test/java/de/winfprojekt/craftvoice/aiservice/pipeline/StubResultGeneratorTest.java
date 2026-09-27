@@ -28,7 +28,10 @@ class StubResultGeneratorTest {
         assertNotNull(result.strukturierteAngebotspositionen());
         assertNotNull(result.strukturierteAngebotspositionen().leistungen());
         assertNotNull(result.strukturierteAngebotspositionen().material());
+        assertFalse(result.strukturierteAngebotspositionen().material().isEmpty());
         assertNotNull(result.korrekturvorschlaege());
+        // Demo-Vorgabe: der Stub setzt immer 4 Stunden Arbeitszeit.
+        assertEquals(4.0, result.geschaetzteArbeitsdauerStunden(), 0.0);
     }
 
     @Test
@@ -37,7 +40,9 @@ class StubResultGeneratorTest {
                 new ProcessRequest("BK-2", "x", null, null, null, "korrektur"));
 
         assertNotNull(result.strukturierteAngebotspositionen());
-        assertFalse(result.strukturierteAngebotspositionen().leistungen().isEmpty());
+        // Inhalt liegt in den Materialpositionen (Arbeitszeit separat via Stundenfeld).
+        assertFalse(result.strukturierteAngebotspositionen().material().isEmpty());
+        assertEquals(4.0, result.geschaetzteArbeitsdauerStunden(), 0.0);
     }
 
     /**

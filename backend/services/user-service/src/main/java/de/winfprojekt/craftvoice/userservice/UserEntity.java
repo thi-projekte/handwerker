@@ -1,10 +1,18 @@
 package de.winfprojekt.craftvoice.userservice;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntity;
-import jakarta.persistence.*;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import java.time.LocalDateTime;
+
+import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -38,17 +46,61 @@ public class UserEntity extends BaseEntity {
     public String companyName;
     public String vatId;
     public String tradeRegisterNumber;
-    public String companyAddress;
+
+    // Detailed Address
+    public String street;
+    public String houseNumber;
+    public String zipCode;
+    public String city;
+    public String state;
+    public String country;
+
+    // Company Contact
+    public String companyEmail;
+    public String companyPhoneNumber;
+    public String website;
+    public String industry;
+
+    // Banking Info
+    public String iban;
+    public String bic;
+    public String bankName;
+    public String accountHolder;
+
+    // Tax Info
+    public String taxNumber;
+    public String legalForm;
+
+    // Business Details
+    public Integer employeeCount;
+    public Integer customerCount;
+    public Double hourlyRate;
+    public String priceListUrl;
+
+    // Travel / Anfahrtskosten configuration
+    // Allowed values: "PAUSCHALE", "PAUSCHALE_PLUS_KM", "NUR_KM"
+    public String travelModel;
+
+    @Column(precision = 19, scale = 4)
+    public BigDecimal travelFlatRate;
+
+    @Column(precision = 19, scale = 4)
+    public BigDecimal travelKmRate;
 
     // AI Style Preferences
-    public String toneOfVoice; // e.g. "Du" vs "Sie"
-    public String detailLevel; // e.g. "kurz & prägnant" vs "detailliert"
+    public String toneOfVoice;
+    public String detailLevel;
 
     // Text Blocks
     @Column(columnDefinition = "TEXT")
     public String agbNotes;
+
     @Column(columnDefinition = "TEXT")
     public String paymentTerms;
+
+    // Owner tracking for customers (null for OWNER/EMPLOYEE roles)
+    // Stores the ID of the craftsman who created this customer
+    public Long ownerId;
 
     public static UserEntity findByEmail(String email) {
         return find("email", email).firstResult();
@@ -60,9 +112,14 @@ public class UserEntity extends BaseEntity {
 }
 
 enum UserStatus {
-    PENDING, ACTIVE, DELETED
+    PENDING,
+    ACTIVE,
+    DELETED
 }
 
 enum UserRole {
-    OWNER, EMPLOYEE, ACCOUNTANT
+    OWNER,
+    EMPLOYEE,
+    ACCOUNTANT,
+    CUSTOMER
 }

@@ -10,65 +10,94 @@ import jakarta.enterprise.context.ApplicationScoped;
 import java.util.List;
 
 /**
- * Erzeugt eine fest verdrahtete {@link ErgebnisKi}-Antwort fuer die Stub-Phase
- * (Ticket #532).
+ * Erzeugt eine fest verdrahtete {@link ErgebnisKi}-Antwort als <b>Fallback</b>, wenn die echte
+ * LLM-Pipeline (LLM-Call 1) nicht zur Verfuegung steht — also kein {@code MEGALLM_API_KEY}
+ * gesetzt ist oder der LLM-Aufruf/das Parsen fehlschlaegt (siehe {@link LlmCall1Generator}).
  *
- * <p>So lange die echte LLM-Pipeline (Tickets #538 / #541) nicht steht, antwortet
- * der ai-service mit dieser Mock-Struktur. Sie ist realistisch genug, damit das
- * BPMN-Team den gesamten Prozess gegen einen echten Service testen kann — der
- * Vertrag mit der Process Engine ist identisch zur spaeteren Variante.
+ * <p>Inhaltlich ein typisches <b>Wallbox-Installationsangebot</b> (Wallbox, Starkstrom- und
+ * Netzwerkkabel, Leitungsschutzschalter) plus 4 Stunden Arbeitszeit. So bleibt der Notnagel
+ * nah am haeufigsten Demo-/Testfall und wirkt nicht fachfremd, falls er live einspringen muss.
+ * Da LLM-Call 2 ({@link Call2Selector}) auch auf dem Stub-Ergebnis laeuft, ergaenzt der Katalog
+ * — sofern erreichbar — sogar echte Produkt-IDs und Preise zu diesen Materialpositionen.
  *
- * <p>Die Struktur entspricht dem Schnittstellenvertrag (Stand 29.05.2026):
- * {@link Angebotspositionen} mit {@code leistungen}/{@code material}/{@code notizen}.
+ * <p>Die Struktur entspricht dem Schnittstellenvertrag: {@link Angebotspositionen} mit
+ * {@code leistungen}/{@code material}/{@code notizen}. Die Arbeitszeit wird ueber
+ * {@code geschaetzteArbeitsdauerStunden} (4 h) gesetzt — der offer-service rechnet daraus mit
+ * dem Stundensatz eine Arbeitszeit-Position.
  *
- * <p>Wichtig: KEINE Preise (Datenschutz-Constraint, siehe {@link Position}).
+ * <p>Wichtig: KEINE Preise (Datenschutz-Constraint, siehe {@link Position}). Die Kabel-Mengen
+ * sind grobe Richtwerte und vor Ort zu pruefen.
  */
 @ApplicationScoped
 public class StubResultGenerator {
 
+    /** Lennard-Vorgabe fuer die Demo: der Stub setzt immer 4 Stunden Arbeitszeit. */
+    private static final double STUB_ARBEITSDAUER_STUNDEN = 4.0;
+
     public ErgebnisKi forErstangebot(ProcessRequest request) {
         Angebotspositionen positionen = new Angebotspositionen(
-                List.of(new Position(
-                        "Fliesen verlegen",
-                        "Bodenfliesen im Bad verlegen, Feinsteinzeug 60x60",
-                        15.0,
-                        "m²")),
-                List.of(new Position(
-                        "Feinsteinzeug 60x60",
-                        "Großformatige Bodenfliese",
-                        15.0,
-                        "m²")),
-                List.of("Materialmengen vor Ort prüfen."));
-        return new ErgebnisKi(positionen, List.of(
-                "Bitte Materialfarbe und Fugenfarbe mit dem Kunden abstimmen."));
+                List.of(),
+                List.of(
+                        new Position(
+                                "Wallbox",
+                                "Wallbox zum Laden von Elektrofahrzeugen.",
+                                1.0,
+                                "Stück"),
+                        new Position(
+                                "Starkstromkabel NYM-J 5x6mm²",
+                                "Starkstrom-Zuleitung für die Versorgung der Wallbox.",
+                                10.0,
+                                "m"),
+                        new Position(
+                                "Netzwerkkabel Cat 7",
+                                "Datenleitung zur Anbindung der Wallbox.",
+                                10.0,
+                                "m"),
+                        new Position(
+                                "Leitungsschutzschalter C16",
+                                "Leitungsschutzschalter zur Absicherung der Wallbox im Verteiler.",
+                                1.0,
+                                "Stück")),
+                List.of("Leitungslängen vor Ort prüfen."));
+        return new ErgebnisKi(
+                positionen,
+                List.of("Wallbox-Modell und Ladeleistung mit dem Kunden abstimmen."),
+                STUB_ARBEITSDAUER_STUNDEN);
     }
 
     public ErgebnisKi forKorrektur(ProcessRequest request) {
         Angebotspositionen positionen = new Angebotspositionen(
+                List.of(),
                 List.of(
                         new Position(
-                                "Fliesen verlegen",
-                                "Bodenfliesen im Bad verlegen, Feinsteinzeug 60x60",
-                                15.0,
-                                "m²"),
+                                "Wallbox",
+                                "Wallbox zum Laden von Elektrofahrzeugen.",
+                                1.0,
+                                "Stück"),
                         new Position(
-                                "Sockelleisten setzen",
-                                "Wurde laut Korrekturschnipsel ergänzt",
-                                25.0,
-                                "m")),
-                List.of(
+                                "Starkstromkabel NYM-J 5x6mm²",
+                                "Starkstrom-Zuleitung für die Versorgung der Wallbox.",
+                                10.0,
+                                "m"),
                         new Position(
-                                "Feinsteinzeug 60x60",
-                                "Großformatige Bodenfliese",
-                                15.0,
-                                "m²"),
+                                "Netzwerkkabel Cat 7",
+                                "Datenleitung zur Anbindung der Wallbox.",
+                                10.0,
+                                "m"),
                         new Position(
-                                "Sockelleisten",
-                                "Passende Sockelleisten umlaufend",
-                                25.0,
-                                "m")),
-                List.of("Korrektur eingearbeitet — finale Mengen prüfen."));
-        return new ErgebnisKi(positionen, List.of(
-                "Sockelleisten ergänzt — bitte gewünschte Höhe bestätigen."));
+                                "Leitungsschutzschalter C16",
+                                "Leitungsschutzschalter zur Absicherung der Wallbox im Verteiler.",
+                                1.0,
+                                "Stück"),
+                        new Position(
+                                "FI-Schutzschalter Typ B",
+                                "Laut Korrekturschnipsel ergänzt — allstromsensitiver Personenschutz für die Wallbox.",
+                                1.0,
+                                "Stück")),
+                List.of("Korrektur eingearbeitet — finale Mengen vor Ort prüfen."));
+        return new ErgebnisKi(
+                positionen,
+                List.of("Zusätzlichen FI-Schutzschalter Typ B ergänzt — bitte bestätigen."),
+                STUB_ARBEITSDAUER_STUNDEN);
     }
 }

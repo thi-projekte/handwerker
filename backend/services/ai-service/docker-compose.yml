@@ -1,0 +1,74 @@
+version: '3.8'
+
+# ---------------------------------------------------------------------------
+# Standalone-Stack fuer den ai-service (Portainer / Repository-Deploy).
+#
+# - Nutzt das von der Backend-CI gebaute GHCR-Image (Tag = Branchname, z.B. sprint4).
+# - Der ai-service ist STATELESS (keine eigene DB).
+# - Er wird von der Process Engine per HTTP-Connector aufgerufen (POST /ai/process)
+#   und korreliert das Ergebnis (ergebnisKI-Message) per businessKey zurueck.
+# - Der Reverse-Proxy (Nginx Proxy Manager) routet eine Domain auf  ai-service:8081
+#   ueber das externe Netz "nginx-proxy-manager" -> daher KEIN ports:-Mapping noetig.
+#
+# Alle Werte sind ueber Portainer-Stack-Variablen ueberschreibbar. ZWINGEND zu setzen:
+#   MEGALLM_API_KEY   (geheim, niemals committen)
+# Pruefen/anpassen je nach Topologie:
+#   CAMUNDA_ENGINE_URL  -> denselben Wert wie der offer-service-Stack (dort PE_URL) nehmen
+# ---------------------------------------------------------------------------
+
+services:
+  ai-service:
+    image: ghcr.io/thi-projekte/handwerker/ai-service:${IMAGE_TAG:-sprint4}
+    container_name: ai-service
+    restart: unless-stopped
+    environment:
+      # Server-Port im Container. Der Reverse-Proxy zeigt auf ai-service:8081.
+      HTTP_PORT: "8081"
+
+      # ---- MegaLLM (LLM-Provider) ----
+      # API-Key ZWINGEND als Portainer-Stack-Variable setzen (kein Default => Pflicht).
+      MEGALLM_API_KEY: ${MEGALLM_API_KEY}
+      MEGALLM_API_URL: ${MEGALLM_API_URL:-https://ai.megallm.io/v1}
+      MEGALLM_MODEL: ${MEGALLM_MODEL:-gemini-3-flash-preview}
+      # Fallback-Modell: greift, wenn das Primaermodell endgueltig fehlschlaegt (z.B. die ganze
+      # Gemini-Familie liefert 503 "Resource overloaded"). Andere Modellfamilie -> von der
+      # Ueberlast unabhaengig. Explizit gesetzt, damit der Fallback garantiert aktiv ist.
+      MEGALLM_MODEL_FALLBACK: ${MEGALLM_MODEL_FALLBACK:-google-gemma-4-26b}
+
+      # ---- Process Engine (Camunda / CIB seven) ----
+      # Muss auf /engine-rest enden. Denselben Wert wie offer-service (PE_URL) verwenden.
+      # WICHTIG: interner Container-Name + Port 8080 (PE). NICHT host.docker.internal:8081 -
+      # das war der eigene ai-service-Port und in Prod nicht aufloesbar -> ergebnisKI
+      # konnte nie an Camunda zurueckgestellt werden, Prozesse haengen still am receiveTask.
+      CAMUNDA_ENGINE_URL: ${CAMUNDA_ENGINE_URL:-http://craftvoice-processengine:8080/engine-rest}
+
+      # ---- Catalog-Suche (LLM-Call 2) ----
+      # Mock=true matcht gegen 30 hartcodierte Artikel mit NUMERISCHEN IDs (z.B. 3004) -
+      # der echte catalog-service vergibt aber UUIDs => offer-service-Preis-Lookup scheitert,
+      # keine Preise im Frontend. Default daher false (echter Katalog ist live). Mock nur
+      # noch fuer lokale Demo ohne catalog-service via Env-Override aktivierbar.
+      CATALOG_MOCK_ENABLED: ${CATALOG_MOCK_ENABLED:-false}
+      CATALOG_SERVICE_URL: ${CATALOG_SERVICE_URL:-http://catalog-service:8080}
+
+      # ---- Keycloak / OIDC (technisches client_credentials-Token fuer die catalog-Suche) ----
+      # Der catalog-service verlangt ein JWT; der ai-service holt es sich als Keycloak-Client
+      # "ai-service". Das Secret ist ZWINGEND als Portainer-Stack-Variable zu setzen (geheim,
+      # NIE committen). Ohne gueltiges Secret: Token-Holen schlaegt fehl (unauthorized_client)
+      # -> catalog-Suche scheitert -> die async KI-Verarbeitung bricht ab -> Angebot haengt.
+      AI_SERVICE_OIDC_SECRET: ${AI_SERVICE_OIDC_SECRET}
+      # Defaults stimmen (modernes Keycloak OHNE /auth-Praefix). Nur bei abweichender Topologie
+      # ueberschreiben. Mit /auth liefert der Token-Endpoint 404.
+      KEYCLOAK_AUTH_SERVER_URL: ${KEYCLOAK_AUTH_SERVER_URL:-https://id-craftvoice.winfprojekt.de/realms/handwerker-realm}
+      AI_SERVICE_OIDC_CLIENT_ID: ${AI_SERVICE_OIDC_CLIENT_ID:-ai-service}
+
+    extra_hosts:
+      # Erlaubt host.docker.internal auch auf Linux-Hosts (Portainer-Server).
+      - "host.docker.internal:host-gateway"
+
+    networks:
+      - nginx-proxy-manager
+
+networks:
+  # Externes Netz des Nginx Proxy Managers - der Reverse-Proxy erreicht ai-service hierueber.
+  nginx-proxy-manager:
+    external: true

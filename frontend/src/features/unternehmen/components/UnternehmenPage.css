@@ -302,7 +302,7 @@ textarea.input-field {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
-    margine-bottom: 12px;
+    margin-bottom: 12px;
   }
 
   .employee-edit-button {
@@ -521,5 +521,63 @@ select.input-field option {
     color: #ffffff;
     border-color: transparent;
     box-shadow: 0 8px 20px rgba(255, 106, 0, 0.28);
+  }
+}
+
+/* User-Service Anbindung */
+.company-service-feedback {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 13px 16px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.company-service-feedback-success {
+  color: #64c878;
+  border: 1px solid rgba(100, 200, 120, 0.4);
+  background: rgba(100, 200, 120, 0.1);
+}
+
+.company-service-feedback-error {
+  color: #ff6b6b;
+  border: 1px solid rgba(255, 107, 107, 0.4);
+  background: rgba(255, 107, 107, 0.1);
+}
+
+.company-service-feedback-info {
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-divider);
+  background: var(--color-surface);
+}
+
+.company-service-load-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 120px;
+  color: var(--color-text-secondary);
+}
+
+.company-service-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.company-service-save-button {
+  width: 100%;
+}
+
+.company-service-save-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+@media (min-width: 640px) {
+  .company-service-save-button {
+    width: auto;
+    min-width: 260px;
   }
 }

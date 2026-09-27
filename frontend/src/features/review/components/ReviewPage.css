@@ -832,3 +832,163 @@
   padding: 2px 4px;
   text-align: right;
 }
+
+/* =========================
+   ReviewPage – Ergänzungen für API-Integration
+   ========================= */
+
+/* ── KI-Hinweise ── */
+.review-ki-hinweise {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.review-ki-hinweis-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(255, 190, 0, 0.06);
+  border: 1px solid rgba(255, 190, 0, 0.2);
+  font-size: 13px;
+  color: var(--color-text-primary);
+  line-height: 1.5;
+}
+
+.review-ki-hinweis-icon {
+  flex-shrink: 0;
+  font-size: 15px;
+  margin-top: 1px;
+}
+
+/* ── Position hinzufügen Button ── */
+.review-add-position-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px dashed var(--color-divider);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
+}
+
+.review-add-position-btn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+/* ── Gesamtpreis ── */
+.review-gesamtpreis {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+}
+
+.review-gesamtpreis-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.review-gesamtpreis-value {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--color-accent);
+}
+
+/* ── Aktionen ── */
+.review-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+@media (min-width: 768px) {
+  .review-actions {
+    flex-direction: row;
+  }
+
+  .review-actions .button-primary,
+  .review-secondary-btn {
+    flex: 1;
+  }
+}
+
+.review-secondary-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid var(--color-divider);
+  background: transparent;
+  color: var(--color-text-primary);
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.review-secondary-btn:hover {
+  border-color: var(--color-accent);
+}
+
+/* ── Notiz-Textarea ── */
+.review-notiz-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--color-divider);
+  background: transparent;
+  color: var(--color-text-primary);
+  font-size: 14px;
+  line-height: 1.5;
+  resize: vertical;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.review-notiz-input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+/* ── Loader (wiederverwendet von LadenPage) ── */
+.loader {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.loader span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  animation: bounce 0.6s infinite alternate;
+}
+
+.loader span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.loader span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes bounce {
+  to {
+    transform: translateY(-8px);
+    opacity: 0.6;
+  }
+}

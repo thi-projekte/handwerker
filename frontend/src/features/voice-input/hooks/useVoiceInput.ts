@@ -1,11 +1,18 @@
 import { useRef, useState } from "react";
 import { startMicrophone } from "../services/microphoneService";
+import { getToken } from "@/services/authService";
+
+const OFFER_SERVICE_URL =
+  import.meta.env.VITE_API_URL ||
+  "https://offerservice-craftvoice.winfprojekt.de";
 
 export const useVoiceInput = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [volume, setVolume] = useState(0);
   const [transcript, setTranscript] = useState("");
   const [audioBlobUrl, setAudioBlobUrl] = useState<string | null>(null);
+  const [audioSegments, setAudioSegments] = useState<string[]>([]);
+  const [audioBlobs, setAudioBlobs] = useState<Blob[]>([]);
   const [state, setState] = useState<
     "idle" | "recording" | "review" | "finished"
   >("idle");
@@ -35,6 +42,7 @@ export const useVoiceInput = () => {
     const dataArray = new Uint8Array(analyser.frequencyBinCount);
 
     const update = () => {
+      if (!analyserRef.current) return;
       analyser.getByteFrequencyData(dataArray);
       const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
 
@@ -62,8 +70,6 @@ export const useVoiceInput = () => {
 
       const url = URL.createObjectURL(blob);
       setAudioBlobUrl(url);
-
-      // 👉 optional: hier später Backend Upload möglich
       console.log("Audio Blob ready:", blob);
     };
 
@@ -77,8 +83,21 @@ export const useVoiceInput = () => {
       cancelAnimationFrame(animationRef.current);
     }
 
-    if (mediaRecorderRef.current?.state === "recording") {
-      mediaRecorderRef.current.pause();
+    if (!mediaRecorderRef.current) return;
+
+    // 🔥 WICHTIG: Den Handler ZUERST definieren, BEVOR .stop() aufgerufen wird!
+    mediaRecorderRef.current.onstop = () => {
+      const url = createSegment();
+      setAudioSegments((prev) => [...prev, url]);
+    };
+
+    if (mediaRecorderRef.current.state === "recording") {
+      mediaRecorderRef.current.stop();
+    }
+
+    // AudioContext aufräumen / pausieren
+    if (audioContextRef.current && audioContextRef.current.state !== "closed") {
+      audioContextRef.current.close();
     }
 
     setIsRecording(false);
@@ -87,74 +106,113 @@ export const useVoiceInput = () => {
   };
 
   // Aufnahme fortsetzen
-  const resume = () => {
-    if (mediaRecorderRef.current?.state === "paused") {
-      mediaRecorderRef.current.resume();
-    }
+  const resume = async () => {
+    const stream = await startMicrophone();
 
-    // Visualizer neu starten
-    if (analyserRef.current) {
-      const analyser = analyserRef.current;
+    const mediaRecorder = new MediaRecorder(stream);
+    mediaRecorderRef.current = mediaRecorder;
+    chunksRef.current = [];
 
-      const dataArray = new Uint8Array(
-        analyser.frequencyBinCount
-      );
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data.size > 0) chunksRef.current.push(e.data);
+    };
 
-      const update = () => {
-        analyser.getByteFrequencyData(dataArray);
+    // Auch hier: Erst definieren, dann starten
+    mediaRecorder.onstop = () => {
+      const url = createSegment();
+      setAudioSegments((prev) => [...prev, url]);
+    };
 
-        const avg =
-          dataArray.reduce((a, b) => a + b, 0) /
-          dataArray.length;
+    // Visualisierung für die Fortsetzung neu starten
+    const audioContext = new AudioContext();
+    const analyser = audioContext.createAnalyser();
+    const source = audioContext.createMediaStreamSource(stream);
+    source.connect(analyser);
+    analyser.fftSize = 256;
+    audioContextRef.current = audioContext;
+    analyserRef.current = analyser;
+    const dataArray = new Uint8Array(analyser.frequencyBinCount);
 
-        setVolume(avg);
+    const update = () => {
+      analyser.getByteFrequencyData(dataArray);
+      const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+      setVolume(avg);
+      animationRef.current = requestAnimationFrame(update);
+    };
+    update();
 
-        animationRef.current =
-          requestAnimationFrame(update);
-      };
-
-      update();
-    }
-
+    mediaRecorder.start();
     setIsRecording(true);
     setState("recording");
   };
 
-  // Aufnahme endgültig beenden und Blob erstellen
+  // Aufnahme endgültig beenden
   const finalizeRecording = () => {
-    if (animationRef.current) {
-      cancelAnimationFrame(animationRef.current);
+    if (mediaRecorderRef.current?.state === "recording") {
+      // Falls finalize direkt aus der Aufnahme aufgerufen wird,
+      // wollen wir das Haupt-onstop-Verhalten aus 'start' nutzen
+      mediaRecorderRef.current.stop();
     }
-
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-    }
-
-    if (!mediaRecorderRef.current) return;
-
-    mediaRecorderRef.current.onstop = () => {
-      const blob = new Blob(chunksRef.current, {
-        type: "audio/webm",
-      });
-
-      const url = URL.createObjectURL(blob);
-
-      setAudioBlobUrl(url);
-
-      setState("finished");
-    };
-
-    mediaRecorderRef.current.stop();
-
-    mediaRecorderRef.current.stream
-      .getTracks()
-      .forEach((track) => track.stop());
-
-    setIsRecording(false);
-    setVolume(0);
+    setState("review");
   };
 
-  // 🔀 Schaltet zwischen Start und Stop um
+  const createSegment = () => {
+    const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+    // Blob für spätere Transkription speichern
+    setAudioBlobs((prev) => [...prev, blob]);
+    return URL.createObjectURL(blob);
+  };
+
+  /**
+   * Merged alle aufgenommenen Segmente zu einem einzigen Blob,
+   * schickt ihn an /speech-capture/transcribe und gibt das Transkript zurück.
+   */
+  const transcribeAudio = async (): Promise<string> => {
+    // Aktuellen (noch nicht gestoppten) Chunk ebenfalls einbeziehen
+    const currentBlob =
+      chunksRef.current.length > 0
+        ? new Blob(chunksRef.current, { type: "audio/webm" })
+        : null;
+
+    const allBlobs = currentBlob
+      ? [...audioBlobs, currentBlob]
+      : [...audioBlobs];
+
+    if (allBlobs.length === 0) {
+      throw new Error("Keine Audioaufnahme vorhanden.");
+    }
+
+    // Alle Segmente zu einem Blob zusammenführen
+    const mergedBlob = new Blob(allBlobs, { type: "audio/webm" });
+
+    const formData = new FormData();
+    formData.append("audio", mergedBlob, "aufnahme.webm");
+
+    // Auth-Token mitschicken — der Endpunkt ist geschützt (sonst 401).
+    // WICHTIG: Content-Type NICHT setzen, damit der Browser die multipart-
+    // Boundary selbst ergänzt.
+    const token = await getToken();
+
+    const response = await fetch(
+      `${OFFER_SERVICE_URL}/speech-capture/transcribe`,
+      {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      },
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `Transkription fehlgeschlagen (${response.status}): ${errorText}`,
+      );
+    }
+
+    const data = await response.json();
+    return data.transkript as string;
+  };
+
   const toggle = () => {
     if (state === "idle") {
       start();
@@ -168,7 +226,16 @@ export const useVoiceInput = () => {
   const reset = () => {
     setState("idle");
     setTranscript("");
+    setAudioSegments([]);
+    setAudioBlobs([]);
     setAudioBlobUrl(null);
+    if (animationRef.current) cancelAnimationFrame(animationRef.current);
+    // Nur schließen, wenn noch nicht geschlossen — sonst wirft der Browser
+    // "Can't close an AudioContext twice" (z.B. wenn stop() ihn bereits schloss).
+    if (audioContextRef.current && audioContextRef.current.state !== "closed") {
+      audioContextRef.current.close();
+    }
+    audioContextRef.current = null;
   };
 
   return {
@@ -177,11 +244,13 @@ export const useVoiceInput = () => {
     toggle,
     transcript,
     setTranscript,
+    audioSegments,
     audioBlobUrl,
     state,
     reset,
     resume,
     pause,
     finalizeRecording,
+    transcribeAudio,
   };
 };

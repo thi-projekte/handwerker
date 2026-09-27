@@ -1,8 +1,12 @@
 package de.winfprojekt.craftvoice.offerservice.dashboard;
 
+import de.winfprojekt.craftvoice.offerservice.offer.OfferPosition;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.security.TestSecurity;
+import io.quarkus.test.security.oidc.Claim;
+import io.quarkus.test.security.oidc.OidcSecurity;
 import org.junit.jupiter.api.Test;
 
 import de.winfprojekt.craftvoice.offerservice.offer.Offer;
@@ -38,8 +42,8 @@ class DashboardResourceTest {
     @jakarta.transaction.Transactional
     Offer createOffer(String status) {
         Offer offer = new Offer();
-        offer.customerId = 1L;
-        offer.handwerkerId = 99L;
+        offer.customerId = "1";
+        offer.handwerkerId = "99";
         offer.businessKey = "angebot-" + UUID.randomUUID();
         offer.annahmeToken = UUID.randomUUID().toString();
         offer.status = status;
@@ -58,8 +62,8 @@ class DashboardResourceTest {
         final long[] offerId = new long[1];
         QuarkusTransaction.requiringNew().run(() -> {
             Offer offer = new Offer();
-            offer.customerId = 1L;
-            offer.handwerkerId = 99L;
+            offer.customerId = "1";
+            offer.handwerkerId = "99";
             offer.businessKey = "angebot-" + UUID.randomUUID();
             offer.annahmeToken = UUID.randomUUID().toString();
             offer.status = Offer.STATUS_VERSENDET;
@@ -98,6 +102,10 @@ class DashboardResourceTest {
      * Kein Feld darf fehlen (JSON-Vollständigkeit).
      */
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void shouldReturn200WithAllFieldsPresent() {
         given()
                 .when()
@@ -124,6 +132,10 @@ class DashboardResourceTest {
      * Rechnungsfelder müssen immer 0 liefern — kein Fehler, auch ohne Rechnungs-Service.
      */
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void shouldReturnZeroForAllInvoiceFields() {
         given()
                 .when()
@@ -139,6 +151,10 @@ class DashboardResourceTest {
      * GET /dashboard darf niemals einen 5xx-Fehler zurückgeben.
      */
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void shouldNeverReturn500() {
         given()
                 .when()
@@ -155,6 +171,10 @@ class DashboardResourceTest {
      * ohneRueckmeldung zählt nur VERSENDET-Angebote.
      */
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void shouldCountOhneRueckmeldungCorrectly() {
         // Baseline
         int vorher = given().get("/dashboard").then().extract().path("ohneRueckmeldung");
@@ -173,6 +193,10 @@ class DashboardResourceTest {
      * mitRueckmeldung zählt ANGENOMMEN + ABGELEHNT zusammen.
      */
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void shouldCountMitRueckmeldungCorrectly() {
         int vorher = given().get("/dashboard").then().extract().path("mitRueckmeldung");
 
@@ -190,6 +214,10 @@ class DashboardResourceTest {
      * nichtFertiggestellt zählt ERFASST + IN_BEARBEITUNG + KI_FERTIG.
      */
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void shouldCountNichtFertiggestelltCorrectly() {
         int vorher = given().get("/dashboard").then().extract().path("nichtFertiggestellt");
 
@@ -208,6 +236,10 @@ class DashboardResourceTest {
      * angeboteGesamt zählt alle Angebote unabhängig vom Status.
      */
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void shouldCountAngeboteGesamtForAllStatuses() {
         int vorher = given().get("/dashboard").then().extract().path("angeboteGesamt");
 
@@ -230,6 +262,10 @@ class DashboardResourceTest {
      * letzteAktivitaeten ist immer eine Liste (nicht null), auch bei leerer Historie.
      */
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void shouldReturnEmptyListForAktivitaetenWhenNoHistory() {
         given()
                 .when()
@@ -244,6 +280,10 @@ class DashboardResourceTest {
      * mit den erwarteten Feldern.
      */
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void shouldIncludeStatusHistoryInAktivitaeten() {
         Offer offer = createOffer(Offer.STATUS_ERFASST);
         addStatusHistory(offer, Offer.STATUS_IN_BEARBEITUNG);
@@ -265,6 +305,10 @@ class DashboardResourceTest {
      * letzteAktivitaeten enthält maximal 10 Einträge (LIMIT).
      */
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void shouldLimitAktivitaetenToTen() {
         Offer offer = createOffer(Offer.STATUS_ERFASST);
         // 12 Statuswechsel anlegen
@@ -288,6 +332,10 @@ class DashboardResourceTest {
      * aufmerksamkeitErforderlich ist immer eine Liste (nicht null).
      */
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void shouldReturnEmptyListForAufmerksamkeitWhenNoneStale() {
         given()
                 .when()
@@ -302,6 +350,10 @@ class DashboardResourceTest {
      * muss in aufmerksamkeitErforderlich erscheinen.
      */
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void shouldIncludeStaleVersendetOfferInAufmerksamkeit() {
         Offer stale = createStaleVersendetOffer(15);
 
@@ -321,6 +373,10 @@ class DashboardResourceTest {
      * darf NICHT in aufmerksamkeitErforderlich erscheinen.
      */
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void shouldNotIncludeFreshVersendetOfferInAufmerksamkeit() {
         Offer frisch = createOffer(Offer.STATUS_VERSENDET);
 
@@ -338,6 +394,10 @@ class DashboardResourceTest {
      * Prüft, dass die monatliche Angebotsübersicht korrekt gezählt wird.
      */
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     void shouldCalculateAngebotsuebersichtCorrectly() {
         java.time.YearMonth currentMonth = java.time.YearMonth.now();
         String currentMonthName = getGermanMonthAbbreviation(currentMonth.getMonthValue());
@@ -359,6 +419,65 @@ class DashboardResourceTest {
                 .statusCode(200)
                 .body("angebotsuebersicht.find { it.month == '" + currentMonthName + "' }.angebote", equalTo(baseline + 1));
     }
+
+    @Test
+    @TestSecurity(user = "owner-99", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
+    void dashboard_shouldOnlyReturnStatsForCurrentOwner() {
+
+        QuarkusTransaction.requiringNew().run(() -> {
+            OfferStatusHistory.deleteAll();
+            OfferPosition.deleteAll();
+            Offer.deleteAll();
+        });
+
+        QuarkusTransaction.requiringNew().run(() -> {
+            Offer ownOffer1 = new Offer();
+            ownOffer1.businessKey = "angebot-" + UUID.randomUUID();
+            ownOffer1.customerId = "1";
+            ownOffer1.handwerkerId = "99";
+            ownOffer1.status = Offer.STATUS_VERSENDET;
+            ownOffer1.createdAt = LocalDateTime.now();
+            ownOffer1.persist();
+
+            Offer ownOffer2 = new Offer();
+            ownOffer2.businessKey = "angebot-" + UUID.randomUUID();
+            ownOffer2.customerId = "2";
+            ownOffer2.handwerkerId = "99";
+            ownOffer2.status = Offer.STATUS_ANGENOMMEN;
+            ownOffer2.createdAt = LocalDateTime.now();
+            ownOffer2.persist();
+
+            Offer otherOffer = new Offer();
+            otherOffer.businessKey = "angebot-" + UUID.randomUUID();
+            otherOffer.customerId = "3";
+            otherOffer.handwerkerId = "123";
+            otherOffer.status = Offer.STATUS_VERSENDET;
+            otherOffer.createdAt = LocalDateTime.now();
+            otherOffer.persist();
+        });
+
+        given()
+                .when()
+                .get("/dashboard")
+                .then()
+                .statusCode(200)
+                .body("angeboteGesamt", equalTo(2))
+                .body("ohneRueckmeldung", equalTo(1))
+                .body("mitRueckmeldung", equalTo(1));
+    }
+
+    @Test
+    void dashboard_shouldRejectUnauthenticatedUser() {
+        given()
+                .when()
+                .get("/dashboard")
+                .then()
+                .statusCode(401);
+    }
+
 
     private String getGermanMonthAbbreviation(int month) {
         switch (month) {

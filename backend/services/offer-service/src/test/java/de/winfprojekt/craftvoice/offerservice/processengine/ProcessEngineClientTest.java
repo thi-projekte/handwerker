@@ -12,6 +12,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 /**
@@ -40,7 +41,7 @@ class ProcessEngineClientTest {
                 false
         );
 
-        when(restClient.sendMessage(payload))
+        when(restClient.sendMessage(any(), any()))
                 .thenThrow(new RuntimeException("PE down"));
 
         assertThrows(ProcessEngineException.class, () ->

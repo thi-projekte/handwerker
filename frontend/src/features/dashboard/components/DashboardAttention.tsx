@@ -1,43 +1,48 @@
 import { StatusBadge } from "./StatusBadge";
+import { DashboardStatsResponse } from "@/data/api/dashboardApi";
 
-const attentionOffers = [
-  {
-    id: 1,
-    customer: "Müller GmbH",
-    issue: "Keine Rückmeldung seit 14 Tagen",
-    status: "offen",
-  },
-  {
-    id: 2,
-    customer: "Elektro Kaiser",
-    issue: "Angebot nicht fertiggestellt",
-    status: "unfertig",
-  },
-];
+type Props = {
+  data: DashboardStatsResponse;
+};
 
-export const DashboardAttention = () => {
+export const DashboardAttention = ({ data }: Props) => {
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return "heute";
+    if (diffDays === 1) return "gestern";
+    return `vor ${diffDays} Tagen`;
+  };
+
   return (
     <div className="dashboard-attention">
-
       <div className="section-header">
         <h2>Benötigt Aufmerksamkeit</h2>
       </div>
 
-      <div className="attention-list">
-        {attentionOffers.map((offer) => (
-          <div className="attention-card" key={offer.id}>
+      {data.aufmerksamkeitErforderlich.length > 0 ? (
+        <div className="attention-list">
+          {data.aufmerksamkeitErforderlich.map((offer) => (
+            <div className="attention-card" key={offer.offerId}>
+              <div>
+                <strong>{offer.businessKey}</strong>
+                <p>Keine Rückmeldung seit {formatDate(offer.versendetAm)}</p>
+              </div>
 
-            <div>
-              <strong>{offer.customer}</strong>
-              <p>{offer.issue}</p>
+              <StatusBadge status="offen" />
             </div>
-
-            <StatusBadge status={offer.status} />
-
-          </div>
-        ))}
-      </div>
-
+          ))}
+        </div>
+      ) : (
+        <div className="attention-list">
+          <p style={{ color: "#666", textAlign: "center", padding: "1rem" }}>
+            Keine Angebote benötigen Aufmerksamkeit
+          </p>
+        </div>
+      )}
     </div>
   );
 };

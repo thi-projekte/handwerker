@@ -13,6 +13,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static org.hibernate.query.Page.page;
+
 /**
  * Service zur Berechnung von Dashboard-Aggregationskennzahlen.
  *
@@ -40,20 +42,29 @@ public class DashboardService {
      * @return befülltes {@link DashboardStats}-Objekt; alle Felder sind != null
      */
     @Transactional
-    public DashboardStats getDashboardStats() {
+    public DashboardStats getDashboardStats(String handwerkerId) {
         DashboardStats stats = new DashboardStats();
 
         // ── Angebots-Kacheln ─────────────────────────────────────────────────
 
-        stats.angeboteGesamt = Offer.count();
+        stats.angeboteGesamt = Offer.count(
+                "handwerkerId = ?1",
+                handwerkerId
+        );
 
-        stats.ohneRueckmeldung = Offer.count("status = 'VERSENDET'");
+        stats.ohneRueckmeldung = Offer.count(
+                "handwerkerId = ?1 AND status = ?2",
+                handwerkerId,
+                "VERSENDET"
+        );
 
         stats.mitRueckmeldung = Offer.count(
-                "status IN ('ANGENOMMEN', 'ABGELEHNT')");
+                "handwerkerId = ?1 AND status IN ('ANGENOMMEN', 'ABGELEHNT')",
+                handwerkerId);
 
         stats.nichtFertiggestellt = Offer.count(
-                "status IN ('ERFASST', 'IN_BEARBEITUNG', 'KI_FERTIG', 'KI_BEARBEITUNG_ABGESCHLOSSEN')");
+                "handwerkerId = ?1 AND status IN ('ERFASST', 'IN_BEARBEITUNG', 'KI_FERTIG', 'KI_BEARBEITUNG_ABGESCHLOSSEN')",
+                handwerkerId);
 
         // ── Rechnungs-Kacheln (vorerst 0 — kein Rechnungs-Service) ──────────
 
@@ -65,7 +76,11 @@ public class DashboardService {
         // Die 10 neuesten Statuswechsel, absteigend nach zeitpunkt
 
         List<OfferStatusHistory> histories = OfferStatusHistory
-                .findAll(Sort.by("zeitpunkt").descending())
+                .find(
+                        "offer.handwerkerId = ?1",
+                        Sort.by("zeitpunkt").descending(),
+                        handwerkerId
+                )
                 .page(0, AKTIVITAETEN_LIMIT)
                 .list();
 
@@ -86,12 +101,18 @@ public class DashboardService {
 
         LocalDateTime cutoff = LocalDateTime.now().minusDays(ATTENTION_TAGE);
 
-        List<Offer> activeVersendetOffers = Offer.find("status = 'VERSENDET'").list();
+        List<Offer> activeVersendetOffers = Offer.find(
+                "handwerkerId = ?1 AND status = ?2",
+                handwerkerId,
+                "VERSENDET").list();
 
         stats.aufmerksamkeitErforderlich = activeVersendetOffers.stream()
                 .map(o -> {
                     OfferStatusHistory latestVersendet = OfferStatusHistory
-                            .find("offer = ?1 AND status = 'VERSENDET'", Sort.by("zeitpunkt").descending(), o)
+                            .find("offer = ?1 AND status = ?2",
+                                    Sort.by("zeitpunkt").descending(),
+                                    o,
+                                    "VERSENDET")
                             .firstResult();
 
                     if (latestVersendet != null && latestVersendet.zeitpunkt.isBefore(cutoff)) {
@@ -114,7 +135,10 @@ public class DashboardService {
             LocalDateTime start = ym.atDay(1).atStartOfDay();
             LocalDateTime end = ym.atEndOfMonth().atTime(23, 59, 59, 999999999);
 
-            long count = Offer.count("createdAt >= ?1 AND createdAt <= ?2", start, end);
+            long count = Offer.count( "handwerkerId = ?1 AND createdAt >= ?2 AND createdAt < ?3",
+                    handwerkerId,
+                    start,
+                    end);
 
             ChartDataDTO dto = new ChartDataDTO();
             dto.month = getGermanMonthAbbreviation(ym.getMonthValue());

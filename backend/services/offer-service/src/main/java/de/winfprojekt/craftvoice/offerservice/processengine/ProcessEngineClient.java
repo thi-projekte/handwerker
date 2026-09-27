@@ -1,12 +1,16 @@
 package de.winfprojekt.craftvoice.offerservice.processengine;
 
 import de.winfprojekt.craftvoice.offerservice.processengine.dto.PeMessagePayload;
+import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import jakarta.ws.rs.core.Response;
 
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import static java.lang.Thread.sleep;
 
 /**
  * Client zur Kommunikation mit der Process Engine.
@@ -18,15 +22,36 @@ public class ProcessEngineClient {
         @RestClient
         ProcessEngineRestClient client;
 
+        @Inject
+        jakarta.ws.rs.core.HttpHeaders httpHeaders;
+
+        private String getActiveAuthHeader() {
+                try {
+                        return httpHeaders.getHeaderString(jakarta.ws.rs.core.HttpHeaders.AUTHORIZATION);
+                } catch (Exception e) {
+                        return null;
+                }
+        }
+
         /**
          * Methode, die für das Aufrufen des ProcessEngineRestClients zuständig ist und auch dessen Fehlerbehandlug übernimmt.
          *
          * @param payload Inhalt, der an die PE geschickt wird
          */
         public void sendMessage(PeMessagePayload payload) {
+                sendMessage(null, payload);
+        }
 
+        /**
+         * Methode, die für das Aufrufen des ProcessEngineRestClients mit manuellem Auth-Header zuständig ist.
+         *
+         * @param authHeader manueller Authorization-Header (z.B. Bearer Token)
+         * @param payload Inhalt, der an die PE geschickt wird
+         */
+        public void sendMessage(String authHeader, PeMessagePayload payload) {
                 try {
-                        Response response = client.sendMessage(payload);
+                        String auth = authHeader != null ? authHeader : getActiveAuthHeader();
+                        Response response = client.sendMessage(auth, payload);
 
                         if (response.getStatus() >= 400) {
                                 throw new ProcessEngineException(
@@ -37,7 +62,7 @@ public class ProcessEngineClient {
                         throw e;
                 } catch (Exception e) {
                         throw new ProcessEngineException(
-                                "Kommunikation mit der Process Engine fehlgeschlagen",
+                                "Kommunikation mit der Process Engine failed",
                                 e);
                 }
         }
@@ -51,15 +76,15 @@ public class ProcessEngineClient {
          * @param sprachschnipsel erfasster Sprachschnipsel zur Anfrage
          * @param vorlage         optionale Angebotsvorlage
          */
-        public void sendAngebotPayload(String businessKey, Long customerId, Long handwerkerId, String sprachschnipsel, Object vorlage) {
+        public void sendAngebotPayload(String businessKey, String customerId, String handwerkerId, String sprachschnipsel, Object vorlage) {
 
-                Map<String, Object> kundendaten = Map.of(
+                Map<String, Object> customerIdMap = Map.of(
                                 "value", customerId,
-                                "type", "Long");
+                                "type", "String");
 
                 Map<String, Object> handwerkerdaten = Map.of(
                                 "value", handwerkerId,
-                                "type", "Long");
+                                "type", "String");
 
                 Map<String, Object> sprachschnipselMap = Map.of(
                                 "value", sprachschnipsel,
@@ -70,7 +95,7 @@ public class ProcessEngineClient {
                 vorlageMap.put("type", "Json");
 
                 Map<String, Object> processVariables = Map.of(
-                                "kundendaten", kundendaten,
+                                "customerId", customerIdMap,
                                 "handwerkerId", handwerkerdaten,
                                 "sprachschnipsel", sprachschnipselMap,
                                 "vorlage", vorlageMap);
@@ -86,27 +111,143 @@ public class ProcessEngineClient {
         }
 
         /**
-         * Sendet das KI-Ergebnis an die Process Engine.
+         * Korreliert den erstellten Angebotsentwurf zurück an die Process Engine.
+         * Der Prozess wartet an Event_10bgkb0 auf die Nachricht "angebotsentwurf".
          *
-         * @param businessKey          businessKey des Angebots
-         * @param ergebnisKiJsonString strukturierteAngebotspositionen und
-         *                             korrekturvorschlaege als JSON-String
+         * @param businessKey         businessKey des Angebots
+         * @param angebotsentwurfJson das serialisierte OfferResponse-DTO als JSON-String
          */
-        public void sendAiResult(String businessKey, String ergebnisKiJsonString) {
+        public void sendAngebotsentwurf(String businessKey, String angebotsentwurfJson) {
+
+                Log.infof(
+                        "Sende PE-Nachricht: messageName=%s, businessKey=%s",
+                        "angebotsentwurf",
+                        businessKey
+                );
 
                 Map<String, Object> processVariables = Map.of(
-                        "ergebnisKI", Map.of(
-                                "value", ergebnisKiJsonString,
-                                "type", "String"));
-
+                        "angebotsentwurf", Map.of(
+                                "value", angebotsentwurfJson,
+                                "type", "Json"));
 
                 PeMessagePayload payload = new PeMessagePayload(
-                        "ergebnisKI",
+                        "angebotsentwurf",
                         businessKey,
                         processVariables,
                         false
                 );
 
+                int maxAttempts = 2;
+
+                for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+                        try {
+                                sendMessage(payload);
+                                return;
+                        } catch (ProcessEngineException exception) {
+                                if (attempt == maxAttempts) {
+                                        throw exception;
+                                }
+
+                                try {
+                                        TimeUnit.SECONDS.sleep(2);
+                                } catch (InterruptedException interruptedException) {
+                                        Thread.currentThread().interrupt();
+                                        throw new ProcessEngineException(
+                                                "Retry wurde unterbrochen",
+                                                interruptedException
+                                        );
+                                }
+                        }
+                }
+        }
+        /**
+         * Korreliert die Nachricht "angebotAngenommen" zurück an die Process Engine.
+         * Wird aufgerufen, wenn der Kunde das Angebot angenommen hat.
+         * Die PE setzt den Prozess fort und ruft die Rechnungserstellung auf.
+         *
+         * @param businessKey businessKey des Angebots
+         */
+        public void sendAngebotAngenommen(String businessKey) {
+
+                PeMessagePayload payload = new PeMessagePayload(
+                        "angebotAngenommen",
+                        businessKey,
+                        Map.of(),
+                        false
+                );
+
                 sendMessage(payload);
+        }
+
+        /**
+         * Korreliert die Nachricht "angebotAbgelehnt" zurück an die Process Engine.
+         * Wird aufgerufen, wenn der Kunde das Angebot abgelehnt hat.
+         * Die PE beendet den Prozess.
+         *
+         * @param businessKey businessKey des Angebots
+         */
+        public void sendAngebotAbgelehnt(String businessKey) {
+
+                PeMessagePayload payload = new PeMessagePayload(
+                        "angebotAbgelehnt",
+                        businessKey,
+                        Map.of(),
+                        false
+                );
+
+                sendMessage(payload);
+        }
+
+        /**
+         * Sendet den erstellten Rechnungsentwurf zurück an die Process Engine.
+         * Die PE wartet auf diese Nachricht, um anschließend den Document Service
+         * zur endgültigen PDF-Generierung aufzurufen.
+         *
+         * @param businessKey         businessKey des Angebots
+         * @param rechnungsentwurfJson das serialisierte InvoiceResponse-DTO als JSON-String
+         * @param authHeader          Authorization-Header der PE-Anfrage
+         */
+        public void sendRechnungsentwurf(String businessKey, String rechnungsentwurfJson, String authHeader) {
+
+                Log.infof(
+                        "Sende PE-Nachricht: messageName=%s, businessKey=%s",
+                        "rechnungsentwurf",
+                        businessKey
+                );
+
+                Map<String, Object> processVariables = Map.of(
+                        "rechnungsentwurf", Map.of(
+                                "value", rechnungsentwurfJson,
+                                "type", "Json"));
+
+                PeMessagePayload payload = new PeMessagePayload(
+                        "rechnungsentwurf",
+                        businessKey,
+                        processVariables,
+                        false
+                );
+
+                int maxAttempts = 2;
+
+                for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+                        try {
+                                sendMessage(authHeader, payload);
+                                return;
+                        } catch (ProcessEngineException exception) {
+                                if (attempt == maxAttempts) {
+                                        throw exception;
+                                }
+
+                                try {
+                                        TimeUnit.SECONDS.sleep(2);
+                                } catch (InterruptedException interruptedException) {
+                                        Thread.currentThread().interrupt();
+                                        throw new ProcessEngineException(
+                                                "Retry wurde unterbrochen",
+                                                interruptedException
+                                        );
+                                }
+                        }
+                }
         }
 }

@@ -16,9 +16,11 @@ import java.util.regex.Pattern;
 
 /**
  * Baut System-Prompt und User-Nachricht fuer LLM-Call 2 (Produktauswahl) und parst die
- * Antwort. Prompt und Parse-Logik sind <b>wortgleich</b> aus der Evaluation
- * ({@code eval/call2-llm-eval.mjs}) uebernommen — damit das Produktionsverhalten dem
- * entspricht, was gemessen wurde (alle Modelle 16/16).
+ * Antwort. Basis ist die Evaluation ({@code eval/call2-llm-eval.mjs}, alle Modelle 16/16 gegen
+ * den Mock). Gegen den ECHTEN Katalog ({@code eval/real-catalog-call2-eval.mjs}) ergaenzt:
+ * eine Regel fuer Hauptprodukt-mit-Zubehoer-Positionen — ohne sie lehnte das Modell z.B. eine
+ * "Steckdose inkl. Rahmen und Abdeckung" trotz 15 passender Steckdosen mit KEIN_TREFFER ab
+ * (gemessen 0/3 -> 3/3 mit Regel; Gesamt-Trefferquote 6/8 -> 7/8).
  *
  * <p>Die Kandidaten werden <b>neutral nach articleNumber sortiert</b> praesentiert, damit das
  * Modell nicht einfach "Rang 1" abschreibt. Es muss genau eine articleNumber waehlen oder
@@ -37,11 +39,18 @@ public class Call2PromptBuilder {
             + "gar nicht dabei), dann waehle NICHT erzwungen, sondern gib articleNumber = \"KEIN_TREFFER\".\n"
             + "Die articleNumber MUSS exakt aus der Kandidatenliste stammen (oder \"KEIN_TREFFER\"). Preise sind "
             + "nicht angegeben und spielen keine Rolle.\n"
+            + "Beschreibt die Position ein Hauptprodukt mit Zubehoer (z.B. 'Steckdose inklusive Rahmen und "
+            + "Abdeckung'), waehle den Kandidaten fuer das HAUPTPRODUKT; fehlendes Zubehoer (Rahmen, Abdeckung, "
+            + "Wippe) ist KEIN Grund fuer KEIN_TREFFER.\n"
             + "Antworte AUSSCHLIESSLICH mit JSON: {\"articleNumber\": \"<...>\", \"begruendung\": \"<kurz, 1 Satz>\"}";
 
     private static final Pattern FENCE_START = Pattern.compile("(?s)^\\s*```(?:json)?\\s*");
     private static final Pattern FENCE_END = Pattern.compile("(?s)\\s*```\\s*$");
-    private static final Pattern ARTICLE = Pattern.compile("[A-Z]{2,5}-\\d+");
+    // Artikelnummern des echten catalog-service sind LETTERS-SEGMENT(-SEGMENT)*, z.B.
+    // SCH-JUNG-SD, KAB-NYM315, INS-KAI-GD2-25 (nicht nur das Mock-Format ELE-3004). Das
+    // alte Muster "[A-Z]{2,5}-\\d+" matchte NUR Mock-Nummern -> bei echten Nummern im
+    // JSON-Fallback/der Normalisierung wurde nichts erkannt.
+    private static final Pattern ARTICLE = Pattern.compile("[A-Z]{2,6}(?:-[A-Z0-9]+)+");
     private static final Pattern KEIN_TREFFER_TEXT =
             Pattern.compile("^(kein[_\\s-]?treffer|none|null|keiner?)$", Pattern.CASE_INSENSITIVE);
 

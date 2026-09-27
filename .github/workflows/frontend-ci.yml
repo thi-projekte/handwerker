@@ -77,16 +77,20 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}/frontend
           tags: |
-            # Snapshot-/Dev-Tags
-            type=ref,event=branch
+            type=raw,value=latest,enable=${{ github.ref_name == 'main' }}
+            type=raw,value=sprint4,enable=${{ github.ref_name == 'sprint4' }}
             type=sha,prefix=sha-
+          
+            # Snapshot-/Dev-Tags
+            # type=ref,event=branch
+            # type=sha,prefix=sha-
 
             # SemVer-Releases über Git-Tags
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
+            # type=semver,pattern={{version}}
+            # type=semver,pattern={{major}}.{{minor}}
 
             # latest nur bei echten Releases
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            # type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
 
       # Docker-Image bauen und pushen
       - name: Build and push Docker image

@@ -2,6 +2,10 @@ package de.winfprojekt.craftvoice.offerservice.speechcapture;
 
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.security.TestSecurity;
+import io.quarkus.test.security.oidc.Claim;
+import io.quarkus.test.security.oidc.OidcSecurity;
+import io.restassured.http.ContentType;
 import jakarta.ws.rs.core.MediaType;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -16,6 +20,10 @@ public class SpeechCaptureResourceTest {
     DeepgramClient deepgramClient;
 
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     public void testTranscribeSuccess() throws DeepgramException {
         Mockito.when(deepgramClient.transcribe(Mockito.any(byte[].class), Mockito.any(String.class)))
                 .thenReturn("Das ist ein echtes Transkript.");
@@ -31,6 +39,10 @@ public class SpeechCaptureResourceTest {
     }
 
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     public void testTranscribeEmptyTranscript() throws DeepgramException {
         Mockito.when(deepgramClient.transcribe(Mockito.any(byte[].class), Mockito.any(String.class)))
                 .thenReturn("");
@@ -44,6 +56,10 @@ public class SpeechCaptureResourceTest {
     }
 
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     public void testTranscribeDeepgramError() throws DeepgramException {
         Mockito.when(deepgramClient.transcribe(Mockito.any(byte[].class), Mockito.any(String.class)))
                 .thenThrow(new DeepgramException("API key invalid or connection timed out"));
@@ -57,6 +73,10 @@ public class SpeechCaptureResourceTest {
     }
 
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     public void testTranscribeMissingAudio() {
         given()
             .multiPart("notAudio", "value")
@@ -67,6 +87,10 @@ public class SpeechCaptureResourceTest {
     }
 
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     public void testTranscribeInvalidMimeType() {
         given()
             .multiPart("audio", "test.txt", "some text".getBytes(), "text/plain")
@@ -77,6 +101,10 @@ public class SpeechCaptureResourceTest {
     }
 
     @Test
+    @TestSecurity(user = "test-user", roles = {"OWNER"})
+    @OidcSecurity(claims = {
+            @Claim(key = "sub", value = "99")
+    })
     public void testTranscribeOctetStreamRejected() {
         given()
             .multiPart("audio", "audio.bin", "some bytes".getBytes(), "application/octet-stream")
@@ -85,4 +113,15 @@ public class SpeechCaptureResourceTest {
         .then()
             .statusCode(415);
     }
+
+    @Test
+    void transcribe_shouldRejectUnauthenticatedUser() {
+        given()
+                .multiPart("audio", "test.wav", new byte[]{1, 2, 3}, "audio/wav")
+                .when()
+                .post("/speech-capture/transcribe")
+                .then()
+                .statusCode(401);
+    }
+
 }

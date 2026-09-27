@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.List;
 
 /**
- * Antwort des catalog-service-Such-Endpoints ({@code GET /materials/search}).
+ * Antwort des catalog-service-Such-Endpoints ({@code GET /catalog/material/search}, PR #701).
  *
  * <p>Form laut Spec ({@code docs/catalog-search-spec.md}): eine nach Relevanz absteigend
  * sortierte Kandidatenliste; leere Liste, wenn nichts passt (→ die KI kann ablehnen).
