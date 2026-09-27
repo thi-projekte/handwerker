@@ -19,6 +19,8 @@ Blick, darunter die Details.
 > **Merksatz:** Die **KI versteht**, die **Programmierung rechnet**, die **DB speichert**.
 > Und die **goldene Regel: die KI sieht NIEMALS Preise** — die kommen erst danach aus der DB dazu.
 
+> **Standshinweis (2026-09-27):** Das ist ein fachliches Zielbild. Call 2 wird je Materialposition ausgeführt (nicht nur ein zweiter HTTP-Aufruf pro Angebot). Außerdem ignoriert der aktuelle `offer-service`-DTO die KI-Liste `leistungen` bei der Speicherung; aktuell werden Material-, Anfahrt- und Arbeitszeitpositionen geführt. Siehe [Projekt-Handbuch](../../../../docs/PROJECT-HANDBOOK.md#3-fachlicher-ablauf-und-datenvertraege).
+
 ### Der Sprach-Ablauf (Erstangebot) — Schritt für Schritt
 
 ```
@@ -52,7 +54,7 @@ Blick, darunter die Details.
 
 ### Wann was? (Kurzantwort)
 
-- **KI** läuft **nur beim Diktieren** (Sprache → Angebot): genau **2 Aufrufe** (Call 1 + Call 2).
+- **KI** läuft beim Diktieren (Sprache → Angebot): ein Extraktionsaufruf (Call 1) plus ein Auswahlaufruf je erkannter Materialposition (Call 2; parallel verarbeitet).
 - **Programmierung + DB** machen den Rest: Suche, Preise, Rechnen — **und alle manuellen UI-Korrekturen** (da ist gar keine KI beteiligt).
 
 ---

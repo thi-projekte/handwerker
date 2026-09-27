@@ -1,146 +1,86 @@
-# Datenvertrag: `ergebnisKI` (ai-service → PE → offer-service → Frontend)
+# `ergebnisKI`-Datenvertrag (aktueller Codeabgleich)
 
-**Status:** live verifiziert (2026-06-14) · **Quelle:** `ErgebnisKi.java`, `Position.java`, `CamundaCorrelationRequest.java`
-**Adressaten:** offer-service (Lennart/Marvin, Konsum/Persistierung) · Frontend (Johannes, Anzeige) · BPMN-Team (Korrelation)
+**Zuletzt gegen Quellcode geprüft:** 2026-09-27. Maßgebliche Stellen: `ai-service/model/ErgebnisKi.java`, `ProcessResource.java`, `offer-service/offer/dto/OfferChangesRequest.java`, `AngebotspositionenDTO.java`, `StructuredOfferPositionDTO.java`, `OfferService.java` und BPMN-Dateien unter `processengine/src/main/resources/processes/`.
 
-Dieses Dokument legt fest, **was der ai-service produziert** und **wie es bei den Konsumenten ankommt**. Es ist der schriftliche Vertrag zu Cluster-Ticket **T-02** (Schnittstellenvertrag „KI-Ergebnis & Persistierung").
+Dieses Dokument ersetzt die früheren offenen Annahmen zu flacher Positionsliste und Mapping. Die aktuelle Schnittstelle ist verschachtelt; der Offer Service liest diese Struktur. Eine fachliche Lücke besteht weiterhin: Er ignoriert `leistungen` bei der Speicherung.
 
----
+## 1. Aufrufkette
 
-## 1. Architektur-Einordnung — wer ruft wen
-
-```
-Frontend ──(Audio/Start/Korrektur)──> offer-service ──> Process Engine (BPMN)
-                                                              │
-                                                  HTTP-Connector POST /ai/process
-                                                              ▼
-                                                         ai-service
-                                                   (Call 1 + Call 2, LLM)
-                                                              │
-                                          ergebnisKI-Message (per businessKey)
-                                                              ▼
-                                                     Process Engine  ──> offer-service ──> Frontend
+```text
+offer-service → Process Engine/BPMN → POST /ai/process
+                                      │ HTTP 202 sofort
+                                      └─ Hintergrund: Call 1 → Call 2 (je Materialposition)
+                                                       │
+                                                       └─ POST /message an Engine
+                                                            messageName=ergebnisKI
+                                                            businessKey=<Angebotsschlüssel>
+                                                                  │
+                             BPMN extrahiert strukturierte Daten ─┘
+                                    → POST /angebote/{businessKey}/ki-ergebnis
+                                      → offer-service → Frontend
 ```
 
-- **Das Frontend ruft den ai-service NIE direkt auf.** Der ai-service ist stateless und wird nur von der PE getriggert.
-- Das Frontend **konsumiert** das KI-Ergebnis über den offer-service (Positionen, KI-Hinweise, geschätzte Stunden).
-- **Preise** vergibt der ai-service nie (Datenschutz) — sie kommen erst im offer-service/catalog-service dazu.
+Das Frontend ruft den AI Service nicht direkt auf. `ProcessResource` antwortet an den BPMN HTTP-Connector mit HTTP 202 und startet die Verarbeitung asynchron, damit der Receive Task zuerst seine Camunda-Message-Subscription anlegen kann. Fehler nach der 202 werden protokolliert; das HTTP-Response des Connectors kann sie nicht mehr melden.
 
----
+## 2. BPMN-Eingang und Kontext
 
-## 2. Was der ai-service an die PE sendet
+`POST /ai/process` erhält `ProcessRequest` als JSON und kann `X-Handwerker-Id` als Header erhalten. Erstangebots- und Korrekturmodus werden anhand der vorhandenen Requestfelder erkannt. Das BPMN-Modell unter `processengine/src/main/resources/processes/v6.2Sprachschnipselverarbeitung.bpmn` verweist auf `http://ai-service:8081/ai/process`; Hostnamen/Port müssen zur jeweiligen Runtime-Topologie passen.
 
-**Transport:** `POST {CAMUNDA_ENGINE_URL}/message`, korreliert per `businessKey` + Message-Name.
+Die `businessKey`-Korrelation verbindet die Antwort mit der wartenden Prozessinstanz. `handwerkerId` wird für den mandantenbezogenen Catalog-Aufruf weitergegeben. Die Prozess- und Catalog-Rollen müssen zur Keycloak-Clientkonfiguration passen.
 
-### 2.1 Korrelations-Envelope
+## 3. AI-Ergebnisobjekt
+
+Der AI Service serialisiert ein `ErgebnisKi`-Objekt, das als Inhalt der Process Variable `ergebnisKI` zurück an die Engine geht:
+
+```json
+{
+  "strukturierteAngebotspositionen": {
+    "leistungen": [
+      { "bezeichnung": "string", "beschreibung": "string", "menge": 2.0, "einheit": "h", "katalogProduktId": null }
+    ],
+    "material": [
+      { "bezeichnung": "string", "beschreibung": "string", "menge": 2.0, "einheit": "Stk", "katalogProduktId": "uuid-string-oder-null" }
+    ],
+    "notizen": ["string"]
+  },
+  "korrekturvorschlaege": ["string"],
+  "geschaetzteArbeitsdauerStunden": 2.0
+}
+```
+
+- `strukturierteAngebotspositionen` enthält die Listen `leistungen`, `material` und `notizen`.
+- `menge` ist numerisch oder `null`; `geschaetzteArbeitsdauerStunden` ist optional (`null`, falls keine Dauer angegeben wurde).
+- `katalogProduktId` ist String/UUID oder `null`, nicht `Long`.
+- Das Positionsmodell besitzt kein Preisfeld. Der AI Service soll keine Katalog-/Angebotspreise an LLM-Aufrufe übergeben.
+- Call 2 ergänzt Materialpositionen mit Katalog-IDs. Er wird für Materialpositionen parallel ausgeführt und kann im Mock-Modus andere Daten/IDs liefern als der echte Katalog.
+
+## 4. Message-Envelope an die Process Engine
+
+`CamundaCorrelationRequest.ergebnisKI(...)` sendet an `POST {CAMUNDA_ENGINE_URL}/message`. Die Process Variable ist eine Zeichenkette mit JSON-Inhalt:
+
 ```json
 {
   "messageName": "ergebnisKI",
-  "businessKey": "<derselbe businessKey wie im Eingang>",
+  "businessKey": "angebot-…",
   "processVariables": {
     "ergebnisKI": {
-      "value": "<<ErgebnisKi als JSON-STRING, siehe 2.2>>",
+      "value": "{\"strukturierteAngebotspositionen\":{…},\"korrekturvorschlaege\":[],\"geschaetzteArbeitsdauerStunden\":null}",
       "type": "String"
     }
   }
 }
 ```
-- Message-Name **`ergebnisKI`**, Variablenname **`ergebnisKI`**.
-- Variablentyp **`String`** (nicht `Json`): der Inhalt ist **stringifiziertes JSON**; der BPMN-ExecutionListener parst es selbst per Spin `S(...)`.
 
-### 2.2 Inhalt von `value` — das `ErgebnisKi`-Schema (geparst)
-```json
-{
-  "strukturierteAngebotspositionen": {
-    "leistungen": [
-      { "bezeichnung": "string", "beschreibung": "string",
-        "menge": 2.0, "einheit": "string", "katalogProduktId": null }
-    ],
-    "material": [
-      { "bezeichnung": "string", "beschreibung": "string",
-        "menge": 2.0, "einheit": "string", "katalogProduktId": "uuid-string-oder-null" }
-    ],
-    "notizen": [ "string" ]
-  },
-  "korrekturvorschlaege": [ "string" ],
-  "geschaetzteArbeitsdauerStunden": 2.0
-}
-```
+Das BPMN-Skript liest die String-Variable, wandelt sie mit Camunda Spin `S(...)` in JSON um und übergibt anschließend die strukturierten Daten an den Offer Service.
 
-### 2.3 Feld-Regeln (verbindlich)
-| Feld | Typ | Regel |
-|---|---|---|
-| `strukturierteAngebotspositionen` | Objekt | **verschachtelt** mit `leistungen` / `material` / `notizen` — **keine flache Liste** |
-| `…leistungen[]` / `…material[]` | Position[] | Arrays von Positionen (s.u.); können leer sein |
-| `…notizen[]` | string[] | freie Notizen der KI; kann leer sein |
-| `korrekturvorschlaege` | string[] | Hinweise/Annahmen/Rückfragen an den Handwerker (→ UI „KI-Hinweise"); kann leer sein |
-| `geschaetzteArbeitsdauerStunden` | number \| null | nur gesetzt, wenn der Handwerker eine Dauer **ausspricht**; sonst `null`. KI schätzt NIE selbst. |
+## 5. Offer-Service-Verarbeitung und bekannte Lücke
 
-**Position** (in `leistungen[]` und `material[]`):
-| Feld | Typ | Regel |
-|---|---|---|
-| `bezeichnung` | string | Kurzname |
-| `beschreibung` | string | Langtext |
-| `menge` | number \| null | `null`, wenn nicht genannt (dann Hinweis in `korrekturvorschlaege`) |
-| `einheit` | string | z.B. `"Stk"`, `"m²"`, `"h"` |
-| `katalogProduktId` | **string (UUID)** \| null | Katalog-ID des in Call 2 gewählten Produkts. **Nur bei `material`** gesetzt; bei `leistungen` und „kein Treffer" → `null`. **Kein `preis`-Feld.** |
+Der aktuelle Offer-Service-Endpoint `POST /angebote/{businessKey}/ki-ergebnis` erhält `OfferChangesRequest` mit derselben verschachtelten Struktur sowie `korrekturvorschlaege` und optionaler `geschaetzteArbeitsdauerStunden`.
 
-> Hinweis: `katalogProduktId` ist seit catalog-PR #701/#702 ein **UUID-String** (vorher `Long`). Konsumenten müssen ihn als String lesen.
+- Das DTO enthält Felder für `leistungen`, `material` und `notizen`; Materialpositionen werden zu `MATERIAL`-OfferPositionen.
+- **`leistungen` werden aktuell nicht verarbeitet**; der Service kommentiert, dass es keinen `LEISTUNG`-Positionstyp im Angebot gibt. Die UI-/Produktanforderung für Arbeitspositionen muss mit dieser Implementierung abgeglichen werden.
+- Materialpreise werden anhand der UUID über den Catalog Service nachgeladen. Bei fehlender/ungültiger ID oder nicht verfügbarem Katalog wird der Preis auf 0 gesetzt bzw. protokolliert.
+- Angebotsentwurf enthält getrennte Arbeitszeit-/Anfahrtspositionen; die im Text genannte KI-Arbeitsdauer wird separat behandelt.
 
----
+Vor DTO-/BPMN-Änderungen End-to-End beide Seiten aktualisieren. Bei Änderungen der Processing-Ausgabe das Preisfreiheitsgebot sowie leere, fehlende und nicht gefundene Katalogtreffer berücksichtigen.
 
-## 3. Vorschlag für den offer-service (Lennart): nested → flat Mapping
-
-Aktuell erwartet `AiResultRequest` eine **flache** Positionsliste; der ai-service liefert die **verschachtelte** Struktur (Vertrag 29.05.2026). Empfehlung: **der offer-service mappt beim Einlesen**, weil die verschachtelte Form das vereinbarte KI-Format ist und Leistung/Material sinnvoll trennt.
-
-```java
-// offer-service: ergebnisKI-JSON -> interne flache Positionsliste
-record FlachePosition(
-        String typ,              // "LEISTUNG" | "MATERIAL"
-        String bezeichnung,
-        String beschreibung,
-        Double menge,            // kann null sein -> im UI/Calc als "zu ergänzen" behandeln
-        String einheit,
-        String katalogProduktId  // UUID-String; null bei Leistungen / kein Treffer
-) {}
-
-List<FlachePosition> flatten(ErgebnisKiDto e) {
-    var sap = e.strukturierteAngebotspositionen();
-    var out = new ArrayList<FlachePosition>();
-    sap.leistungen().forEach(p -> out.add(map("LEISTUNG", p)));
-    sap.material().forEach(p   -> out.add(map("MATERIAL", p)));
-    return out;
-}
-private FlachePosition map(String typ, PositionDto p) {
-    return new FlachePosition(typ, p.bezeichnung(), p.beschreibung(),
-                              p.menge(), p.einheit(), p.katalogProduktId());
-}
-```
-
-Zusätzlich aus demselben JSON lesen und persistieren/weiterreichen:
-- **`geschaetzteArbeitsdauerStunden`** → Vorbelegung der Arbeitszeit (×Stundensatz im offer-service; der Handwerker kann es im UI überschreiben). `null` ⇒ Feld leer lassen, Handwerker trägt ein.
-- **`korrekturvorschlaege`** → als KI-Hinweise speichern/weitergeben (UI-Anzeige).
-- **`notizen`** → optionale Notizen.
-
-**Preise:** der ai-service liefert keine. Der offer-service ergänzt sie:
-- Material: per `katalogProduktId` Lookup im catalog-service.
-- Arbeitszeit: `geschaetzteArbeitsdauerStunden` × Stundensatz + Anfahrt.
-
-**Wichtig (Typänderung):** `AiResultRequest`/DTO muss `katalogProduktId` als **String** führen (nicht `Long`), sonst schlägt das Deserialisieren der UUID fehl.
-
----
-
-## 4. Was das Frontend daraus rendert (Johannes)
-
-Das Frontend bekommt diese Daten **über den offer-service**, nicht vom ai-service. Mapping auf die Review-Seite:
-- `leistungen[]` → Abschnitt „Leistungen", `material[]` → Abschnitt „Materialien" (Felder bezeichnung/beschreibung/menge/einheit).
-- `katalogProduktId` (Material) → Referenz, über die der offer-service den **Preis** liefert; das „Alternativen"-Dropdown kann später per Katalog-Suche befüllt werden (`GET /catalog/material/search`).
-- `korrekturvorschlaege[]` → Liste „KI-Hinweise" (read-only Hinweise/Annahmen — **kein** interaktiver Chat).
-- `geschaetzteArbeitsdauerStunden` → Vorbelegung Stundenfeld (editierbar).
-
----
-
-## 5. Offene Punkte
-- **Struktur-Angleichung** (Abschnitt 3) zwischen ai-service und offer-service final bestätigen (T-02).
-- **Korrektur-Rückweg**: das UI-Feld „Hinweis an die KI" geht als `korrekturschnipsel` zurück → löst eine Korrektur-Runde aus (ai-service Call-1-Korrektur-Pfad, gleiches `ergebnisKI`-Schema kommt zurück).
-- **Direktaufruf?** Falls für die Demo ein direkter Frontend→ai-service-Pfad erwogen wird (statt über PE): technisch möglich, aber dann müsste das Frontend den PE-Eingangs-Payload bauen und die Preis-/Orchestrierungslogik fehlt — **nicht empfohlen**.

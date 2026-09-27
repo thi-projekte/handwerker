@@ -1,83 +1,51 @@
-# 🛠️ Offer Service (Quarkus)
+# Offer Service
 
-Willkommen im `offer-service`! Diese README erklärt, wie Quarkus, Docker, PostgreSQL und Hibernate zusammenarbeiten und wie du den Service lokal startest.
+Der `offer-service` verwaltet Angebotsentwürfe und Status, nimmt Speech-to-Text-Audio an und verbindet Angebotsaktionen mit der Process Engine, dem User Service und dem Catalog Service. Das Modul ist Java 21 / Quarkus 3.35.2 und verwendet `offer-db`.
 
----
+## Lokale Entwicklung
 
-## 🏗️ 1. Die Bausteine (Wer macht was?)
-
-Unser Setup besteht aus drei Hauptkomponenten:
-
-1. **PostgreSQL (Die Datenbank):** Hier werden die Daten physisch gespeichert. Wir nutzen **Docker**, um eine vorkonfigurierte Datenbank ohne lokale Installation zu starten.
-2. **Quarkus (Das Framework):** Unser Java-Backend. Es ist auf Schnelligkeit und geringen Ressourcenverbrauch optimiert.
-3. **Hibernate ORM mit Panache (Der Übersetzer):** Verbindet die Java-Objektwelt mit der relationalen SQL-Datenbank. Panache minimiert dabei den benötigten Code (Boilerplate).
-
----
-
-## ⚙️ 2. Wie funktioniert das Zusammenspiel?
-
-### Schritt A: Die Datenbank läuft (Docker)
-Die zentrale Datenbank-Konfiguration liegt im Verzeichnis `backend/docker-compose.dev.yml`. 
-Wenn du die Datenbank startest, wird ein PostgreSQL-Container erstellt, der intern im Docker-Netzwerk als `postgres` erreichbar ist und lokal auf Port `5432` exponiert wird.
-
-Die Datenbank für diesen Service heißt standardmäßig `offer-db`.
-
-### Schritt B: Quarkus verbindet sich
-In `src/main/resources/application.properties` ist die Verbindung definiert:
-```properties
-quarkus.datasource.jdbc.url=jdbc:postgresql://${DB_HOST:postgres}:5432/${DB_NAME:offer-db}
+```bash
+cd backend/services/offer-service
+./mvnw quarkus:dev
 ```
-Lokal (außerhalb von Docker) kannst du `DB_HOST=localhost` setzen, um auf den Container zuzugreifen.
 
-### Schritt C: Java-Klassen werden zu Tabellen (Hibernate)
-Dank `quarkus.hibernate-orm.database.generation=update` erstellt Hibernate automatisch die passenden Tabellen in der Datenbank basierend auf deinen `@Entity`-Klassen (z.B. `Offer`).
+Der lokale HTTP-Port ist **8080**. Der Dienst benötigt PostgreSQL gemäß `application.properties`, eine erreichbare Process Engine und für Audio-Transkription einen gesetzten `DEEPGRAM_API_KEY`. Das alte README nannte `backend/docker-compose.dev.yml` und Port 8081; die Datei existiert im aktuellen Branch nicht und der Quarkus-Port ist in der aktuellen Konfiguration 8080.
 
----
+## Wichtige APIs
 
-## 🚀 3. Wie starte ich das Projekt zum Entwickeln?
+Die vollständigen Parameter und Rollen stehen in den `*Resource.java`-Klassen. Zentrale Einstiege:
 
-Befolge diese Schritte, um die Entwicklungsumgebung zu starten:
+| Methode | Pfad | Zweck |
+|---|---|---|
+| `POST` | `/speech-capture/transcribe` | Multipart-Feld `audio` an Deepgram transkribieren |
+| `POST` | `/offers` | Angebot anlegen und Prozess starten |
+| `GET` | `/offers`, `/offers/{businessKey}` | Angebote des Nutzers auflisten/abrufen |
+| `POST` | `/angebote/{businessKey}/positionen` | Angebotspositionen anpassen |
+| `POST` | `/angebote/{businessKey}/ki-ergebnis` | Ergebnis aus Prozessverarbeitung übernehmen |
+| `POST` | `/angebote/{businessKey}/arbeitsstunden` | Arbeitsstunden erfassen |
+| `GET` | `/dashboard` | Dashboarddaten (OWNER-Rolle) |
+| `POST` | `/angebote/annahme/{token}` | öffentliches Angebot per Token annehmen/ablehnen |
+| `POST` | `/rechnungen/{businessKey}/erstellen` | Rechnung zu Angebot erstellen |
 
-1. **Docker-Daemon starten** (z.B. Docker Desktop).
+`businessKey` ist der anwendungsübergreifende Prozess-/Angebotsschlüssel. REST-Pfade, Auth-Annotationen und Rollen können sich je Endpunkt unterscheiden. Der öffentliche Annahmepfad ist bewusst tokenbasiert.
 
-2. **Deepgram API-Key konfigurieren:**
-   Kopiere die Vorlage `.env.deepgram_example` in diesem Verzeichnis als `.env`:
-   ```bash
-   cp .env.deepgram_example .env
-   ```
-   Öffne die neue `.env`-Datei und trage deinen echten API-Key ein.
-   Entweder nutzt du hierfür den bestehenden API-Key von Cluster 3 oder erstellst kostenlos einen eigenen unter https://console.deepgram.com/signup
+## Datenfluss und Integrationen
 
-3. **Datenbank starten** (aus dem Verzeichnis `backend/`):
-   ```bash
-   docker compose -f docker-compose.dev.yml up -d
-   ```
+- Speech Resource akzeptiert Audio über Multipart-Feld `audio`, ruft Deepgram auf und löscht die temporäre Datei nach der Verarbeitung.
+- Angebotsabläufe werden an die Process Engine delegiert. Engine-URL: `PE_URL` (Fallback in der Service-Konfiguration auf `http://pe-craftvoice.winfprojekt.de/engine-rest`).
+- Profil-/Kundendaten kommen über den User-Service-REST-Client.
+- Materialpreise/Informationen können über den Catalog-Service abgerufen werden; Material-IDs sind UUIDs.
+- Der AI Service wird nicht direkt vom Frontend aufgerufen; die BPMN-Engine ruft den AI-Service auf und korreliert die Rückmeldung.
 
-4. **Service im Dev-Modus starten** (aus diesem Verzeichnis `backend/services/offer-service/`):
-   ```bash
-   ./mvnw quarkus:dev
-   ```
+## Konfiguration
 
-5. **Verfügbarkeit prüfen**:
-   Der Service läuft auf Port **8081**. Du kannst den Status hier abrufen:
-   `http://localhost:8081/q/health`
+Relevante Variablen sind `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `PE_URL`, `DEEPGRAM_API_KEY`, `USER_SERVICE_URL` und `CATALOG_SERVICE_URL`. Die Datenbankdefaults und der Deepgram-Platzhalter sind keine Produktionssecrets. Im Repository liegt derzeit keine `.env.deepgram_example`-Datei, obwohl das frühere README darauf verwies.
 
-**Vorteil des Dev-Modus:** Änderungen am Code werden sofort übernommen (Hot Reload), ohne dass du den Prozess neu starten musst.
+Die OIDC-Konfiguration ist im Service standardmäßig aktiviert und bezieht Keycloak über `KEYCLOAK_AUTH_SERVER_URL`; Compose-Profile können davon abweichen. CORS-Origins stehen in `application.properties`. Vor externer Bereitstellung beide Einstellungen gegen die tatsächliche Umgebung prüfen.
 
----
+## Weitere Referenz
 
-## 🔧 4. Wichtige Konfigurationen (INFRA-1)
-
-Der Service nutzt folgende wichtige Properties (konfigurierbar über Umgebungsvariablen oder die lokale `.env`-Datei):
-
-*   **HTTP Port**: `8081` (Vermeidet Konflikt mit CIB seven auf 8080)
-*   **Process Engine URL**: `${PE_URL:http://localhost:8080/engine-rest}`
-*   **Deepgram API-Key**: `${DEEPGRAM_API_KEY:changeme}` (Lokal konfigurierbar über die `.env`-Datei)
-*   **Datenbank**: Name `offer-db`, User `postgres`, PW `postgres` (Defaults für lokal)
-
----
-
-## 🔒 5. Sicherheit & Profile
-
-In der lokalen Entwicklung (Profil `dev`) sind viele Mechanismen wie Keycloak (`quarkus.oidc.tenant-enabled=false`) vorerst deaktiviert, um den Einstieg zu erleichtern. Für den Produktivbetrieb werden diese über entsprechende Profile oder Umgebungsvariablen aktiviert.
+- [Dashboard-API-Notiz](src/main/java/de/winfprojekt/craftvoice/offerservice/dashboard/dashboard-backend-api.md) — vor Nutzung gegen `DashboardResource` aktualisieren/prüfen
+- [Backend-Gesamtüberblick](../../README.md)
+- [Betriebs- und Übergabehandbuch](../../../docs/PROJECT-HANDBOOK.md)
 

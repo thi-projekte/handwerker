@@ -8,7 +8,7 @@ Jeder Unterordner ist ein separates Maven-/Quarkus-Projekt. Die unten dokumentie
 | `ai-service` | BPMN-HTTP-Einstieg, LLM-Calls und Materialvorauswahl | keine | 8081 | [README](ai-service/README.md) |
 | `catalog-service` | Materialstammdaten, Suche und Import | `catalog-db` | 8080 | [README](catalog-service/README-catalog-service.md) |
 | `user-service` | Profile, Unternehmen, Kunden, Rollen und Keycloak-Integration | `user-db` | 8080 | [README](user-service/README.md) |
-| `document-service` | PDF-Dateien und Dokumentenmetadaten | `document-db` | 8080 | [README](document-service/README-document-service.md) |
+| `document-service` | PDF-Dateien und Dokumentenmetadaten | `document-db` | 8082 (Dev), 8080 (Container/Prod) | [README](document-service/README-document-service.md) |
 
 ## Fachliche Grenzen
 

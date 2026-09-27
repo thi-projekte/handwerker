@@ -56,9 +56,9 @@ Die Services haben getrennte Datenbanken, laufen im Backend-Compose aber mit dem
 
 1. Das Frontend erfasst Audio und sendet es an `POST /speech-capture/transcribe` des Offer Service. Der Service ruft Deepgram auf und gibt das Transkript zurück.
 2. Der Offer Service startet bzw. aktualisiert einen Prozess in der Process Engine. Prozess- und Angebotszustand sind über `businessKey` verknüpft.
-3. Ein BPMN-HTTP-Connector ruft `POST /ai/process` auf. Im aktuellen AI-Service-Code sind LLM-Client und Prompts vorhanden; die README-Beschreibung eines bloßen Stubs ist veraltet.
+3. Ein BPMN-HTTP-Connector ruft `POST /ai/process` auf. Der Endpoint antwortet zunächst mit HTTP 202; LLM-Call 1 läuft danach asynchron (mit konfiguriertem Stub-Fallback), gefolgt von Call 2 für Materialpositionen, parallel ausgeführt. Fehler nach der 202 werden geloggt und können dazu führen, dass der BPMN-Prozess auf sein Ergebnis wartet.
 4. Der AI Service erzeugt strukturierte Positionen und korreliert die Message `ergebnisKI` zurück an die Engine. Die Rückgabe ist eine Camunda-Message, deren Prozessvariable `ergebnisKI` ein stringifiziertes JSON enthält. Die asynchrone Korrelation verhindert ein Rennen mit der Engine-Subscription.
-5. Das Ergebnis gelangt zum Offer Service und dann zum Frontend. Die KI soll keine Preise erhalten oder ausgeben. Katalog- und Arbeitskosten werden im Angebotskontext ergänzt.
+5. Die Process Engine mappt die `ergebnisKI`-Variablen in einen Request an den Offer Service. Der aktuelle DTO liest die verschachtelte Struktur; **im Code werden nur `material`-Positionen persistiert und bepreist. KI-`leistungen` werden bewusst ignoriert** (kein `LEISTUNG`-Positionstyp im aktuellen Angebot). Die Arbeitsdauer wird separat im Offer-Service verarbeitet; Arbeitszeit und Anfahrt sind eigene Angebotspositionen.
 6. Eine Fachkraft überprüft Positionen, Mengen, Auswahl und Preis. Danach kann sie den Entwurf freigeben, teilen, annehmen oder ablehnen lassen.
 
 Details zum `ergebnisKI`-Schema stehen in [`ergebnisKI-datenvertrag.md`](../backend/services/ai-service/docs/ergebnisKI-datenvertrag.md). Da dieses Dokument als „live verifiziert“ vom 14.06.2026 datiert ist und offene Punkte ausweist, vor API-Änderungen DTOs und BPMN-Mapping im aktuellen Code erneut prüfen.
@@ -141,7 +141,7 @@ Der aktuelle `backend/docker-compose.yml`-Stack hat einige wichtige Grenzen:
 
 1. PostgreSQL-Port 5432 wird nicht auf den Host veröffentlicht. Ein auf dem Host gestarteter Quarkus-Prozess kann den Compose-Hostnamen `postgres` daher nicht direkt auflösen.
 2. Es gibt keine versionierte `backend/docker-compose.dev.yml`, obwohl mehrere alte READMEs deren Verwendung beschreiben.
-3. Der Stack listet Offer, User, Catalog und Document, aber nicht `ai-service`, Keycloak oder die Process Engine.
+3. Der Stack listet Offer, User, Catalog und Document, aber nicht `ai-service`, Keycloak oder die Process Engine. Für `ai-service` existiert ein separates Compose-File unter `backend/services/ai-service/docker-compose.yml`.
 4. Compose setzt für `offer-service` `PE_URL=http://host.docker.internal:8081/engine-rest`; `processengine/docker-compose.yml` bildet standardmäßig Engine-Port 8080 ab. Dieser Unterschied muss aufgelöst werden.
 5. `CATALOG_MOCK_ENABLED` und AI-Service-Containerkonfiguration fehlen im Root-Backend-Compose.
 
@@ -224,6 +224,7 @@ Die folgenden Punkte sind nicht zuverlässig aus Git ableitbar. Vor Projektüber
 - [ ] Wie sehen Backups, Restore-Tests, Lösch-/Aufbewahrungsfristen und Incident-Kontakte aus?
 - [ ] Welche BPMN-Quelle ist maßgeblich, wer darf sie ändern und wie wird ein Modell in die Ziel-Engine deployed?
 - [ ] Ist der produktive Katalogmodus `CATALOG_MOCK_ENABLED=false` vorgesehen und sind Client-Rollen sowie Eigentümer-Mandantenzuordnung konfiguriert?
+- [ ] Werden von der KI erstellte `leistungen` künftig zu echten Angebotspositionen? Im aktuellen Offer Service werden sie ignoriert.
 - [ ] Welche Features sind fachlich abgenommen, welche Demonstrator-/Seed-Daten und bekannten Fehler gehören zum akzeptierten Lieferumfang?
 - [ ] Ist Deepgram-Audioverarbeitung mit dem Datenschutzkonzept/Einwilligungsprozess der Zielumgebung abgestimmt?
 
