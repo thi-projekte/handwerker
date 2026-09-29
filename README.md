@@ -69,3 +69,8 @@ GitHub Actions enthalten getrennte Workflows für Frontend, Backend und Process 
 - BPMN-Dateien unter `docs/bpmn-reference/` sind ausdrücklich Referenzen. Maßgebliche deploybare Modelle und deren Eigentümer müssen bei der Prozessmodellierungsgruppe bestätigt werden.
 - Betriebsverantwortung, Backup/Restore-Verfahren, Monitoring, DNS/Proxy-Änderungen und Secret-Rotation müssen mit dem Infrastrukturteam übergeben werden; siehe offene Checkliste im Handbuch.
 
+## Portainer & Nginx-Poxy
+
+-> Container und Proxy Hosts sind an den Links zum Repo oder namentlicher Kennzeichnung zu erkennen
+-> Container sind alle auf den main-Branch gesynct außer PE-Container, der ist auf dem letzten Commit, der Änderungen an der PE vornimmt
+-> Die Anwendung ist unter cv.winfprojekt.de erreichbar, craftvoice.winfprojekt.de ist nicht funktionsfähig
