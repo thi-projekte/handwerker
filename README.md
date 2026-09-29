@@ -71,6 +71,6 @@ GitHub Actions enthalten getrennte Workflows für Frontend, Backend und Process 
 
 ## Portainer & Nginx-Poxy
 
--> Container und Proxy Hosts sind an den Links zum Repo oder namentlicher Kennzeichnung zu erkennen
--> Container sind alle auf den main-Branch gesynct außer PE-Container, der ist auf dem letzten Commit, der Änderungen an der PE vornimmt
--> Die Anwendung ist unter cv.winfprojekt.de erreichbar, craftvoice.winfprojekt.de ist nicht funktionsfähig
+- Container und Proxy Hosts sind an den Links zum Repo oder namentlicher Kennzeichnung zu erkennen
+- Container sind alle auf den main-Branch gesynct außer PE-Container, der ist auf dem letzten Commit, der Änderungen an der PE vornimmt
+- Die Anwendung ist unter cv.winfprojekt.de erreichbar, craftvoice.winfprojekt.de ist nicht funktionsfähig
