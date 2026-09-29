@@ -1,333 +1,42 @@
-# 📱 Architektur Leitfaden - Frontend
+# Frontend-Architektur: aktueller Stand
 
-## Dieses Dokument dient als verbindliche Orientierung für die Entwicklung unserer React-Anwendung. Ziel ist eine klare, skalierbare und wartbare Struktur, die von allen Teammitgliedern einheitlich genutzt wird.
+Dieses Dokument erklärt den implementierten Aufbau des Frontends. Es ersetzt das frühere generische Zielbild, das Ordner wie `src/app/views` und `src/data/apiClient.ts` nannte, die im Repository so nicht existieren.
 
-# 🧠 Grundprinzipien
+## Einstiegspunkte
 
-Unsere Architektur basiert auf drei zentralen Konzepten:
+- `src/main.tsx`: React-Root, Theme-Einrichtung und Mounting
+- `src/App.tsx`: `BrowserRouter` und Anwendungskomposition
+- `src/routes.tsx`: URL-zu-Seite-Zuordnung
+- `src/shared/components/AppLayout.tsx`: gemeinsamer Seitenrahmen
+- `src/core/keycloak.ts`: Keycloak-Client
+- `src/config/api.ts`: Service-URLs
 
-## 1. Feature-Based Struktur
+## Laufzeit-Datenfluss
 
-Code wird nach Funktionen (Features) organisiert, nicht nach technischen Typen.
-➡️ Weil: Klare Verantwortlichkeiten im Team
-
-## 2. MVVM (Model-View-ViewModel)
-
-Trennung von:
-
-- UI (View)
-- Logik (ViewModel)
-- Daten (Model)
-  ➡️ Weil: Sauberer, testbarer Code
-
-## 3. Clean Architecture (leichtgewichtig)
-
-Trennung von:
-
-- Business-Logik
-- UI
-- Datenzugriff
-  ➡️ Weil: Unabhängigkeit vom Backend
-
----
-
-# 📂 Projektstruktur
-
-```
-/src
-  /app
-    /views
-  /features
-  /domain
-  /data
-  /shared
-  /core
-  /assets
+```text
+Seite/Feature → Hook oder API-Helfer → fetch/HTTP-Client → Backend-Service
 ```
 
----
+API-Zugriff ist verteilt auf `src/data/api/`, `src/data/repositories/` und `src/services/`. Bei Änderungen sollen neue HTTP-Aufrufe nach Möglichkeit an den für das Feature bereits zuständigen API-Helfer angeschlossen werden; nicht parallel neue, widersprüchliche Basiskonfigurationen einführen. Shared UI gehört nach `src/shared/`, feature-spezifische UI nach `src/features/<feature>/`.
 
-# 📁 /app
+## Tatsächliche Verzeichnisverantwortung
 
-## Zweck
+| Pfad | Inhalt |
+|---|---|
+| `features/` | Fachseiten und UI-Funktionen; Organisation ist je Feature unterschiedlich |
+| `data/api/` | API-Endpunkte und Zugriffshelfer für Offer, Catalog, Document, Process Engine und Dashboard |
+| `data/repositories/` | Datentransformation/Zugriff für Form, Offer und Voice |
+| `services/` | bestehende Auth- und User-Service-Clients |
+| `domain/models/`, `domain/usecases/` | geteilte Modelle und ausgewählte fachliche Funktionen |
+| `shared/` | wiederverwendbare UI, Hooks, Types und Utilities |
+| `core/`, `config/` | Keycloak, Konstanten, Environment/API-Konfiguration |
+| `assets/`, `app/` | Medien und vorhandene statische App-Ressourcen |
 
-Zentrale Steuerung der Anwendung
+Diese Trennung ist eine Konvention, keine starre Architekturprüfung: mehrere Features besitzen bereits eigene `types/`, `hooks/`, `mapper/` oder `services/`. Folge dem nahen Beispiel im gleichen Feature.
 
-## Inhalt
+## Authentifizierung und externe Aufrufe
 
-- `App.tsx` → Einstiegspunkt
-- `routes.tsx` → Navigation
-- `providers.tsx` → Globale Zustände (Auth, Theme, etc.)
-- `views/` → HTML-Seiten und statische App-Views
+Das Frontend nutzt `keycloak-js`. Tokens werden über die jeweiligen API-Clients an geschützte Backends übergeben; öffentliche Angebotslinks haben einen eigenen Tokenpfad. Vite-Variablen werden in den erzeugten Browsercode eingebettet und dürfen keine geheimen Zugangsdaten enthalten. CORS, Realm, Client und Redirect-URLs müssen zusammen mit dem Backend abgestimmt werden.
 
-## Regeln
+Für Modulstart, Build-/Lint-Skripte und URLs siehe [Frontend README](README.md).
 
-- Keine Business-Logik
-- Keine Feature-spezifischen Implementierungen
-
----
-
-# 📁 /features
-
-## Zweck
-
-Enthält alle funktionalen Bereiche der App
-
-## Struktur eines Features
-
-```
-featureName/
-  components/
-  hooks/
-  services/
-  models/
-  index.ts
-```
-
-## Regeln
-
-- Jedes Feature ist in sich abgeschlossen
-- Keine direkte Kommunikation zwischen Features
-- Kommunikation erfolgt über Domain oder Shared
-
----
-
-## 📂 components
-
-UI-Komponenten (React Components)
-
-- `stylesheets/` → App-Styles und globale CSS-Dateien
-
-### Regeln
-
-- Keine Business-Logik
-- Nur Darstellung + Events
-
----
-
-## 📂 hooks
-
-ViewModel (Logik der Anwendung)
-
-### Aufgaben
-
-- State Management
-- Aufruf von Use Cases
-- Datenverarbeitung für UI
-
-### Regeln
-
-- Keine direkte API-Kommunikation
-- Keine komplexe Business-Logik
-
----
-
-## 📂 services
-
-Technische Implementierungen
-
-### Beispiele
-
-- Zugriff auf Browser APIs (z. B. Mikrofon)
-- Drittanbieter-Bibliotheken
-
-### Regeln
-
-- Keine Business-Logik
-
----
-
-## 📂 models
-
-## Feature-spezifische Datentypen
-
-## 📄 index.ts
-
-## Exportiert die öffentliche API des Features
-
-# 📁 /domain
-
-## Zweck
-
-Zentrale Business-Logik der Anwendung
-
-## Struktur
-
-```
-/models
-/usecases
-```
-
----
-
-## 📂 models
-
-Globale Datenmodelle
-
-### Beispiele
-
-- Offer
-- Form
-- VoiceInput
-
----
-
-## 📂 usecases
-
-Business-Logik
-
-### Beispiele
-
-- generateOffer.ts
-- parseVoiceInput.ts
-- validateForm.ts
-
-### Regeln
-
-- Kein React
-- Keine API Calls
-- Reine Funktionen
-
----
-
-# 📁 /data
-
-## Zweck
-
-Kommunikation mit externen Systemen (Backend)
-
-## Struktur
-
-```
-/api
-/repositories
-```
-
----
-
-## 📂 api
-
-### Inhalte
-
-- `apiClient.ts` → zentrale API-Konfiguration
-- `endpoints.ts` → API-Endpunkte
-
----
-
-## 📂 repositories
-
-### Zweck
-
-Vermittler zwischen Domain und API
-
-### Regeln
-
-- Nur hier werden API Calls gemacht
-
----
-
-# 📁 /shared
-
-## Zweck
-
-Wiederverwendbare Komponenten und Logik
-
-## Struktur
-
-```
-/components
-/hooks
-/utils
-/types
-```
-
----
-
-## Regeln
-
-- Darf von allen Features genutzt werden
-- Keine Feature-spezifische Logik
-
----
-
-# 📁 /core
-
-## Zweck
-
-Technische Grundlagen der Anwendung
-
-## Struktur
-
-```
-/config
-/constants
-```
-
----
-
-## Inhalte
-
-- Environment Variablen
-- Globale Konstanten
-
----
-
-# 📁 /assets
-
-## Zweck
-
-Statische Dateien
-
-### Beispiele
-
-- Bilder
-- Icons
-
----
-
-# 🚨 Wichtige Regeln
-
-## ❌ Verboten
-
-- Business-Logik in React Components
-- API Calls außerhalb von /data
-- Direkte Abhängigkeiten zwischen Features
-
-## ✅ Pflicht
-
-- Nutzung von Hooks für Logik
-- Nutzung von Use Cases für Business-Regeln
-- Klare Trennung der Verantwortlichkeiten
-
----
-
-# 🔄 Typischer Datenfluss
-
-1. User interagiert mit UI
-2. Component ruft Hook auf
-3. Hook nutzt Use Case
-4. Use Case verarbeitet Daten
-5. Repository kommuniziert mit API
-6. Ergebnis zurück zur UI
-
----
-
-# 👥 Teamregeln
-
-- Jedes Feature hat einen Verantwortlichen
-- Code Reviews sind Pflicht
-- Gemeinsame Namenskonventionen einhalten
-
----
-
-# 🎯 Ziel
-
-Diese Struktur stellt sicher, dass:
-
-- die App skalierbar bleibt
-- der Code verständlich ist
-- neue Features schnell entwickelt werden können
-
----
-
-Bei Fragen oder Unsicherheiten bitte frühzeitig im Team klären, sodass die Struktur des Projektes konsistent bleibt

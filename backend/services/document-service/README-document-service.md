@@ -1,112 +1,40 @@
 # Document Service
 
-Der Document Service ist für die Generierung, Speicherung, Bereitstellung und den Versand von Angebots- und Rechnungsdokumenten als PDF verantwortlich.
+Der `document-service` erzeugt Angebots- und Rechnungs-PDFs, speichert Dokumente/Metadaten, liefert Dateien aus und kann sie per E-Mail teilen. Es fragt dazu Angebots- und Kundendaten über REST-Clients ab. Fachliche Route und Datenmodell werden durch `document/DocumentResource`, `DocumentService` und `Document` definiert.
 
 ## Endpunkte
 
-### Angebots-PDF generieren
+Ressourcenbasis: `/documents`.
 
-```http
-POST /documents/offers/{offerId}/generate
+| Methode | Pfad | Zweck |
+|---|---|---|
+| `POST` | `/documents/offers/{businessKey}/generate` | Angebots-PDF erzeugen |
+| `POST` | `/documents/invoices/{businessKey}/generate` | Rechnungs-PDF erzeugen |
+| `POST` | `/documents/offers/{businessKey}/share` | Angebot per E-Mail teilen |
+| `POST` | `/documents/invoices/{businessKey}/share` | Rechnung per E-Mail teilen |
+| `GET` | `/documents` | Dokumentmetadaten auflisten |
+| `GET` | `/documents/{documentId}` | Metadaten zu Dokument-ID |
+| `GET` | `/documents/offers/{businessKey}` | Angebotsdokumentmetadaten abrufen |
+| `GET` | `/documents/{documentId}/pdf` | PDF anhand Dokument-ID herunterladen |
+| `GET` | `/documents/offers/{businessKey}/pdf` | Angebots-PDF anhand Business Key herunterladen |
+
+Für PDF-Downloads ist in der aktuellen Anwendungskonfiguration eine `permit`-Regel für `/documents/*/pdf` eingetragen. Token-/Mandantenkontrolle, Öffentlichkeit und Reichweite der Pfadmuster vor Deployment prüfen. Die ursprüngliche README verwendete `offerId`/`invoiceId` in Beispielpfaden, aber der aktuelle Resource-Code erwartet `businessKey`.
+
+## Daten und Abhängigkeiten
+
+- Datenbank: `document-db` (Prod-Profil). Dev/Test verwenden H2.
+- PDF-Speicherpfad: `DOCUMENT_STORAGE_PATH`, Standard `/data/documents`; der Backend-Compose bindet ein benanntes Volume ein.
+- Angebotsdaten: über `OFFER_SERVICE_URL`.
+- Kundendaten: über `USER_SERVICE_URL`.
+- E-Mail: SMTP über `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM`; Dev/Test haben Mail-Mock-Konfiguration.
+- Auth: Prod-Profil aktiviert OIDC und `DOCUMENT_AUTH_ENABLED` standardmäßig; konkrete Route-Richtlinien vor Freigabe prüfen.
+
+## Lokal entwickeln
+
+```bash
+cd backend/services/document-service
+./mvnw quarkus:dev
 ```
 
-Erstellt ein PDF für das angegebene Angebot und speichert dieses im Document Service.
+Der Dev-Port ist `8082`; Prod-Containerport ist `8080`. Eine vollständige lokale Konfiguration braucht erreichbare Offer- und User-Service-Adressen, wenn PDF-Inhalte generiert bzw. geteilt werden. Build-/Profilhinweise stehen in [README-framework.md](README-framework.md).
 
----
-
-### Rechnungs-PDF generieren
-
-```http
-POST /documents/invoices/{invoiceId}/generate
-```
-
-Erstellt ein PDF für die angegebene Rechnung und speichert dieses im Document Service.
-
----
-
-### Angebot per E-Mail versenden
-
-```http
-POST /documents/offers/{offerId}/share
-```
-
-Versendet das Angebots-PDF per E-Mail an den Kunden. Falls das Dokument noch nicht existiert, wird es vor dem Versand automatisch generiert.
-
----
-
-### Rechnung per E-Mail versenden
-
-```http
-POST /documents/invoices/{invoiceId}/share
-```
-
-Versendet das Rechnungs-PDF per E-Mail an den Kunden. Falls das Dokument noch nicht existiert, wird es vor dem Versand automatisch generiert.
-
----
-
-### Alle Dokumente abrufen
-
-```http
-GET /documents
-```
-
-Liefert eine Liste aller gespeicherten Dokumente inklusive ihrer Metadaten.
-
----
-
-### Dokument-Metadaten abrufen
-
-```http
-GET /documents/{documentId}
-```
-
-Liefert die Metadaten eines gespeicherten Dokuments, beispielsweise Dokumenttyp, Dateiname und Erstellungszeitpunkt.
-
----
-
-### PDF herunterladen
-
-```http
-GET /documents/{documentId}/pdf
-```
-
-Liefert die PDF-Datei des angegebenen Dokuments.
-
-
-## Struktur
-```
-de.winfprojekt.craftvoice.documentservice
-├── document
-│   ├── Document.java
-│   ├── DocumentType.java
-│   ├── DocumentRepository.java
-│   ├── DocumentResponse.java
-│   ├── DocumentService.java
-│   └── DocumentResource.java
-│
-├── client
-│   ├── user
-│   │   ├── UserClient.java
-│   │   └── UserDto.java
-│   │
-│   ├── offer
-│   │   ├── OfferClient.java
-│   │   ├── OfferDto.java
-│   │   └── OfferPositionDto.java
-│   │
-│   └── invoice
-│       ├── InvoiceClient.java
-│       ├── InvoiceDto.java
-│       ├── InvoicePositionDto.java
-│       └── CustomerSnapshotDto.java
-│
-├── pdf
-│   └── PdfGenerator.java
-│
-├── mail
-│   └── MailService.java
-│
-└── exception
-    ├── DocumentNotFoundException.java
-    └── DocumentAccessException.java
-```

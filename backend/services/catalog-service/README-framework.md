@@ -1,86 +1,22 @@
-# rest-service
+# Catalog Service: Build- und Laufhinweise
 
-This project uses Quarkus, the Supersonic Subatomic Java Framework.
+Dieses Modul ist kein unverändertes Quarkus-`rest-service`-Template: es besitzt Catalog-Ressourcen, PostgreSQL/Flyway, OIDC und projektspezifische Containerdateien. Fachliche Endpunkte und Mandantenzuordnung sind in [README-catalog-service.md](README-catalog-service.md) dokumentiert.
 
-If you want to learn more about Quarkus, please visit its website: <https://quarkus.io/>.
+## Lokal
 
-## Running the application in dev mode
-
-You can run your application in dev mode that enables live coding using:
-
-```shell script
+```bash
+cd backend/services/catalog-service
 ./mvnw quarkus:dev
 ```
 
-> **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at <http://localhost:8080/q/dev/>.
+Der Service erwartet seine Datenbank- und Auth-Konfiguration über `src/main/resources/application.properties` und `DB_*`/`QUARKUS_OIDC_*`-Variablen. Ohne passende OIDC-/DB-Profile ist eine erreichbare API nicht gewährleistet.
 
-## Packaging and running the application
+## Build
 
-The application can be packaged using:
-
-```shell script
-./mvnw package
+```bash
+./mvnw clean test
+./mvnw package -DskipTests
 ```
 
-It produces the `quarkus-run.jar` file in the `target/quarkus-app/` directory.
-Be aware that it’s not an _über-jar_ as the dependencies are copied into the `target/quarkus-app/lib/` directory.
+Der CI-Matrixjob verwendet JDK 21, führt Tests aus und baut anschließend das Containerimage mit `docker/Dockerfile.jvm`. Änderungen an `src/main/resources/db/migration/` sind versionierte Datenbankänderungen und müssen mit vorhandenen Installationen rückwärtsverträglich geplant werden.
 
-The application is now runnable using `java -jar target/quarkus-app/quarkus-run.jar`.
-
-If you want to build an _über-jar_, execute the following command:
-
-```shell script
-./mvnw package -Dquarkus.package.jar.type=uber-jar
-```
-
-The application, packaged as an _über-jar_, is now runnable using `java -jar target/*-runner.jar`.
-
-## Creating a native executable
-
-You can create a native executable using:
-
-```shell script
-./mvnw package -Dnative
-```
-
-Or, if you don't have GraalVM installed, you can run the native executable build in a container using:
-
-```shell script
-./mvnw package -Dnative -Dquarkus.native.container-build=true
-```
-
-You can then execute your native executable with: `./target/rest-service-1.0.0-SNAPSHOT-runner`
-
-If you want to learn more about building native executables, please consult <https://quarkus.io/guides/maven-tooling>.
-
-## Related Guides
-
-- REST Jackson ([guide](https://quarkus.io/guides/rest#json-serialisation)): Jackson serialization support for Quarkus REST. This extension is not compatible with the quarkus-resteasy extension, or any of the extensions that depend on it
-- OpenID Connect ([guide](https://quarkus.io/guides/security-openid-connect)): Secure applications with OpenID Connect and OAuth 2.0 using bearer tokens and authorization code flow
-- Hibernate ORM with Panache ([guide](https://quarkus.io/guides/hibernate-orm-panache)): Simplified JPA/Hibernate data access layer with active record and repository patterns
-- SmallRye Health ([guide](https://quarkus.io/guides/smallrye-health)): Monitor service health
-- JDBC Driver - PostgreSQL ([guide](https://quarkus.io/guides/datasource)): Connect to the PostgreSQL database via JDBC
-
-## Provided Code
-
-### Hibernate ORM
-
-Create your first JPA entity
-
-[Related guide section...](https://quarkus.io/guides/hibernate-orm)
-
-
-[Related Hibernate with Panache section...](https://quarkus.io/guides/hibernate-orm-panache)
-
-
-### REST
-
-Easily start your REST Web Services
-
-[Related guide section...](https://quarkus.io/guides/getting-started-reactive#reactive-jax-rs-resources)
-
-### SmallRye Health
-
-Monitor your application's health using SmallRye Health
-
-[Related guide section...](https://quarkus.io/guides/smallrye-health)

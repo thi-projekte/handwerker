@@ -1,234 +1,38 @@
-# Catalog Service – Material API
+# Catalog Service
 
-Der Catalog-Service verwaltet Materialien eines angemeldeten Benutzers. Alle Materialdaten werden über die `ownerId` dem jeweiligen Benutzer zugeordnet. Gelöschte Materialien werden nicht physisch entfernt, sondern über `active = false` deaktiviert.
+Der `catalog-service` verwaltet Materialdatensätze mandantenbezogen. Material gehört einem `ownerId` (normalerweise dem `sub`-Claim des Handwerker-JWT), hat eine UUID, Artikelnummer, Einheit, Preis und weitere Katalogfelder. Löschung deaktiviert einen Datensatz (`active=false`), statt ihn physisch zu entfernen. Der Dienst ist Java 21 / Quarkus 3.36.0 und verwendet PostgreSQL sowie Flyway-Migrationen.
 
-Basis-URL:
+## HTTP-Endpunkte
 
-```text
-/catalog/material
+Ressourcenbasis: `/catalog/material`.
+
+| Methode | Pfad | Zweck |
+|---|---|---|
+| `GET` | `/catalog/material` | Aktive Materialien des aktuellen Eigentümers |
+| `GET` | `/catalog/material/{id}` | Einzelnes Material nach UUID |
+| `POST` | `/catalog/material` | Material manuell anlegen |
+| `PUT` | `/catalog/material/{id}` | Material aktualisieren |
+| `DELETE` | `/catalog/material/{id}` | Material deaktivieren |
+| `GET` | `/catalog/material/search?q=...&limit=...` | Eigentümerbezogene Suche; Standardlimit 15, Maximum 50 |
+| `POST` | `/catalog/material/import/csv` | Multipart-Upload mit `file` |
+| `POST` | `/catalog/material/import/datanorm` | Einzelnen Datensatz importieren |
+
+Die Suche kombiniert deutsche PostgreSQL-Volltextsuche, gewichtete Felder, Teilstringvergleich und Trigramm-Ähnlichkeit; der Code in `MaterialRepository` definiert Ranking und Grenzen. Das CSV-Format ist im Parser maßgeblich; bestehende Doku nennt semikolongetrennte Felder `name;manufacturer;description;category;unit;price;currency`.
+
+## Mandantentrennung und Sicherheit
+
+Alle Resource-Methoden erfordern `@Authenticated`. Für einen normalen User kommt die Material-`ownerId` aus `jwt.getSubject()`. Ein technischer Aufruf darf `X-Handwerker-Id` nur mit der Catalog-Client-Rolle `process-engine` verwenden. Der AI Service kann so Material für den Besitzer im Prozess suchen, ohne dessen User-Token als Subject vorzutäuschen.
+
+Die Anwendungskonfiguration setzt `QUARKUS_OIDC_TENANT_ENABLED` standardmäßig auf `false`, während die REST-Ressource authentifizierte Requests voraussetzt. Dieses Spannungsverhältnis vor lokalem Betrieb bzw. Deployment explizit konfigurieren und mit realen Tokens verifizieren.
+
+## Entwicklung
+
+```bash
+cd backend/services/catalog-service
+./mvnw quarkus:dev
 ```
 
-## Endpunkte
+Port: Quarkus-Standard 8080, sofern nicht anders überschrieben. In Dev/Test sind DB-/Auth-Profile zu beachten. Flyway-Migrationen liegen in `src/main/resources/db/migration/`; beim produktiven Start werden Migrationen ausgeführt.
 
-| Methode  | Pfad                                       | Beschreibung                                                     |
-| -------- | ------------------------------------------ | ---------------------------------------------------------------- |
-| `GET`    | `/catalog/material`                        | Gibt alle aktiven Materialien des angemeldeten Benutzers zurück. |
-| `GET`    | `/catalog/material/{id}`                   | Gibt ein einzelnes Material anhand der ID zurück.                |
-| `POST`   | `/catalog/material`                        | Legt ein neues Material manuell an.                              |
-| `PUT`    | `/catalog/material/{id}`                   | Aktualisiert ein bestehendes Material.                           |
-| `DELETE` | `/catalog/material/{id}`                   | Deaktiviert ein Material.                                        |
-| `GET`    | `/catalog/material/search?q=...&limit=...` | Sucht Materialien mit Ranking und Fuzzy Search.                  |
-| `POST`   | `/catalog/material/import/csv`             | Importiert Materialien aus einer CSV-Datei.                      |
+Materialdetails und Umgebungsgrenzen siehe Quellcode `catalog/MaterialResource`, `MaterialService`, `MaterialRepository` und `application.properties`. Der Backend-Compose liefert lokale DB-Defaults und schaltet OIDC standardmäßig aus; daraus folgt keine Produktivfreigabe.
 
-## Material abrufen
-
-```http
-GET /catalog/material
-```
-
-Antwort:
-
-```json
-[
-  {
-    "id": "uuid",
-    "articleNumber": "MAT-000001",
-    "name": "Bohrmaschine",
-    "description": "Professionelle Schlagbohrmaschine",
-    "manufacturer": "Bosch",
-    "category": "Werkzeug",
-    "unit": "Stück",
-    "price": 149.99,
-    "currency": "EUR",
-    "createdAt": "2026-06-14T12:00:00Z",
-    "updatedAt": "2026-06-14T12:00:00Z"
-  }
-]
-```
-
-## Einzelnes Material abrufen
-
-```http
-GET /catalog/material/{id}
-```
-
-Antwort:
-
-```json
-{
-  "id": "uuid",
-  "articleNumber": "MAT-000001",
-  "name": "Bohrmaschine",
-  "description": "Professionelle Schlagbohrmaschine",
-  "manufacturer": "Bosch",
-  "category": "Werkzeug",
-  "unit": "Stück",
-  "price": 149.99,
-  "currency": "EUR",
-  "createdAt": "2026-06-14T12:00:00Z",
-  "updatedAt": "2026-06-14T12:00:00Z"
-}
-```
-
-## Material manuell anlegen
-
-```http
-POST /catalog/material
-Content-Type: application/json
-```
-
-Request:
-
-```json
-{
-  "name": "Bohrmaschine",
-  "manufacturer": "Bosch",
-  "description": "Professionelle Schlagbohrmaschine",
-  "category": "Werkzeug",
-  "unit": "Stück",
-  "price": 149.99,
-  "currency": "EUR"
-}
-```
-
-Antwort:
-
-```json
-{
-  "id": "uuid",
-  "articleNumber": "MAT-000001",
-  "name": "Bohrmaschine",
-  "description": "Professionelle Schlagbohrmaschine",
-  "manufacturer": "Bosch",
-  "category": "Werkzeug",
-  "unit": "Stück",
-  "price": 149.99,
-  "currency": "EUR",
-  "createdAt": "2026-06-14T12:00:00Z",
-  "updatedAt": "2026-06-14T12:00:00Z"
-}
-```
-
-## Material aktualisieren
-
-```http
-PUT /catalog/material/{id}
-Content-Type: application/json
-```
-
-Request:
-
-```json
-{
-  "name": "Akkuschrauber",
-  "manufacturer": "Makita",
-  "description": "18V Akkuschrauber",
-  "category": "Werkzeug",
-  "unit": "Stück",
-  "price": 89.99,
-  "currency": "EUR"
-}
-```
-
-Antwort:
-
-```json
-{
-  "id": "uuid",
-  "articleNumber": "MAT-000001",
-  "name": "Akkuschrauber",
-  "description": "18V Akkuschrauber",
-  "manufacturer": "Makita",
-  "category": "Werkzeug",
-  "unit": "Stück",
-  "price": 89.99,
-  "currency": "EUR",
-  "createdAt": "2026-06-14T12:00:00Z",
-  "updatedAt": "2026-06-14T12:30:00Z"
-}
-```
-
-## Material löschen
-
-```http
-DELETE /catalog/material/{id}
-```
-
-Beschreibung:
-
-Das Material wird nicht aus der Datenbank entfernt, sondern über `active = false` deaktiviert.
-
-Antwort:
-
-```text
-204 No Content
-```
-
-## Materialien suchen
-
-```http
-GET /catalog/material/search?q=bohrmaschine&limit=15
-```
-
-Beschreibung:
-
-Die Suche verwendet PostgreSQL Full-Text-Search mit gewichteten Feldern und zusätzlicher Fuzzy Search. Es werden nur aktive Materialien des angemeldeten Benutzers durchsucht.
-
-Antwort:
-
-```json
-{
-  "candidates": [
-    {
-      "id": "uuid",
-      "articleNumber": "MAT-000001",
-      "name": "Bohrmaschine",
-      "description": "Professionelle Schlagbohrmaschine",
-      "manufacturer": "Bosch",
-      "category": "Werkzeug",
-      "unit": "Stück",
-      "price": 149.99,
-      "currency": "EUR",
-      "score": 12.53
-    }
-  ]
-}
-```
-
-## CSV importieren
-
-```http
-POST /catalog/material/import/csv
-Content-Type: multipart/form-data
-```
-
-Form-Data:
-
-```text
-file=<csv-datei>
-```
-
-CSV-Spalten:
-
-```text
-name;manufacturer;description;category;unit;price;currency
-```
-
-Antwort:
-
-```json
-3
-```
-
-Die Zahl gibt an, wie viele Materialien importiert wurden.
-
-
-## Authentifizierung
-
-Bei aktivierter Keycloak-Integration muss jeder Request ein gültiges Access Token enthalten:
-
-```http
-Authorization: Bearer <access_token>
-```
-
-Die Benutzerzuordnung erfolgt über die `sub`-ID aus dem JWT.
